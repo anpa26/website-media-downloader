@@ -23,21 +23,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.commit_sha }}
           fetch-depth: 0
 
       - name: Get Commit Details
         id: commit_info
         run: |
-          TITLE=$(git log -1 --pretty=%s)
-          BODY=$(git log -1 --pretty=%b)
+          SHA="${{ github.event.inputs.commit_sha }}"
+          TITLE=$(git log -1 --pretty=%s "$SHA")
+          BODY=$(git log -1 --pretty=%b "$SHA")
           echo "title=$TITLE" >> $GITHUB_OUTPUT
           
-          # If body is empty, use title as body
           if [ -z "$BODY" ]; then
             echo "body=$TITLE" >> $GITHUB_OUTPUT
           else
-            # Use a delimiter for multi-line body
             echo "body<<EOF" >> $GITHUB_OUTPUT
             echo "$BODY" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
@@ -45,6 +43,8 @@ jobs:
 
       - name: Create Release Archive (XPI)
         run: |
+          # Checkout the specific commit content to be packaged
+          git checkout ${{ github.event.inputs.commit_sha }}
           cd src
           zip -r ../addon.xpi ./*
           cd ..
@@ -53,7 +53,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.event.inputs.tag_name }}
-          name: ${{ github.event.inputs.release_name || steps.commit_info.outputs.title }}
+          name: ${{ steps.commit_info.outputs.title }}
           body: ${{ steps.commit_info.outputs.body }}
           files: addon.xpi
           target_commitish: ${{ github.event.inputs.commit_sha }}

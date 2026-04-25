@@ -28,6 +28,10 @@
       "background.js"
     ]
   },
+  "icons": {
+    "96": "icons/file_save.svg",
+    "128": "icons/file_save.svg"
+  },
   "action": {
     "default_title": "__MSG_actionTitle__"
   },
