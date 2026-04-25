@@ -1,0 +1,508 @@
+{
+    "actionTitle": {
+        "message": "Unduh media",
+        "description": "Isi menu konteks saat mengarahkan kursor ke ikon ekstensi."
+    },
+    "extensionDescription": {
+        "message": "Unduh video, musik, dan siaran langsung ke perangkat Anda!",
+        "description": "Deskripsi ekstensi yang ditampilkan di halaman pengaturan peramban."
+    },
+    "errorTitle1": {
+        "message": "Terjadi kesalahan!",
+        "description": "Judul ke-1 dari popup kesalahan."
+    },
+    "errorTitle2": {
+        "message": "Ups!",
+        "description": "Judul ke-2 dari popup kesalahan."
+    },
+    "errorTitle3": {
+        "message": "Aduh!",
+        "description": "Judul ke-3 dari popup kesalahan."
+    },
+    "errorTitle4": {
+        "message": "Kesalahan!",
+        "description": "Judul ke-4 dari popup kesalahan."
+    },
+    "errorTitle5": {
+        "message": "Wah, rusak!",
+        "description": "Judul ke-5 dari popup kesalahan."
+    },
+    "errorTitle6": {
+        "message": "Oh tidak!",
+        "description": "Judul ke-6 dari popup kesalahan."
+    },
+    "offlineError": {
+        "message": "Unduhan kemungkinan gagal karena Anda sedang luring. Silakan periksa koneksi internet Anda dan coba lagi.",
+        "description": "Pesan kesalahan yang ditampilkan saat pengguna mencoba mengunduh media saat luring."
+    },
+    "reportIssue": {
+        "message": "Laporkan masalah",
+        "description": "Teks tautan untuk melaporkan masalah di popup kesalahan."
+    },
+    "okButton": {
+        "message": "OKE",
+        "description": "Teks tombol OKE di popup kesalahan."
+    },
+    "requestText": {
+        "message": "Permintaan $METHOD$ dari $SOURCE$ pada $TIME$",
+        "description": "Teks yang menunjukkan jenis permintaan yang dibuat untuk memuat media.",
+        "placeholders": {
+            "METHOD": {
+                "content": "$1",
+                "example": "GET"
+            },
+            "SOURCE": {
+                "content": "$2",
+                "example": "https://example.com/video.mp4"
+            },
+            "TIME": {
+                "content": "$3",
+                "example": "12:34"
+            }
+        }
+    },
+    "requestMethodUnknown": {
+        "message": "Tidak diketahui",
+        "description": "Teks yang ditampilkan saat metode permintaan tidak dikenali."
+    },
+    "requestSourceUnknown": {
+        "message": "sumber tidak diketahui",
+        "description": "Teks yang ditampilkan saat sumber permintaan tidak dikenali."
+    },
+    "sizeText": {
+        "message": "Ukuran",
+        "description": "Teks di atas pemilih ukuran dalam daftar media."
+    },
+    "copyURL": {
+        "message": "Salin URL",
+        "description": "Teks tombol untuk menyalin URL media ke papan klip."
+    },
+    "URLCopyError": {
+        "message": "Gagal menyalin URL ke papan klip",
+        "description": "Pesan kesalahan saat operasi salin URL gagal."
+    },
+    "previewMedia": {
+        "message": "Pratinjau",
+        "description": "Teks tombol pratinjau dalam daftar media."
+    },
+    "downloadMedia": {
+        "message": "Unduh",
+        "description": "Teks tombol unduh dalam daftar media."
+    },
+    "endOfMediaList": {
+        "message": "Itu saja yang bisa kami temukan! Jika Anda tidak melihat media yang Anda cari, coba putar medianya lalu segarkan daftar. Jika masih tidak terlihat, ubah metode deteksi media di pengaturan. Untuk bantuan lebih lanjut, klik tombol bantuan di pojok kiri bawah.",
+        "description": "Teks yang ditampilkan di akhir daftar media di popup."
+    },
+    "endOfMediaListLink": {
+        "message": "Media tidak ditemukan? Kirim di sini!",
+        "description": "Teks tautan di akhir daftar media untuk mengirimkan media yang tidak terdeteksi."
+    },
+    "listLoadError": {
+        "message": "Kesalahan saat mengambil permintaan media. Berikut masalahnya: $ERROR$",
+        "description": "Pesan kesalahan saat daftar media gagal dimuat."
+    },
+    "listClearError": {
+        "message": "Kesalahan saat menghapus daftar media. Berikut masalahnya: $ERROR$",
+        "description": "Pesan kesalahan saat daftar media gagal dihapus."
+    },
+    "unknownSize": {
+        "message": "Ukuran tidak diketahui",
+        "description": "Teks yang ditampilkan saat ukuran media tidak dapat diurai."
+    },
+    "downloadError": {
+        "message": "Kesalahan saat mengunduh media. Berikut masalahnya: $ERROR$",
+        "description": "Pesan kesalahan saat pengunduhan media gagal."
+    },
+    "homeTab": {
+        "message": "Beranda",
+        "description": "Nama tab beranda di popup."
+    },
+    "settingsTab": {
+        "message": "Pengaturan",
+        "description": "Nama tab pengaturan di popup."
+    },
+    "clearListButton": {
+        "message": "Hapus daftar",
+        "description": "Label tombol untuk menghapus daftar media."
+    },
+    "refreshListButton": {
+        "message": "Segarkan daftar",
+        "description": "Label tombol untuk menyegarkan daftar media."
+    },
+    "settingsDetectionSectionTitle": {
+        "message": "Pengaturan deteksi",
+        "description": "Judul bagian pengaturan deteksi di tab pengaturan."
+    },
+    "settingsDownloadSectionTitle": {
+        "message": "Pengaturan unduhan",
+        "description": "Judul bagian pengaturan unduhan di tab pengaturan."
+    },
+    "settingsInterfaceSectionTitle": {
+        "message": "Pengaturan antarmuka",
+        "description": "Judul bagian pengaturan antarmuka di tab pengaturan."
+    },
+    "detectionMethodTitle": {
+        "message": "Metode deteksi",
+        "description": "Judul bagian metode deteksi di tab pengaturan."
+    },
+    "needToRefreshListWarning": {
+        "message": "Setelah mengubah ini, klik \"Segarkan daftar\" untuk melihat perubahan!",
+        "description": "Peringatan di bawah judul metode deteksi."
+    },
+    "detectionDisabledExplain": {
+        "message": "Menghapus centang kedua opsi tidak akan menyaring apa pun, menampilkan semua permintaan peramban (termasuk non-media!).",
+        "description": "Penjelasan saat deteksi dinonaktifkan."
+    },
+    "urlDetectionExplain": {
+        "message": "Deteksi dengan memeriksa apakah URL mengandung jenis media yang dikenal (contoh .mp4, .m3u8). Cepat, tapi beberapa situs tidak menggunakan jenis URL ini.",
+        "description": "Penjelasan metode deteksi berbasis URL."
+    },
+    "urlDetectionCheckbox": {
+        "message": "Deteksi via URL",
+        "description": "Label kotak centang untuk deteksi berbasis URL."
+    },
+    "mimeDetectionExplain": {
+        "message": "Deteksi dengan memeriksa respons MIME server (contoh video/mp4, application/vnd.apple.mpegurl). Lebih lambat tapi lebih handal.",
+        "description": "Penjelasan metode deteksi berbasis MIME."
+    },
+    "mimeDetectionCheckbox": {
+        "message": "Deteksi via respons MIME server",
+        "description": "Label kotak centang untuk deteksi berbasis MIME."
+    },
+    "downloadMethodTitle": {
+        "message": "Metode unduhan",
+        "description": "Judul bagian metode unduhan di tab pengaturan."
+    },
+    "browserDownloadExplain": {
+        "message": "Unduh menggunakan pengelola unduhan bawaan peramban. Cepat dan mendukung pemutusan koneksi, tapi hanya berfungsi di beberapa situs dan peramban (Firefox PC).",
+        "description": "Penjelasan metode unduhan bawaan peramban."
+    },
+    "browserDownloadCheckbox": {
+        "message": "Unduhan bawaan peramban",
+        "description": "Label kotak centang untuk unduhan bawaan peramban."
+    },
+    "fetchDownloadExplain": {
+        "message": "Unduh menggunakan Fetch API. Berfungsi di sebagian besar situs dan peramban, tapi bisa lebih lambat.",
+        "description": "Penjelasan metode unduhan Fetch API."
+    },
+    "fetchDownloadCheckbox": {
+        "message": "Fetch API",
+        "description": "Label kotak centang untuk unduhan Fetch API."
+    },
+    "mediaCacheTitle": {
+        "message": "Cache media",
+        "description": "Judul bagian cache media di tab pengaturan."
+    },
+    "mediaCacheExplain": {
+        "message": "Mencoba menyimpan respons media agar unduhan lebih cepat tanpa meminta ulang ke server. Bisa memperlambat peramban.",
+        "description": "Penjelasan opsi cache media."
+    },
+    "mediaCacheExplainPrivate": {
+        "message": "Fitur ini tidak digunakan karena Anda dalam mode penjelajahan pribadi.",
+        "description": "Penjelasan mengapa cache media dinonaktifkan di mode pribadi."
+    },
+    "mediaCacheCheckbox": {
+        "message": "Aktifkan cache media",
+        "description": "Label kotak centang untuk mengaktifkan cache media."
+    },
+    "hideSegmentsTitle": {
+        "message": "Sembunyikan segmen siaran",
+        "description": "Judul bagian sembunyikan segmen siaran."
+    },
+    "hideSegmentsExplain": {
+        "message": "Siaran langsung menggunakan banyak segmen kecil. Biasanya hanya manifest siaran yang diperlukan.",
+        "description": "Penjelasan opsi sembunyikan segmen siaran."
+    },
+    "hideSegmentsCheckbox": {
+        "message": "Sembunyikan segmen siaran di daftar media",
+        "description": "Label kotak centang untuk menyembunyikan segmen siaran."
+    },
+    "streamDownloadTitle": {
+        "message": "Preferensi unduhan siaran",
+        "description": "Judul preferensi unduhan siaran."
+    },
+    "streamFileDownloadExplain": {
+        "message": "Unduh file manifest siaran (.m3u8, .mpd) secara langsung. Perlu pemutar media seperti VLC untuk menontonnya.",
+        "description": "Penjelasan metode unduhan manifest siaran."
+    },
+    "streamFileDownloadCheckbox": {
+        "message": "Unduh manifest siaran",
+        "description": "Label kotak centang untuk unduhan manifest siaran."
+    },
+    "offlineDownloadExplain": {
+        "message": "Ubah siaran menjadi file video luring tunggal (.ts atau .zip) setelah diunduh.",
+        "description": "Penjelasan metode unduhan file video luring."
+    },
+    "offlineDownloadChecbox": {
+        "message": "Ubah ke file video luring",
+        "description": "Label kotak centang untuk unduhan file video luring."
+    },
+    "streamQualityTitle": {
+        "message": "Preferensi kualitas siaran",
+        "description": "Judul preferensi kualitas siaran."
+    },
+    "askStreamQualityExplain": {
+        "message": "Selalu tanya kualitas mana yang akan diunduh.",
+        "description": "Penjelasan preferensi kualitas 'Selalu tanya'."
+    },
+    "askStreamQualityCheckbox": {
+        "message": "Selalu tanya saya",
+        "description": "Label tombol radio untuk preferensi kualitas 'Selalu tanya'."
+    },
+    "highestStreamQualityExplain": {
+        "message": "Selalu unduh kualitas tertinggi yang tersedia.",
+        "description": "Penjelasan preferensi kualitas 'Selalu tertinggi'."
+    },
+    "highestStreamQualityCheckbox": {
+        "message": "Kualitas tertinggi",
+        "description": "Label tombol radio untuk preferensi kualitas 'Selalu tertinggi'."
+    },
+    "lowestStreamQualityExplain": {
+        "message": "Selalu unduh kualitas terendah yang tersedia.",
+        "description": "Penjelasan preferensi kualitas 'Selalu terendah'."
+    },
+    "lowestStreamQualityCheckbox": {
+        "message": "Kualitas terendah",
+        "description": "Label tombol radio untuk preferensi kualitas 'Selalu terendah'."
+    },
+    "mpdFixExplain": {
+        "message": "Ini akan memodifikasi file .mpd yang Anda unduh agar hanya menyertakan kualitas yang Anda unduh.",
+        "description": "Penjelasan opsi perbaikan MPD."
+    },
+    "mpdFixCheckbox": {
+        "message": "Perbaiki file MPD (disarankan)",
+        "description": "Label kotak centang untuk mengaktifkan perbaikan MPD."
+    },
+    "openPreference": {
+        "message": "Preferensi pembukaan add-on",
+        "description": "Judul bagian preferensi pembukaan add-on."
+    },
+    "openPreferenceExplain": {
+        "message": "Pilih bagaimana add-on terbuka saat Anda mengklik ikon.",
+        "description": "Penjelasan preferensi pembukaan add-on."
+    },
+    "newTabCheckbox": {
+        "message": "Buka di tab baru",
+        "description": "Label tombol radio untuk buka di tab baru."
+    },
+    "newWindowCheckbox": {
+        "message": "Buka di jendela baru",
+        "description": "Label tombol radio untuk buka di jendela baru."
+    },
+    "popupCheckbox": {
+        "message": "Buka sebagai popup",
+        "description": "Label tombol radio untuk buka sebagai popup."
+    },
+    "colorPickerTitle": {
+        "message": "Warna antarmuka",
+        "description": "Judul bagian warna antarmuka."
+    },
+    "creditsTitle": {
+        "message": "Kredit",
+        "description": "Judul bagian kredit."
+    },
+    "creditsDescription1": {
+        "message": "Website Media Downloader adalah ",
+        "description": "Bagian pertama deskripsi kredit."
+    },
+    "creditsDescription2": {
+        "message": "proyek sumber terbuka",
+        "description": "Bagian kedua deskripsi kredit."
+    },
+    "creditsDescription3": {
+        "message": " yang dibuat oleh ",
+        "description": "Bagian ketiga deskripsi kredit."
+    },
+    "creditsDescription4": {
+        "message": "dibuat oleh helloyanis, dikembangkan lebih lanjut oleh anpa26",
+        "description": "Bagian keempat deskripsi kredit."
+    },
+    "creditsDescription5": {
+        "message": ".",
+        "description": "Bagian kelima deskripsi kredit."
+    },
+    "rateButton": {
+        "message": "Nilai",
+        "description": "Label tombol untuk menilai ekstensi."
+    },
+    "shareButton": {
+        "message": "Bagikan",
+        "description": "Label tombol untuk membagikan ekstensi."
+    },
+    "donateButton": {
+        "message": "Donasi",
+        "description": "Label tombol untuk berdonasi."
+    },
+    "mobileIncompatibleWarning": {
+        "message": "Opsi ini tidak kompatibel dengan beberapa peramban seluler, seperti Firefox Android.",
+        "description": "Peringatan ketidakcocokan seluler."
+    },
+    "permissionRequestTitle": {
+        "message": "Izin Diperlukan",
+        "description": "Judul popup permintaan izin."
+    },
+    "permissionRequestDescription": {
+        "message": "Ekstensi memerlukan izin untuk mengakses semua URL agar berfungsi dengan baik.",
+        "description": "Deskripsi popup permintaan izin."
+    },
+    "grantPermissionButton": {
+        "message": "Berikan Izin",
+        "description": "Label tombol berikan izin."
+    },
+    "denyPermissionButton": {
+        "message": "Jangan ingatkan saya",
+        "description": "Label tombol tolak izin."
+    },
+    "permissionGrantedMessage": {
+        "message": "Izin berhasil diberikan.",
+        "description": "Pesan saat izin diberikan."
+    },
+    "permissionDeniedMessage": {
+        "message": "Izin ditolak.",
+        "description": "Pesan saat izin ditolak."
+    },
+    "permissionGrantFailedMessage": {
+        "message": "Gagal memberikan izin.",
+        "description": "Pesan saat pemberian izin gagal."
+    },
+    "mpdDownloadCompleteTitle": {
+        "message": "Unduhan MPD Selesai",
+        "description": "Judul notifikasi unduhan MPD selesai."
+    },
+    "mpdDownloadCompleteMessage": {
+        "message": "Siaran MPD telah diunduh sebagai file ZIP.",
+        "description": "Pesan notifikasi unduhan MPD selesai."
+    },
+    "splitDownloadWarningSnackbar": {
+        "message": "Aliran audio dan video terpisah. Dua file akan diunduh.",
+        "description": "Pesan snackbar aliran audio/video terpisah."
+    },
+    "downloadingAudioSnackbar": {
+        "message": "Mengunduh aliran audio...",
+        "description": "Pesan snackbar saat mengunduh audio."
+    },
+    "splitAudioVideoDownloadCompleteTitle": {
+        "message": "Aliran audio dan video terpisah berhasil diunduh",
+        "description": "Judul dialog unduhan terpisah selesai."
+    },
+    "splitAudioVideoDownloadCompleteDescription": {
+        "message": "Kedua aliran video dan audio telah diunduh.",
+        "description": "Deskripsi dialog unduhan terpisah selesai."
+    },
+    "videoQualityDialogTitle": {
+        "message": "Pilih kualitas video",
+        "description": "Judul dialog pilih kualitas video."
+    },
+    "videoQualitySelectLabel": {
+        "message": "Kualitas video",
+        "description": "Label pilihan kualitas video."
+    },
+    "audioQualityDialogTitle": {
+        "message": "Pilih kualitas audio",
+        "description": "Judul dialog pilih kualitas audio."
+    },
+    "audioQualitySelectLabel": {
+        "message": "Kualitas audio",
+        "description": "Label pilihan kualitas audio."
+    },
+    "streamQualityDialogTitle": {
+        "message": "Pilih kualitas siaran",
+        "description": "Judul dialog pilih kualitas siaran."
+    },
+    "streamQualitySelectLabel": {
+        "message": "Kualitas siaran",
+        "description": "Label pilihan kualitas siaran."
+    },
+    "mediaPreviewSnackbar": {
+        "message": "Pratinjau media tidak berfungsi di semua situs.",
+        "description": "Snackbar pratinjau media."
+    },
+    "mediaPreviewDontRemindMe": {
+        "message": "Jangan ingatkan saya",
+        "description": "Aksi snackbar pratinjau media."
+    },
+    "helpTooltip": {
+        "message": "Buka bantuan",
+        "description": "Tooltip bantuan."
+    },
+    "diagnosticDataPermissionDenied": {
+        "message": "Izin berbagi data diagnostik ditolak.",
+        "description": "Pesan izin diagnostik ditolak."
+    },
+    "diagnosticDataSent": {
+        "message": "Data diagnostik berhasil dikirim. Terima kasih!",
+        "description": "Pesan data diagnostik terkirim."
+    },
+    "diagnosticDataSendError": {
+        "message": "Terjadi kesalahan saat mengirim data diagnostik.",
+        "description": "Pesan kesalahan kirim diagnostik."
+    },
+    "noRequestFoundError": {
+        "message": "Tidak dapat menemukan info permintaan dalam riwayat.",
+        "description": "Pesan kesalahan permintaan tidak ditemukan."
+    },
+    "drmWarningTitle": {
+        "message": "DRM Terdeteksi",
+        "description": "Judul peringatan DRM."
+    },
+    "drmWarningDescription": {
+        "message": "File ini menggunakan DRM (Perlindungan Konten).",
+        "description": "Deskripsi peringatan DRM."
+    },
+    "drmWarningConntinueButton": {
+        "message": "Lanjutkan",
+        "description": "Tombol lanjut DRM."
+    },
+    "drmWarningCancelButton": {
+        "message": "Batal",
+        "description": "Tombol batal DRM."
+    },
+    "ratingBannerText": {
+        "message": "Jika Anda menyukai add-on ini, silakan berikan nilai. Terima kasih!",
+        "description": "Teks spanduk penilaian."
+    },
+    "ratingBannerRateButton": {
+        "message": "Nilai sekarang",
+        "description": "Tombol nilai spanduk penilaian."
+    },
+    "ratingBannerDismissButton": {
+        "message": "Tutup",
+        "description": "Tombol tutup spanduk penilaian."
+    },
+    "ratingBannerDontShowAgainButton": {
+        "message": "Jangan tanya lagi",
+        "description": "Tombol jangan tanya lagi spanduk penilaian."
+    },
+    "ratingBannerRemindMeLaterButton": {
+        "message": "Ingatkan lagi minggu depan",
+        "description": "Tombol ingatkan nanti spanduk penilaian."
+    },
+    "youtubeDialogAskTitle": {
+        "message": "Apakah Anda mencoba mengunduh dari YouTube?",
+        "description": "Judul dialog YouTube."
+    },
+    "youtubeDialogAskMessage": {
+        "message": "Mengunduh dari YouTube tidak didukung langsung di ekstensi ini.",
+        "description": "Pesan dialog YouTube."
+    },
+    "youtubeDialogAskOkButton": {
+        "message": "Ya",
+        "description": "Tombol ya dialog YouTube."
+    },
+    "youtubeDialogDownloaderPCTitle": {
+        "message": "Coba dengan yt-dlp",
+        "description": "Judul panduan yt-dlp."
+    },
+    "youtubeDialogDownloaderPCMessage": {
+        "message": "Anda dapat menggunakan yt-dlp untuk mengunduh video YouTube di PC.",
+        "description": "Pesan panduan yt-dlp."
+    },
+    "youtubeDialogDownloaderAndroidTitle": {
+        "message": "Coba dengan Seal",
+        "description": "Judul panduan Seal Android."
+    },
+    "youtubeDialogDownloaderAndroidMessage": {
+        "message": "Anda dapat menggunakan Seal untuk mengunduh video YouTube di Android.",
+        "description": "Pesan panduan Seal Android."
+    }
+}

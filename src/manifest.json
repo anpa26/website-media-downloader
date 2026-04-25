@@ -1,12 +1,12 @@
 {
-  "name": "Media Downloader Unleashed!!",
+  "name": "Website Media Downloader",
   "manifest_version": 3,
-  "version": "3.6.8",
+  "version": "1.5.0",
   "description": "__MSG_extensionDescription__",
-  "author": "🦊 helloyanis",
+  "author": "helloyanis, improved by anpa26",
   "developer": {
-    "name": "🦊 helloyanis",
-    "url": "https://🦊💻️.ws"
+    "name": "helloyanis, improved by anpa26",
+    "url": "https://github.com/anpa26/website-media-downloader"
   },
   "permissions": [
     "storage",
@@ -21,7 +21,7 @@
   "host_permissions": [
     "<all_urls>"
   ],
-  "homepage_url": "https://github.com/helloyanis/media-downloader-unleashed",
+  "homepage_url": "https://github.com/anpa26/website-media-downloader",
   "background": {
     "service_worker": "background.js",
     "scripts": [

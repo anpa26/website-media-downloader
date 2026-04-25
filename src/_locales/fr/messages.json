@@ -90,7 +90,7 @@
         "description": "The text of the download button in the media list."
     },
     "endOfMediaList": {
-        "message": "C'est tout ce qui a été trouvé. Si vous ne voyez pas le média que vous cherchez, rafraichissez la page où il se trouve, lancez la lecture puis cliquez sur \"Actualiser liste\". Si il n'apparaît toujours pas, changez la méthode de détection dans les options. Pour plus d'aide, cliquez sur le bouton '?' en bas à gauche.",
+        "message": "C'est tout ce qui a été trouvé. Si vous ne voyez pas le média que vous cherchez, rafraichissez la page où il se trouve, lancez la lecture puis cliquez sur \"Actualiser liste\". Si il n'apparaît toujours pas, changez la méthode de détection dans les options. Pour plus d'aide, cliquez sur le bouton help en bas à gauche.",
         "description": "The text shown at the end of the media list."
     },
     "endOfMediaListLink": {
@@ -164,7 +164,7 @@
         "description": "The title of the detection method section in the settings tab."
     },
     "needToRefreshListWarning": {
-        "message": "⚠️ Vous devez actualiser la liste des médias pour appliquer le changement.",
+        "message": "Vous devez actualiser la liste des médias pour appliquer le changement.",
         "description": "The warning shown below the detection method title in the settings tab."
     },
     "detectionDisabledExplain": {
@@ -192,7 +192,7 @@
         "description": "The title of the download method section in the settings tab."
     },
     "browserDownloadExplain": {
-        "message": "Télécharger le média en utilisant la méthode de téléchargement native du navigateur. Rapide et fiable, mais fonctionne uniquement sur certains sites, et ne fonctionne pas sur Firefox pour Android.",
+        "message": "Télécharger le média en utilisant la method de téléchargement native du navigateur. Rapide et fiable, mais fonctionne uniquement sur certains sites, et ne fonctionne pas sur Firefox pour Android.",
         "description": "The explanation of native browser download method shown in a tooltip."
     },
     "browserDownloadCheckbox": {
@@ -216,7 +216,7 @@
         "description": "The explanation of the media cache option shown in a tooltip."
     },
     "mediaCacheExplainPrivate": {
-        "message": "❗️ Cette fonctionnalité n'est actuellement pas utilisée car vous êtes en mode de navigation privée. Pour utiliser ou changer ce paramètre, veuillez ouvrir l'extension et vos médias depuis une fenêtre non privée.",
+        "message": "Cette fonctionnalité n'est actuellement pas utilisée car vous êtes en mode de navigation privée. Pour utiliser ou changer ce paramètre, veuillez ouvrir l'extension et vos médias depuis une fenêtre non privée.",
         "description": "The explanation of why media cache option is disabled in private mode, shown in a tooltip."
     },
     "mediaCacheCheckbox": {
@@ -272,7 +272,7 @@
         "description": "The explanation of 'Always highest' stream quality preference shown in a tooltip."
     },
     "highestStreamQualityCheckbox": {
-        "message": "Toujours la meilleure qualité",
+        "message": "La meilleure qualité",
         "description": "The label of the radio button to enable 'Always highest' stream quality preference."
     },
     "lowestStreamQualityExplain": {
@@ -280,7 +280,7 @@
         "description": "The explanation of 'Always lowest' stream quality preference shown in a tooltip."
     },
     "lowestStreamQualityCheckbox": {
-        "message": "Toujours la qualité la plus basse",
+        "message": "La qualité la plus basse",
         "description": "The label of the radio button to enable 'Always lowest' stream quality preference."
     },
     "mpdFixExplain": {
@@ -307,6 +307,9 @@
         "message": "Dans une nouvelle fenêtre",
         "description": "The label of the radio button to open the add-on in a new window."
     },
+    "popupCheckbox": {
+        "message": "Ouvrir en tant que popup"
+    },
     "colorPickerTitle": {
         "message": "Couleur de l'interface",
         "description": "The title of the interface color section in the settings tab."
@@ -316,11 +319,11 @@
         "description": "The title of the credits section in the settings tab."
     },
     "creditsDescription1": {
-        "message": "Media Downloader Unleashed!! est un ",
+        "message": "Website Media Downloader est un ",
         "description": "The first part of the credits description."
     },
     "creditsDescription2": {
-        "message": "projet libre et open-source",
+        "message": "projet open-source",
         "description": "The second part of the credits description."
     },
     "creditsDescription3": {
@@ -328,7 +331,7 @@
         "description": "The third part of the credits description."
     },
     "creditsDescription4": {
-        "message": "🦊 helloyanis",
+        "message": "créé par helloyanis, amélioré par anpa26",
         "description": "The fourth part of the credits description."
     },
     "creditsDescription5": {
@@ -347,24 +350,8 @@
         "message": "Faire un don",
         "description": "The label of the button to donate to the developer."
     },
-    "contactTitle": {
-        "message": "Me contacter",
-        "description": "The title of the contact section in the settings tab."
-    },
-    "contactDescription": {
-        "message": "Si vous avez des questions, des suggestions ou des problèmes, n'hésitez pas à me contacter !",
-        "description": "The description of the contact section in the settings tab."
-    },
-    "emailButton": {
-        "message": "E-mail",
-        "description": "The label of the button to contact the developer via e-mail."
-    },
-    "mastodonButton": {
-        "message": "Mastodon",
-        "description": "The label of the button to contact the developer via Mastodon."
-    },
     "mobileIncompatibleWarning": {
-        "message": "⚠️ Cette option n'est pas compatible avec certains navigateurs mobiles, comme Firefox pour Android. Si vous utilisez ce navigateur, revenez en arrière.",
+        "message": "Cette option n'est pas compatible avec certains navigateurs mobiles, comme Firefox pour Android. Si vous utilisez ce navigateur, revenez en arrière.",
         "description": "The warning shown when the user enables an option that is not compatible with mobile browsers."
     },
     "permissionRequestTitle": {
@@ -483,53 +470,11 @@
         "message": "Une erreur s'est produite lors de l'envoi des données de diagnostic. Veuillez réessayer plus tard.",
         "description": "The message shown when there is an error sending diagnostic data."
     },
-    "diagnosticDataEmailTitle": {
-        "message": "Voulez-vous que je vous recontacte à propos de ce problème?",
-        "description": "The title of the prompt to enter an e-mail when sharing diagnostic data."
-    },
-    "diagnosticDataEmailDescription": {
-        "message": "Dans ce cas, merci d'entrer votre e-mail ci dessous. Il ne sera pas sauvegardé ni partagé à des tiers et sera uniquement utilisé pour vous recontacter. Si vous ne souhaitez pas être recontacté, laissez le champ vide.<br/>Les données incluses dans votre signalement sont les suivantes : <br/><ul><li>Votre user agent (le vôtre est : <code>$USERAGENT$</code>)</li><li>L'URL de la page qui a causé l'erreur : <code>$REFERER$</code></li><li>L'URL du média : <code>$MEDIAURL$</code></li><li>L'erreur qui est survenue : <code>$ERROR$</code></li></ul>",
-        "description": "The description of the prompt to enter an e-mail when sharing diagnostic data.",
-        "placeholders": {
-            "USERAGENT": {
-                "content": "$1",
-                "example": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            },
-            "REFERER": {
-                "content": "$2",
-                "example": "https://example.com/video_page"
-            },
-            "MEDIAURL": {
-                "content": "$3",
-                "example": "https://example.com/video.mp4"
-            },
-            "ERROR": {
-                "content": "$4",
-                "example": "Network error"
-            }
-        }
-    },
-    "diagnosticDataEmailLabel": {
-        "message": "Adresse e-mail (facultatif)",
-        "description": "The label of the text field to enter an e-mail when sharing diagnostic data."
-    },
-    "diagnosticDataEmailPlaceholder": {
-        "message": "email@example.com",
-        "description": "The placeholder of the text field to enter an e-mail when sharing diagnostic data."
-    },
-    "diagnosticDataEmailOkButton": {
-        "message": "Envoyer",
-        "description": "The text of the OK button in the prompt to enter an e-mail when sharing diagnostic data."
-    },
-    "diagnosticDataEmailCancelButton": {
-        "message": "Annuler l'envoi",
-        "description": "The text of the Cancel button in the prompt to enter an e-mail when sharing diagnostic data."
-    },
     "noRequestFoundError": {
         "message": "Impossible de trouver les détails de la requête parmi l'historique de requêtes. Cela peut arriver quand la requête a déjà été effectuée et mise en cache dans votre navigateur avant l'installation de l'extension. Effacez les données de navigation du site web depuis lequel vous essayez de télécharger, puis redémarrez le navigateur et réessayez.",
         "description": "The error message shown when there is no request found for the selected size."
     },
-       "drmWarningTitle": {
+    "drmWarningTitle": {
         "message": "DRM Detected",
         "description": "The title of the warning shown when a DRM-protected MPD is detected."
     },
@@ -555,7 +500,7 @@
     },
     "ratingBannerDismissButton": {
         "message": "Ignorer",
-        "description": "The label of the button to dismiss the rating banner." 
+        "description": "The label of the button to dismiss the rating banner."
     },
     "ratingBannerDontShowAgainButton": {
         "message": "Ne plus demander",

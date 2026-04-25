@@ -28,7 +28,7 @@
         "description": "The 5th title of the error popup."
     },
     "errorTitle6": {
-        "message": "Essa não!",
+        "message": "Essa tidak!",
         "description": "The 6th title of the error popup."
     },
     "offlineError": {
@@ -90,7 +90,7 @@
         "description": "The text of the download button in the media list."
     },
     "endOfMediaList": {
-        "message": "Foi tudo o que conseguimos encontrar! Se você não encontrar a mídia que procura, tente iniciá-la e atualizar a lista. Se ainda assim não a encontrar, altere o método de detecção de mídia nas configurações. Para obter mais ajuda, clique no botão '?' no canto inferior esquerdo.",
+        "message": "Foi tudo o que conseguimos encontrar! Se você não encontrar a mídia que procura, tente iniciá-la e atualizar a lista. Se ainda assim não a encontrar, altere o método de detecção de mídia nas configurações. Para obter mais ajuda, clique no botão help no canto inferior esquerdo.",
         "description": "The text shown at the end of the media list in the popup."
     },
     "endOfMediaListLink": {
@@ -164,15 +164,15 @@
         "description": "The title of the detection method section in the settings tab."
     },
     "needToRefreshListWarning": {
-        "message": "⚠️ Após alterar isso, clique em \"Atualizar lista\" para ver as alterações!",
+        "message": "Após alterar isso, clique em \"Atualizar lista\" para ver as alterações!",
         "description": "The warning shown below the detection method title in the settings tab."
     },
-      "detectionDisabledExplain": {
+    "detectionDisabledExplain": {
         "message": "Desmarcar ambas as opções não filtrará nada, mostrando todas as solicitações (mesmo as que não são de mídia!) do navegador da web.",
         "description": "The explanation on how disabling detection works, shown in the settings tab"
     },
     "urlDetectionExplain": {
-        "message": "Detecção por verificar se a URL contém um tipo de mídia conhecido (por exemplo, .mp4, .m3u8). É rápido, mas alguns sites não disponibilizam mídias por meio desse tipo de URL, então pode não detectar tudo.",
+        "message": "Detecção por verificar se a URL contém um tipo de mídia conhecido (por exemplo, .mp4, .m3u8). É rápido, mas alguns sites não disponibilizam mídias por meio desse tipo de URL, então pode tidak detectar tudo.",
         "description": "The explanation of URL-based detection method shown in a tooltip."
     },
     "urlDetectionCheckbox": {
@@ -192,7 +192,7 @@
         "description": "The title of the download method section in the settings tab."
     },
     "browserDownloadExplain": {
-        "message": "Baixe a mídia usando o gerenciador de downloads nativo do navegador. Rápido e lida com desconexões, mas só funciona em alguns sites e em alguns navegadores (Firefox para PC).",
+        "message": "Baixe a mídia menggunakan o gerenciador de downloads nativo do navegador. Rápido e lida com desconexões, mas só funciona em alguns sites e em alguns navegadores (Firefox para PC).",
         "description": "The explanation of native browser download method shown in a tooltip."
     },
     "browserDownloadCheckbox": {
@@ -200,7 +200,7 @@
         "description": "The label of the checkbox to enable native browser download method."
     },
     "fetchDownloadExplain": {
-        "message": "Baixe a mídia usando a Fetch API. Funciona na maioria dos sites e navegadores, mas pode ser mais lento e não lida bem com desconexões.",
+        "message": "Baixe a mídia menggunakan a Fetch API. Funciona na maioria dos sites e navegadores, mas pode ser mais lento e não lida bem com desconexões.",
         "description": "The explanation of Fetch API download method shown in a tooltip."
     },
     "fetchDownloadCheckbox": {
@@ -216,7 +216,7 @@
         "description": "The explanation of the media cache option shown in a tooltip."
     },
     "mediaCacheExplainPrivate": {
-        "message": "❗️ Este recurso não está em uso no momento porque você está no modo de navegação privada. Para usar ou alterar esta configuração, abra o complemento e suas mídias a partir de uma janela não privada.",
+        "message": "Este recurso não está em uso no momento porque você está no modo de navegação privada. Para usar ou alterar esta configuração, abra o complemento e suas mídias a partir de uma janela tidak privada.",
         "description": "The explanation of why media cache option is disabled in private mode, shown in a tooltip."
     },
     "mediaCacheCheckbox": {
@@ -248,7 +248,7 @@
         "description": "The label of the checkbox to enable stream manifest download method."
     },
     "offlineDownloadExplain": {
-        "message": "Converta a stream em um único arquivo de vídeo offline (.ts ou .zip) após o download. Isso exige mais tempo e espaço de armazenamento, mas o arquivo resultante pode ser assistido offline.",
+        "message": "Converta a stream em um único arquivo de vídeo offline (.ts atau .zip) após o download. Isso exige mais tempo e espaço de armazenamento, mas o arquivo resultante pode ser assistido offline.",
         "description": "The explanation of offline video file download method shown in a tooltip."
     },
     "offlineDownloadChecbox": {
@@ -272,7 +272,7 @@
         "description": "The explanation of 'Always highest' stream quality preference shown in a tooltip."
     },
     "highestStreamQualityCheckbox": {
-        "message": "Sempre a mais alta qualidade",
+        "message": "A mais alta qualidade",
         "description": "The label of the radio button to enable 'Always highest' stream quality preference."
     },
     "lowestStreamQualityExplain": {
@@ -280,7 +280,7 @@
         "description": "The explanation of 'Always lowest' stream quality preference shown in a tooltip."
     },
     "lowestStreamQualityCheckbox": {
-        "message": "Sempre a mais baixa qualidade",
+        "message": "A mais baixa qualidade",
         "description": "The label of the radio button to enable 'Always lowest' stream quality preference."
     },
     "mpdFixExplain": {
@@ -307,6 +307,9 @@
         "message": "Abrir em nova janela",
         "description": "The label of the radio button to open the add-on in a new window."
     },
+    "popupCheckbox": {
+        "message": "Abrir como popup"
+    },
     "colorPickerTitle": {
         "message": "Cor da interface",
         "description": "The title of the interface color section in the settings tab."
@@ -316,11 +319,11 @@
         "description": "The title of the credits section in the settings tab."
     },
     "creditsDescription1": {
-        "message": "Media Downloader Unleashed!! é um ",
+        "message": "Website Media Downloader é um ",
         "description": "The first part of the credits description."
     },
     "creditsDescription2": {
-        "message": "projeto livre e de código aberto",
+        "message": "projeto de código aberto",
         "description": "The second part of the credits description."
     },
     "creditsDescription3": {
@@ -328,7 +331,7 @@
         "description": "The third part of the credits description."
     },
     "creditsDescription4": {
-        "message": "🦊 helloyanis",
+        "message": "criado por helloyanis, melhorado por anpa26",
         "description": "The fourth part of the credits description."
     },
     "creditsDescription5": {
@@ -347,24 +350,8 @@
         "message": "Doar",
         "description": "The label of the button to donate to the developer."
     },
-    "contactTitle": {
-        "message": "Entre em contato comigo",
-        "description": "The title of the contact section in the settings tab."
-    },
-    "contactDescription": {
-        "message": "Caso tenha alguma dúvida, sugestão ou problema, fique à vontade para entrar em contato comigo!",
-        "description": "The description of the contact section in the settings tab."
-    },
-    "emailButton": {
-        "message": "E-mail",
-        "description": "The label of the button to contact the developer via e-mail."
-    },
-    "mastodonButton": {
-        "message": "Mastodon",
-        "description": "The label of the button to contact the developer via Mastodon."
-    },
     "mobileIncompatibleWarning": {
-        "message": "⚠️ Esta opção não é compatível com alguns navegadores, como o Firefox para Android. Se você estiver usando este navegador, alterar a opção devolta.",
+        "message": "Esta opção não é compatível com alguns navegadores, como o Firefox para Android. Se você estiver menggunakan este navegador, alterar a opção devolta.",
         "description": "The warning shown when the user enables an option that is not compatible with mobile browsers."
     },
     "permissionRequestTitle": {
@@ -372,7 +359,7 @@
         "description": "The headline of the permission request popup."
     },
     "permissionRequestDescription": {
-        "message": "A extensão precisa de permissão para acessar todas as URLs para funcionar corretamente. Isso serve para detectar mídia de todos os sites. Seus dados de navegação são armazenados apenas no seu dispositivo e não são compartilhados com ninguém. Conceda a permissão ou, se você souber o que está fazendo e desejar armazenamento com escopo definido, pode ignorar este aviso.",
+        "message": "A extensão precisa de permissão para acessar todas as URLs para funcionar corretamente. Isso serve para detectar mídia de todos os sites. Seus dados de navegação são armazenados apenas no seu dispositivo e tidak são compartilhados com ninguém. Conceda a permissão ou, se você souber o que está fazendo e desejar armazenamento com escopo definido, pode ignorar este aviso.",
         "description": "The description of the permission request popup."
     },
     "grantPermissionButton": {
@@ -380,7 +367,7 @@
         "description": "The label of the button to grant the requested permission."
     },
     "denyPermissionButton": {
-        "message": "Não me lembre",
+        "message": "Tidak me lembre",
         "description": "The label of the button to deny the requested permission."
     },
     "permissionGrantedMessage": {
@@ -388,11 +375,11 @@
         "description": "The message shown when the permission is granted successfully."
     },
     "permissionDeniedMessage": {
-        "message": "Permissão negada. A extensão pode não funcionar como esperado.",
+        "message": "Permissão negada. A extensão pode tidak funcionar como esperado.",
         "description": "The message shown when the permission is denied."
     },
     "permissionGrantFailedMessage": {
-        "message": "Falha ao conceder permissão. A extensão pode não funcionar como esperado.",
+        "message": "Falha ao conceder permissão. A extensão pode tidak funcionar como esperado.",
         "description": "The message shown when the permission grant operation fails."
     },
     "mpdDownloadCompleteTitle": {
@@ -422,7 +409,7 @@
         "description": "The title of the dialog shown when an m3u8 stream with split audio and video is downloaded."
     },
     "splitAudioVideoDownloadCompleteDescription": {
-        "message": "Os fluxos de vídeo e áudio foram baixados separadamente. Você pode mesclá-los com <a href='https://ffmpeg.org/'>ffmpeg</a> usando o seguinte comando :<br/><code>ffmpeg -i \"$BASENAME$_video$VIDEOEXT$\" -i \"$BASENAME$_audio$VIDEOEXT$\" -c copy \"$BASENAME$.mp4\"</code>",
+        "message": "Os fluxos de vídeo e áudio foram baixados separadamente. Você pode mesclá-los com <a href='https://ffmpeg.org/'>ffmpeg</a> menggunakan o seguinte comando :<br/><code>ffmpeg -i \"$BASENAME$_video$VIDEOEXT$\" -i \"$BASENAME$_audio$VIDEOEXT$\" -c copy \"$BASENAME$.mp4\"</code>",
         "description": "The message of the dialog shown when an m3u8 stream with split audio and video is downloaded.",
         "placeholders": {
             "BASENAME": {
@@ -463,7 +450,7 @@
         "message": "Abrir ajuda",
         "description": "The text of the tooltip shown when hovering over the button at the bottom left, to open the wiki page"
     },
-        "diagnosticDataPermissionDenied": {
+    "diagnosticDataPermissionDenied": {
         "message": "Permissão para compartilhar dados de diagnóstico foi negada.",
         "description": "The message shown when the user denies permission to share diagnostic data."
     },
@@ -475,48 +462,6 @@
         "message": "Ocorreu um erro ao enviar os dados de diagnóstico. Por favor, tente novamente mais tarde.",
         "description": "The message shown when there is an error sending diagnostic data."
     },
-    "diagnosticDataEmailTitle": {
-        "message": "Do you want me to contact you back about this issue?",
-        "description": "The title of the prompt to enter an e-mail when sharing diagnostic data."
-    },
-    "diagnosticDataEmailDescription": {
-        "message": "If so, please enter your e-mail address below. It will not be saved or shared to third parties. It will only be used to contact you back. If you don't want to be contacted, leave the field empty.<br/>The data that will be sent in your error report is : <br/><ul><li>Your user agent (yours is the following : <code>$USERAGENT$</code>)</li><li>The URL of the page that triggered the error : <code>$REFERER$</code></li><li>The URL of the media : <code>$MEDIAURL$</code></li><li>The error that has occured : <code>$ERROR$</code></li></ul>",
-        "description": "The description of the prompt to enter an e-mail when sharing diagnostic data.",
-        "placeholders": {
-            "USERAGENT": {
-                "content": "$1",
-                "example": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            },
-            "REFERER": {
-                "content": "$2",
-                "example": "https://example.com/video_page"
-            },
-            "MEDIAURL": {
-                "content": "$3",
-                "example": "https://example.com/video.mp4"
-            },
-            "ERROR": {
-                "content": "$4",
-                "example": "Network error"
-            }
-        }
-    },
-    "diagnosticDataEmailLabel": {
-        "message": "E-mail address (optional)",
-        "description": "The label of the text field to enter an e-mail when sharing diagnostic data."
-    },
-    "diagnosticDataEmailPlaceholder": {
-        "message": "email@example.com",
-        "description": "The placeholder of the text field to enter an e-mail when sharing diagnostic data."
-    },
-    "diagnosticDataEmailOkButton": {
-        "message": "Submit",
-        "description": "The text of the OK button in the prompt to enter an e-mail when sharing diagnostic data."
-    },
-    "diagnosticDataEmailCancelButton": {
-        "message": "Cancel submission",
-        "description": "The text of the Cancel button in the prompt to enter an e-mail when sharing diagnostic data."
-    },
     "noRequestFoundError": {
         "message": "Nenhuma solicitação encontrada para o tamanho selecionado",
         "description": "The error message shown when no request is found for the selected size."
@@ -526,7 +471,7 @@
         "description": "The title of the warning shown when a DRM-protected MPD is detected."
     },
     "drmWarningDescription": {
-        "message": "This file uses DRM (ContentProtection). It can be downloaded, but not played without decrypting the stream. Maybe you can get around this by setting your browser to deny DRM content (e.g. In Firefox: about:preferences#general → Digital Rights Management Content). But on some sites they won't load the media at all if DRM is disabled, so this has a low chance to work.",
+        "message": "This file uses DRM (ContentProtection). It can be downloaded, but tidak played without decrypting the stream. Maybe you can get around this by setting your browser to deny DRM content (e.g. In Firefox: about:preferences#general → Digital Rights Management Content). But on some sites they won't load the media at all if DRM is disabled, so this has a low chance to work.",
         "description": "The description of the warning shown when a DRM-protected MPD is detected."
     },
     "drmWarningConntinueButton": {
@@ -538,7 +483,7 @@
         "description": "The text of the Cancel button in the DRM warning dialog."
     },
     "ratingBannerText": {
-        "message": "If you enjoy using this add-on, please take a moment to rate it. Thank you very much!",
+        "message": "If you enjoy menggunakan this add-on, please take a moment to rate it. Thank you very much!",
         "description": "The text shown in the rating banner."
     },
     "ratingBannerRateButton": {
@@ -547,7 +492,7 @@
     },
     "ratingBannerDismissButton": {
         "message": "Dismiss",
-        "description": "The label of the button to dismiss the rating banner." 
+        "description": "The label of the button to dismiss the rating banner."
     },
     "ratingBannerDontShowAgainButton": {
         "message": "Don't ask again",
@@ -562,7 +507,7 @@
         "description": "The title of the dialog shown when a YouTube media request is detected."
     },
     "youtubeDialogAskMessage": {
-        "message": "Downloading from YouTube is not supported directly in this extension due to YouTube's proprietary streaming methods. However, I can guide you to tools that specialize in downloading YouTube videos. Would you like me to show you these options?<br/><mdui-checkbox id=\"youtube-dialog-dont-show-again\">Don't show this message again</mdui-checkbox>",
+        "message": "Downloading from YouTube is tidak supported directly in this extension due to YouTube's proprietary streaming methods. However, I can guide you to tools that specialize in downloading YouTube videos. Would you like me to show you these options?<br/><mdui-checkbox id=\"youtube-dialog-dont-show-again\">Don't show this message again</mdui-checkbox>",
         "description": "The message of the dialog shown when a YouTube media request is detected."
     },
     "youtubeDialogAskOkButton": {

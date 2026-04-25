@@ -434,6 +434,15 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Initialize the listener
 initListener();
 
+// Initialize popup state
+browser.storage.local.get('open-preference', function (result) {
+    if (result['open-preference'] === 'popup') {
+        browser.action.setPopup({ popup: 'popup.html' });
+    } else {
+        browser.action.setPopup({ popup: '' });
+    }
+});
+
 // Clear local storage when message is received
 browser.runtime.onMessage.addListener((message) => {
     if (message.action === 'clearStorage') {
@@ -473,14 +482,14 @@ browser.action.onClicked.addListener((tab) => {
 browser.runtime.onInstalled.addListener((details) => {
     if (details.reason === 'install') {
         browser.tabs.create({
-            url: `https://github.com/helloyanis/media-downloader-unleashed/blob/master/src/installed.md#thank-you-for-installing-the-media-downloader-unleashed-add-on`,
+            url: browser.runtime.getURL('installed.md'),
         });
     }
 });
 
 browser.runtime.onStartup.addListener(initListener);
 
-browser.runtime.setUninstallURL(`https://forms.gle/Q5j2147qNkJnftU19`);
+browser.runtime.setUninstallURL(`https://github.com/anpa26/website-media-downloader`);
 
 // ----------------- Capture & cache media response bodies -----------------
 // We use onHeadersReceived to detect Content-Type, and if it's a media type we attach

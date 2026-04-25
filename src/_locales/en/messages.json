@@ -93,7 +93,7 @@
         "message": "That's all we could find! If you don't see the media you're looking for, try starting the media then refreshing the list. If you still don't see it, change media detection method in the settings. For more help, click the '?' button at the bottom left.",
         "description": "The text shown at the end of the media list in the popup."
     },
-    "endOfMediaListLink":{
+    "endOfMediaListLink": {
         "message": "Can't find your media? Submit it here!",
         "description": "The text of the link shown at the end of the media list in the popup, which leads to a form to submit undetected media."
     },
@@ -164,7 +164,7 @@
         "description": "The title of the detection method section in the settings tab."
     },
     "needToRefreshListWarning": {
-        "message": "⚠️ After changing this, click on \"Refresh list\" to see the changes!",
+        "message": "After changing this, click on \"Refresh list\" to see the changes!",
         "description": "The warning shown below the detection method title in the settings tab."
     },
     "detectionDisabledExplain": {
@@ -216,7 +216,7 @@
         "description": "The explanation of the media cache option shown in a tooltip."
     },
     "mediaCacheExplainPrivate": {
-        "message": "❗️ This feature is currently not in use because you are in private browsing mode. To use or change this setting, please open the add-on and your media from a non-private window.",
+        "message": "This feature is currently not in use because you are in private browsing mode. To use or change this setting, please open the add-on and your media from a non-private window.",
         "description": "The explanation of why media cache option is disabled in private mode, shown in a tooltip."
     },
     "mediaCacheCheckbox": {
@@ -272,7 +272,7 @@
         "description": "The explanation of 'Always highest' stream quality preference shown in a tooltip."
     },
     "highestStreamQualityCheckbox": {
-        "message": "Always highest quality",
+        "message": "Highest quality",
         "description": "The label of the radio button to enable 'Always highest' stream quality preference."
     },
     "lowestStreamQualityExplain": {
@@ -280,7 +280,7 @@
         "description": "The explanation of 'Always lowest' stream quality preference shown in a tooltip."
     },
     "lowestStreamQualityCheckbox": {
-        "message": "Always lowest quality",
+        "message": "Lowest quality",
         "description": "The label of the radio button to enable 'Always lowest' stream quality preference."
     },
     "mpdFixExplain": {
@@ -307,6 +307,10 @@
         "message": "Open in new window",
         "description": "The label of the radio button to open the add-on in a new window."
     },
+    "popupCheckbox": {
+        "message": "Open as popup",
+        "description": "The label of the radio button to open the add-on as a popup."
+    },
     "colorPickerTitle": {
         "message": "Interface color",
         "description": "The title of the interface color section in the settings tab."
@@ -316,11 +320,11 @@
         "description": "The title of the credits section in the settings tab."
     },
     "creditsDescription1": {
-        "message": "Media Downloader Unleashed!! is a ",
+        "message": "Website Media Downloader is a ",
         "description": "The first part of the credits description."
     },
     "creditsDescription2": {
-        "message": "free and open-source project",
+        "message": "open source project",
         "description": "The second part of the credits description."
     },
     "creditsDescription3": {
@@ -328,7 +332,7 @@
         "description": "The third part of the credits description."
     },
     "creditsDescription4": {
-        "message": "🦊 helloyanis",
+        "message": "created by helloyanis, improved by anpa26",
         "description": "The fourth part of the credits description."
     },
     "creditsDescription5": {
@@ -347,24 +351,8 @@
         "message": "Donate",
         "description": "The label of the button to donate to the developer."
     },
-    "contactTitle": {
-        "message": "Contact me",
-        "description": "The title of the contact section in the settings tab."
-    },
-    "contactDescription": {
-        "message": "If you have any questions, suggestions or issues, feel free to contact me!",
-        "description": "The description of the contact section in the settings tab."
-    },
-    "emailButton": {
-        "message": "E-mail",
-        "description": "The label of the button to contact the developer via e-mail."
-    },
-    "mastodonButton": {
-        "message": "Mastodon",
-        "description": "The label of the button to contact the developer via Mastodon."
-    },
     "mobileIncompatibleWarning": {
-        "message": "⚠️ This option is not compatible for some browsers, like Firefox for Android. If you are using this browser, then change the option back.",
+        "message": "This option is not compatible for some browsers, like Firefox for Android. If you are using this browser, then change the option back.",
         "description": "The warning shown when the user enables an option that is not compatible with mobile browsers."
     },
     "permissionRequestTitle": {
@@ -425,15 +413,15 @@
         "message": "Both video and audio streams have been downloaded. You can merge them both with <a href='https://ffmpeg.org/'>ffmpeg</a> using the following command :<br/><code>ffmpeg -i \"$BASENAME$_video$VIDEOEXT$\" -i \"$BASENAME$_audio$VIDEOEXT$\" -c copy \"$BASENAME$.mp4\"</code>",
         "description": "The message of the dialog shown when an m3u8 stream with split audio and video is downloaded.",
         "placeholders": {
-          "BASENAME": {
-              "content": "$1",
-              "example": "my_stream"
-          },
-          "VIDEOEXT": {
-            "content": "$2",
-            "example": ".mp4"
-          }
-      }
+            "BASENAME": {
+                "content": "$1",
+                "example": "my_stream"
+            },
+            "VIDEOEXT": {
+                "content": "$2",
+                "example": ".mp4"
+            }
+        }
     },
     "videoQualityDialogTitle": {
         "message": "Select video quality",
@@ -483,48 +471,6 @@
         "message": "An error occurred while sending diagnostic data. Please try again later.",
         "description": "The message shown when there is an error sending diagnostic data."
     },
-    "diagnosticDataEmailTitle": {
-        "message": "Do you want me to contact you back about this issue?",
-        "description": "The title of the prompt to enter an e-mail when sharing diagnostic data."
-    },
-    "diagnosticDataEmailDescription": {
-        "message": "If so, please enter your e-mail address below. It will not be saved or shared to third parties. It will only be used to contact you back. If you don't want to be contacted, leave the field empty.<br/>The data that will be sent in your error report is : <br/><ul><li>Your user agent (yours is the following : <code>$USERAGENT$</code>)</li><li>The URL of the page that triggered the error : <code>$REFERER$</code></li><li>The URL of the media : <code>$MEDIAURL$</code></li><li>The error that has occured : <code>$ERROR$</code></li></ul>",
-        "description": "The description of the prompt to enter an e-mail when sharing diagnostic data.",
-        "placeholders": {
-            "USERAGENT": {
-                "content": "$1",
-                "example": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            },
-            "REFERER": {
-                "content": "$2",
-                "example": "https://example.com/video_page"
-            },
-            "MEDIAURL": {
-                "content": "$3",
-                "example": "https://example.com/video.mp4"
-            },
-            "ERROR": {
-                "content": "$4",
-                "example": "Network error"
-            }
-        }
-    },
-    "diagnosticDataEmailLabel": {
-        "message": "E-mail address (optional)",
-        "description": "The label of the text field to enter an e-mail when sharing diagnostic data."
-    },
-    "diagnosticDataEmailPlaceholder": {
-        "message": "email@example.com",
-        "description": "The placeholder of the text field to enter an e-mail when sharing diagnostic data."
-    },
-    "diagnosticDataEmailOkButton": {
-        "message": "Submit",
-        "description": "The text of the OK button in the prompt to enter an e-mail when sharing diagnostic data."
-    },
-    "diagnosticDataEmailCancelButton": {
-        "message": "Cancel submission",
-        "description": "The text of the Cancel button in the prompt to enter an e-mail when sharing diagnostic data."
-    },
     "noRequestFoundError": {
         "message": "Cannot find the corresponding request's info in the request history. This can happen when the request was already made and cached in your browser before installing the add-on. Clear your browsing data from the website you try to download from, then restart the browser and try again.",
         "description": "The error message shown when there is no request found for the selected size."
@@ -555,7 +501,7 @@
     },
     "ratingBannerDismissButton": {
         "message": "Dismiss",
-        "description": "The label of the button to dismiss the rating banner." 
+        "description": "The label of the button to dismiss the rating banner."
     },
     "ratingBannerDontShowAgainButton": {
         "message": "Don't ask again",

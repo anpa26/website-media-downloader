@@ -1,135 +1,201 @@
+:root {
+    --app-border-radius: 16px;
+}
+
 * {
-    font-family: system-ui;
-}
-
-.bottom-right {
-    display: flex;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-}
-
-.bottom-right>* {
-    margin: 5px;
-}
-
-.bottom-left {
-    position: fixed;
-    bottom: 16px;
-    left: 16px;
-}
-
-mdui-bottom-app-bar {
-    height: unset;
-    min-height: 5rem;
-    background-color: rgb(var(--mdui-color-surface-container-high));
-}
-
-.media-item {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    margin: 10px 0;
-}
-
-.md-item[multiline] {
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-#settings-container {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-around;
-}
-
-#settings-container>* {
-    margin: 10px;
-    padding: 10px;
-    flex-grow: 1;
-}
-
-#end-of-media-list {
-    margin-bottom: 200px;
-}
-
-mdui-card {
-    margin: 10px;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    box-sizing: border-box;
 }
 
 body {
     margin: 0;
     padding: 0;
-    font-size: 100%
+    font-size: 15px;
+    background-color: rgb(var(--mdui-color-surface));
+    color: rgb(var(--mdui-color-on-surface));
+    overflow-x: hidden;
 }
 
-#refresh-list,
-#clear-list {
-    width: unset !important;
-    /*This button seemed to bug with MDUI putting it at 0 width*/
-}
-
-mdui-select::part(menu) {
-  max-height: 300px;
-  overflow: auto;
-  width: 100%;
-}
-
-mdui-card {
-    overflow-x: scroll;
-}
-
-code{
-    background-color: var(--mdui-color-surface-container-low);
-    color: var(--mdui-color-on-surface);
-    font-family: monospace;
-}
-
-#rating-banner {
-    background-color: rgb(var(--mdui-color-surface-bright));
+/* Tabs & Layout */
+mdui-tabs {
+    background-color: rgb(var(--mdui-color-surface));
+    border-bottom: 1px solid rgb(var(--mdui-color-outline-variant));
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    padding: 5px;
+    justify-content: center;
 }
 
-#rating-banner > * {
-    margin: 5px;
+mdui-tab {
+    min-width: 120px;
 }
 
-#star-icon {
-    min-width: 25px;
+mdui-tab-panel {
+    padding-bottom: 80px;
 }
 
-#rating-banner-buttons {
-    margin-left: auto;
+/* Settings container */
+#settings-container {
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 16px;
+    max-width: 800px;
+    margin: 0 auto;
 }
 
-.highlighted {
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(var(--mdui-color-primary-container), 0.8);
-    }
-    90% {
-        box-shadow: 0 0 0 20px rgba(var(--mdui-color-primary-container), 0.5);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(var(--mdui-color-primary-container), 0);
-    }
-}
-
-.bottom-button {
-    margin-right: 5px;
+.settings-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .settings-section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgb(var(--mdui-color-primary));
+    margin: 12px 8px 4px;
     display: flex;
     align-items: center;
+    gap: 8px;
+}
+
+mdui-card {
+    border-radius: var(--app-border-radius);
+    background-color: rgb(var(--mdui-color-surface-container-lowest));
+    border: 1px solid rgb(var(--mdui-color-outline-variant));
+    box-shadow: none;
+    overflow: hidden;
+    padding: 0 !important;
+}
+
+/* Setting Items */
+.setting-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    gap: 12px;
+}
+
+.setting-item.vertical {
+    flex-direction: column;
+    align-items: stretch;
     gap: 10px;
+}
+
+.setting-item h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.setting-text p {
+    margin: 2px 0 0;
+    font-size: 0.8rem;
+    color: rgb(var(--mdui-color-on-surface-variant));
+    line-height: 1.3;
+}
+
+/* Fix for Segmented Buttons selection VISIBILITY */
+mdui-segmented-button[selected],
+mdui-segmented-button[selected]::part(button) {
+    background-color: rgb(var(--mdui-color-primary)) !important;
+    color: rgb(var(--mdui-color-on-primary)) !important;
+    font-weight: bold;
+}
+
+/* Hover state for non-selected buttons */
+mdui-segmented-button:not([selected]):hover {
+    background-color: rgba(var(--mdui-color-primary), 0.1);
+}
+
+/* Credits Section */
+.credits-card {
+    padding: 16px !important;
+}
+
+.credits-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.credits-info b {
+    font-size: 1rem;
+    color: rgb(var(--mdui-color-primary));
+}
+
+/* Media Items */
+.media-item {
+    display: flex !important;
+    margin: 10px 16px;
+    border-radius: var(--app-border-radius);
+    background-color: rgb(var(--mdui-color-surface-container-low));
+    border: 1px solid rgb(var(--mdui-color-outline-variant));
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
+
+.media-item-content {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.media-actions {
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    background-color: rgba(var(--mdui-color-surface-variant), 0.2);
+    border-radius: 12px;
+}
+
+/* Common UI */
+mdui-divider {
+    opacity: 0.2;
+}
+
+mdui-bottom-app-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    border-top: 1px solid rgb(var(--mdui-color-outline-variant));
+    background-color: rgb(var(--mdui-color-surface-container-high));
+    height: 64px;
+}
+
+.bottom-right {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+}
+
+.bottom-buttons-right {
+    display: flex;
+    gap: 8px;
+}
+
+#loading, #loading-media-list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+}
+
+#color-picker-input {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    background: none;
+    padding: 0;
 }
