@@ -3,18 +3,15 @@ name: Manual Release
 on:
   workflow_dispatch:
     inputs:
+      commit_sha:
+        description: 'Commit ID to release (e.g., a1b2c3d)'
+        required: true
       tag_name:
         description: 'Tag name for the release (e.g., v1.5.0)'
         required: true
-        default: 'v1.5.0'
       release_name:
-        description: 'Name of the release'
-        required: true
-        default: 'Release v1.5.0'
-      body:
-        description: 'Description of the release'
+        description: 'Name of the release (leave empty to use commit title)'
         required: false
-        default: 'Manual release of Website Media Downloader.'
 
 jobs:
   build:
@@ -25,20 +22,40 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.commit_sha }}
+          fetch-depth: 0
 
-      - name: Create Release Archive
+      - name: Get Commit Details
+        id: commit_info
+        run: |
+          TITLE=$(git log -1 --pretty=%s)
+          BODY=$(git log -1 --pretty=%b)
+          echo "title=$TITLE" >> $GITHUB_OUTPUT
+          
+          # If body is empty, use title as body
+          if [ -z "$BODY" ]; then
+            echo "body=$TITLE" >> $GITHUB_OUTPUT
+          else
+            # Use a delimiter for multi-line body
+            echo "body<<EOF" >> $GITHUB_OUTPUT
+            echo "$BODY" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release Archive (XPI)
         run: |
           cd src
-          zip -r ../website-media-downloader.zip ./*
+          zip -r ../addon.xpi ./*
           cd ..
 
       - name: Create GitHub Release
-        id: create_release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.event.inputs.tag_name }}
-          name: ${{ github.event.inputs.release_name }}
-          body: ${{ github.event.inputs.body }}
-          files: website-media-downloader.zip
+          name: ${{ github.event.inputs.release_name || steps.commit_info.outputs.title }}
+          body: ${{ steps.commit_info.outputs.body }}
+          files: addon.xpi
+          target_commitish: ${{ github.event.inputs.commit_sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
