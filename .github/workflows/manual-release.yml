@@ -1,0 +1,44 @@
+name: Manual Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for the release (e.g., v1.5.0)'
+        required: true
+        default: 'v1.5.0'
+      release_name:
+        description: 'Name of the release'
+        required: true
+        default: 'Release v1.5.0'
+      body:
+        description: 'Description of the release'
+        required: false
+        default: 'Manual release of Website Media Downloader.'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Release Archive
+        run: |
+          cd src
+          zip -r ../website-media-downloader.zip ./*
+          cd ..
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.tag_name }}
+          name: ${{ github.event.inputs.release_name }}
+          body: ${{ github.event.inputs.body }}
+          files: website-media-downloader.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
