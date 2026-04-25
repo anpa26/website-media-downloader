@@ -243,12 +243,19 @@ async function downloadFile(url, mediaDiv, specificSize) {
   try { wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
   updateDownloadingCount(1);
   const loadingBar = document.createElement('mdui-linear-progress');
+  const statusInfo = document.createElement('div');
+  statusInfo.className = 'download-status-info';
+  statusInfo.style.fontSize = '12px';
+  statusInfo.style.marginTop = '4px';
+  statusInfo.style.textAlign = 'center';
+
   try {
     const requests = await browser.runtime.sendMessage({ action: 'getMediaRequests', url: url }); 
     const targetRequest = requests[url]?.find(r => r.size === specificSize) || requests[url]?.[0];
     if(!targetRequest) throw new Error("Data lost");
 
     mediaDiv.appendChild(loadingBar);
+    mediaDiv.appendChild(statusInfo);
     loadingBar.style.width = '100%';
     loadingBar.setAttribute('indeterminate', 'true');
 
@@ -259,7 +266,39 @@ async function downloadFile(url, mediaDiv, specificSize) {
     } else {
       const response = await fetch(url);
       if (!response.ok) throw new Error("Server error");
-      const blob = await response.blob();
+      
+      const contentLength = response.headers.get('content-length');
+      const total = contentLength ? parseInt(contentLength, 10) : 0;
+      
+      if (total > 0) {
+        loadingBar.removeAttribute('indeterminate');
+        loadingBar.setAttribute('max', total);
+        loadingBar.setAttribute('value', 0);
+      }
+
+      const reader = response.body.getReader();
+      let loaded = 0;
+      const chunks = [];
+
+      while(true) {
+        const {done, value} = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        loaded += value.length;
+        
+        const loadedMB = (loaded / (1024 * 1024)).toFixed(2);
+        if (total > 0) {
+          const totalMB = (total / (1024 * 1024)).toFixed(2);
+          const percent = Math.round((loaded / total) * 100);
+          const remainingMB = ((total - loaded) / (1024 * 1024)).toFixed(2);
+          statusInfo.textContent = `${loadedMB} MB / ${totalMB} MB (${percent}%) • ${remainingMB} MB remaining`;
+          loadingBar.setAttribute('value', loaded);
+        } else {
+          statusInfo.textContent = `${loadedMB} MB downloaded`;
+        }
+      }
+
+      const blob = new Blob(chunks);
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = getFileName(url);
@@ -271,6 +310,7 @@ async function downloadFile(url, mediaDiv, specificSize) {
     if (wakeLock) wakeLock.release();
     updateDownloadingCount(-1);
     if(mediaDiv.contains(loadingBar)) mediaDiv.removeChild(loadingBar);
+    if(mediaDiv.contains(statusInfo)) mediaDiv.removeChild(statusInfo);
   }
 }
 

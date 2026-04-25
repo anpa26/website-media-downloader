@@ -153,6 +153,14 @@ mdui-segmented-button:not([selected]):hover {
     border-radius: 12px;
 }
 
+.download-status-info {
+    font-size: 11px;
+    color: rgb(var(--mdui-color-on-surface-variant));
+    text-align: center;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
 /* Common UI */
 mdui-divider {
     opacity: 0.2;

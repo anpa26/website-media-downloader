@@ -60,6 +60,41 @@ async function fetchWithCache(url, options = {}) {
 // ----------------------------------------
 
 /**
+ * Update the status text below the loading bar.
+ */
+function updateProgressStatus(loadingBar, loaded, total) {
+  if (!loadingBar || !loadingBar.parentNode) return;
+  let statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
+  if (!statusInfo) {
+    statusInfo = document.createElement('div');
+    statusInfo.className = 'download-status-info';
+    loadingBar.parentNode.appendChild(statusInfo);
+  }
+
+  const loadedMB = (loaded / (1024 * 1024)).toFixed(2);
+  if (total > 0) {
+    const totalMB = (total / (1024 * 1024)).toFixed(2);
+    const percent = Math.round((loaded / total) * 100);
+    const remainingMB = ((total - loaded) / (1024 * 1024)).toFixed(2);
+    statusInfo.textContent = `${loadedMB} MB / ${totalMB} MB (${percent}%) • ${remainingMB} MB remaining`;
+  } else {
+    statusInfo.textContent = `${loadedMB} MB downloaded`;
+  }
+}
+
+function updateSegmentProgressStatus(loadingBar, processed, total) {
+  if (!loadingBar || !loadingBar.parentNode) return;
+  let statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
+  if (!statusInfo) {
+    statusInfo = document.createElement('div');
+    statusInfo.className = 'download-status-info';
+    loadingBar.parentNode.appendChild(statusInfo);
+  }
+  const percent = Math.round((processed / total) * 100);
+  statusInfo.textContent = `Segments: ${processed} / ${total} (${percent}%)`;
+}
+
+/**
  * Downloads and converts an M3U8 stream to an MP4 file for offline use.
  * Uses either browser.downloads API or fetch depending on the download method.
  * Most of the code here is chatGPT so good luck finding out what it does lol (ㆆ_ㆆ)
@@ -417,6 +452,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
             'value',
             Math.min(1, globalProcessedSegments / globalTotalSegments)
           );
+          updateSegmentProgressStatus(loadingBar, globalProcessedSegments, globalTotalSegments);
         }
 
         continue;
@@ -934,6 +970,9 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
           const max = Number(loadingBar.getAttribute("max")) || 0;
           if (max > 0) {
             loadingBar.setAttribute("value", downloadedBytes);
+            updateProgressStatus(loadingBar, downloadedBytes, max);
+          } else {
+            updateProgressStatus(loadingBar, downloadedBytes, 0);
           }
         }
       });
@@ -966,6 +1005,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     loadingBar.setAttribute("max", finalMax);
     loadingBar.setAttribute("value", downloadedBytes);
     loadingBar.removeAttribute("indeterminate");
+    updateProgressStatus(loadingBar, downloadedBytes, finalMax);
 
     console.log("✅ Direct downloads complete.");
     showDialog(browser.i18n.getMessage("splitAudioVideoDownloadCompleteDescription", [baseName, ".mp4"]), browser.i18n.getMessage("splitAudioVideoDownloadCompleteTitle"), { error: `✅ Downloaded separate audio and video files for "${baseName}".`, url: mpdUrl, request: request, downloadMethod: downloadMethod });
@@ -1233,6 +1273,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
         });
         zipEntries.push({ name: prefixedName(segZipPath), input: buf });
         loadingBar.setAttribute("value", i + 1); // show segment progress as count (since we don't know sizes)
+        updateSegmentProgressStatus(loadingBar, i + 1, t.info.segmentUrls.length);
       }
 
     } else if (t.type === "base") {
@@ -1248,7 +1289,12 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
           lastReceivedForFile = received;
           downloadedBytes += delta;
           const max = Number(loadingBar.getAttribute("max")) || 0;
-          if (max > 0) loadingBar.setAttribute("value", downloadedBytes);
+          if (max > 0) {
+            loadingBar.setAttribute("value", downloadedBytes);
+            updateProgressStatus(loadingBar, downloadedBytes, max);
+          } else {
+            updateProgressStatus(loadingBar, downloadedBytes, 0);
+          }
         }
       });
 
@@ -1269,7 +1315,12 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
           lastReceivedForFile = received;
           downloadedBytes += delta;
           const max = Number(loadingBar.getAttribute("max")) || 0;
-          if (max > 0) loadingBar.setAttribute("value", downloadedBytes);
+          if (max > 0) {
+            loadingBar.setAttribute("value", downloadedBytes);
+            updateProgressStatus(loadingBar, downloadedBytes, max);
+          } else {
+            updateProgressStatus(loadingBar, downloadedBytes, 0);
+          }
         }
       });
 
@@ -1295,6 +1346,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
           }
         });
         loadingBar.setAttribute("value", i + 1); // show segment progress as count (since we don't know sizes)
+        updateSegmentProgressStatus(loadingBar, i + 1, t.info.segmentUrls.length);
         zipEntries.push({ name: prefixedName(segZipPath), input: buf });
       }
       if (mpdFixEnabled) repIdToLocalName[t.rep.id] = { type: "list", init: t.info.initZipPath, segments: t.info.segmentZipPaths };
@@ -1373,6 +1425,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     loadingBar.setAttribute("max", finalMax);
     loadingBar.setAttribute("value", downloadedBytes);
     loadingBar.removeAttribute("indeterminate");
+    updateProgressStatus(loadingBar, downloadedBytes, finalMax);
   } catch (e) { }
 
   // Generate ZIP and trigger download
