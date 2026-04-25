@@ -1,56 +1,76 @@
-A browser add-on to easily download any media (audio, video and streams) played in the browser! *(Not compatible with YouTube)*
+# Website Media Downloader (Unleashed)
 
-> [!IMPORTANT]
-> This add-on is currently only available on the Firefox Add-ons store. Beware of any copies that you may find elsewhere, like on the Chrome web store or the Edge store!
-> It's not on these stores because :
-> - Chrome web store wants to get a $5 payment for opening the account which is fundamentally incompatible for a non-profit open-source app
-> - Edge does not want to accept the add-on because some features (like the icon) don't work fully, even though the core downloading process works fine.
-
-### How to install on Chrome, Edge, Chromium, etc...
-1. Get the `addon.xpi` file from the [releases page](https://github.com/anpa26/website-media-downloader/releases) (scroll down for a bit to see it)
-2. Rename it to `addon.zip`, and extract it in its own folder
-3. Sideload it in your browser. See your browser documentation for more info. To sideload it on Chrome :
-   - Open Chrome's `...` menu, then `Extensions`, `Manage browers extensions`
-   - Enable the `Developer mode` switch
-   - Click `Load unpacked extension` and chose the folder you just extracted earlier. It should have a `manifest.json` file in it.
+A powerful, open-source browser extension designed to detect and download virtually any media (audio, video, and streams) played in your browser. This version is a customized and improved fork of the original "Website Media Downloader".
 
 > [!WARNING]
-> If you use the add-on on Chromium based browsers, these features are known to be broken :
-> - The extension shows a default icon, or no icon
-> - The detected media list does not show which website made the request, nor the time it happened at.
-> - The "Report a problem" button does not work
-> - Some settings might be broken
-> 
-> The development is mainly focused towards Firefox for desktop and Android so these are not going to be fixed. Use firefox for the best experience!
+> **YouTube is NOT supported.** Due to legal restrictions and proprietary streaming methods, this extension does not work on YouTube.
 
-## Supporded media types
+---
 
-- 🎬 Video : `3g2`, `3gp`, `asx`, `avi`, `divx`, `4v`, `flv`, `ismv`, `m2t`, `m2ts`, `m2v`, `m4s`, `m4v`, `mk3d`, `mkv`, `mng`, `mov`, `mp2v`, `mp4`, `mp4v`, `mpe`, `mpeg`, `mpeg1`, `mpeg2`, `mpeg4`, `mpg`, `mxf`, `ogm`, `ogv`, `qt`, `rm`, `swf`, `ts`, `vob`, `vp9`, `webm`, `wmv`
-- 🎵 Audio : `3ga`, `aac`, `ac3`, `adts`, `aif`, `aiff`, `alac`, `ape`, `asf`, `au`, `dts`, `f4a`, `f4b`, `flac`, `isma`, `it`, `m4a`, `m4b`, `m4r`, `mid`, `mka`, `mod`, `mp1`, `mp2`, `mp3`, `mp4a`, `mpa`, `mpga`, `oga`, `ogg`, `ogx`, `opus`, `ra`, `shn`, `spx`, `vorbis`, `wav`, `weba`, `wma`, `xm`
-- 📺 Stream : `f4f`\*, `f4m`\*, `m3u8`, `mpd`, `smil`\*
+## Key Features
 
-> [!NOTE]
-> `*` means partial support. Can download the stream manifest, but not convert to offline video/audio. You can use a third-party tool like ffmpeg to convert the downloaded stream manifest to offline video/audio, or use VLC to play the stream manifest.
+- **Multi-Format Support:** Detects everything from standard MP4/MP3 files to advanced HLS (M3U8) and DASH (MPD) streams.
+- **Offline Stream Conversion:** Automatically converts fragmented streams (HLS/DASH) into playable offline files (TS or ZIP).
+- **Material Design UI:** A clean, modern, and intuitive interface powered by MDUI.
+- **Advanced Detection:** Multiple detection methods (URL-based and MIME-based) to ensure even hidden media is found.
+- **Media Previewer:** Preview the detected video or audio directly within the extension before downloading.
+- **Header Spoofing:** Automatically handles Referer and Origin headers to bypass simple hotlinking protections.
+- **Completely Private:** No tracking, no data collection. All processing happens locally on your device.
 
-- Can change settings to show all requests without filtering if your media is not detected by default.
+---
 
-> [!NOTE]
-> Some sites may not work with the add-on due to DRM or other restrictions. If you encounter any issues, please report them on the [GitHub page](https://github.com/anpa26/website-media-downloader/issues)
+## How to Use
 
-#### What this add-on does
+1. **Navigate:** Visit any website containing the video or audio you want to download.
+2. **Play:** Start playing the media. The extension needs the media to start loading to "catch" the request.
+3. **Capture:** Click the extension icon in your toolbar. A list of detected media will appear.
+4. **Choose:** Select your preferred quality or file size from the list.
+5. **Download:** Click the **Download** button. 
+   - For streams, you may be asked to choose between "Direct Manifest" or "Offline Conversion".
+   - For MPD/DASH, it will package the stream into a ZIP file for local playback.
 
-You can download audios, videos and streams to view offline, from most websites!
+---
 
-- Support for video, audio, and .m3u8 streams
-- Clean interface with material design!
-- Easy to use settings!
-- Multiple detection and download methods to try to find one that works on the site!
-- Media preview in the browser!
-- Spoof headers and referrer to play and download videos from sites with protections!
-- Completely free and open-source! Nothing to pay at all! (Except for donations, which are optional and does not unlock any features)
+## Installation
 
-#### Third party libraries used :
+### Firefox (Installation of Unsigned XPI)
+Since this version is customized and not from the official store, you need to allow unsigned extensions in Firefox:
+1. Open Firefox and type `about:config` in the address bar.
+2. Search for `xpinstall.signatures.required`.
+3. Set it to `false` by double-clicking it.
+4. Now you can install the `.xpi` file via `about:addons` -> Gear icon -> "Install Add-on From File...".
 
-- [MDUI](https://www.mdui.org/en/) - Material Design UI framework (MIT License)
-- [HLS.js](https://github.com/video-dev/hls.js/) - HLS.js library to play media in the browser (Apache License 2.0) 
-- [JSZIP](https://github.com/Stuk/jszip) - Download zip files when getting mpd streams (Dual license, MIT and GPL v3)
+*Note: This usually works in Firefox Developer Edition, Nightly, or Android (via custom collections).*
+
+### Chrome / Edge / Chromium Browsers
+1. Download the source code or the latest release.
+2. Go to `chrome://extensions/` (or `edge://extensions/`).
+3. Enable **Developer Mode**.
+4. Click **Load unpacked** and select the `src` folder.
+
+---
+
+## Supported Formats
+
+- **Video:** `mp4`, `mkv`, `mov`, `webm`, `ts`, `avi`, `flv`, `m4v`, `mpeg`, and many more.
+- **Audio:** `mp3`, `aac`, `ogg`, `wav`, `flac`, `m4a`, `opus`, etc.
+- **Streams:** `m3u8` (HLS), `mpd` (DASH).
+
+---
+
+## Troubleshooting
+
+- **Media not detected?** Try refreshing the page and playing the video again. If it still doesn't show up, go to **Settings** and enable "Detection via server's MIME response".
+- **Download fails?** Some sites use DRM (Digital Rights Management) or encryption. This extension cannot download encrypted content (like Netflix or Amazon Prime).
+- **Broken files?** If a converted stream doesn't play, try downloading the "Direct Manifest" and playing it with **VLC Media Player**.
+
+---
+
+## Credits & License
+
+- **Original Creator:** [helloyanis](https://github.com/helloyanis)
+- **Improved by:** [anpa26](https://github.com/anpa26)
+- **UI Framework:** [MDUI](https://www.mdui.org/)
+- **Libraries:** [HLS.js](https://github.com/video-dev/hls.js/), [client-zip](https://github.com/jimmywarting/client-zip)
+
+Licensed under the MIT License.

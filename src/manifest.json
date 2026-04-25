@@ -2,11 +2,11 @@
   "name": "Website Media Downloader",
   "manifest_version": 3,
   "version": "1.5.0",
-  "description": "__MSG_extensionDescription__",
-  "author": "helloyanis, improved by anpa26",
-  "developer": {
-    "name": "helloyanis, improved by anpa26",
-    "url": "https://github.com/anpa26/website-media-downloader"
+  "description": "A powerful tool to download videos, music, and live streams from any website. Usage: 1. Play media on a website, 2. Click the extension icon to detect links, 3. Choose quality and click Download. Supports HLS/M3U8, MPD, and offline conversion.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{924f7c81-8b1e-4b6e-9e7c-8e4a9e1d2c3f}"
+    }
   },
   "permissions": [
     "storage",
@@ -27,10 +27,6 @@
     "scripts": [
       "background.js"
     ]
-  },
-  "icons": {
-    "96": "icons/file_save.svg",
-    "128": "icons/file_save.svg"
   },
   "action": {
     "default_title": "__MSG_actionTitle__"
