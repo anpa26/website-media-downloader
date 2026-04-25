@@ -43,8 +43,7 @@ jobs:
 
       - name: Create Release Archive (XPI)
         run: |
-          # Checkout the specific commit content to be packaged
-          git checkout ${{ github.event.inputs.commit_sha }}
+          # Package the latest source code from the current checkout
           cd src
           zip -r ../addon.xpi ./*
           cd ..
