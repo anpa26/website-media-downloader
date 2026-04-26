@@ -22,6 +22,48 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('refresh-list').addEventListener('click', () => loadMediaList());
   document.getElementById('clear-list').addEventListener('click', () => clearMediaList());
 
+  document.getElementById('help-button').addEventListener('click', async () => {
+    try {
+      const response = await fetch(browser.runtime.getURL('changelog.json'));
+      const data = await response.json();
+      const lang = browser.i18n.getUILanguage().split('-')[0];
+      const content = data[lang] || data['en'];
+      const version = browser.runtime.getManifest().version;
+      
+      const headlineHtml = `
+        <div style="display: flex; align-items: baseline; justify-content: space-between; width: 100%;">
+          <span>${content.headline}</span>
+          <span style="opacity: 0.5; font-size: 0.8rem; font-weight: normal; margin-left: 16px;">v${version}</span>
+        </div>`;
+        
+      const changelogHtml = `<ul style="padding-left: 20px; margin: 0;">${content.changes.map(change => `<li>${change}</li>`).join('')}</ul>`;
+      
+      const githubButton = document.createElement('mdui-button');
+      githubButton.variant = "text";
+      githubButton.href = "https://github.com/anpa26/website-media-downloader";
+      githubButton.target = "_blank";
+      githubButton.style.marginRight = "auto";
+      githubButton.style.marginLeft = "-8px";
+      githubButton.innerHTML = `
+        <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></mdui-icon> GitHub Repository
+      `;
+
+      showDialog(changelogHtml, headlineHtml, [githubButton]);
+    } catch (e) {
+      console.error("Failed to load changelog:", e);
+      const githubButton = document.createElement('mdui-button');
+      githubButton.variant = "text";
+      githubButton.href = "https://github.com/anpa26/website-media-downloader";
+      githubButton.target = "_blank";
+      githubButton.style.marginRight = "auto";
+      githubButton.style.marginLeft = "-8px";
+      githubButton.innerHTML = `
+        <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></mdui-icon> GitHub Repository
+      `;
+      showDialog("Visit our GitHub for the latest updates.", "Changelog", [githubButton]);
+    }
+  });
+
   checkAndShowRatingBanner();
   document.getElementById('dont-show-again-button').addEventListener('click', () => dismissRatingBanner());
 
@@ -129,24 +171,47 @@ function updateDownloadingCount(change) {
   document.title = downloadingCount > 0 ? `${downloadingCount}` : "Website Media Downloader";
 }
 
-function showDialog(message, title = null) {
+function showDialog(message, title = null, extraActions = []) {
   const dialog = document.createElement('mdui-dialog');
-  const headline = document.createElement('div');
-  headline.setAttribute('slot', 'headline');
-  headline.textContent = title || "Notification";
-  dialog.appendChild(headline);
+  
+  if (title && typeof title === 'string' && title.includes('<')) {
+    const headline = document.createElement('div');
+    headline.setAttribute('slot', 'headline');
+    headline.style.width = '100%';
+    headline.innerHTML = title;
+    dialog.appendChild(headline);
+  } else {
+    dialog.headline = title || "Changelog";
+  }
+
   const description = document.createElement('div');
   description.setAttribute('slot', 'description');
   description.innerHTML = message;
   dialog.appendChild(description);
+
+  if (Array.isArray(extraActions)) {
+    extraActions.forEach(action => {
+      action.setAttribute('slot', 'action');
+      dialog.appendChild(action);
+    });
+  }
+
   const okButton = document.createElement('mdui-button');
   okButton.variant = "text";
-  okButton.textContent = "OK";
+  okButton.textContent = browser.i18n.getMessage("okButton") || "OK";
   okButton.slot = 'action';
-  okButton.addEventListener('click', () => dialog.removeAttribute('open'));
+  okButton.style.marginRight = "-8px";
+  okButton.addEventListener('click', () => {
+    dialog.open = false;
+  });
   dialog.appendChild(okButton);
+  
   document.body.appendChild(dialog);
-  dialog.setAttribute('open', true);
+  dialog.open = true;
+
+  dialog.addEventListener('closed', () => {
+    dialog.remove();
+  });
 }
 
 function loadMediaList() {
