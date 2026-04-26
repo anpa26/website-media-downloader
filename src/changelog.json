@@ -2,12 +2,15 @@
   "en": {
     "headline": "What's New",
     "changes": [
-      "Fix interface color setting and add 'Only show video and audio' filter",
+      "Overhauled download system with real-time progress and optimized IndexedDB storage",
+      "Added auto-generate button for filename templates",
+      "Implemented localized changelog dialog and refined UI layout",
+      "Fixed interface color settings and added 'Only show video and audio' filter",
       "Enhance and localize 'No media detected' message",
       "Make downloads permission mandatory and localize end-of-list message",
       "Ensure background fetch downloads are unique and preserve original request context",
       "Implement inline video previews with HLS support",
-      "Enhanced background architecture and file management (v1.5.3)",
+      "Enhanced background architecture and file management",
       "Add filename template and rename before download",
       "Implement sequential download queue and tab-based stream downloader"
     ]
@@ -15,12 +18,15 @@
   "id": {
     "headline": "Yang Baru",
     "changes": [
+      "Perombakan sistem unduhan dengan progres real-time dan optimalisasi penyimpanan IndexedDB",
+      "Penambahan tombol buat otomatis untuk template nama file",
+      "Implementasi dialog catatan perubahan yang terlokalisasi dan penyempurnaan tata letak UI",
       "Perbaikan pengaturan warna antarmuka dan penambahan filter 'Hanya tampilkan video dan audio'",
       "Peningkatan dan lokalisasi pesan 'Tidak ada media yang terdeteksi'",
       "Izin unduhan diwajibkan dan lokalisasi pesan akhir daftar",
       "Memastikan unduhan fetch latar belakang unik dan menjaga konteks permintaan asli",
       "Implementasi pratinjau video inline dengan dukungan HLS",
-      "Peningkatan arsitektur latar belakang dan manajemen file (v1.5.3)",
+      "Peningkatan arsitektur latar belakang dan manajemen file",
       "Penambahan template nama file dan ubah nama sebelum mengunduh",
       "Implementasi antrean unduhan berurutan dan pengunduh siaran berbasis tab"
     ]
