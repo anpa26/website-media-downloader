@@ -15,18 +15,27 @@ async function initializeSettings() {
     const settings = [
         'url-detection', 'mime-detection', 'hide-segments',
         'download-method', 'media-cache', 'stream-download',
-        'stream-quality', 'mpd-fix', 'open-preference'
+        'stream-quality', 'mpd-fix', 'open-preference',
+        'filename-template'
     ];
 
     for (const setting of settings) {
         const result = await browser.storage.local.get(setting);
         const value = result[setting];
 
-        const switchElement = document.getElementById(setting);
-        if (switchElement && switchElement.tagName === 'MDUI-SWITCH') {
-            switchElement.checked = value === '1' || value === true;
-            switchElement.addEventListener('change', () => {
-                browser.storage.local.set({ [setting]: switchElement.checked ? '1' : '0' });
+        const element = document.getElementById(setting);
+        if (element && element.tagName === 'MDUI-SWITCH') {
+            element.checked = value === '1' || value === true;
+            element.addEventListener('change', () => {
+                browser.storage.local.set({ [setting]: element.checked ? '1' : '0' });
+            });
+            continue;
+        }
+
+        if (element && element.tagName === 'MDUI-TEXT-FIELD') {
+            element.value = value || '';
+            element.addEventListener('input', () => {
+                browser.storage.local.set({ [setting]: element.value });
             });
             continue;
         }

@@ -10,4 +10,12 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn(`Missing translation for key: ${key}`);
         }
     });
+
+    document.querySelectorAll('[data-helper-translate]').forEach(element => {
+        const key = element.getAttribute('data-helper-translate');
+        const translation = browser.i18n.getMessage(key);
+        if (translation) {
+            element.setAttribute('helper', translation);
+        }
+    });
 });

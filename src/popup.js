@@ -314,18 +314,32 @@ function getHumanReadableSize(size) {
 async function downloadFile(url, mediaDiv, specificSize) {
   let wakeLock = null;
   try { wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
-  updateDownloadingCount(1);
-  const loadingBar = document.createElement('mdui-linear-progress');
-  const statusInfo = document.createElement('div');
-  statusInfo.className = 'download-status-info';
-  statusInfo.style.fontSize = '12px';
-  statusInfo.style.marginTop = '4px';
-  statusInfo.style.textAlign = 'center';
 
   try {
     const requests = await browser.runtime.sendMessage({ action: 'getMediaRequests', url: url }); 
     const targetRequest = requests[url]?.find(r => r.size === specificSize) || requests[url]?.[0];
     if(!targetRequest) throw new Error("Data lost");
+
+    // Get default filename
+    const defaultName = getFileName(url, 100);
+    const template = await browser.storage.local.get('filename-template').then(res => res['filename-template']);
+    let finalName = defaultName;
+
+    if (template) {
+        finalName = await generateTemplateName(template, url, defaultName);
+    }
+
+    // Show Rename Dialog
+    const newName = await showRenameDialog(finalName);
+    if (newName === null) return; // User cancelled
+
+    updateDownloadingCount(1);
+    const loadingBar = document.createElement('mdui-linear-progress');
+    const statusInfo = document.createElement('div');
+    statusInfo.className = 'download-status-info';
+    statusInfo.style.fontSize = '12px';
+    statusInfo.style.marginTop = '4px';
+    statusInfo.style.textAlign = 'center';
 
     mediaDiv.dataset.url = url; // Set for progress tracking
     mediaDiv.appendChild(loadingBar);
@@ -340,19 +354,19 @@ async function downloadFile(url, mediaDiv, specificSize) {
     if (isStream && streamPref === 'offline') {
       // Redirect to dedicated stream downloader tab
       browser.tabs.create({
-        url: browser.runtime.getURL(`stream_downloader.html?url=${encodeURIComponent(url)}&size=${encodeURIComponent(specificSize || '')}`),
+        url: browser.runtime.getURL(`stream_downloader.html?url=${encodeURIComponent(url)}&size=${encodeURIComponent(specificSize || '')}&filename=${encodeURIComponent(newName)}`),
         active: true
       });
       finishDownloadUI(url);
     } else if (downloadMethod === 'browser') {
-      await browser.downloads.download({ url: url, filename: getFileName(url) });
+      await browser.downloads.download({ url: url, filename: newName });
       // UI cleanup will be handled by background progress listener
     } else {
       // Send message to background to start download
       browser.runtime.sendMessage({
         action: 'startFetchDownload',
         url: url,
-        filename: getFileName(url)
+        filename: newName
       });
       // UI updates will be handled by the message listener
     }
@@ -363,5 +377,78 @@ async function downloadFile(url, mediaDiv, specificSize) {
     if (wakeLock) wakeLock.release();
   }
 }
+
+async function generateTemplateName(template, url, originalName) {
+    let result = template || "{name}";
+    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    const activeTab = tabs[0];
+    const pageTitle = activeTab ? activeTab.title : "Media";
+    const host = new URL(url).hostname;
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+    
+    // Extract name without extension for {name}
+    const lastDotIdx = originalName.lastIndexOf('.');
+    const nameWithoutExt = lastDotIdx !== -1 ? originalName.substring(0, lastDotIdx) : originalName;
+    const ext = lastDotIdx !== -1 ? originalName.substring(lastDotIdx) : '';
+
+    result = result
+        .replace(/{title}/g, pageTitle)
+        .replace(/{host}/g, host)
+        .replace(/{date}/g, dateStr)
+        .replace(/{time}/g, timeStr)
+        .replace(/{name}/g, nameWithoutExt);
+    
+    // Ensure extension is kept if not in template and not already present
+    if (ext && !result.toLowerCase().endsWith(ext.toLowerCase())) {
+        result += ext;
+    }
+
+    // Basic filename sanitization
+    return result.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_');
+}
+
+function showRenameDialog(initialValue) {
+    return new Promise((resolve) => {
+        const dialog = document.createElement('mdui-dialog');
+        dialog.headline = browser.i18n.getMessage("renameDialogHeadline") || "Download as...";
+        
+        const textField = document.createElement('mdui-text-field');
+        textField.value = initialValue;
+        textField.style.marginTop = '16px';
+        textField.setAttribute('label', browser.i18n.getMessage("renameDialogLabel") || "Filename");
+        dialog.appendChild(textField);
+
+        const cancelBtn = document.createElement('mdui-button');
+        cancelBtn.slot = "action";
+        cancelBtn.variant = "text";
+        cancelBtn.textContent = browser.i18n.getMessage("renameDialogCancelButton") || "Cancel";
+        cancelBtn.addEventListener('click', () => {
+            dialog.open = false;
+            resolve(null);
+        });
+
+        const okBtn = document.createElement('mdui-button');
+        okBtn.slot = "action";
+        okBtn.variant = "tonal";
+        okBtn.textContent = browser.i18n.getMessage("renameDialogDownloadButton") || "Download";
+        okBtn.addEventListener('click', () => {
+            dialog.open = false;
+            resolve(textField.value);
+        });
+
+        dialog.appendChild(cancelBtn);
+        dialog.appendChild(okBtn);
+        document.body.appendChild(dialog);
+        
+        dialog.open = true;
+        
+        dialog.addEventListener('closed', () => {
+            dialog.remove();
+        });
+    });
+}
+
 
 const beforeUnloadHandler = (event) => { event.preventDefault(); };

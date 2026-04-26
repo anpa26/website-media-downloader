@@ -537,5 +537,29 @@
     "youtubeDialogDownloaderAndroidMessage": {
         "message": "Vous pouvez utiliser Seal, une application Android qui vous permet de télécharger des vidéos depuis YouTube et d'autres plateformes. Vous pouvez trouver le lien de téléchargement sur leur page GitHub.",
         "description": "The message of the dialog shown when guiding the user to download YouTube videos on Android."
+    },
+    "filenameTemplateTitle": {
+        "message": "Modèle de nom de fichier",
+        "description": "The title of the filename template section in the settings tab."
+    },
+    "filenameTemplateHelper": {
+        "message": "{title}, {host}, {date}, {time}, {name}",
+        "description": "The helper text for the filename template section, showing available placeholders."
+    },
+    "renameDialogHeadline": {
+        "message": "Enregistrer sous...",
+        "description": "The headline of the dialog to rename the file before downloading."
+    },
+    "renameDialogLabel": {
+        "message": "Nom du fichier",
+        "description": "The label of the filename input field in the rename dialog."
+    },
+    "renameDialogDownloadButton": {
+        "message": "Télécharger",
+        "description": "The text of the download button in the rename dialog."
+    },
+    "renameDialogCancelButton": {
+        "message": "Annuler",
+        "description": "The text of the cancel button in the rename dialog."
     }
 }

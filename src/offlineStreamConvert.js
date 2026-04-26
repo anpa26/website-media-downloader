@@ -108,7 +108,7 @@ function updateSegmentProgressStatus(loadingBar, processed, total) {
  * Uses either browser.downloads API or fetch depending on the download method.
  * Most of the code here is chatGPT so good luck finding out what it does lol (ㆆ_ㆆ)
  */
-async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar, request) {
+async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar, request, customFilename = null) {
   const getText = async (url) => {
     const fetchOptions = {
       headers: Object.fromEntries(headers.map(h => [h.name, h.value])),
@@ -509,7 +509,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
 
   // Then download video
   const { blob: videoBlob, ext } = await downloadSegments(videoUrl);
-  const baseFileName = getFileName(m3u8Url);
+  const baseFileName = customFilename ? (customFilename.substring(0, customFilename.lastIndexOf('.')) || customFilename) : getFileName(m3u8Url);
   const videoBlobUrl = URL.createObjectURL(videoBlob);
 
   if (downloadMethod === "browser") {
@@ -674,7 +674,7 @@ async function selectStreamVariant(playlistLines, baseUrl, options = {}) {
  * @param {HTMLElement} loadingBar  – the <mdui-linear-progress> element
  * @param {Object} request          – the single request object (requests[url][selectedSizeIndex])
  */
-async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, request) {
+async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, request, customFilename = null) {
   // --- Helpers
   function sanitizeZipPath(originalPath) {
     if (!originalPath || typeof originalPath !== "string") return originalPath || "";
@@ -879,7 +879,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     : null;
 
   const mpdBase = mpdUrl.substring(0, mpdUrl.lastIndexOf("/") + 1);
-  const mpdFilename = getFileName(mpdUrl);
+  const mpdFilename = customFilename || getFileName(mpdUrl);
   const baseName = mpdFilename.replace(/\.mpd$/i, "");
 
   const isSegmentBaseOnly =

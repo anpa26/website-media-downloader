@@ -35,7 +35,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Find the specific request if size was provided
         const request = requests.find(r => r.size === size) || requests[0];
         
-        mediaTitle.textContent = getFileName(streamUrl);
+        const urlParams = new URLSearchParams(window.location.search);
+        const customFilename = urlParams.get('filename');
+        mediaTitle.textContent = customFilename || getFileName(streamUrl);
         statusHeader.textContent = "Downloading Stream";
 
         const headers = request.requestHeaders || [];
@@ -43,9 +45,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 2. Start the appropriate offline download
         if (streamUrl.toLowerCase().includes('.m3u8')) {
-            await downloadM3U8Offline(streamUrl, headers, downloadMethod, loadingBar, request);
+            await downloadM3U8Offline(streamUrl, headers, downloadMethod, loadingBar, request, customFilename);
         } else if (streamUrl.toLowerCase().includes('.mpd')) {
-            await downloadMPDOffline(streamUrl, headers, downloadMethod, loadingBar, request);
+            await downloadMPDOffline(streamUrl, headers, downloadMethod, loadingBar, request, customFilename);
         } else {
             throw new Error("Unsupported stream format.");
         }

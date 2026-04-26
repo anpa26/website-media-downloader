@@ -504,5 +504,29 @@
     "youtubeDialogDownloaderAndroidMessage": {
         "message": "Anda dapat menggunakan Seal untuk mengunduh video YouTube di Android.",
         "description": "Pesan panduan Seal Android."
+    },
+    "filenameTemplateTitle": {
+        "message": "Template nama file",
+        "description": "Judul bagian template nama file di tab pengaturan."
+    },
+    "filenameTemplateHelper": {
+        "message": "{title}, {host}, {date}, {time}, {name}",
+        "description": "Teks pembantu untuk bagian template nama file, menunjukkan placeholder yang tersedia."
+    },
+    "renameDialogHeadline": {
+        "message": "Simpan sebagai...",
+        "description": "Judul dialog untuk mengubah nama file sebelum mengunduh."
+    },
+    "renameDialogLabel": {
+        "message": "Nama file",
+        "description": "Label kolom input nama file di dialog ubah nama."
+    },
+    "renameDialogDownloadButton": {
+        "message": "Download",
+        "description": "Teks tombol download di dialog ubah nama."
+    },
+    "renameDialogCancelButton": {
+        "message": "Batal",
+        "description": "Teks tombol batal di dialog ubah nama."
     }
 }
