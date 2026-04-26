@@ -24,6 +24,7 @@ const mediaTypes = [
 
 let urlList = [];
 let headersSentListener, headersReceivedListener;
+const activeDownloads = new Map(); // url -> { loaded, total }
 
 // ---------- IndexedDB helpers (same DB used by offlineStreamConvert.js) ----------
 const DB_NAME = "MediaCacheDB";
@@ -77,11 +78,51 @@ const detectionRegex = new RegExp('\\.(?:' + extPattern + ')(?:[?#].*)?$', 'i');
 const temporaryHeaderMap = new Map();
 const temporaryRequestBodyMap = new Map();
 const temporaryCookieMap = new Map();
+const urlToHeaderMap = new Map(); // Store URL -> { Cookie, Referer }
 
 // helper to interpret setting values
 function isFlagEnabled(val) {
     return val === '1' || val === 1 || val === true || val === 'true';
 }
+
+// Intercept and store headers for potential downloads, and re-inject them for Native downloads
+browser.webRequest.onBeforeSendHeaders.addListener(
+    (details) => {
+        // 1. Capture headers for every request to use later if it becomes a download
+        const cookie = details.requestHeaders.find(h => h.name.toLowerCase() === 'cookie')?.value;
+        const referer = details.requestHeaders.find(h => h.name.toLowerCase() === 'referer')?.value;
+        if (cookie || referer) {
+            urlToHeaderMap.set(details.url, { cookie, referer });
+        }
+
+        // 2. If this is a download request triggered by the extension or browser's downloader
+        if (details.type === 'other' || details.url.includes('download')) {
+            const stored = urlToHeaderMap.get(details.url);
+            if (stored) {
+                if (stored.cookie) {
+                    let hasCookie = false;
+                    for (let h of details.requestHeaders) {
+                        if (h.name.toLowerCase() === 'cookie') { h.value = stored.cookie; hasCookie = true; break; }
+                    }
+                    if (!hasCookie) details.requestHeaders.push({ name: 'Cookie', value: stored.cookie });
+                }
+                if (stored.referer) {
+                    let hasReferer = false;
+                    for (let h of details.requestHeaders) {
+                        if (h.name.toLowerCase() === 'referer') { h.value = stored.referer; hasReferer = true; break; }
+                    }
+                    if (!hasReferer) details.requestHeaders.push({ name: 'Referer', value: stored.referer });
+                }
+            }
+        }
+        
+        if (cookie) temporaryCookieMap.set(details.requestId, cookie);
+
+        return { requestHeaders: details.requestHeaders };
+    },
+    { urls: ["<all_urls>"] },
+    ["blocking", "requestHeaders"]
+);
 
 // get local settings
 function getSettings(callback) {
@@ -421,6 +462,42 @@ function initListener() {
     });
 }
 
+// Track native downloads
+browser.downloads.onCreated.addListener((downloadItem) => {
+    if (downloadItem.url && (downloadItem.url.startsWith('http') || downloadItem.url.startsWith('blob'))) {
+        activeDownloads.set(downloadItem.id, { 
+            url: downloadItem.url, 
+            loaded: 0, 
+            total: downloadItem.totalBytes,
+            isNative: true 
+        });
+    }
+});
+
+browser.downloads.onChanged.addListener((delta) => {
+    const item = activeDownloads.get(delta.id);
+    if (!item) return;
+
+    if (delta.bytesReceived) item.loaded = delta.bytesReceived.current;
+    if (delta.totalBytes) item.total = delta.totalBytes.current;
+
+    if (delta.state && (delta.state.current === 'complete' || delta.state.current === 'interrupted')) {
+        browser.runtime.sendMessage({
+            action: delta.state.current === 'complete' ? 'downloadComplete' : 'downloadError',
+            url: item.url,
+            error: delta.error ? delta.error.current : null
+        }).catch(() => {});
+        activeDownloads.delete(delta.id);
+    } else {
+        browser.runtime.sendMessage({
+            action: 'downloadProgress',
+            url: item.url,
+            loaded: item.loaded,
+            total: item.total
+        }).catch(() => {});
+    }
+});
+
 // Send media request data to the popup (session storage is not shared between background and popup scripts)
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'getMediaRequests') {
@@ -429,7 +506,127 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
         return true; // Indicate that the response will be sent asynchronously
     }
+
+    if (message.action === 'startFetchDownload') {
+        handleFetchDownload(message.url, message.filename);
+        return true;
+    }
+
+    if (message.action === 'getActiveDownloads') {
+        const downloadsObj = {};
+        for (let [key, value] of activeDownloads) {
+            // For native downloads, we use the ID as key but the popup expects URL
+            const identifier = value.url || key;
+            downloadsObj[identifier] = value;
+        }
+        sendResponse(downloadsObj);
+        return true;
+    }
 });
+
+function getFileName(url, maxLength = 30) {
+    try {
+        let parsedUrl = new URL(url);
+        let fileName = parsedUrl.pathname.substring(parsedUrl.pathname.lastIndexOf('/') + 1).split('?')[0];
+        fileName = fileName.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_');
+        if (!fileName) fileName = parsedUrl.hostname;
+        if (fileName.length > maxLength) fileName = fileName.substring(0, maxLength) + '…';
+        return decodeURIComponent(fileName);
+    } catch (e) { return "Media File"; }
+}
+
+async function handleFetchDownload(url, filename) {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Server error: " + response.status);
+
+        const contentLength = response.headers.get('content-length');
+        const total = contentLength ? parseInt(contentLength, 10) : 0;
+        
+        activeDownloads.set(url, { loaded: 0, total: total });
+
+        const reader = response.body.getReader();
+        let loaded = 0;
+        const chunks = [];
+        let lastReportTime = 0;
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            loaded += value.length;
+
+            activeDownloads.set(url, { loaded, total });
+
+            const now = Date.now();
+            if (now - lastReportTime > 500) {
+                lastReportTime = now;
+                browser.runtime.sendMessage({
+                    action: 'downloadProgress',
+                    url: url,
+                    loaded: loaded,
+                    total: total
+                }).catch(() => {});
+            }
+        }
+        
+        browser.runtime.sendMessage({
+            action: 'downloadProgress',
+            url: url,
+            loaded: loaded,
+            total: total
+        }).catch(() => {});
+
+        const blob = new Blob(chunks);
+        const finalFilename = filename || getFileName(url);
+
+        // Store in cache and open the bridge tab (the most reliable way on Android)
+        await storeInCache(url, blob, '');
+        browser.tabs.create({
+            url: browser.runtime.getURL(`download.html?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(finalFilename)}`),
+            active: true
+        });
+
+        activeDownloads.delete(url);
+        browser.runtime.sendMessage({ action: 'downloadComplete', url: url }).catch(() => {});
+
+    } catch (error) {
+        console.error("Background fetch download failed:", error);
+        activeDownloads.delete(url);
+        browser.runtime.sendMessage({ action: 'downloadError', url: url, error: error.message }).catch(() => {});
+    }
+}
+
+// Help Native downloads by injecting headers from the original request
+browser.webRequest.onBeforeSendHeaders.addListener(
+    (details) => {
+        // If this is a download request triggered by the extension
+        if (details.type === 'other' || details.url.includes('download')) {
+            // We could try to match URL and inject cookies here if needed
+        }
+        return { requestHeaders: details.requestHeaders };
+    },
+    { urls: ["<all_urls>"] },
+    ["blocking", "requestHeaders"]
+);
+
+// Set default settings on install
+browser.runtime.onInstalled.addListener(async (details) => {
+    if (details.reason === 'install') {
+        const defaults = {
+            'download-method': 'browser', // Default to Native for direct experience
+            'mime-detection': '1',
+            'url-detection': '1',
+            'media-cache': '1'
+        };
+        await browser.storage.local.set(defaults);
+        
+        browser.tabs.create({
+            url: browser.runtime.getURL('installed.md'),
+        });
+    }
+});
+
 
 // Initialize the listener
 initListener();

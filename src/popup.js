@@ -48,6 +48,58 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+browser.runtime.onMessage.addListener((message) => {
+  if (message.action === 'downloadProgress') {
+    updateProgressUI(message.url, message.loaded, message.total);
+  } else if (message.action === 'downloadComplete') {
+    finishDownloadUI(message.url);
+  } else if (message.action === 'downloadError') {
+    finishDownloadUI(message.url);
+    showDialog("Download error: " + message.error);
+  }
+});
+
+function updateProgressUI(url, loaded, total) {
+  const mediaItems = document.querySelectorAll('.media-item');
+  mediaItems.forEach(item => {
+    // This is a bit hacky but we need to find the right item. 
+    // Usually downloadFile attaches loadingBar to mediaDiv.
+    // We can use a Map or data attributes to track active downloads.
+    if (item.dataset.url === url) {
+      const loadingBar = item.querySelector('mdui-linear-progress');
+      const statusInfo = item.querySelector('.download-status-info');
+      if (loadingBar && statusInfo) {
+        const loadedMB = (loaded / (1024 * 1024)).toFixed(2);
+        if (total > 0) {
+          const totalMB = (total / (1024 * 1024)).toFixed(2);
+          const percent = Math.round((loaded / total) * 100);
+          const remainingMB = ((total - loaded) / (1024 * 1024)).toFixed(2);
+          statusInfo.textContent = `${loadedMB} MB / ${totalMB} MB (${percent}%) • ${remainingMB} MB remaining`;
+          loadingBar.removeAttribute('indeterminate');
+          loadingBar.setAttribute('max', total);
+          loadingBar.setAttribute('value', loaded);
+        } else {
+          statusInfo.textContent = `${loadedMB} MB downloaded`;
+        }
+      }
+    }
+  });
+}
+
+function finishDownloadUI(url) {
+  const mediaItems = document.querySelectorAll('.media-item');
+  mediaItems.forEach(item => {
+    if (item.dataset.url === url) {
+      const loadingBar = item.querySelector('mdui-linear-progress');
+      const statusInfo = item.querySelector('.download-status-info');
+      if (loadingBar) item.removeChild(loadingBar);
+      if (statusInfo) item.removeChild(statusInfo);
+      updateDownloadingCount(-1);
+      delete item.dataset.url;
+    }
+  });
+}
+
 async function checkAndShowRatingBanner() {
   if(typeof Temporal !== 'undefined') {
     const installData = await browser.storage.local.get('install-date');
@@ -143,6 +195,7 @@ function loadMediaList() {
       const mediaDiv = document.createElement('mdui-list-item');
       mediaDiv.setAttribute('nonclickable', 'true');
       mediaDiv.classList.add('media-item');
+      mediaDiv.dataset.url = bestRequest.originalUrl; // Set for progress tracking
 
       const mediaIconContainer = document.createElement('mdui-icon');
       mediaIconContainer.setAttribute('slot', 'icon');
@@ -211,6 +264,26 @@ function loadMediaList() {
     endMsg.style.padding = '20px 0 100px';
     endMsg.innerHTML = "End of list";
     mediaContainer.appendChild(endMsg);
+
+    // Restore active downloads UI
+    browser.runtime.sendMessage({ action: 'getActiveDownloads' }).then((activeDownloads) => {
+      if (!activeDownloads) return;
+      Object.keys(activeDownloads).forEach(url => {
+        const item = document.querySelector(`.media-item[data-url="${url}"]`);
+        if (item && !item.querySelector('mdui-linear-progress')) {
+          const loadingBar = document.createElement('mdui-linear-progress');
+          const statusInfo = document.createElement('div');
+          statusInfo.className = 'download-status-info';
+          statusInfo.style.fontSize = '12px';
+          statusInfo.style.marginTop = '4px';
+          statusInfo.style.textAlign = 'center';
+          item.appendChild(loadingBar);
+          item.appendChild(statusInfo);
+          updateDownloadingCount(1);
+          updateProgressUI(url, activeDownloads[url].loaded, activeDownloads[url].total);
+        }
+      });
+    });
   });
 }
 
@@ -254,6 +327,7 @@ async function downloadFile(url, mediaDiv, specificSize) {
     const targetRequest = requests[url]?.find(r => r.size === specificSize) || requests[url]?.[0];
     if(!targetRequest) throw new Error("Data lost");
 
+    mediaDiv.dataset.url = url; // Set for progress tracking
     mediaDiv.appendChild(loadingBar);
     mediaDiv.appendChild(statusInfo);
     loadingBar.style.width = '100%';
@@ -262,55 +336,22 @@ async function downloadFile(url, mediaDiv, specificSize) {
     const downloadMethod = await browser.storage.local.get('download-method').then(res => res['download-method']);
     
     if (downloadMethod === 'browser') {
-      browser.downloads.download({ url: url, filename: getFileName(url) });
+      await browser.downloads.download({ url: url, filename: getFileName(url) });
+      // UI cleanup will be handled by background progress listener
     } else {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("Server error");
-      
-      const contentLength = response.headers.get('content-length');
-      const total = contentLength ? parseInt(contentLength, 10) : 0;
-      
-      if (total > 0) {
-        loadingBar.removeAttribute('indeterminate');
-        loadingBar.setAttribute('max', total);
-        loadingBar.setAttribute('value', 0);
-      }
-
-      const reader = response.body.getReader();
-      let loaded = 0;
-      const chunks = [];
-
-      while(true) {
-        const {done, value} = await reader.read();
-        if (done) break;
-        chunks.push(value);
-        loaded += value.length;
-        
-        const loadedMB = (loaded / (1024 * 1024)).toFixed(2);
-        if (total > 0) {
-          const totalMB = (total / (1024 * 1024)).toFixed(2);
-          const percent = Math.round((loaded / total) * 100);
-          const remainingMB = ((total - loaded) / (1024 * 1024)).toFixed(2);
-          statusInfo.textContent = `${loadedMB} MB / ${totalMB} MB (${percent}%) • ${remainingMB} MB remaining`;
-          loadingBar.setAttribute('value', loaded);
-        } else {
-          statusInfo.textContent = `${loadedMB} MB downloaded`;
-        }
-      }
-
-      const blob = new Blob(chunks);
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = getFileName(url);
-      a.click();
+      // Send message to background to start download
+      browser.runtime.sendMessage({
+        action: 'startFetchDownload',
+        url: url,
+        filename: getFileName(url)
+      });
+      // UI updates will be handled by the message listener
     }
   } catch (error) {
     showDialog("Download error: " + error.message);
+    finishDownloadUI(url);
   } finally {
     if (wakeLock) wakeLock.release();
-    updateDownloadingCount(-1);
-    if(mediaDiv.contains(loadingBar)) mediaDiv.removeChild(loadingBar);
-    if(mediaDiv.contains(statusInfo)) mediaDiv.removeChild(statusInfo);
   }
 }
 

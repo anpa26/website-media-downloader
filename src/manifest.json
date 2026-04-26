@@ -13,7 +13,9 @@
     "webRequest",
     "webRequestBlocking",
     "webRequestFilterResponse",
-    "unlimitedStorage"
+    "unlimitedStorage",
+    "scripting",
+    "activeTab"
   ],
   "optional_permissions": [
     "downloads"

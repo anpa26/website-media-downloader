@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Saving Media...</title>
+  <style>
+    body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background-color: #f5f5f5; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h3 id="status-title">Preparing download...</h3>
+    <p id="status-text">Your file is ready. If the download doesn't start automatically, please click the button below.</p>
+    <div id="action-area" style="margin-top: 20px;">
+        <button id="save-button" style="padding: 12px 24px; background: #007bff; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; display: none;">Save to Device</button>
+    </div>
+    <p style="font-size: 12px; color: #666; margin-top: 20px;">This tab will close automatically after the download starts.</p>
+  </div>
+  <script src="download.js"></script>
+</body>
+</html>
