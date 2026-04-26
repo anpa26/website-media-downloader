@@ -153,7 +153,14 @@
               </div>
               <mdui-divider></mdui-divider>
               <div class="setting-item vertical">
-                 <h3 data-translate="filenameTemplateTitle">Filename template</h3>
+                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                    <h3 data-translate="filenameTemplateTitle" style="margin: 0;">Filename template</h3>
+                    <mdui-button-icon id="auto-generate-template" style="margin-right: -8px;" title="Auto-generate template">
+                       <mdui-icon>
+                          <svg viewBox="0 0 24 24"><path d="m19 1-1.26 2.74L15 5l2.74 1.26L19 9l1.26-2.74L23 5l-2.74-1.26L19 1m-10 6L6.5 12.5 1 15l5.5 2.5L9 23l2.5-5.5 5.5-2.5-5.5-2.5L9 7m10 8-1.26 2.74L15 19l2.74 1.26L19 23l1.26-2.74L23 19l-2.74-1.26L19 15z"/></svg>
+                       </mdui-icon>
+                    </mdui-button-icon>
+                 </div>
                  <mdui-text-field id="filename-template" variant="outlined" data-helper-translate="filenameTemplateHelper"></mdui-text-field>
               </div>
             </mdui-card>

@@ -104,6 +104,26 @@ async function initializeSettings() {
     }
 
     const colorResult = await browser.storage.local.get('theme-color');
+
+    // Filename template auto-generator
+    const autoGenBtn = document.getElementById('auto-generate-template');
+    const filenameInput = document.getElementById('filename-template');
+    if (autoGenBtn && filenameInput) {
+        autoGenBtn.addEventListener('click', () => {
+            const defaultTemplate = "{title} - {name}";
+            filenameInput.value = defaultTemplate;
+            browser.storage.local.set({ 'filename-template': defaultTemplate });
+            
+            // Show a brief snackbar feedback if mdui is available
+            if (typeof mdui !== 'undefined' && mdui.snackbar) {
+                mdui.snackbar({
+                    message: "Template auto-generated: " + defaultTemplate,
+                    placement: "top"
+                });
+            }
+        });
+    }
+
     const colorInput = document.getElementById('color-picker-input');
     if (colorInput) {
         const activeColor = colorResult['theme-color'] || '#bbdefb';
