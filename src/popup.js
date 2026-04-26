@@ -172,7 +172,7 @@ function loadMediaList() {
     if (!mediaRequests || Object.keys(mediaRequests).length === 0) {
         if (loadingSpinner) loadingSpinner.style.display = 'none';
         if (activeItems.size === 0) {
-          mediaContainer.innerHTML = '<div style="padding:40px; text-align:center;">No media detected.</div>';
+          mediaContainer.innerHTML = `<div style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
         }
         return;
     }

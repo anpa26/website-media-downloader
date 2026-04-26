@@ -107,6 +107,10 @@
             }
         }
     },
+    "noMediaDetected": {
+        "message": "No media detected on this page. To detect media, please start playing the video or audio first, then refresh this list. If it still doesn't appear, try changing the detection method in the settings.",
+        "description": "The message shown when no media is detected on the current page."
+    },
     "listClearError": {
         "message": "Error clearing media list. Here's what went wrong: $ERROR$",
         "description": "The error message shown when the media list fails to clear.",

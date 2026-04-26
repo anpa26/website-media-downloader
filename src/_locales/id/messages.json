@@ -101,6 +101,10 @@
         "message": "Kesalahan saat mengambil permintaan media. Berikut masalahnya: $ERROR$",
         "description": "Pesan kesalahan saat daftar media gagal dimuat."
     },
+    "noMediaDetected": {
+        "message": "Tidak ada media yang terdeteksi di halaman ini. Untuk mendeteksi media, silakan putar video atau audio terlebih dahulu, lalu segarkan daftar ini. Jika masih tidak muncul, coba ubah metode deteksi di pengaturan.",
+        "description": "Pesan yang ditampilkan saat tidak ada media yang terdeteksi di halaman saat ini."
+    },
     "listClearError": {
         "message": "Kesalahan saat menghapus daftar media. Berikut masalahnya: $ERROR$",
         "description": "Pesan kesalahan saat daftar media gagal dihapus."
