@@ -153,7 +153,17 @@ function loadMediaList() {
   const mainContent = document.getElementById('main-content');
 
   if (loadingSpinner) loadingSpinner.style.display = 'block';
+  
+  // Preserve active download items to avoid flickering
+  const activeItems = new Map();
+  mediaContainer.querySelectorAll('.media-item').forEach(item => {
+    if (item.querySelector('mdui-linear-progress')) {
+      activeItems.set(item.dataset.url, item);
+    }
+  });
+
   mediaContainer.innerHTML = ''; 
+  activeItems.forEach(item => mediaContainer.appendChild(item));
 
   browser.runtime.sendMessage({ action: 'getMediaRequests' }).then(async (mediaRequests) => {
     if (globalLoading) globalLoading.style.display = 'none';
@@ -161,32 +171,51 @@ function loadMediaList() {
     
     if (!mediaRequests || Object.keys(mediaRequests).length === 0) {
         if (loadingSpinner) loadingSpinner.style.display = 'none';
-        mediaContainer.innerHTML = '<div style="padding:40px; text-align:center;">No media detected.</div>';
+        if (activeItems.size === 0) {
+          mediaContainer.innerHTML = '<div style="padding:40px; text-align:center;">No media detected.</div>';
+        }
         return;
     }
 
     const mediaGroups = new Map();
     for (const rawUrl in mediaRequests) {
+      if (activeItems.has(rawUrl)) continue;
+
       let mediaURL;
       try { mediaURL = new URL(rawUrl); } catch (e) { continue; }
       const requests = mediaRequests[rawUrl];
       if (!Array.isArray(requests) || requests.length === 0) continue;
-      const identity = mediaURL.hostname + mediaURL.pathname;
+      
+      // Use URL without common tracking params as identity to distinguish qualities
+      const identity = rawUrl.split('?')[0]; 
       if (!mediaGroups.has(identity)) mediaGroups.set(identity, { requests: [] });
       const group = mediaGroups.get(identity);
+      
       requests.forEach(req => {
-        const existingIdx = group.requests.findIndex(r => r.size === req.size);
-        if (existingIdx === -1) group.requests.push({ ...req, originalUrl: rawUrl });
-        else if ((req.timeStamp || 0) > (group.requests[existingIdx].timeStamp || 0)) group.requests[existingIdx] = { ...req, originalUrl: rawUrl };
+        const existingIdx = group.requests.findIndex(r => r.originalUrl === rawUrl);
+        if (existingIdx === -1) {
+          group.requests.push({ ...req, originalUrl: rawUrl });
+        } else {
+          // If we see the same URL again, keep the one with the larger size (better detection)
+          const currentSize = parseInt(req.size) || 0;
+          const existingSize = parseInt(group.requests[existingIdx].size) || 0;
+          if (currentSize > existingSize) {
+            group.requests[existingIdx] = { ...req, originalUrl: rawUrl };
+          }
+        }
       });
     }
 
-    for (const [identity, group] of mediaGroups) {
-      const requests = group.requests;
-      // Sort: Terbesar di urutan 0
-      requests.sort((a, b) => (parseInt(b.size) || 0) - (parseInt(a.size) || 0));
-      const bestRequest = requests[0]; // Ambil yang paling besar
+    // Flatten and sort globally by size
+    const flattenedRequests = [];
+    mediaGroups.forEach(group => {
+        group.requests.sort((a, b) => (parseInt(b.size) || 0) - (parseInt(a.size) || 0));
+        flattenedRequests.push(group.requests[0]);
+    });
+    
+    flattenedRequests.sort((a, b) => (parseInt(b.size) || 0) - (parseInt(a.size) || 0));
 
+    for (const bestRequest of flattenedRequests) {
       const videoExtensions = [".3g2", ".3gp", ".asx", ".avi", ".divx", ".4v", ".flv", ".ismv", ".m2t", ".m2ts", ".m2v", ".m4s", ".m4v", ".mk3d", ".mkv", ".mng", ".mov", ".mp2v", ".mp4", ".mp4v", ".mpe", ".mpeg", ".mpeg1", ".mpeg2", ".mpeg4", ".mpg", ".mxf", ".ogm", ".ogv", ".qt", ".rm", ".swf", ".ts", ".vob", ".vp9", ".webm", ".wmv"]
       const audioExtensions = [".3ga", ".aac", ".ac3", ".adts", ".aif", ".aiff", ".alac", ".ape", ".asf", ".au", ".dts", ".f4a", ".f4b", ".flac", ".isma", ".it", ".m4a", ".m4b", ".m4r", ".mid", ".mka", ".mod", ".mp1", ".mp2", ".mp3", ".mp4a", ".mpa", ".mpga", ".oga", ".ogg", ".ogx", ".opus", ".ra", ".shn", ".spx", ".vorbis", ".wav", ".weba", ".wma", ".xm"];
       const streamExtensions = [".f4f", ".f4m", ".m3u8", ".mpd", ".smil"];
@@ -197,24 +226,70 @@ function loadMediaList() {
       mediaDiv.classList.add('media-item');
       mediaDiv.dataset.url = bestRequest.originalUrl; // Set for progress tracking
 
-      const mediaIconContainer = document.createElement('mdui-icon');
-      mediaIconContainer.setAttribute('slot', 'icon');
-      mediaIconContainer.style.fontSize = '24px';
-      mediaIconContainer.style.color = 'rgb(var(--mdui-color-primary))';
-      const mediaIcon = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
-      mediaIcon.setAttribute('viewBox', '0 -960 960 960');
-      let path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-      
-      if (videoExtensions.some(ext => mediaURL.pathname.toLowerCase().endsWith(ext)) || bestRequest.responseHeaders?.find(h => h.name.toLowerCase() === "content-type" && h.value.startsWith("video/"))) {
-        path.setAttribute('d', 'm160-800 80 160h120l-80-160h80l80 160h120l-80-160h80l80 160h120l-80-160h120q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800Zm0 240v320h640v-320H160Zm0 0v320-320Z');
-      } else if (audioExtensions.some(ext => mediaURL.pathname.toLowerCase().endsWith(ext)) || bestRequest.responseHeaders?.find(h => h.name.toLowerCase() === "content-type" && h.value.startsWith("audio/"))) {
-        path.setAttribute('d', 'M400-120q-66 0-113-47t-47-113q0-66 47-113t113-47q23 0 42.5 5.5T480-418v-422h240v160H560v400q0 66-47 113t-113 47Z');
+      const previewContainer = document.createElement('div');
+      previewContainer.classList.add('media-preview-container');
+      previewContainer.setAttribute('slot', 'icon');
+
+      const isVideo = videoExtensions.some(ext => mediaURL.pathname.toLowerCase().endsWith(ext)) || bestRequest.responseHeaders?.find(h => h.name.toLowerCase() === "content-type" && h.value.startsWith("video/"));
+      const isAudio = audioExtensions.some(ext => mediaURL.pathname.toLowerCase().endsWith(ext)) || bestRequest.responseHeaders?.find(h => h.name.toLowerCase() === "content-type" && h.value.startsWith("audio/"));
+      const isStream = streamExtensions.some(ext => mediaURL.pathname.toLowerCase().endsWith(ext)) || bestRequest.responseHeaders?.find(h => h.name.toLowerCase() === "content-type" && (h.value.includes("mpegurl") || h.value.includes("dash+xml")));
+
+      if (isVideo || isStream) {
+        previewContainer.classList.add('video');
+        const video = document.createElement('video');
+        video.src = isStream ? "" : bestRequest.originalUrl;
+        video.preload = "metadata";
+        video.muted = true;
+        video.playsInline = true;
+        if (!isStream) video.currentTime = 0.1;
+        previewContainer.appendChild(video);
+        
+        let hls = null;
+        previewContainer.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (video.paused) {
+            // Pause all other playing videos first
+            document.querySelectorAll('.media-preview-container.playing video').forEach(v => {
+              v.pause();
+              v.parentElement.classList.remove('playing');
+            });
+
+            if (isStream && !video.src) {
+              if (Hls.isSupported()) {
+                hls = new Hls();
+                hls.loadSource(bestRequest.originalUrl);
+                hls.attachMedia(video);
+              } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = bestRequest.originalUrl;
+              }
+            }
+            
+            video.muted = false;
+            video.play().then(() => {
+              previewContainer.classList.add('playing');
+            }).catch(err => console.error("Playback failed:", err));
+          } else {
+            video.pause();
+            previewContainer.classList.remove('playing');
+          }
+        });
       } else {
-        path.setAttribute('d', 'M40-480q0-92 34.5-172T169-791.5q60-59.5 140-94T480-920q91 0 171 34.5t140 94Q851-732 885.5-652T920-480h-80q0-75-28.5-140.5T734-735q-49-49-114.5-77T480-840q-74 0-139.5 28T226-735q-49 49-77.5 114.5T120-480H40Zm160 0q0-118 82-199t198-81q116 0 198 81t82 199h-80q0-83-58.5-141.5T480-680q-83 0-141.5 58.5T280-480h-80ZM360-64l-56-56 136-136v-132q-27-12-43.5-37T380-480q0-42 29-71t71-29q42 0 71 29t29 71q0 30-16.5 55T520-388v132l136 136-56 56-120-120L360-64Z');
+        const mediaIconContainer = document.createElement('mdui-icon');
+        mediaIconContainer.classList.add('media-preview-icon');
+        const mediaIcon = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
+        mediaIcon.setAttribute('viewBox', '0 -960 960 960');
+        let path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
+
+        if (isAudio) {
+          path.setAttribute('d', 'M400-120q-66 0-113-47t-47-113q0-66 47-113t113-47q23 0 42.5 5.5T480-418v-422h240v160H560v400q0 66-47 113t-113 47Z');
+        } else {
+          path.setAttribute('d', 'M40-480q0-92 34.5-172T169-791.5q60-59.5 140-94T480-920q91 0 171 34.5t140 94Q851-732 885.5-652T920-480h-80q0-75-28.5-140.5T734-735q-49-49-114.5-77T480-840q-74 0-139.5 28T226-735q-49 49-77.5 114.5T120-480H40Zm160 0q0-118 82-199t198-81q116 0 198 81t82 199h-80q0-83-58.5-141.5T480-680q-83 0-141.5 58.5T280-480h-80ZM360-64l-56-56 136-136v-132q-27-12-43.5-37T380-480q0-42 29-71t71-29q42 0 71 29t29 71q0 30-16.5 55T520-388v132l136 136-56 56-120-120L360-64Z');
+        }
+        mediaIcon.appendChild(path);
+        mediaIconContainer.appendChild(mediaIcon);
+        previewContainer.appendChild(mediaIconContainer);
       }
-      mediaIcon.appendChild(path);
-      mediaIconContainer.appendChild(mediaIcon);
-      mediaDiv.appendChild(mediaIconContainer);
+      mediaDiv.appendChild(previewContainer);
 
       const cardContent = document.createElement('div');
       cardContent.classList.add('media-item-content');
@@ -359,7 +434,28 @@ async function downloadFile(url, mediaDiv, specificSize) {
       });
       finishDownloadUI(url);
     } else if (downloadMethod === 'browser') {
-      await browser.downloads.download({ url: url, filename: newName });
+      // For Native downloads, we want to ensure it doesn't just download a chunk.
+      // We can try to strip range-related parameters if they exist in the URL
+      let downloadUrl = url;
+      try {
+        const urlObj = new URL(url);
+        // Common parameters used for range/offset that might limit size
+        const rangeParams = ['range', 'offset', 'start', 'end'];
+        let changed = false;
+        rangeParams.forEach(param => {
+          if (urlObj.searchParams.has(param)) {
+            urlObj.searchParams.delete(param);
+            changed = true;
+          }
+        });
+        if (changed) downloadUrl = urlObj.toString();
+      } catch (e) {}
+
+      await browser.downloads.download({ 
+        url: downloadUrl, 
+        filename: newName,
+        saveAs: false // Already showed our own dialog
+      });
       // UI cleanup will be handled by background progress listener
     } else {
       // Send message to background to start download

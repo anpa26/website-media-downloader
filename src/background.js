@@ -364,8 +364,19 @@ function initListener() {
             try {
                 // Extract content-length and content-type (if present)
                 const responseHeaders = details.responseHeaders || [];
+                let size = 'unknown';
+                
                 let mediaSizeHeader = responseHeaders.find(header => header.name && header.name.toLowerCase() === 'content-length');
-                let size = mediaSizeHeader ? mediaSizeHeader.value : 'unknown';
+                if (mediaSizeHeader) size = mediaSizeHeader.value;
+
+                // Better size detection: check Content-Range for total size (e.g., bytes 0-1023/1000000)
+                let contentRangeHeader = responseHeaders.find(header => header.name && header.name.toLowerCase() === 'content-range');
+                if (contentRangeHeader && contentRangeHeader.value.includes('/')) {
+                    const totalSize = contentRangeHeader.value.split('/').pop();
+                    if (totalSize && totalSize !== '*') {
+                        size = totalSize;
+                    }
+                }
 
                 let contentTypeHeader = responseHeaders.find(header => header.name && header.name.toLowerCase() === 'content-type');
                 let contentType = contentTypeHeader ? (contentTypeHeader.value || '').toLowerCase() : '';
@@ -668,8 +679,27 @@ browser.storage.local.get('open-preference', function (result) {
 // Clear local storage when message is received
 browser.runtime.onMessage.addListener((message) => {
     if (message.action === 'clearStorage') {
-        browser.storage.session.clear();
-        // Also clear IndexedDB cache
+        // Get all active download URLs
+        const activeUrls = new Set();
+        for (const [key, value] of activeDownloads) {
+            if (value.url) activeUrls.add(value.url);
+        }
+
+        browser.storage.session.get(null, function (items) {
+            const keysToRemove = [];
+            for (const url in items) {
+                if (!activeUrls.has(url)) {
+                    keysToRemove.push(url);
+                }
+            }
+            if (keysToRemove.length > 0) {
+                browser.storage.session.remove(keysToRemove);
+            }
+        });
+
+        // Also clear IndexedDB cache, but maybe we should also keep active ones? 
+        // For now, let's just clear it as before, or skip if we want to be safe.
+        // Usually, IndexedDB is only for completed fetch downloads or stream segments.
         openCacheDB().then(db => {
             const tx = db.transaction([STORE_NAME], "readwrite");
             const store = tx.objectStore(STORE_NAME);
