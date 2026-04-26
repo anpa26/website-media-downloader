@@ -112,8 +112,72 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+const DB_NAME = "MediaCacheDB";
+const STORE_NAME = "network-cache";
+const CHUNK_STORE_NAME = "download-chunks";
+
+function openCacheDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 3);
+        request.onerror = (event) => reject(event.target.error || "IDB Open Error");
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME, { keyPath: "url" });
+            }
+            if (!db.objectStoreNames.contains(CHUNK_STORE_NAME)) {
+                db.createObjectStore(CHUNK_STORE_NAME, { keyPath: ["downloadId", "chunkIndex"] });
+            }
+        };
+        request.onsuccess = (event) => resolve(event.target.result);
+    });
+}
+
 async function fetchMedia(url, size) {
     console.log('Fetching media file:', url);
+
+    // Try cache first
+    try {
+        const db = await openCacheDB();
+        const tx = db.transaction([STORE_NAME], "readonly");
+        const store = tx.objectStore(STORE_NAME);
+        const cachedItem = await new Promise((resolve) => {
+            const req = store.get(url);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => resolve(null);
+        });
+
+        if (cachedItem) {
+            if (cachedItem.data) return cachedItem.data;
+            
+            // Chunked storage
+            const chunks = [];
+            const chunkTx = db.transaction([CHUNK_STORE_NAME], "readonly");
+            const chunkStore = chunkTx.objectStore(CHUNK_STORE_NAME);
+            const range = IDBKeyRange.bound([url, 0], [url, Infinity]);
+            const cursorRequest = chunkStore.openCursor(range);
+
+            await new Promise((resolveChunk) => {
+                cursorRequest.onsuccess = (e) => {
+                    const cursor = e.target.result;
+                    if (cursor) {
+                        chunks.push(cursor.value.data);
+                        cursor.continue();
+                    } else {
+                        resolveChunk();
+                    }
+                };
+                cursorRequest.onerror = () => resolveChunk();
+            });
+
+            if (chunks.length > 0) {
+                console.log("⚡ Preview using IndexedDB cache chunks");
+                return new Blob(chunks, { type: cachedItem.mime || "application/octet-stream" });
+            }
+        }
+    } catch (e) {
+        console.warn("Cache retrieval failed in previewer:", e);
+    }
 
     // Find the closest matching URL key
     const requestKey = Object.keys(requests).find(storedUrl => storedUrl.includes(url));

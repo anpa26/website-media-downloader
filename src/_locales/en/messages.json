@@ -574,5 +574,13 @@
     "renameDialogCancelButton": {
         "message": "Cancel",
         "description": "The text of the cancel button in the rename dialog."
+    },
+    "cancelButton": {
+        "message": "Cancel",
+        "description": "The text of the cancel button during an active download."
+    },
+    "downloadCancelled": {
+        "message": "Download cancelled",
+        "description": "The message shown when a download is manually cancelled."
     }
 }

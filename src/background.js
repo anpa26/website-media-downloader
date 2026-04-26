@@ -29,15 +29,22 @@ const activeDownloads = new Map(); // url -> { loaded, total }
 // ---------- IndexedDB helpers (same DB used by offlineStreamConvert.js) ----------
 const DB_NAME = "MediaCacheDB";
 const STORE_NAME = "network-cache";
+const CHUNK_STORE_NAME = "download-chunks";
 
 function openCacheDB() {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, 1);
+        const request = indexedDB.open(DB_NAME, 3); // Upgrade version to add store
         request.onerror = (event) => reject(event.target.error || "IDB Open Error");
+        request.onblocked = () => {
+            console.warn("IndexedDB upgrade blocked by other tabs. Please close them.");
+        };
         request.onupgradeneeded = (event) => {
             const db = event.target.result;
             if (!db.objectStoreNames.contains(STORE_NAME)) {
                 db.createObjectStore(STORE_NAME, { keyPath: "url" });
+            }
+            if (!db.objectStoreNames.contains(CHUNK_STORE_NAME)) {
+                db.createObjectStore(CHUNK_STORE_NAME, { keyPath: ["downloadId", "chunkIndex"] });
             }
         };
         request.onsuccess = (event) => resolve(event.target.result);
@@ -62,6 +69,34 @@ async function storeInCache(url, blob, mime) {
         });
     } catch (e) {
         console.error("Failed to store in cache:", e);
+    }
+}
+
+let cachedDB = null;
+async function getDB() {
+    if (cachedDB) return cachedDB;
+    cachedDB = await openCacheDB();
+    return cachedDB;
+}
+
+async function storeChunkInCache(downloadId, chunkIndex, data) {
+    try {
+        const db = await getDB();
+        const tx = db.transaction([CHUNK_STORE_NAME], "readwrite");
+        const store = tx.objectStore(CHUNK_STORE_NAME);
+        const item = {
+            downloadId: downloadId,
+            chunkIndex: chunkIndex,
+            data: data,
+            timestamp: Date.now()
+        };
+        return new Promise((resolve, reject) => {
+            const req = store.put(item);
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
+        });
+    } catch (e) {
+        console.error("Failed to store chunk in cache:", e);
     }
 }
 // -------------------------------------------------------------------------------
@@ -493,15 +528,22 @@ browser.downloads.onChanged.addListener((delta) => {
     if (delta.totalBytes) item.total = delta.totalBytes.current;
 
     if (delta.state && (delta.state.current === 'complete' || delta.state.current === 'interrupted')) {
+        let errorMsg = delta.error ? delta.error.current : null;
+        if (delta.state.current === 'interrupted' && (errorMsg === 'USER_CANCELED' || errorMsg === 'USER_SHUTDOWN')) {
+            errorMsg = 'USER_CANCELED';
+        }
+
         browser.runtime.sendMessage({
             action: delta.state.current === 'complete' ? 'downloadComplete' : 'downloadError',
+            id: delta.id,
             url: item.url,
-            error: delta.error ? delta.error.current : null
+            error: errorMsg
         }).catch(() => {});
         activeDownloads.delete(delta.id);
     } else {
         browser.runtime.sendMessage({
             action: 'downloadProgress',
+            id: delta.id,
             url: item.url,
             loaded: item.loaded,
             total: item.total
@@ -519,16 +561,44 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === 'startFetchDownload') {
-        handleFetchDownload(message.url, message.filename, message.request);
+        handleFetchDownload(message.url, message.filename, message.request, message.downloadId);
+        return true;
+    }
+
+    if (message.action === 'cancelDownload') {
+        let targetId = null;
+        let isNative = false;
+        for (let [id, val] of activeDownloads) {
+            if (val.url === message.url) {
+                targetId = id;
+                isNative = !!val.isNative;
+                break;
+            }
+        }
+        
+        if (targetId) {
+            const item = activeDownloads.get(targetId);
+            if (isNative) {
+                browser.downloads.cancel(targetId);
+                activeDownloads.delete(targetId);
+                // browser.downloads.onChanged will handle sending downloadError/USER_CANCELED
+            } else if (item && item.abortController) {
+                item.abortController.abort();
+                activeDownloads.delete(targetId);
+            }
+        }
         return true;
     }
 
     if (message.action === 'getActiveDownloads') {
         const downloadsObj = {};
-        for (let [key, value] of activeDownloads) {
-            // For native downloads, we use the ID as key but the popup expects URL
-            const identifier = value.url || key;
-            downloadsObj[identifier] = value;
+        for (let [id, value] of activeDownloads) {
+            downloadsObj[id] = {
+                id: id,
+                loaded: value.loaded,
+                total: value.total,
+                url: value.url
+            };
         }
         sendResponse(downloadsObj);
         return true;
@@ -571,12 +641,15 @@ browser.tabs.onRemoved.addListener((tabId) => {
     }
 });
 
-async function handleFetchDownload(url, filename, originalRequest = null) {
+async function handleFetchDownload(url, filename, originalRequest = null, providedId = null) {
+    const abortController = new AbortController();
+    const downloadId = providedId || ('dl_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
     try {
         const fetchOptions = {
             method: originalRequest ? originalRequest.method : 'GET',
             headers: {},
-            credentials: 'include' // Important for cookies
+            credentials: 'include', // Important for cookies
+            signal: abortController.signal
         };
 
         if (originalRequest && originalRequest.requestHeaders) {
@@ -621,58 +694,86 @@ async function handleFetchDownload(url, filename, originalRequest = null) {
         const contentLength = response.headers.get('content-length');
         const total = contentLength ? parseInt(contentLength, 10) : 0;
         
-        activeDownloads.set(url, { loaded: 0, total: total });
+        activeDownloads.set(downloadId, { loaded: 0, total: total, abortController: abortController, url: url });
 
         const reader = response.body.getReader();
         let loaded = 0;
-        const chunks = [];
         let lastReportTime = 0;
+        let chunkIndex = 0;
+        
+        const writeQueue = [];
+        const MAX_WRITE_QUEUE = 3; 
 
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            chunks.push(value);
-            loaded += value.length;
+            
+            const currentChunk = value;
+            const currentChunkIndex = chunkIndex++;
 
-            activeDownloads.set(url, { loaded, total });
+            loaded += currentChunk.length;
+            activeDownloads.set(downloadId, { loaded, total, abortController, url: url });
 
+            // Update UI immediately (every 50ms)
             const now = Date.now();
-            if (now - lastReportTime > 500) {
+            if (now - lastReportTime > 50) {
                 lastReportTime = now;
                 browser.runtime.sendMessage({
                     action: 'downloadProgress',
+                    id: downloadId,
                     url: url,
                     loaded: loaded,
                     total: total
                 }).catch(() => {});
             }
+
+            // Write to IndexedDB without blocking the next network read immediately
+            const writePromise = storeChunkInCache(downloadId, currentChunkIndex, currentChunk);
+            writeQueue.push(writePromise);
+            
+            // Allow the network to stay a few chunks ahead of the disk
+            if (writeQueue.length >= MAX_WRITE_QUEUE) {
+                await writeQueue.shift();
+            }
         }
+        
+        // Ensure all pending writes finish
+        await Promise.all(writeQueue);
         
         browser.runtime.sendMessage({
             action: 'downloadProgress',
+            id: downloadId,
             url: url,
             loaded: loaded,
             total: total
         }).catch(() => {});
 
-        const blob = new Blob(chunks);
         const finalFilename = filename || getFileName(url);
-        const downloadId = 'dl_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-        // Store in cache using unique ID
-        await storeInCache(downloadId, blob, response.headers.get('content-type'));
+        // Store metadata in cache to signal chunked download
+        await storeInCache(downloadId, null, response.headers.get('content-type'));
         
         // Add to queue instead of opening immediately
         pendingSaveQueue.push({ id: downloadId, url, filename: finalFilename });
         processSaveQueue();
 
-        activeDownloads.delete(url);
-        browser.runtime.sendMessage({ action: 'downloadComplete', url: url }).catch(() => {});
+        activeDownloads.delete(downloadId);
+        browser.runtime.sendMessage({ action: 'downloadComplete', id: downloadId, url: url }).catch(() => {});
 
     } catch (error) {
+        // Find the downloadId if possible to cleanup
+        let targetId = null;
+        for (let [id, val] of activeDownloads) {
+            if (val.url === url) {
+                targetId = id;
+                break;
+            }
+        }
+        if (targetId) activeDownloads.delete(targetId);
+        
         console.error("Background fetch download failed:", error);
-        activeDownloads.delete(url);
-        browser.runtime.sendMessage({ action: 'downloadError', url: url, error: error.message }).catch(() => {});
+        const errorMsg = (error.name === 'AbortError') ? 'USER_CANCELED' : error.message;
+        browser.runtime.sendMessage({ action: 'downloadError', url: url, error: errorMsg }).catch(() => {});
     }
 }
 
@@ -818,6 +919,10 @@ function attachCacheListener() {
         try {
             // quick checks; avoid any async storage calls here
             if (details.incognito) return;
+            
+            // CRITICAL: Only intercept if it looks like media. 
+            // Intercepting everything (CSS, JS) breaks the browser.
+            if (!detectionRegex.test(details.url)) return;
 
             // attach filter to stream & capture the response body
             let filter;
@@ -828,11 +933,16 @@ function attachCacheListener() {
                 return;
             }
 
-            const chunks = [];
+            let chunkIndex = 0;
+            const downloadId = details.url; // For auto-cache, we use URL as ID
+
             filter.ondata = (event) => {
                 try {
-                    chunks.push(event.data);
+                    // Write back to browser IMMEDIATELY to avoid blocking rendering
                     filter.write(event.data);
+                    
+                    // Store chunk in IndexedDB (non-blocking)
+                    storeChunkInCache(downloadId, chunkIndex++, event.data);
                 } catch (e) {
                     console.error("Error writing chunk back to filter:", e);
                 }
@@ -840,13 +950,10 @@ function attachCacheListener() {
             filter.onstop = async () => {
                 try {
                     filter.disconnect();
-                    const blob = new Blob(chunks, { type: 'application/octet-stream' });
-                    if (blob.size > 0) {
-                        await storeInCache(details.url, blob, '');
-                        console.log("Cached response for:", details.url, "bytes:", blob.size);
-                    } else {
-                        console.warn("Skipping cache for empty response:", details.url);
-                    }
+                    // Store metadata in cache to signal chunked download
+                    // We don't have the full blob here anymore, and that's the point.
+                    await storeInCache(downloadId, null, 'application/octet-stream');
+                    console.log("Cached response chunks for:", details.url);
                 } catch (e) {
                     console.error("Failed to cache response body for", details.url, e);
                 }

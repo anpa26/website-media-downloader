@@ -95,52 +95,103 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 browser.runtime.onMessage.addListener((message) => {
   if (message.action === 'downloadProgress') {
-    updateProgressUI(message.url, message.loaded, message.total);
+    updateProgressUI(message.id || message.url, message.loaded, message.total);
   } else if (message.action === 'downloadComplete') {
-    finishDownloadUI(message.url);
+    finishDownloadUI(message.id || message.url);
   } else if (message.action === 'downloadError') {
-    finishDownloadUI(message.url);
-    showDialog("Download error: " + message.error);
+    finishDownloadUI(message.id || message.url);
+    if (message.error === "USER_CANCELED") {
+      if (typeof mdui !== 'undefined' && mdui.snackbar) {
+        mdui.snackbar({
+          message: browser.i18n.getMessage("downloadCancelled") || "Download cancelled",
+          placement: "top"
+        });
+      }
+      return;
+    }
+    showDialog(browser.i18n.getMessage("downloadError", [message.error]) || ("Download error: " + message.error));
   }
 });
 
-function updateProgressUI(url, loaded, total) {
-  const mediaItems = document.querySelectorAll('.media-item');
-  mediaItems.forEach(item => {
-    // This is a bit hacky but we need to find the right item. 
-    // Usually downloadFile attaches loadingBar to mediaDiv.
-    // We can use a Map or data attributes to track active downloads.
-    if (item.dataset.url === url) {
-      const loadingBar = item.querySelector('mdui-linear-progress');
-      const statusInfo = item.querySelector('.download-status-info');
-      if (loadingBar && statusInfo) {
-        const loadedMB = (loaded / (1024 * 1024)).toFixed(2);
-        if (total > 0) {
-          const totalMB = (total / (1024 * 1024)).toFixed(2);
-          const percent = Math.round((loaded / total) * 100);
-          const remainingMB = ((total - loaded) / (1024 * 1024)).toFixed(2);
-          statusInfo.textContent = `${loadedMB} MB / ${totalMB} MB (${percent}%) • ${remainingMB} MB remaining`;
-          loadingBar.removeAttribute('indeterminate');
-          loadingBar.setAttribute('max', total);
-          loadingBar.setAttribute('value', loaded);
-        } else {
-          statusInfo.textContent = `${loadedMB} MB downloaded`;
+const uiCache = new Map();
+
+function updateProgressUI(id, loaded, total) {
+  let item = uiCache.get(id);
+  
+  if (!item) {
+    const mediaItems = document.querySelectorAll('.media-item');
+    for (const el of mediaItems) {
+      if (el.dataset.downloadId === id || el.dataset.url === id) {
+        const loadingBar = el.querySelector('mdui-linear-progress');
+        const statusInfo = el.querySelector('.download-status-info');
+        if (loadingBar && statusInfo) {
+          item = { loadingBar, statusInfo, element: el };
+          uiCache.set(id, item);
+          // Also cache by the other identifier if possible
+          if (el.dataset.downloadId) uiCache.set(el.dataset.downloadId, item);
+          if (el.dataset.url) uiCache.set(el.dataset.url, item);
         }
+        break;
       }
     }
-  });
+  }
+
+  if (item) {
+    const { loadingBar, statusInfo } = item;
+    const loadedMB = (loaded / (1024 * 1024)).toFixed(2);
+    if (total > 0) {
+      const totalMB = (total / (1024 * 1024)).toFixed(2);
+      const percent = Math.round((loaded / total) * 100);
+      const remainingMB = ((total - loaded) / (1024 * 1024)).toFixed(2);
+      statusInfo.textContent = `${loadedMB} MB / ${totalMB} MB (${percent}%) • ${remainingMB} MB remaining`;
+      loadingBar.indeterminate = false;
+      loadingBar.max = total;
+      loadingBar.value = loaded;
+    } else {
+      statusInfo.textContent = `${loadedMB} MB downloaded`;
+      if (loadingBar.indeterminate !== true && !loadingBar.value) {
+          loadingBar.indeterminate = true;
+      }
+    }
+  }
 }
 
-function finishDownloadUI(url) {
+function finishDownloadUI(id) {
+  const itemData = uiCache.get(id);
+  if (itemData) {
+      const { element, loadingBar, statusInfo } = itemData;
+      if (loadingBar && loadingBar.parentNode === element) element.removeChild(loadingBar);
+      if (statusInfo && statusInfo.parentNode === element) element.removeChild(statusInfo);
+      
+      const dlBtn = element.querySelector('#download-button');
+      if (dlBtn) {
+        dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>Download`;
+        dlBtn.classList.remove('cancel-active');
+        dlBtn.disabled = false;
+      }
+      uiCache.delete(id);
+      updateDownloadingCount(-1);
+      return;
+  }
+  
+  // Fallback if not in cache
   const mediaItems = document.querySelectorAll('.media-item');
   mediaItems.forEach(item => {
-    if (item.dataset.url === url) {
+    if (item.dataset.downloadId === id || item.dataset.url === id) {
       const loadingBar = item.querySelector('mdui-linear-progress');
       const statusInfo = item.querySelector('.download-status-info');
       if (loadingBar) item.removeChild(loadingBar);
       if (statusInfo) item.removeChild(statusInfo);
+
+      // Reset button to Download
+      const dlBtn = item.querySelector('#download-button');
+      if (dlBtn) {
+        dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>Download`;
+        dlBtn.classList.remove('cancel-active');
+        dlBtn.disabled = false;
+      }
+
       updateDownloadingCount(-1);
-      delete item.dataset.url;
     }
   });
 }
@@ -401,7 +452,17 @@ function loadMediaList() {
       const dlBtn = document.createElement('mdui-segmented-button');
       dlBtn.id = 'download-button';
       dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>Download`;
-      dlBtn.addEventListener('click', () => downloadFile(bestRequest.originalUrl, mediaDiv, bestRequest.size));
+      dlBtn.addEventListener('click', () => {
+        if (dlBtn.classList.contains('cancel-active')) {
+          browser.runtime.sendMessage({ action: 'cancelDownload', url: bestRequest.originalUrl });
+          // Provide immediate feedback
+          dlBtn.disabled = true;
+          const statusInfo = mediaDiv.querySelector('.download-status-info');
+          if (statusInfo) statusInfo.textContent = browser.i18n.getMessage("downloadCancelled") || "Cancelling...";
+        } else {
+          downloadFile(bestRequest.originalUrl, mediaDiv, bestRequest.size);
+        }
+      });
       
       const prvBtn = document.createElement('mdui-segmented-button');
       prvBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="m380-300 280-180-280-180v360ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg></mdui-icon>Preview`;
@@ -427,9 +488,18 @@ function loadMediaList() {
     // Restore active downloads UI
     browser.runtime.sendMessage({ action: 'getActiveDownloads' }).then((activeDownloads) => {
       if (!activeDownloads) return;
-      Object.keys(activeDownloads).forEach(url => {
-        const item = document.querySelector(`.media-item[data-url="${url}"]`);
+      Object.keys(activeDownloads).forEach(id => {
+        const downloadData = activeDownloads[id];
+        const url = downloadData.url;
+
+        // Find the item. Match by id if available, or by URL
+        const item = Array.from(document.querySelectorAll('.media-item')).find(el =>
+          el.dataset.downloadId === id || el.dataset.url === url || url.startsWith(el.dataset.url.split('?')[0])
+        );
+
         if (item && !item.querySelector('mdui-linear-progress')) {
+          item.dataset.downloadId = id; // Sync with background ID
+          item.dataset.url = url; 
           const loadingBar = document.createElement('mdui-linear-progress');
           const statusInfo = document.createElement('div');
           statusInfo.className = 'download-status-info';
@@ -438,12 +508,19 @@ function loadMediaList() {
           statusInfo.style.textAlign = 'center';
           item.appendChild(loadingBar);
           item.appendChild(statusInfo);
+
+          // Restore Cancel button state
+          const dlBtn = item.querySelector('#download-button');
+          if (dlBtn) {
+            dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></mdui-icon>${browser.i18n.getMessage("cancelButton") || "Cancel"}`;
+            dlBtn.classList.add('cancel-active');
+          }
+
           updateDownloadingCount(1);
-          updateProgressUI(url, activeDownloads[url].loaded, activeDownloads[url].total);
+          updateProgressUI(id, downloadData.loaded, downloadData.total);
         }
       });
-    });
-  });
+    });  });
 }
 
 function clearMediaList() {
@@ -475,12 +552,20 @@ async function downloadFile(url, mediaDiv, specificSize) {
   try { wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
 
   try {
-    const requests = await browser.runtime.sendMessage({ action: 'getMediaRequests', url: url }); 
-    const targetRequest = requests[url]?.find(r => r.size === specificSize) || requests[url]?.[0];
-    if(!targetRequest) throw new Error("Data lost");
+   const requests = await browser.runtime.sendMessage({ action: 'getMediaRequests', url: url });
+   const targetRequest = requests[url]?.find(r => r.size === specificSize) || requests[url]?.[0];
+   if(!targetRequest) throw new Error("Data lost");
 
-    // Get default filename
-    const defaultName = getFileName(url, 100);
+   // Update button to Cancel
+   const dlBtn = mediaDiv.querySelector('#download-button');
+   if (dlBtn) {
+     dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></mdui-icon>${browser.i18n.getMessage("cancelButton") || "Cancel"}`;
+     dlBtn.classList.add('cancel-active');
+   }
+
+   // Get default filename
+   const defaultName = getFileName(url, 100);
+   mediaDiv.dataset.downloadId = 'dl_' + Date.now(); // Temporary ID for UI tracking
     const template = await browser.storage.local.get('filename-template').then(res => res['filename-template']);
     let finalName = defaultName;
 
@@ -490,7 +575,10 @@ async function downloadFile(url, mediaDiv, specificSize) {
 
     // Show Rename Dialog
     const newName = await showRenameDialog(finalName);
-    if (newName === null) return; // User cancelled
+    if (newName === null) {
+        finishDownloadUI(mediaDiv.dataset.downloadId);
+        return;
+    } // User cancelled
 
     updateDownloadingCount(1);
     const loadingBar = document.createElement('mdui-linear-progress');
@@ -516,7 +604,7 @@ async function downloadFile(url, mediaDiv, specificSize) {
         url: browser.runtime.getURL(`stream_downloader.html?url=${encodeURIComponent(url)}&size=${encodeURIComponent(specificSize || '')}&filename=${encodeURIComponent(newName)}`),
         active: true
       });
-      finishDownloadUI(url);
+      finishDownloadUI(mediaDiv.dataset.downloadId || url);
     } else if (downloadMethod === 'browser') {
       // For Native downloads, we want to ensure it doesn't just download a chunk.
       // We can try to strip range-related parameters if they exist in the URL
@@ -535,23 +623,24 @@ async function downloadFile(url, mediaDiv, specificSize) {
         if (changed) downloadUrl = urlObj.toString();
       } catch (e) {}
 
-      await browser.downloads.download({ 
-        url: downloadUrl, 
+      const id = await browser.downloads.download({
+        url: downloadUrl,
         filename: newName,
         saveAs: false // Already showed our own dialog
       });
+      mediaDiv.dataset.downloadId = id;
       // UI cleanup will be handled by background progress listener
     } else {
       // Send message to background to start download
       browser.runtime.sendMessage({
         action: 'startFetchDownload',
         url: url,
+        downloadId: mediaDiv.dataset.downloadId,
         filename: newName,
         request: targetRequest
       });
       // UI updates will be handled by the message listener
-    }
-  } catch (error) {
+    }  } catch (error) {
     showDialog("Download error: " + error.message);
     finishDownloadUI(url);
   } finally {

@@ -10,16 +10,20 @@ function getHumanReadableSize(size) {
 // --- IndexedDB Cache Helpers ---
 const DB_NAME = "MediaCacheDB";
 const STORE_NAME = "network-cache";
+const CHUNK_STORE_NAME = "download-chunks";
 
 function openCacheDB() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1);
+    const request = indexedDB.open(DB_NAME, 3);
     request.onerror = (event) => reject(event.target.error);
     request.onupgradeneeded = (event) => {
       // In case this script runs before background (unlikely), create store
       const db = event.target.result;
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME, { keyPath: "url" });
+      }
+      if (!db.objectStoreNames.contains(CHUNK_STORE_NAME)) {
+        db.createObjectStore(CHUNK_STORE_NAME, { keyPath: ["downloadId", "chunkIndex"] });
       }
     };
     request.onsuccess = (event) => resolve(event.target.result);
@@ -47,18 +51,49 @@ async function fetchWithCache(url, options = {}) {
       req.onerror = () => reject(req.error);
     });
 
-    if (cachedItem && cachedItem.data) {
-      console.log("⚡ IndexedDB Cache hit for:", url);
-      return new Response(cachedItem.data, {
-        status: 200,
-        statusText: "OK (Cached)",
-        headers: {
-          "Content-Type": cachedItem.mime || "application/octet-stream"
-        }
-      });
-    } else {
-      console.log("⚡ IndexedDB Cache miss for:", url);
+    if (cachedItem) {
+      let responseData;
+      if (cachedItem.data) {
+          responseData = cachedItem.data;
+      } else {
+          // Chunked storage
+          const chunks = [];
+          const chunkTx = db.transaction([CHUNK_STORE_NAME], "readonly");
+          const chunkStore = chunkTx.objectStore(CHUNK_STORE_NAME);
+          const range = IDBKeyRange.bound([url, 0], [url, Infinity]);
+          const cursorRequest = chunkStore.openCursor(range);
+
+          await new Promise((resolveChunk, rejectChunk) => {
+              cursorRequest.onsuccess = (e) => {
+                  const cursor = e.target.result;
+                  if (cursor) {
+                      chunks.push(cursor.value.data);
+                      cursor.continue();
+                  } else {
+                      resolveChunk();
+                  }
+              };
+              cursorRequest.onerror = (e) => rejectChunk(e.target.error);
+          });
+          
+          if (chunks.length > 0) {
+              responseData = new Blob(chunks);
+          }
+      }
+
+      if (responseData) {
+        console.log("⚡ IndexedDB Cache hit for:", url);
+        return new Response(responseData, {
+          status: 200,
+          statusText: "OK (Cached)",
+          headers: {
+            "Content-Type": cachedItem.mime || "application/octet-stream"
+          }
+        });
+      }
     }
+    
+    console.log("⚡ IndexedDB Cache miss for:", url);
   } catch (e) {
     console.warn("Cache lookup failed/miss, fetching from network:", e);
   }
@@ -1254,11 +1289,28 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     else throw new Error("Unsupported audio representation type");
   }
 
-  // Setup dynamic byte-tracking progress for ZIP flow
-  loadingBar.removeAttribute("indeterminate");
-  loadingBar.setAttribute("max", 0);
-  loadingBar.setAttribute("value", 0);
+  // Setup dynamic progress for ZIP flow
+  let globalTotalSegments = 0;
+  let globalProcessedSegments = 0;
   let downloadedBytes = 0;
+  let useByteTracking = false;
+
+  for (const t of tasks) {
+    if (t.type === "template" || t.type === "list") {
+      globalTotalSegments += t.info.segmentUrls.length;
+    } else if (t.type === "base") {
+      useByteTracking = true;
+    }
+  }
+
+  if (useByteTracking) {
+    loadingBar.removeAttribute("indeterminate");
+    loadingBar.setAttribute("max", 0);
+    loadingBar.setAttribute("value", 0);
+  } else {
+    loadingBar.setAttribute("max", globalTotalSegments);
+    loadingBar.setAttribute("value", 0);
+  }
 
   function addToMax(n) {
     const prev = Number(loadingBar.getAttribute("max")) || 0;
@@ -1273,45 +1325,20 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     if (t.type === "template") {
       // init
       console.log(">>> Fetching template init:", t.info.initUrl);
-      let lastReceivedForFile = 0;
-      const initBuf = await fetchWithProgress(t.info.initUrl, {
-        onStart: (contentLength) => {
-          // if (contentLength && contentLength > 0) addToMax(contentLength);
-          // else loadingBar.setAttribute("indeterminate", "");
-        },
-        onChunk: (received) => {
-          // const delta = received - lastReceivedForFile;
-          // lastReceivedForFile = received;
-          // downloadedBytes += delta;
-          // const max = Number(loadingBar.getAttribute("max")) || 0;
-          // if (max > 0) loadingBar.setAttribute("value", downloadedBytes);
-        }
-      });
+      const initBuf = await fetchWithProgress(t.info.initUrl);
       zipEntries.push({ name: prefixedName(t.info.initZipPath), input: initBuf });
 
       // segments
-      loadingBar.setAttribute("max", t.info.segmentUrls.length);
       for (let i = 0; i < t.info.segmentUrls.length; i++) {
         const segUrl = t.info.segmentUrls[i];
         const segZipPath = t.info.mediaZipPaths[i];
         console.log(`>>> Fetching template segment #${i + 1}:`, segUrl);
-        let lastReceived = 0;
-        const buf = await fetchWithProgress(segUrl, {
-          onStart: (contentLength) => {
-            // if (contentLength && contentLength > 0) addToMax(contentLength);
-            // else loadingBar.setAttribute("indeterminate", "");
-          },
-          onChunk: (received) => {
-            // const delta = received - lastReceived;
-            // lastReceived = received;
-            // downloadedBytes += delta;
-            // const max = Number(loadingBar.getAttribute("max")) || 0;
-            // if (max > 0) loadingBar.setAttribute("value", downloadedBytes);
-          }
-        });
+        const buf = await fetchWithProgress(segUrl);
         zipEntries.push({ name: prefixedName(segZipPath), input: buf });
-        loadingBar.setAttribute("value", i + 1); // show segment progress as count (since we don't know sizes)
-        updateSegmentProgressStatus(loadingBar, i + 1, t.info.segmentUrls.length);
+        
+        globalProcessedSegments++;
+        loadingBar.setAttribute("value", globalProcessedSegments);
+        updateSegmentProgressStatus(loadingBar, globalProcessedSegments, globalTotalSegments);
       }
 
     } else if (t.type === "base") {
@@ -1342,50 +1369,20 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
       if (mpdFixEnabled) repIdToLocalName[t.rep.id] = t.zipName;
     } else if (t.type === "list") {
       console.log(">>> Fetching SegmentList init:", t.info.initUrl);
-      let lastReceivedForFile = 0;
-      const initBuf = await fetchWithProgress(t.info.initUrl, {
-        onStart: (contentLength) => {
-          if (contentLength && contentLength > 0) addToMax(contentLength);
-          else loadingBar.setAttribute("indeterminate", "");
-        },
-        onChunk: (received) => {
-          const delta = received - lastReceivedForFile;
-          lastReceivedForFile = received;
-          downloadedBytes += delta;
-          const max = Number(loadingBar.getAttribute("max")) || 0;
-          if (max > 0) {
-            loadingBar.setAttribute("value", downloadedBytes);
-            updateProgressStatus(loadingBar, downloadedBytes, max);
-          } else {
-            updateProgressStatus(loadingBar, downloadedBytes, 0);
-          }
-        }
-      });
-
+      const initBuf = await fetchWithProgress(t.info.initUrl);
       zipEntries.push({ name: prefixedName(t.info.initZipPath), input: initBuf });
-      loadingBar.setAttribute("max", t.info.segmentUrls.length);  
+
       for (let i = 0; i < t.info.segmentUrls.length; i++) {
         const segUrl = t.info.segmentUrls[i];
         const segZipPath = t.info.segmentZipPaths[i];
 
         console.log(`>>> Fetching SegmentList segment #${i + 1}:`, segUrl);
-        let lastReceived = 0;
-        const buf = await fetchWithProgress(segUrl, {
-          onStart: (contentLength) => {
-            // if (contentLength && contentLength > 0) addToMax(contentLength);
-            // else loadingBar.setAttribute("indeterminate", "");
-          },
-          onChunk: (received) => {
-            // const delta = received - lastReceived;
-            // lastReceived = received;
-            // downloadedBytes += delta;
-            // const max = Number(loadingBar.getAttribute("max")) || 0;
-            // if (max > 0) loadingBar.setAttribute("value", downloadedBytes);
-          }
-        });
-        loadingBar.setAttribute("value", i + 1); // show segment progress as count (since we don't know sizes)
-        updateSegmentProgressStatus(loadingBar, i + 1, t.info.segmentUrls.length);
+        const buf = await fetchWithProgress(segUrl);
         zipEntries.push({ name: prefixedName(segZipPath), input: buf });
+
+        globalProcessedSegments++;
+        loadingBar.setAttribute("value", globalProcessedSegments);
+        updateSegmentProgressStatus(loadingBar, globalProcessedSegments, globalTotalSegments);
       }
       if (mpdFixEnabled) repIdToLocalName[t.rep.id] = { type: "list", init: t.info.initZipPath, segments: t.info.segmentZipPaths };
     }

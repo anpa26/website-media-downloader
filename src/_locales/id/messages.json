@@ -540,5 +540,13 @@
     "renameDialogCancelButton": {
         "message": "Batal",
         "description": "Teks tombol batal di dialog ubah nama."
+    },
+    "cancelButton": {
+        "message": "Batal",
+        "description": "The text of the cancel button during an active download."
+    },
+    "downloadCancelled": {
+        "message": "Unduhan dibatalkan",
+        "description": "The message shown when a download is manually cancelled."
     }
 }
