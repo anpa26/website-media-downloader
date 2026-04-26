@@ -535,6 +535,31 @@ function getFileName(url, maxLength = 30) {
     } catch (e) { return "Media File"; }
 }
 
+const pendingSaveQueue = [];
+let activeBridgeTabId = null;
+
+async function processSaveQueue() {
+    if (activeBridgeTabId !== null || pendingSaveQueue.length === 0) return;
+
+    const nextDownload = pendingSaveQueue.shift();
+    const { url, filename } = nextDownload;
+
+    const tab = await browser.tabs.create({
+        url: browser.runtime.getURL(`download.html?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`),
+        active: true
+    });
+    activeBridgeTabId = tab.id;
+}
+
+// Listen for the bridge tab closing to open the next one in queue
+browser.tabs.onRemoved.addListener((tabId) => {
+    if (tabId === activeBridgeTabId) {
+        activeBridgeTabId = null;
+        // Small delay before opening the next one for better UX on Android
+        setTimeout(processSaveQueue, 1000);
+    }
+});
+
 async function handleFetchDownload(url, filename) {
     try {
         const response = await fetch(url);
@@ -580,12 +605,12 @@ async function handleFetchDownload(url, filename) {
         const blob = new Blob(chunks);
         const finalFilename = filename || getFileName(url);
 
-        // Store in cache and open the bridge tab (the most reliable way on Android)
+        // Store in cache
         await storeInCache(url, blob, '');
-        browser.tabs.create({
-            url: browser.runtime.getURL(`download.html?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(finalFilename)}`),
-            active: true
-        });
+        
+        // Add to queue instead of opening immediately
+        pendingSaveQueue.push({ url, filename: finalFilename });
+        processSaveQueue();
 
         activeDownloads.delete(url);
         browser.runtime.sendMessage({ action: 'downloadComplete', url: url }).catch(() => {});
