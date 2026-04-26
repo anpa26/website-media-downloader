@@ -1,3 +1,12 @@
+function getHumanReadableSize(size) {
+  const units = ['b', 'Kb', 'Mb', 'Gb', 'Tb'];
+  let sizeInBytes = parseInt(size);
+  if (isNaN(sizeInBytes)) return "Unknown Size";
+  let i = 0;
+  while (sizeInBytes > 1024 && i < units.length - 1) { sizeInBytes /= 1024; i++; }
+  return `${sizeInBytes.toFixed(2)} ${units[i]}`;
+}
+
 // --- IndexedDB Cache Helpers ---
 const DB_NAME = "MediaCacheDB";
 const STORE_NAME = "network-cache";
@@ -22,8 +31,8 @@ function openCacheDB() {
  * If missing, falls back to network fetch.
  */
 async function fetchWithCache(url, options = {}) {
-
-  if (browser.extension.inIncognitoContext || (await browser.storage.local.get("media-cache").then((result) => result["media-cache"])) !== "1") {
+  const isIncognito = (typeof browser !== 'undefined' && browser.extension && browser.extension.inIncognitoContext) || false;
+  if (isIncognito || (await browser.storage.local.get("media-cache").then((result) => result["media-cache"])) !== "1") {
     // Bypass cache in incognito/private mode or if media-cache is disabled
     return fetch(url, options);
   }
@@ -101,15 +110,28 @@ function updateSegmentProgressStatus(loadingBar, processed, total) {
  */
 async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar, request) {
   const getText = async (url) => {
-    // UPDATED
-    const res = await fetchWithCache(url, {
+    const fetchOptions = {
       headers: Object.fromEntries(headers.map(h => [h.name, h.value])),
-      referrer: request.requestHeaders.find(h => h.name.toLowerCase() === "referer")?.value,
       method: request.method,
-      referrer:
-        request.requestHeaders.find(h => h.name.toLowerCase() === "referer")?.value || "",
-      body: request.method !== 'GET' ? request.requestBody : null,
-    });
+      referrer: request.requestHeaders?.find(h => h.name.toLowerCase() === "referer")?.value || "",
+    };
+
+    if (request.method !== 'GET' && request.requestBody) {
+      if (request.requestBody.type === 'formData') {
+        const formData = new FormData();
+        for (const key in request.requestBody.data) {
+          request.requestBody.data[key].forEach(val => formData.append(key, val));
+        }
+        fetchOptions.body = formData;
+      } else if (request.requestBody.type === 'base64') {
+        const bin = atob(request.requestBody.data);
+        const u = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+        fetchOptions.body = u;
+      }
+    }
+
+    const res = await fetchWithCache(url, fetchOptions);
     return res.text();
   };
 
@@ -869,12 +891,28 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
   // onStart(contentLength) — called once after headers are available (contentLength may be 0 if unknown)
   // onChunk(receivedBytes, contentLength) — called repeatedly while streaming
   async function fetchWithProgress(url, { onStart, onChunk } = {}) {
-    const r = await fetchWithCache(url, {
+    const fetchOptions = {
       method: request.method,
       headers: Object.fromEntries(headers.map(h => [h.name, h.value])),
-      referrer: request.requestHeaders.find(h => h.name.toLowerCase() === "referer")?.value || "",
-      body: request.method !== 'GET' ? request.requestBody : null,
-    });
+      referrer: request.requestHeaders?.find(h => h.name.toLowerCase() === "referer")?.value || ""
+    };
+
+    if (request.method !== 'GET' && request.requestBody) {
+      if (request.requestBody.type === 'formData') {
+        const formData = new FormData();
+        for (const key in request.requestBody.data) {
+          request.requestBody.data[key].forEach(val => formData.append(key, val));
+        }
+        fetchOptions.body = formData;
+      } else if (request.requestBody.type === 'base64') {
+        const bin = atob(request.requestBody.data);
+        const u = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+        fetchOptions.body = u;
+      }
+    }
+
+    const r = await fetchWithCache(url, fetchOptions);
     if (!r.ok) throw new Error(`Fetch failed: ${url} (${r.status})`);
 
     const contentLength = Number(r.headers.get("Content-Length")) || 0;

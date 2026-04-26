@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" class="mdui-theme-auto">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stream Downloader - Website Media Downloader</title>
+  <link rel="stylesheet" href="styles/mdui.css">
+  <script src="libraries/mdui.global.js"></script>
+  <script src="libraries/client-zip.js"></script>
+  <script src="libraries/hls.js"></script>
+  <style>
+    body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background-color: rgb(var(--mdui-color-background)); color: rgb(var(--mdui-color-on-background)); }
+    .card { width: 90%; max-width: 500px; padding: 24px; text-align: center; }
+    .status-area { margin-top: 24px; }
+    .download-status-info { font-size: 14px; margin-top: 8px; opacity: 0.8; }
+    #media-title { font-weight: bold; margin-bottom: 8px; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <mdui-card class="card">
+    <h2 id="status-header">Initializing Stream Download</h2>
+    <div id="media-title">Fetching details...</div>
+    
+    <div class="status-area">
+      <mdui-linear-progress id="stream-progress" indeterminate></mdui-linear-progress>
+      <div class="download-status-info" id="status-text">Preparing manifest...</div>
+    </div>
+
+    <div id="action-area" style="margin-top: 24px; display: none;">
+      <mdui-button id="close-button">Close Tab</mdui-button>
+    </div>
+  </mdui-card>
+
+  <script src="translations.js"></script>
+  <script src="offlineStreamConvert.js"></script>
+  <script src="stream_downloader.js"></script>
+</body>
+</html>

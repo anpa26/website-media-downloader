@@ -334,8 +334,17 @@ async function downloadFile(url, mediaDiv, specificSize) {
     loadingBar.setAttribute('indeterminate', 'true');
 
     const downloadMethod = await browser.storage.local.get('download-method').then(res => res['download-method']);
-    
-    if (downloadMethod === 'browser') {
+    const streamPref = await browser.storage.local.get('stream-download').then(res => res['stream-download']);
+    const isStream = url.toLowerCase().includes('.m3u8') || url.toLowerCase().includes('.mpd');
+
+    if (isStream && streamPref === 'offline') {
+      // Redirect to dedicated stream downloader tab
+      browser.tabs.create({
+        url: browser.runtime.getURL(`stream_downloader.html?url=${encodeURIComponent(url)}&size=${encodeURIComponent(specificSize || '')}`),
+        active: true
+      });
+      finishDownloadUI(url);
+    } else if (downloadMethod === 'browser') {
       await browser.downloads.download({ url: url, filename: getFileName(url) });
       // UI cleanup will be handled by background progress listener
     } else {
