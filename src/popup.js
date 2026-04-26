@@ -337,7 +337,7 @@ function loadMediaList() {
     endMsg.id = "end-of-media-list";
     endMsg.style.textAlign = 'center';
     endMsg.style.padding = '20px 0 100px';
-    endMsg.innerHTML = "End of list";
+    endMsg.innerHTML = browser.i18n.getMessage("endOfMediaList");
     mediaContainer.appendChild(endMsg);
 
     // Restore active downloads UI
