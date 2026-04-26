@@ -462,7 +462,8 @@ async function downloadFile(url, mediaDiv, specificSize) {
       browser.runtime.sendMessage({
         action: 'startFetchDownload',
         url: url,
-        filename: newName
+        filename: newName,
+        request: targetRequest
       });
       // UI updates will be handled by the message listener
     }

@@ -4,7 +4,9 @@ if (typeof browser === 'undefined') {
 }
 
 const urlParams = new URLSearchParams(window.location.search);
+const downloadId = urlParams.get('id');
 const targetUrl = urlParams.get('url');
+const cacheKey = downloadId || targetUrl;
 const filename = urlParams.get('filename') || 'Media File';
 
 const DB_NAME = "MediaCacheDB";
@@ -33,7 +35,7 @@ async function triggerDownload() {
         const db = await openCacheDB();
         const tx = db.transaction([STORE_NAME], "readonly");
         const store = tx.objectStore(STORE_NAME);
-        const getRequest = store.get(targetUrl);
+        const getRequest = store.get(cacheKey);
 
         getRequest.onsuccess = (event) => {
             const item = event.target.result;
@@ -60,7 +62,7 @@ async function triggerDownload() {
                     setTimeout(() => {
                         URL.revokeObjectURL(objectUrl);
                         const delTx = db.transaction([STORE_NAME], "readwrite");
-                        delTx.objectStore(STORE_NAME).delete(targetUrl);
+                        delTx.objectStore(STORE_NAME).delete(cacheKey);
                         window.close();
                     }, 8000);
                 };

@@ -519,7 +519,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === 'startFetchDownload') {
-        handleFetchDownload(message.url, message.filename);
+        handleFetchDownload(message.url, message.filename, message.request);
         return true;
     }
 
@@ -553,10 +553,10 @@ async function processSaveQueue() {
     if (activeBridgeTabId !== null || pendingSaveQueue.length === 0) return;
 
     const nextDownload = pendingSaveQueue.shift();
-    const { url, filename } = nextDownload;
+    const { id, url, filename } = nextDownload;
 
     const tab = await browser.tabs.create({
-        url: browser.runtime.getURL(`download.html?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`),
+        url: browser.runtime.getURL(`download.html?id=${id}&url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`),
         active: true
     });
     activeBridgeTabId = tab.id;
@@ -571,9 +571,51 @@ browser.tabs.onRemoved.addListener((tabId) => {
     }
 });
 
-async function handleFetchDownload(url, filename) {
+async function handleFetchDownload(url, filename, originalRequest = null) {
     try {
-        const response = await fetch(url);
+        const fetchOptions = {
+            method: originalRequest ? originalRequest.method : 'GET',
+            headers: {},
+            credentials: 'include' // Important for cookies
+        };
+
+        if (originalRequest && originalRequest.requestHeaders) {
+            originalRequest.requestHeaders.forEach(h => {
+                const name = h.name.toLowerCase();
+                if (name !== 'cookie' && name !== 'referer') {
+                    fetchOptions.headers[h.name] = h.value;
+                }
+            });
+        }
+
+        // Add cookies and referer if available
+        const storedHeaders = urlToHeaderMap.get(url);
+        if (storedHeaders) {
+            if (storedHeaders.referer) {
+                fetchOptions.referrer = storedHeaders.referer;
+            }
+        }
+        
+        // Manual override from requestHeaders if present
+        const manualReferer = originalRequest?.requestHeaders?.find(h => h.name.toLowerCase() === 'referer')?.value;
+        if (manualReferer) fetchOptions.referrer = manualReferer;
+
+        if (originalRequest && originalRequest.method !== 'GET' && originalRequest.requestBody) {
+            if (originalRequest.requestBody.type === 'formData') {
+                const formData = new FormData();
+                for (const key in originalRequest.requestBody.data) {
+                    originalRequest.requestBody.data[key].forEach(val => formData.append(key, val));
+                }
+                fetchOptions.body = formData;
+            } else if (originalRequest.requestBody.type === 'base64') {
+                const bin = atob(originalRequest.requestBody.data);
+                const u = new Uint8Array(bin.length);
+                for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+                fetchOptions.body = u;
+            }
+        }
+
+        const response = await fetch(url, fetchOptions);
         if (!response.ok) throw new Error("Server error: " + response.status);
 
         const contentLength = response.headers.get('content-length');
@@ -615,12 +657,13 @@ async function handleFetchDownload(url, filename) {
 
         const blob = new Blob(chunks);
         const finalFilename = filename || getFileName(url);
+        const downloadId = 'dl_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-        // Store in cache
-        await storeInCache(url, blob, '');
+        // Store in cache using unique ID
+        await storeInCache(downloadId, blob, response.headers.get('content-type'));
         
         // Add to queue instead of opening immediately
-        pendingSaveQueue.push({ url, filename: finalFilename });
+        pendingSaveQueue.push({ id: downloadId, url, filename: finalFilename });
         processSaveQueue();
 
         activeDownloads.delete(url);
