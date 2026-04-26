@@ -7,7 +7,10 @@ let downloadingCount = 0;
 let ratingCount = 0;
 sessionStorage.setItem('shownYoutubeAlert', 0); 
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  const colorResult = await browser.storage.local.get('theme-color');
+  mdui.setColorScheme(colorResult['theme-color'] || '#bbdefb');
+
   loadMediaList();
   document.getElementById('navbar').addEventListener('change', (event) => {
     const selectedTabIndex = document.getElementById('navbar').activeTabIndex;
@@ -177,6 +180,11 @@ function loadMediaList() {
         return;
     }
 
+    const onlyMedia = (await browser.storage.local.get('only-media'))['only-media'] !== '0'; // Default to true
+    const videoExtensions = [".3g2", ".3gp", ".asx", ".avi", ".divx", ".4v", ".flv", ".ismv", ".m2t", ".m2ts", ".m2v", ".m4s", ".m4v", ".mk3d", ".mkv", ".mng", ".mov", ".mp2v", ".mp4", ".mp4v", ".mpe", ".mpeg", ".mpeg1", ".mpeg2", ".mpeg4", ".mpg", ".mxf", ".ogm", ".ogv", ".qt", ".rm", ".swf", ".ts", ".vob", ".vp9", ".webm", ".wmv"]
+    const audioExtensions = [".3ga", ".aac", ".ac3", ".adts", ".aif", ".aiff", ".alac", ".ape", ".asf", ".au", ".dts", ".f4a", ".f4b", ".flac", ".isma", ".it", ".m4a", ".m4b", ".m4r", ".mid", ".mka", ".mod", ".mp1", ".mp2", ".mp3", ".mp4a", ".mpa", ".mpga", ".oga", ".ogg", ".ogx", ".opus", ".ra", ".shn", ".spx", ".vorbis", ".wav", ".weba", ".wma", ".xm"];
+    const streamExtensions = [".f4f", ".f4m", ".m3u8", ".mpd", ".smil"];
+
     const mediaGroups = new Map();
     for (const rawUrl in mediaRequests) {
       if (activeItems.has(rawUrl)) continue;
@@ -185,10 +193,17 @@ function loadMediaList() {
       try { mediaURL = new URL(rawUrl); } catch (e) { continue; }
       const requests = mediaRequests[rawUrl];
       if (!Array.isArray(requests) || requests.length === 0) continue;
+
+      const path = mediaURL.pathname.toLowerCase();
+      const isVideo = videoExtensions.some(ext => path.endsWith(ext)) || requests.some(req => req.responseHeaders?.find(h => h.name.toLowerCase() === "content-type" && h.value.startsWith("video/")));
+      const isAudio = audioExtensions.some(ext => path.endsWith(ext)) || requests.some(req => req.responseHeaders?.find(h => h.name.toLowerCase() === "content-type" && h.value.startsWith("audio/")));
+      const isStream = streamExtensions.some(ext => path.endsWith(ext)) || requests.some(req => req.responseHeaders?.find(h => h.name.toLowerCase() === "content-type" && (h.value.includes("mpegurl") || h.value.includes("dash+xml"))));
+
+      if (onlyMedia && !isVideo && !isAudio && !isStream) continue;
       
       // Use URL without common tracking params as identity to distinguish qualities
       const identity = rawUrl.split('?')[0]; 
-      if (!mediaGroups.has(identity)) mediaGroups.set(identity, { requests: [] });
+      if (!mediaGroups.has(identity)) mediaGroups.set(identity, { requests: [], isVideo, isAudio, isStream });
       const group = mediaGroups.get(identity);
       
       requests.forEach(req => {
@@ -210,16 +225,24 @@ function loadMediaList() {
     const flattenedRequests = [];
     mediaGroups.forEach(group => {
         group.requests.sort((a, b) => (parseInt(b.size) || 0) - (parseInt(a.size) || 0));
-        flattenedRequests.push(group.requests[0]);
+        flattenedRequests.push({ 
+          bestRequest: group.requests[0], 
+          isVideo: group.isVideo, 
+          isAudio: group.isAudio, 
+          isStream: group.isStream 
+        });
     });
     
-    flattenedRequests.sort((a, b) => (parseInt(b.size) || 0) - (parseInt(a.size) || 0));
+    flattenedRequests.sort((a, b) => (parseInt(b.bestRequest.size) || 0) - (parseInt(a.bestRequest.size) || 0));
 
-    for (const bestRequest of flattenedRequests) {
-      const videoExtensions = [".3g2", ".3gp", ".asx", ".avi", ".divx", ".4v", ".flv", ".ismv", ".m2t", ".m2ts", ".m2v", ".m4s", ".m4v", ".mk3d", ".mkv", ".mng", ".mov", ".mp2v", ".mp4", ".mp4v", ".mpe", ".mpeg", ".mpeg1", ".mpeg2", ".mpeg4", ".mpg", ".mxf", ".ogm", ".ogv", ".qt", ".rm", ".swf", ".ts", ".vob", ".vp9", ".webm", ".wmv"]
-      const audioExtensions = [".3ga", ".aac", ".ac3", ".adts", ".aif", ".aiff", ".alac", ".ape", ".asf", ".au", ".dts", ".f4a", ".f4b", ".flac", ".isma", ".it", ".m4a", ".m4b", ".m4r", ".mid", ".mka", ".mod", ".mp1", ".mp2", ".mp3", ".mp4a", ".mpa", ".mpga", ".oga", ".ogg", ".ogx", ".opus", ".ra", ".shn", ".spx", ".vorbis", ".wav", ".weba", ".wma", ".xm"];
-      const streamExtensions = [".f4f", ".f4m", ".m3u8", ".mpd", ".smil"];
+    if (flattenedRequests.length === 0 && activeItems.size === 0) {
+      if (loadingSpinner) loadingSpinner.style.display = 'none';
+      mediaContainer.innerHTML = `<div style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
+      return;
+    }
 
+    for (const item of flattenedRequests) {
+      const { bestRequest, isVideo, isAudio, isStream } = item;
       const mediaURL = new URL(bestRequest.originalUrl);
       const mediaDiv = document.createElement('mdui-list-item');
       mediaDiv.setAttribute('nonclickable', 'true');
@@ -229,10 +252,6 @@ function loadMediaList() {
       const previewContainer = document.createElement('div');
       previewContainer.classList.add('media-preview-container');
       previewContainer.setAttribute('slot', 'icon');
-
-      const isVideo = videoExtensions.some(ext => mediaURL.pathname.toLowerCase().endsWith(ext)) || bestRequest.responseHeaders?.find(h => h.name.toLowerCase() === "content-type" && h.value.startsWith("video/"));
-      const isAudio = audioExtensions.some(ext => mediaURL.pathname.toLowerCase().endsWith(ext)) || bestRequest.responseHeaders?.find(h => h.name.toLowerCase() === "content-type" && h.value.startsWith("audio/"));
-      const isStream = streamExtensions.some(ext => mediaURL.pathname.toLowerCase().endsWith(ext)) || bestRequest.responseHeaders?.find(h => h.name.toLowerCase() === "content-type" && (h.value.includes("mpegurl") || h.value.includes("dash+xml")));
 
       if (isVideo || isStream) {
         previewContainer.classList.add('video');

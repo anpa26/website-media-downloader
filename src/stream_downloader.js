@@ -4,6 +4,9 @@ if (typeof browser === 'undefined') {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    const colorResult = await browser.storage.local.get('theme-color');
+    mdui.setColorScheme(colorResult['theme-color'] || '#bbdefb');
+
     const urlParams = new URLSearchParams(window.location.search);
     const streamUrl = urlParams.get('url');
     const size = urlParams.get('size');

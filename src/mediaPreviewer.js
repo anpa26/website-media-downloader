@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         browser.storage.local.set({ 'dontremindme': '1' });
         document.querySelector("#previewhelp").open = false;
     });
-    mdui.setColorScheme(await browser.storage.local.get('interfaceColor').then(result => result.interfaceColor));
+    const colorResult = await browser.storage.local.get('theme-color');
+    mdui.setColorScheme(colorResult['theme-color'] || '#bbdefb');
     document.querySelector("#previewhelp").open = (await browser.storage.local.get({ 'dontremindme': '0' })).dontremindme !== '1';
 
 

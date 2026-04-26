@@ -221,6 +221,14 @@
         "message": "Sembunyikan segmen siaran di daftar media",
         "description": "Label kotak centang untuk menyembunyikan segmen siaran."
     },
+    "onlyMediaTitle": {
+        "message": "Hanya tampilkan video dan audio",
+        "description": "Judul pengaturan 'Hanya tampilkan video dan audio'."
+    },
+    "onlyMediaExplain": {
+        "message": "Sembunyikan semua permintaan yang tidak teridentifikasi jelas sebagai video, audio, atau siaran (misal manifest). Hapus centang jika ingin melihat semua permintaan yang difilter.",
+        "description": "Penjelasan pengaturan 'Hanya tampilkan video dan audio'."
+    },
     "streamDownloadTitle": {
         "message": "Preferensi unduhan siaran",
         "description": "Judul preferensi unduhan siaran."

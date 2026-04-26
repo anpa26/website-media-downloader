@@ -239,6 +239,14 @@
         "message": "Hide stream segments in the media list",
         "description": "The label of the checkbox to enable hiding stream segments in the media list."
     },
+    "onlyMediaTitle": {
+        "message": "Only show video and audio",
+        "description": "The title of the 'Only show video and audio' setting."
+    },
+    "onlyMediaExplain": {
+        "message": "Hide all requests that are not clearly identified as video, audio, or streams (e.g. manifests). Uncheck this if you want to see all filtered requests.",
+        "description": "The explanation for the 'Only show video and audio' setting."
+    },
     "streamDownloadTitle": {
         "message": "Stream download preference",
         "description": "The title of the stream download preference section in the settings tab."

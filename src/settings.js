@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function initializeSettings() {
     const settings = [
-        'url-detection', 'mime-detection', 'hide-segments',
+        'url-detection', 'mime-detection', 'hide-segments', 'only-media',
         'download-method', 'media-cache', 'stream-download',
         'stream-quality', 'mpd-fix', 'open-preference',
         'filename-template'
@@ -21,7 +21,15 @@ async function initializeSettings() {
 
     for (const setting of settings) {
         const result = await browser.storage.local.get(setting);
-        const value = result[setting];
+        let value = result[setting];
+
+        // Default values for new settings
+        if (value === undefined) {
+            if (['url-detection', 'mime-detection', 'only-media'].includes(setting)) {
+                value = '1';
+                browser.storage.local.set({ [setting]: value });
+            }
+        }
 
         const element = document.getElementById(setting);
         if (element && element.tagName === 'MDUI-SWITCH') {
@@ -98,9 +106,14 @@ async function initializeSettings() {
     const colorResult = await browser.storage.local.get('theme-color');
     const colorInput = document.getElementById('color-picker-input');
     if (colorInput) {
-        colorInput.value = colorResult['theme-color'] || '#bbdefb';
+        const activeColor = colorResult['theme-color'] || '#bbdefb';
+        colorInput.value = activeColor;
+        mdui.setColorScheme(activeColor);
+        
         colorInput.addEventListener('input', (e) => {
-            browser.storage.local.set({ 'theme-color': e.target.value });
+            const newColor = e.target.value;
+            browser.storage.local.set({ 'theme-color': newColor });
+            mdui.setColorScheme(newColor);
         });
     }
 }
