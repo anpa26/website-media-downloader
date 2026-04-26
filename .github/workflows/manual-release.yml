@@ -7,7 +7,7 @@ on:
         description: 'Commit ID to release (e.g., a1b2c3d)'
         required: true
       tag_name:
-        description: 'Tag name for the release (e.g., v1.5.0)'
+        description: 'Tag name for the release (e.g., v1.5.3)'
         required: true
       release_name:
         description: 'Name of the release (leave empty to use commit title)'
