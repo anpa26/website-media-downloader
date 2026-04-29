@@ -66,4 +66,4 @@ jobs:
           files: addon.xpi
           target_commitish: ${{ github.event.inputs.commit_sha }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
