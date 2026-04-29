@@ -229,6 +229,22 @@
         "message": "Sembunyikan semua permintaan yang tidak teridentifikasi jelas sebagai video, audio, atau siaran (misal manifest). Hapus centang jika ingin melihat semua permintaan yang difilter.",
         "description": "Penjelasan pengaturan 'Hanya tampilkan video dan audio'."
     },
+    "mediaNotificationTitle": {
+        "message": "Media terdeteksi!",
+        "description": "The title of the notification when media is detected."
+    },
+    "mediaNotificationCheckbox": {
+        "message": "Aktifkan notifikasi deteksi",
+        "description": "The label of the checkbox to enable media detection notification."
+    },
+    "mediaNotificationExplain": {
+        "message": "Tampilkan notifikasi saat media terdeteksi di situs web.",
+        "description": "The explanation of the media detection notification setting."
+    },
+    "mediaNotificationDownloadAction": {
+        "message": "Unduh",
+        "description": "The action label to download media from the notification."
+    },
     "streamDownloadTitle": {
         "message": "Preferensi unduhan siaran",
         "description": "Judul preferensi unduhan siaran."

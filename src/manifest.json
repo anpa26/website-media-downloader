@@ -21,7 +21,8 @@
     "unlimitedStorage",
     "scripting",
     "activeTab",
-    "downloads"
+    "downloads",
+    "notifications"
   ],
   "optional_permissions": [
   ],

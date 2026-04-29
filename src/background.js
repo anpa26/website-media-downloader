@@ -161,13 +161,224 @@ browser.webRequest.onBeforeSendHeaders.addListener(
 
 // get local settings
 function getSettings(callback) {
-    browser.storage.local.get(['mime-detection', 'url-detection'], function (result) {
+    browser.storage.local.get(['mime-detection', 'url-detection', 'media-notification', 'hide-segments', 'only-media', 'filename-template'], function (result) {
         callback({
             mimeDetection: isFlagEnabled(result['mime-detection']),
-            urlDetection: isFlagEnabled(result['url-detection'])
+            urlDetection: isFlagEnabled(result['url-detection']),
+            mediaNotification: isFlagEnabled(result['media-notification']),
+            hideSegments: isFlagEnabled(result['hide-segments']),
+            onlyMedia: isFlagEnabled(result['only-media']),
+            filenameTemplate: result['filename-template'] || ''
         });
     });
 }
+
+const notificationUrls = new Map(); // notificationId -> { url, tabId }
+const notifiedUrls = new Map(); // tabId -> Set of URLs
+const lastNotificationTime = new Map(); // tabId -> timestamp
+
+function injectNotificationScript(tabId, filename, url) {
+    if (!browser.scripting) return;
+    
+    browser.scripting.executeScript({
+        target: { tabId: tabId },
+        func: (name, downloadUrl, dlLabel) => {
+            // Find existing toasts and shift them up
+            const existingToasts = document.querySelectorAll('.mdu-toast');
+            existingToasts.forEach(t => {
+                const currentBottom = parseInt(t.style.bottom);
+                t.style.bottom = (currentBottom + 80) + 'px';
+            });
+
+            const toast = document.createElement('div');
+            toast.className = 'mdu-toast';
+            toast.style.cssText = `
+                position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+                background: #323232; color: white; padding: 12px 16px; border-radius: 8px;
+                z-index: 2147483647; display: flex; align-items: center; gap: 12px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.4); font-family: system-ui, -apple-system, sans-serif;
+                font-size: 14px; min-width: 280px; max-width: 90vw; justify-content: space-between;
+                transition: bottom 0.3s ease;
+                animation: mdu-fade-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            `;
+
+            const text = document.createElement('span');
+            text.textContent = name;
+            text.style.cssText = `overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-grow: 1;`;
+
+            const actions = document.createElement('div');
+            actions.style.cssText = `display: flex; align-items: center; gap: 8px; flex-shrink: 0;`;
+
+            const dlBtn = document.createElement('button');
+            dlBtn.textContent = dlLabel;
+            dlBtn.style.cssText = `
+                background: #bbdefb; color: #000; border: none; padding: 6px 12px;
+                border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 12px;
+            `;
+            dlBtn.onclick = () => {
+                chrome.runtime.sendMessage({ action: 'startDownloadFromToast', url: downloadUrl });
+                toast.remove();
+            };
+
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '✕';
+            closeBtn.style.cssText = `
+                background: transparent; color: rgba(255,255,255,0.7); border: none;
+                cursor: pointer; font-size: 16px; padding: 4px;
+            `;
+            closeBtn.onclick = () => toast.remove();
+
+            actions.appendChild(dlBtn);
+            actions.appendChild(closeBtn);
+            toast.appendChild(text);
+            toast.appendChild(actions);
+
+            const style = document.createElement('style');
+            style.id = 'mdu-toast-style';
+            style.textContent = `
+                @keyframes mdu-fade-in { from { bottom: 0; opacity: 0; } to { bottom: 24px; opacity: 1; } }
+            `;
+            if (!document.getElementById('mdu-toast-style')) document.head.appendChild(style);
+            document.body.appendChild(toast);
+
+            setTimeout(() => { if (toast.parentNode) toast.remove(); }, 6000);
+        },
+        args: [filename, url, browser.i18n.getMessage("mediaNotificationDownloadAction") || "Download"]
+    }).catch(() => {});
+}
+
+async function generateTemplateName(template, url, originalName, tabId) {
+    let result = template || "{name}";
+    let pageTitle = "Media";
+    try {
+        if (tabId && tabId >= 0) {
+            const tab = await browser.tabs.get(tabId);
+            if (tab && tab.title) pageTitle = tab.title;
+        }
+    } catch (e) {}
+
+    const host = new URL(url).hostname;
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+    
+    // Extract name without extension for {name}
+    const lastDotIdx = originalName.lastIndexOf('.');
+    const nameWithoutExt = lastDotIdx !== -1 ? originalName.substring(0, lastDotIdx) : originalName;
+    const ext = lastDotIdx !== -1 ? originalName.substring(lastDotIdx) : '';
+
+    result = result
+        .replace(/{title}/g, pageTitle)
+        .replace(/{host}/g, host)
+        .replace(/{date}/g, dateStr)
+        .replace(/{time}/g, timeStr)
+        .replace(/{name}/g, nameWithoutExt);
+    
+    // Ensure extension is kept if not in template and not already present
+    if (ext && !result.toLowerCase().endsWith(ext.toLowerCase())) {
+        result += ext;
+    }
+
+    // Basic filename sanitization
+    return result.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_');
+}
+
+async function showMediaNotification(details, settings) {
+    if (!settings.mediaNotification) return;
+
+    const url = details.url;
+    const tabId = details.tabId;
+    if (tabId < 0) return;
+
+    // Use base URL (without query/hash) to identify the video to avoid spamming segments
+    const baseUrl = url.split('?')[0].split('#')[0];
+
+    // Check if we already notified for this specific video in this tab
+    if (!notifiedUrls.has(tabId)) notifiedUrls.set(tabId, new Set());
+    const tabNotified = notifiedUrls.get(tabId);
+    if (tabNotified.has(baseUrl)) return;
+
+    const responseHeaders = details.responseHeaders || [];
+    let contentType = responseHeaders.find(h => h.name.toLowerCase() === 'content-type')?.value || '';
+    let contentLength = parseInt(responseHeaders.find(h => h.name.toLowerCase() === 'content-length')?.value || '0');
+
+    // Filter by onlyMedia setting
+    const isVideo = contentType.startsWith('video/') || videoExtensions.some(ext => url.toLowerCase().includes(ext));
+    const isAudio = contentType.startsWith('audio/') || audioExtensions.some(ext => url.toLowerCase().includes(ext));
+    const isStream = streamExtensions.some(ext => url.toLowerCase().includes(ext)) || contentType.includes('mpegurl') || contentType.includes('dash+xml');
+
+    if (settings.onlyMedia && !isVideo && !isAudio && !isStream) return;
+
+    // Filter by hideSegments setting
+    const isSegment = url.toLowerCase().includes('.ts') || (contentLength > 0 && contentLength < 1048576 && contentType === 'video/mp2t');
+    if (settings.hideSegments && isSegment) return;
+
+    const now = Date.now();
+    // Short cooldown (2 seconds) just to prevent overlapping toasts for multiple videos detected simultaneously
+    if (lastNotificationTime.has(tabId) && (now - lastNotificationTime.get(tabId) < 2000)) {
+        return;
+    }
+
+    tabNotified.add(baseUrl);
+    lastNotificationTime.set(tabId, now);
+
+    const originalFilename = getFileName(url, 50);
+    let displayFilename = originalFilename;
+
+    if (settings.filenameTemplate) {
+        displayFilename = await generateTemplateName(settings.filenameTemplate, url, originalFilename, tabId);
+    }
+    
+    // Fallback: Inject in-page toast for environments where browser.notifications might not work (e.g. Firefox Android)
+    injectNotificationScript(tabId, displayFilename, url);
+
+    browser.notifications.create({
+        type: "basic",
+        iconUrl: browser.runtime.getURL("icons/file_save.svg"),
+        title: browser.i18n.getMessage("mediaNotificationTitle") || "Media detected!",
+        message: displayFilename,
+        buttons: [
+            { title: browser.i18n.getMessage("mediaNotificationDownloadAction") || "Download" }
+        ]
+    }, (notificationId) => {
+        if (browser.runtime.lastError) {
+            console.warn("Notification error (normal in some mobile browsers):", browser.runtime.lastError.message);
+        }
+        notificationUrls.set(notificationId, { url, tabId });
+    });
+}
+
+browser.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
+    const data = notificationUrls.get(notificationId);
+    if (data && buttonIndex === 0) {
+        browser.storage.session.get(data.url, (result) => {
+            const requests = result[data.url];
+            if (requests && requests.length > 0) {
+                const request = requests[requests.length - 1];
+                browser.storage.local.get(['download-method'], (res) => {
+                    const method = res['download-method'] || 'browser';
+                    if (method === 'fetch') {
+                        handleFetchDownload(data.url, getFileName(data.url), request);
+                    } else {
+                        browser.downloads.download({
+                            url: data.url,
+                            filename: getFileName(data.url),
+                            saveAs: false
+                        });
+                    }
+                });
+            }
+        });
+    }
+    notificationUrls.delete(notificationId);
+});
+
+browser.notifications.onClicked.addListener((notificationId) => {
+    browser.tabs.create({
+        url: browser.runtime.getURL(`popup.html`),
+    });
+    notificationUrls.delete(notificationId);
+});
 
 // Helper: convert ArrayBuffer to base64 safely in chunks
 function arrayBufferToBase64(buffer) {
@@ -493,6 +704,11 @@ function initListener() {
                         let requestsObj = {};
                         requestsObj[details.url] = existingRequests;
                         browser.storage.session.set(requestsObj);
+
+                        // NEW: Show notification if media was detected
+                        if (shouldSaveNow || updated) {
+                            showMediaNotification(details, currentSettings);
+                        }
                     });
                 });
             } catch (e) {
@@ -553,6 +769,35 @@ browser.downloads.onChanged.addListener((delta) => {
 
 // Send media request data to the popup (session storage is not shared between background and popup scripts)
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'startDownloadFromToast') {
+        const url = message.url;
+        const tabId = sender.tab ? sender.tab.id : null;
+        browser.storage.session.get(url, (result) => {
+            const requests = result[url] || [];
+            const request = requests.length > 0 ? requests[requests.length - 1] : null;
+            browser.storage.local.get(['download-method', 'filename-template'], async (res) => {
+                const method = res['download-method'] || 'browser';
+                const template = res['filename-template'];
+                const originalName = getFileName(url);
+                let finalName = originalName;
+
+                if (template) {
+                    finalName = await generateTemplateName(template, url, originalName, tabId);
+                }
+
+                if (method === 'fetch') {
+                    handleFetchDownload(url, finalName, request);
+                } else {
+                    browser.downloads.download({
+                        url: url,
+                        filename: finalName,
+                        saveAs: false
+                    });
+                }
+            });
+        });
+        return;
+    }
     if (message.action === 'getMediaRequests') {
         browser.storage.session.get(null, function (items) {
             sendResponse(items);

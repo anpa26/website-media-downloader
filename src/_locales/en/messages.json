@@ -247,6 +247,22 @@
         "message": "Hide all requests that are not clearly identified as video, audio, or streams (e.g. manifests). Uncheck this if you want to see all filtered requests.",
         "description": "The explanation for the 'Only show video and audio' setting."
     },
+    "mediaNotificationTitle": {
+        "message": "Media detected!",
+        "description": "The title of the notification when media is detected."
+    },
+    "mediaNotificationCheckbox": {
+        "message": "Enable detection notification",
+        "description": "The label of the checkbox to enable media detection notification."
+    },
+    "mediaNotificationExplain": {
+        "message": "Show a notification when media is detected on a website.",
+        "description": "The explanation of the media detection notification setting."
+    },
+    "mediaNotificationDownloadAction": {
+        "message": "Download",
+        "description": "The action label to download media from the notification."
+    },
     "streamDownloadTitle": {
         "message": "Stream download preference",
         "description": "The title of the stream download preference section in the settings tab."

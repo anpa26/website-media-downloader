@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function initializeSettings() {
     const settings = [
         'url-detection', 'mime-detection', 'hide-segments', 'only-media',
-        'download-method', 'media-cache', 'stream-download',
+        'media-notification', 'download-method', 'media-cache', 'stream-download',
         'stream-quality', 'mpd-fix', 'open-preference',
         'filename-template', 'history-page'
     ];
@@ -25,7 +25,7 @@ async function initializeSettings() {
 
         // Default values for new settings
         if (value === undefined) {
-            if (['url-detection', 'mime-detection', 'only-media', 'history-page'].includes(setting)) {
+            if (['url-detection', 'mime-detection', 'only-media', 'history-page', 'media-notification'].includes(setting)) {
                 value = '1';
                 browser.storage.local.set({ [setting]: value });
             }
