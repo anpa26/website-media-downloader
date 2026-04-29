@@ -558,6 +558,10 @@
         "message": "History",
         "description": "The name of the history tab in the popup."
     },
+    "aboutTab": {
+        "message": "Sobre",
+        "description": "The name of the about tab in the popup."
+    },
     "historyPageTitle": {
         "message": "Enable history page",
         "description": "The label of the switch to enable the history page."

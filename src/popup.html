@@ -20,6 +20,7 @@
     <mdui-tabs id="navbar" value="home">
       <mdui-tab value="home" data-translate="homeTab">Home</mdui-tab>
       <mdui-tab value="history" id="history-tab" style="display: none;" data-translate="historyTab">History</mdui-tab>
+      <mdui-tab value="about" data-translate="aboutTab">About</mdui-tab>
       <mdui-tab value="settings" data-translate="settingsTab">Settings</mdui-tab>
 
       <mdui-tab-panel slot="panel" value="home">
@@ -64,6 +65,15 @@
             <mdui-button variant="tonal" id="clear-history" data-translate="clearHistoryButton">Clear history</mdui-button>
           </div>
         </mdui-bottom-app-bar>
+      </mdui-tab-panel>
+
+      <mdui-tab-panel slot="panel" value="about">
+        <div id="about-container">
+          <div id="loading-about" style="padding: 40px; text-align: center;">
+            <mdui-circular-progress></mdui-circular-progress>
+          </div>
+          <!-- Dynamic content will be injected here -->
+        </div>
       </mdui-tab-panel>
 
       <mdui-tab-panel slot="panel" value="settings">
@@ -210,21 +220,6 @@
                 <input type="color" id="color-picker-input">
               </div>
             </mdui-card>
-          </div>
-
-          <!-- Credits Section -->
-          <div class="settings-group">
-             <mdui-card variant="filled" class="credits-card">
-               <div class="credits-header">
-                  <mdui-avatar src="https://avatars.githubusercontent.com/u/278016362"></mdui-avatar>
-                  <div class="credits-info">
-                     <b>created by <a href="https://github.com/helloyanis" target="_blank">helloyanis</a>, improved by <a href="https://github.com/anpa26/website-media-downloader" target="_blank">anpa26</a></b>
-                     <p style="margin: 0; font-size: 0.8rem; opacity: 0.7;">
-                        <a href="https://github.com/anpa26/website-media-downloader" target="_blank" data-translate="creditsDescription2">Open Source Project</a>
-                     </p>
-                  </div>
-               </div>
-             </mdui-card>
           </div>
         </div>
       </mdui-tab-panel>

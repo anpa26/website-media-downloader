@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (savedTab) {
     document.getElementById('navbar').value = savedTab;
     if (savedTab === 'history') loadHistoryList();
+    if (savedTab === 'about') loadAboutPage();
   }
   if (savedScroll) {
     window.scrollTo(0, parseInt(savedScroll));
@@ -28,11 +29,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     sessionStorage.setItem('activeTab', selectedTab);
     if (selectedTab === 'history') {
       loadHistoryList();
+    } else if (selectedTab === 'about') {
+      loadAboutPage();
     }
   });
 
   const historyPageResult = await browser.storage.local.get('history-page');
-  if (historyPageResult['history-page'] === '1' || historyPageResult['history-page'] === true) {
+  if (historyPageResult['history-page'] === '1') {
     document.getElementById('history-tab').style.display = 'inline-flex';
   }
 
@@ -593,7 +596,7 @@ function clearMediaList() {
 
 async function addToHistory(item) {
   const result = await browser.storage.local.get('history-page');
-  if (result['history-page'] !== '1' && result['history-page'] !== true) return;
+  if (result['history-page'] !== '1') return;
 
   const historyResult = await browser.storage.local.get('download-history');
   let history = historyResult['download-history'] || [];
@@ -681,6 +684,78 @@ async function loadHistoryList() {
 async function clearHistory() {
   await browser.storage.local.remove('download-history');
   loadHistoryList();
+}
+
+async function loadAboutPage() {
+  const container = document.getElementById('about-container');
+  try {
+    const response = await fetch(browser.runtime.getURL('about.json?t=' + Date.now()));
+    const data = await response.json();
+    
+    let html = `
+      <div style="padding: 16px; display: flex; flex-direction: column; gap: 20px;">
+        <div style="text-align: center;">
+          <h1 style="margin: 0; font-size: 1.5rem; color: rgb(var(--mdui-color-primary));">${data.extension.name}</h1>
+          <p style="opacity: 0.7; margin-top: 4px;">Version ${browser.runtime.getManifest().version}</p>
+          <p style="font-size: 0.9rem; line-height: 1.5; margin-top: 12px;">${data.extension.description}</p>
+        </div>
+    `;
+
+    html += `
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <h2 style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: rgb(var(--mdui-color-primary)); margin: 0 8px;">Authors & Contributors</h2>
+    `;
+
+    data.authors.forEach((author) => {
+      html += `
+        <mdui-card variant="filled" style="padding: 16px !important; margin-bottom: 8px;">
+          <div style="display: flex; gap: 16px; align-items: center;">
+            <mdui-avatar src="${author.avatar}"></mdui-avatar>
+            <div style="flex-grow: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <b style="font-size: 1.1rem;">${author.name}</b>
+                <span style="font-size: 0.75rem; opacity: 0.6; font-weight: 700; text-transform: uppercase;">${author.role}</span>
+              </div>
+              <p style="margin: 4px 0 8px; font-size: 0.85rem; line-height: 1.4;">${author.description}</p>
+              <div style="display: flex; gap: 8px; margin-left: -12px;">
+                <mdui-button variant="text" href="${author.github}" target="_blank">
+                  <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></mdui-icon> GitHub
+                </mdui-button>
+              </div>
+            </div>
+          </div>
+        </mdui-card>
+      `;
+    });
+
+    html += `
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <h2 style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: rgb(var(--mdui-color-primary)); margin: 8px 8px 0;">Useful Links</h2>
+          <mdui-list>
+    `;
+
+    data.links.forEach(link => {
+      html += `
+        <mdui-list-item href="${link.url}" target="_blank">
+          <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="${link.icon}"/></svg></mdui-icon>
+          ${link.label}
+          <mdui-icon slot="end-icon"><svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg></mdui-icon>
+        </mdui-list-item>
+      `;
+    });
+
+    html += `
+          </mdui-list>
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+  } catch (error) {
+    console.error("Failed to load about page:", error);
+    container.innerHTML = `<div style="padding: 40px; text-align: center;">Failed to load About page information.</div>`;
+  }
 }
 
 function getFileName(url, maxLength = 30) {

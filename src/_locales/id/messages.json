@@ -545,6 +545,10 @@
         "message": "Riwayat",
         "description": "Nama tab riwayat di popup."
     },
+    "aboutTab": {
+        "message": "Tentang",
+        "description": "Nama tab tentang di popup."
+    },
     "historyPageTitle": {
         "message": "Aktifkan halaman riwayat",
         "description": "Label sakelar untuk mengaktifkan halaman riwayat."

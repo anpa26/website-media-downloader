@@ -25,7 +25,7 @@ async function initializeSettings() {
 
         // Default values for new settings
         if (value === undefined) {
-            if (['url-detection', 'mime-detection', 'only-media'].includes(setting)) {
+            if (['url-detection', 'mime-detection', 'only-media', 'history-page'].includes(setting)) {
                 value = '1';
                 browser.storage.local.set({ [setting]: value });
             }
