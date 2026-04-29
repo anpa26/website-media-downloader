@@ -247,6 +247,84 @@ function injectNotificationScript(tabId, filename, url) {
     }).catch(() => {});
 }
 
+async function addToHistory(item) {
+    const result = await browser.storage.local.get('history-page');
+    if (result['history-page'] !== '1') return;
+
+    const historyResult = await browser.storage.local.get('download-history');
+    let history = historyResult['download-history'] || [];
+    
+    item.timestamp = item.timestamp || Date.now();
+    
+    // Remove if exactly same URL or (same pageUrl AND same filename)
+    // This handles deduplication: old entry is replaced by the newest one
+    const existingIndex = history.findIndex(h => 
+        h.url === item.url || 
+        (h.pageUrl === item.pageUrl && h.filename === item.filename)
+    );
+    
+    if (existingIndex !== -1) {
+        history.splice(existingIndex, 1);
+    }
+    
+    history.unshift(item);
+    if (history.length > 100) history = history.slice(0, 100);
+    await browser.storage.local.set({ 'download-history': history });
+}
+
+function showSimpleToast(tabId, message) {
+    if (!browser.scripting) return;
+    browser.scripting.executeScript({
+        target: { tabId: tabId },
+        func: (msg) => {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+                background: #4caf50; color: white; padding: 12px 24px; border-radius: 8px;
+                z-index: 2147483647; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500;
+                animation: mdu-slide-down 0.4s cubic-bezier(0, 0, 0.2, 1);
+            `;
+            toast.textContent = msg;
+
+            const style = document.createElement('style');
+            style.textContent = `@keyframes mdu-slide-down { from { top: -60px; opacity: 0; } to { top: 24px; opacity: 1; } }`;
+            document.head.appendChild(style);
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.5s'; setTimeout(() => toast.remove(), 500); }, 3000);
+        },
+        args: [message]
+    }).catch(() => {});
+}
+
+async function autoUpdateHistoryLink(pageUrl, filename, newUrl, tabId) {
+    const historyResult = await browser.storage.local.get('download-history');
+    let history = historyResult['download-history'] || [];
+    let updated = false;
+
+    for (let i = 0; i < history.length; i++) {
+        // Match by pageUrl and filename to find the right record to update
+        if (history[i].pageUrl === pageUrl && history[i].filename === filename) {
+            if (history[i].url !== newUrl) {
+                history[i].url = newUrl;
+                history[i].timestamp = Date.now();
+                // Move updated item to top
+                const item = history.splice(i, 1)[0];
+                history.unshift(item);
+                updated = true;
+            }
+            break;
+        }
+    }
+
+    if (updated) {
+        await browser.storage.local.set({ 'download-history': history });
+        if (tabId) {
+            showSimpleToast(tabId, browser.i18n.getMessage("historyLinkUpdated") || "Link updated successfully.");
+        }
+    }
+}
+
 async function generateTemplateName(template, url, originalName, tabId) {
     let result = template || "{name}";
     let pageTitle = "Media";
@@ -328,6 +406,17 @@ async function showMediaNotification(details, settings) {
     if (settings.filenameTemplate) {
         displayFilename = await generateTemplateName(settings.filenameTemplate, url, originalFilename, tabId);
     }
+
+    // NEW: Automatically update history link if we found a match for this page and filename
+    let pageUrl = "";
+    try {
+        const tab = await browser.tabs.get(tabId);
+        if (tab) pageUrl = tab.url;
+    } catch (e) {}
+    
+    if (pageUrl) {
+        autoUpdateHistoryLink(pageUrl, displayFilename, url, tabId);
+    }
     
     // Fallback: Inject in-page toast for environments where browser.notifications might not work (e.g. Firefox Android)
     injectNotificationScript(tabId, displayFilename, url);
@@ -351,18 +440,38 @@ async function showMediaNotification(details, settings) {
 browser.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
     const data = notificationUrls.get(notificationId);
     if (data && buttonIndex === 0) {
-        browser.storage.session.get(data.url, (result) => {
+        browser.storage.session.get(data.url, async (result) => {
             const requests = result[data.url];
             if (requests && requests.length > 0) {
                 const request = requests[requests.length - 1];
-                browser.storage.local.get(['download-method'], (res) => {
+                let pageUrl = "";
+                let pageTitle = "";
+                try {
+                    const tab = await browser.tabs.get(data.tabId);
+                    if (tab) {
+                        pageUrl = tab.url;
+                        pageTitle = tab.title;
+                    }
+                } catch (e) {}
+
+                browser.storage.local.get(['download-method', 'filename-template'], async (res) => {
                     const method = res['download-method'] || 'browser';
+                    const template = res['filename-template'];
+                    const originalName = getFileName(data.url);
+                    let finalName = originalName;
+
+                    if (template) {
+                        finalName = await generateTemplateName(template, data.url, originalName, data.tabId);
+                    }
+
+                    addToHistory({ url: data.url, filename: finalName, timestamp: Date.now(), pageUrl, pageTitle });
+
                     if (method === 'fetch') {
-                        handleFetchDownload(data.url, getFileName(data.url), request);
+                        handleFetchDownload(data.url, finalName, request);
                     } else {
                         browser.downloads.download({
                             url: data.url,
-                            filename: getFileName(data.url),
+                            filename: finalName,
                             saveAs: false
                         });
                     }
@@ -769,6 +878,10 @@ browser.downloads.onChanged.addListener((delta) => {
 
 // Send media request data to the popup (session storage is not shared between background and popup scripts)
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'addToHistory') {
+        addToHistory(message.item);
+        return;
+    }
     if (message.action === 'startDownloadFromToast') {
         const url = message.url;
         const tabId = sender.tab ? sender.tab.id : null;
@@ -781,9 +894,14 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 const originalName = getFileName(url);
                 let finalName = originalName;
 
+                let pageUrl = sender.tab ? sender.tab.url : "";
+                let pageTitle = sender.tab ? sender.tab.title : "";
+
                 if (template) {
                     finalName = await generateTemplateName(template, url, originalName, tabId);
                 }
+
+                addToHistory({ url, filename: finalName, timestamp: Date.now(), pageUrl, pageTitle });
 
                 if (method === 'fetch') {
                     handleFetchDownload(url, finalName, request);

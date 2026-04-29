@@ -123,6 +123,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('options') === 'true') {
     document.getElementById('navbar').value = 'settings';
+  } else if (urlParams.get('tab') === 'history') {
+    document.getElementById('navbar').value = 'history';
+    loadHistoryList();
   }
 });
 
@@ -594,26 +597,6 @@ function clearMediaList() {
   browser.runtime.sendMessage({ action: 'clearStorage' }).then(() => loadMediaList());
 }
 
-async function addToHistory(item) {
-  const result = await browser.storage.local.get('history-page');
-  if (result['history-page'] !== '1') return;
-
-  const historyResult = await browser.storage.local.get('download-history');
-  let history = historyResult['download-history'] || [];
-  
-  // Add timestamp if not present
-  item.timestamp = item.timestamp || Date.now();
-  
-  // Prevent duplicates (optional, but good)
-  const exists = history.find(h => h.url === item.url && Math.abs(h.timestamp - item.timestamp) < 1000);
-  if (!exists) {
-    history.unshift(item);
-    // Limit history to 100 items
-    if (history.length > 100) history = history.slice(0, 100);
-    await browser.storage.local.set({ 'download-history': history });
-  }
-}
-
 async function loadHistoryList() {
   const historyContainer = document.getElementById('history-list');
   const historyResult = await browser.storage.local.get('download-history');
@@ -637,13 +620,17 @@ async function loadHistoryList() {
 
     const headline = document.createElement('div');
     headline.setAttribute('slot', 'headline');
+    // Priority: use the filename (which now includes {title} from background) 
+    // or fallback to the original URL-based filename
     headline.textContent = item.filename || getFileName(item.url);
     historyItem.appendChild(headline);
 
     const description = document.createElement('div');
     description.setAttribute('slot', 'description');
     const dateStr = new Date(item.timestamp).toLocaleString();
-    description.textContent = dateStr;
+    // Show page title and hostname in description if available to make it easier to find
+    const siteInfo = item.pageTitle ? `${item.pageTitle} • ` : "";
+    description.textContent = `${siteInfo}${dateStr}`;
     historyItem.appendChild(description);
 
     const endIconArea = document.createElement('div');
@@ -653,7 +640,7 @@ async function loadHistoryList() {
 
     const linkBtn = document.createElement('mdui-button-icon');
     linkBtn.innerHTML = `<mdui-icon><svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg></mdui-icon>`;
-    linkBtn.title = "Copy URL";
+    linkBtn.title = browser.i18n.getMessage("copyURL") || "Copy URL";
     linkBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       navigator.clipboard.writeText(item.url).then(() => {
@@ -662,6 +649,53 @@ async function loadHistoryList() {
         }
       });
     });
+
+    const visitBtn = document.createElement('mdui-button-icon');
+    if (item.pageUrl) {
+      visitBtn.innerHTML = `<mdui-icon><svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg></mdui-icon>`;
+      visitBtn.title = browser.i18n.getMessage("historyVisitPage") || "Visit Page";
+      visitBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (typeof mdui !== 'undefined' && mdui.snackbar) {
+          mdui.snackbar({
+            message: browser.i18n.getMessage("historyRefreshInstruction") || "Please play the video to refresh the link",
+            placement: "top"
+          });
+        }
+        setTimeout(() => {
+          browser.tabs.create({ url: item.pageUrl });
+        }, 2000);
+      });
+      endIconArea.appendChild(visitBtn);
+    }
+
+    const downloadBtn = document.createElement('mdui-button-icon');
+    downloadBtn.innerHTML = `<mdui-icon><svg viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg></mdui-icon>`;
+    downloadBtn.title = browser.i18n.getMessage("downloadMedia") || "Download";
+    downloadBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      // Re-download using the stored URL (which might have been auto-updated)
+      browser.storage.local.get(['download-method'], (res) => {
+        const method = res['download-method'] || 'browser';
+        if (method === 'fetch') {
+          browser.runtime.sendMessage({ 
+            action: 'startFetchDownload', 
+            url: item.url, 
+            filename: item.filename 
+          });
+          if (typeof mdui !== 'undefined' && mdui.snackbar) {
+            mdui.snackbar({ message: "Download started...", placement: "top" });
+          }
+        } else {
+          browser.downloads.download({
+            url: item.url,
+            filename: item.filename,
+            saveAs: false
+          });
+        }
+      });
+    });
+    endIconArea.appendChild(downloadBtn);
 
     const deleteBtn = document.createElement('mdui-button-icon');
     deleteBtn.innerHTML = `<mdui-icon><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></mdui-icon>`;
@@ -825,7 +859,15 @@ async function downloadFile(url, mediaDiv, specificSize) {
     loadingBar.style.width = '100%';
     loadingBar.setAttribute('indeterminate', 'true');
 
-    addToHistory({ url, filename: newName, timestamp: Date.now() });
+    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    const activeTab = tabs[0];
+    const pageUrl = activeTab ? activeTab.url : "";
+    const pageTitle = activeTab ? activeTab.title : "";
+
+    browser.runtime.sendMessage({ 
+        action: 'addToHistory', 
+        item: { url, filename: newName, timestamp: Date.now(), pageUrl, pageTitle } 
+    });
 
     const downloadMethod = await browser.storage.local.get('download-method').then(res => res['download-method']);
     const streamPref = await browser.storage.local.get('stream-download').then(res => res['stream-download']);

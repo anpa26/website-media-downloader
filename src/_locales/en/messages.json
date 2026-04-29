@@ -77,6 +77,10 @@
         "message": "Copy URL",
         "description": "The text of the button to copy the media URL to clipboard."
     },
+    "copyURLSuccess": {
+        "message": "URL copied to clipboard",
+        "description": "The message shown when the URL is successfully copied to clipboard."
+    },
     "URLCopyError": {
         "message": "Failed to copy URL to clipboard",
         "description": "The error message shown when the URL copy operation fails."
@@ -614,6 +618,18 @@
     "noHistory": {
         "message": "No download history found.",
         "description": "The message shown when the download history is empty."
+    },
+    "historyVisitPage": {
+        "message": "Visit Page",
+        "description": "The tooltip for the button to visit the original page of a download in the history."
+    },
+    "historyRefreshInstruction": {
+        "message": "Please play the video on the page to automatically update the link in your history.",
+        "description": "Instruction shown when user visits a page to refresh a history link."
+    },
+    "historyLinkUpdated": {
+        "message": "Link updated successfully.",
+        "description": "Message shown when a history link is automatically updated."
     },
     "cancelButton": {
         "message": "Cancel",

@@ -77,6 +77,10 @@
         "message": "Salin URL",
         "description": "Teks tombol untuk menyalin URL media ke papan klip."
     },
+    "copyURLSuccess": {
+        "message": "URL berhasil disalin",
+        "description": "Pesan saat URL berhasil disalin ke papan klip."
+    },
     "URLCopyError": {
         "message": "Gagal menyalin URL ke papan klip",
         "description": "Pesan kesalahan saat operasi salin URL gagal."
@@ -580,6 +584,18 @@
     "noHistory": {
         "message": "Riwayat unduhan tidak ditemukan.",
         "description": "Pesan yang ditampilkan saat riwayat unduhan kosong."
+    },
+    "historyVisitPage": {
+        "message": "Buka Halaman",
+        "description": "The tooltip for the button to visit the original page of a download in the history."
+    },
+    "historyRefreshInstruction": {
+        "message": "Silakan putar video di halaman tersebut untuk memperbarui tautan di riwayat Anda secara otomatis.",
+        "description": "Instruction shown when user visits a page to refresh a history link."
+    },
+    "historyLinkUpdated": {
+        "message": "Tautan berhasil diperbarui.",
+        "description": "Message shown when a history link is automatically updated."
     },
     "cancelButton": {
         "message": "Batal",
