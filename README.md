@@ -7,11 +7,20 @@ A powerful, open-source browser extension designed to detect and download virtua
 
 ---
 
+## Disclaimer
+
+This tool is provided for educational and personal use only. **Users are solely responsible for their actions and any consequences resulting from the use of this tool.** The developers are not responsible for any misuse, legal issues, or copyright violations. It is the user's responsibility to ensure compliance with the terms of service of any website visited and all applicable laws.
+
+---
+
 ## Key Features
 
 - **Multi-Format Support:** Detects everything from standard MP4/MP3 files to advanced HLS (M3U8) and DASH (MPD) streams.
 - **Offline Stream Conversion:** Automatically converts fragmented streams (HLS/DASH) into playable offline files (TS or ZIP).
+- **Smart Download History:** Keeps a local record of your downloads, tracks the original source page, and automatically refreshes expired links when you revisit the page.
+- **Real-Time Notifications:** Instant system or in-page notifications when media is detected, allowing you to download without opening the extension menu.
 - **Material Design UI:** A clean, modern, and intuitive interface powered by MDUI.
+- **Filename Templates:** Customize how your files are named using dynamic placeholders like `{title}`, `{host}`, `{date}`, and `{time}`.
 - **Advanced Detection:** Multiple detection methods (URL-based and MIME-based) to ensure even hidden media is found.
 - **Media Previewer:** Preview the detected video or audio directly within the extension before downloading.
 - **Header Spoofing:** Automatically handles Referer and Origin headers to bypass simple hotlinking protections.
@@ -28,6 +37,17 @@ A powerful, open-source browser extension designed to detect and download virtua
 5. **Download:** Click the **Download** button. 
    - For streams, you may be asked to choose between "Direct Manifest" or "Offline Conversion".
    - For MPD/DASH, it will package the stream into a ZIP file for local playback.
+
+---
+
+## Smart Download History
+
+The extension includes a powerful history management system:
+
+- **Source Tracking:** Every download is saved along with its original page title and URL.
+- **Automatic Link Refresh:** If a download link expires (e.g., token expiration), simply click **"Visit Page"** in your history. As soon as you play the video again, the extension will automatically update the history record with the latest working link.
+- **Deduplication:** Keeps your history clean by automatically replacing old entries with the newest detection for the same media.
+- **One-Click Re-download:** Quickly re-download any previously captured media directly from the History tab.
 
 ---
 
