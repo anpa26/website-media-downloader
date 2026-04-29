@@ -11,13 +11,43 @@ document.addEventListener('DOMContentLoaded', async () => {
   const colorResult = await browser.storage.local.get('theme-color');
   mdui.setColorScheme(colorResult['theme-color'] || '#bbdefb');
 
+  // Restore state if reloaded
+  const savedTab = sessionStorage.getItem('activeTab');
+  const savedScroll = sessionStorage.getItem('scrollPos');
+  if (savedTab) {
+    document.getElementById('navbar').value = savedTab;
+    if (savedTab === 'history') loadHistoryList();
+  }
+  if (savedScroll) {
+    window.scrollTo(0, parseInt(savedScroll));
+  }
+
   loadMediaList();
   document.getElementById('navbar').addEventListener('change', (event) => {
-    const selectedTabIndex = document.getElementById('navbar').activeTabIndex;
-    document.querySelectorAll('.tab-content').forEach((tabContent, index) => {
-      tabContent.style.display = index === selectedTabIndex ? 'block' : 'none';
-    });
+    const selectedTab = document.getElementById('navbar').value;
+    sessionStorage.setItem('activeTab', selectedTab);
+    if (selectedTab === 'history') {
+      loadHistoryList();
+    }
   });
+
+  const historyPageResult = await browser.storage.local.get('history-page');
+  if (historyPageResult['history-page'] === '1' || historyPageResult['history-page'] === true) {
+    document.getElementById('history-tab').style.display = 'inline-flex';
+  }
+
+  // Watch for history-page setting changes
+  browser.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes['history-page']) {
+      // Save current state before reload
+      sessionStorage.setItem('activeTab', document.getElementById('navbar').value);
+      sessionStorage.setItem('scrollPos', window.scrollY);
+      location.reload();
+    }
+  });
+
+  document.getElementById('clear-history').addEventListener('click', () => clearHistory());
+
 
   document.getElementById('refresh-list').addEventListener('click', () => loadMediaList());
   document.getElementById('clear-list').addEventListener('click', () => clearMediaList());
@@ -89,7 +119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('options') === 'true') {
-    document.querySelectorAll('mdui-tab')[1].click();
+    document.getElementById('navbar').value = 'settings';
   }
 });
 
@@ -428,6 +458,15 @@ function loadMediaList() {
 
       const cardContent = document.createElement('div');
       cardContent.classList.add('media-item-content');
+
+      // Create large inline preview area
+      const inlinePreview = document.createElement('div');
+      inlinePreview.classList.add('inline-preview-area');
+      const largeVideo = document.createElement('video');
+      largeVideo.controls = true;
+      inlinePreview.appendChild(largeVideo);
+      mediaDiv.appendChild(inlinePreview);
+      
       mediaDiv.appendChild(cardContent);
 
       const headline = document.createElement('div');
@@ -466,9 +505,34 @@ function loadMediaList() {
       
       const prvBtn = document.createElement('mdui-segmented-button');
       prvBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="m380-300 280-180-280-180v360ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg></mdui-icon>Preview`;
+      
+      let hlsLarge = null;
       prvBtn.addEventListener('click', () => {
-          const isStream = streamExtensions.some(ext => bestRequest.originalUrl.toLowerCase().includes(ext));
-          browser.tabs.create({ url: browser.runtime.getURL(`/mediaPreviewer.html?mediaUrl=${encodeURIComponent(bestRequest.originalUrl)}&isStream=${isStream}`) });
+          const isExpanded = mediaDiv.classList.toggle('expanded');
+          
+          if (isExpanded) {
+            if (isStream) {
+              if (Hls.isSupported()) {
+                hlsLarge = new Hls();
+                hlsLarge.loadSource(bestRequest.originalUrl);
+                hlsLarge.attachMedia(largeVideo);
+              } else if (largeVideo.canPlayType('application/vnd.apple.mpegurl')) {
+                largeVideo.src = bestRequest.originalUrl;
+              }
+            } else {
+              largeVideo.src = bestRequest.originalUrl;
+            }
+            largeVideo.play().catch(e => console.warn("Auto-play failed:", e));
+            prvBtn.setAttribute('selected', '');
+          } else {
+            largeVideo.pause();
+            largeVideo.src = "";
+            if (hlsLarge) {
+              hlsLarge.destroy();
+              hlsLarge = null;
+            }
+            prvBtn.removeAttribute('selected');
+          }
       });
 
       buttonGroup.appendChild(dlBtn);
@@ -525,6 +589,98 @@ function loadMediaList() {
 
 function clearMediaList() {
   browser.runtime.sendMessage({ action: 'clearStorage' }).then(() => loadMediaList());
+}
+
+async function addToHistory(item) {
+  const result = await browser.storage.local.get('history-page');
+  if (result['history-page'] !== '1' && result['history-page'] !== true) return;
+
+  const historyResult = await browser.storage.local.get('download-history');
+  let history = historyResult['download-history'] || [];
+  
+  // Add timestamp if not present
+  item.timestamp = item.timestamp || Date.now();
+  
+  // Prevent duplicates (optional, but good)
+  const exists = history.find(h => h.url === item.url && Math.abs(h.timestamp - item.timestamp) < 1000);
+  if (!exists) {
+    history.unshift(item);
+    // Limit history to 100 items
+    if (history.length > 100) history = history.slice(0, 100);
+    await browser.storage.local.set({ 'download-history': history });
+  }
+}
+
+async function loadHistoryList() {
+  const historyContainer = document.getElementById('history-list');
+  const historyResult = await browser.storage.local.get('download-history');
+  const history = historyResult['download-history'] || [];
+
+  historyContainer.innerHTML = '';
+
+  if (history.length === 0) {
+    historyContainer.innerHTML = `<div style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noHistory") || "No download history found."}</div>`;
+    return;
+  }
+
+  history.forEach((item, index) => {
+    const historyItem = document.createElement('mdui-list-item');
+    historyItem.setAttribute('nonclickable', 'true');
+    
+    const iconContainer = document.createElement('mdui-icon');
+    iconContainer.setAttribute('slot', 'icon');
+    iconContainer.innerHTML = `<svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>`;
+    historyItem.appendChild(iconContainer);
+
+    const headline = document.createElement('div');
+    headline.setAttribute('slot', 'headline');
+    headline.textContent = item.filename || getFileName(item.url);
+    historyItem.appendChild(headline);
+
+    const description = document.createElement('div');
+    description.setAttribute('slot', 'description');
+    const dateStr = new Date(item.timestamp).toLocaleString();
+    description.textContent = dateStr;
+    historyItem.appendChild(description);
+
+    const endIconArea = document.createElement('div');
+    endIconArea.setAttribute('slot', 'end-icon');
+    endIconArea.style.display = 'flex';
+    endIconArea.style.gap = '4px';
+
+    const linkBtn = document.createElement('mdui-button-icon');
+    linkBtn.innerHTML = `<mdui-icon><svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg></mdui-icon>`;
+    linkBtn.title = "Copy URL";
+    linkBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      navigator.clipboard.writeText(item.url).then(() => {
+        if (typeof mdui !== 'undefined' && mdui.snackbar) {
+          mdui.snackbar({ message: browser.i18n.getMessage("copyURLSuccess") || "URL copied to clipboard", placement: "top" });
+        }
+      });
+    });
+
+    const deleteBtn = document.createElement('mdui-button-icon');
+    deleteBtn.innerHTML = `<mdui-icon><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></mdui-icon>`;
+    deleteBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const currentHistory = (await browser.storage.local.get('download-history'))['download-history'] || [];
+      currentHistory.splice(index, 1);
+      await browser.storage.local.set({ 'download-history': currentHistory });
+      loadHistoryList();
+    });
+
+    endIconArea.appendChild(linkBtn);
+    endIconArea.appendChild(deleteBtn);
+    historyItem.appendChild(endIconArea);
+
+    historyContainer.appendChild(historyItem);
+  });
+}
+
+async function clearHistory() {
+  await browser.storage.local.remove('download-history');
+  loadHistoryList();
 }
 
 function getFileName(url, maxLength = 30) {
@@ -593,6 +749,8 @@ async function downloadFile(url, mediaDiv, specificSize) {
     mediaDiv.appendChild(statusInfo);
     loadingBar.style.width = '100%';
     loadingBar.setAttribute('indeterminate', 'true');
+
+    addToHistory({ url, filename: newName, timestamp: Date.now() });
 
     const downloadMethod = await browser.storage.local.get('download-method').then(res => res['download-method']);
     const streamPref = await browser.storage.local.get('stream-download').then(res => res['stream-download']);

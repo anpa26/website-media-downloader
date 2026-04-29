@@ -19,6 +19,7 @@
   <div id="main-content" style="display: none;">
     <mdui-tabs id="navbar" value="home">
       <mdui-tab value="home" data-translate="homeTab">Home</mdui-tab>
+      <mdui-tab value="history" id="history-tab" style="display: none;" data-translate="historyTab">History</mdui-tab>
       <mdui-tab value="settings" data-translate="settingsTab">Settings</mdui-tab>
 
       <mdui-tab-panel slot="panel" value="home">
@@ -50,6 +51,17 @@
               <mdui-button variant="tonal" id="clear-list" data-translate="clearListButton">Clear list</mdui-button>
               <mdui-button variant="filled" id="refresh-list" data-translate="refreshListButton">Refresh list</mdui-button>
             </div>
+          </div>
+        </mdui-bottom-app-bar>
+      </mdui-tab-panel>
+
+      <mdui-tab-panel slot="panel" value="history">
+        <div id="history-list">
+          <!-- History items will be injected here by popup.js -->
+        </div>
+        <mdui-bottom-app-bar>
+          <div style="flex-grow: 1; display: flex; justify-content: center;">
+            <mdui-button variant="tonal" id="clear-history" data-translate="clearHistoryButton">Clear history</mdui-button>
           </div>
         </mdui-bottom-app-bar>
       </mdui-tab-panel>
@@ -183,6 +195,14 @@
                     <mdui-segmented-button value="window" data-translate="newWindowCheckbox">Window</mdui-segmented-button>
                     <mdui-segmented-button value="popup" data-translate="popupCheckbox">Popup</mdui-segmented-button>
                  </mdui-segmented-button-group>
+              </div>
+              <mdui-divider></mdui-divider>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="historyPageTitle">Enable history page</h3>
+                  <p data-translate="historyPageExplain">Keep a local record of your downloads.</p>
+                </div>
+                <mdui-switch id="history-page"></mdui-switch>
               </div>
               <mdui-divider></mdui-divider>
               <div class="setting-item">

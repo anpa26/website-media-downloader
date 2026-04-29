@@ -541,6 +541,26 @@
         "message": "Batal",
         "description": "Teks tombol batal di dialog ubah nama."
     },
+    "historyTab": {
+        "message": "Riwayat",
+        "description": "Nama tab riwayat di popup."
+    },
+    "historyPageTitle": {
+        "message": "Aktifkan halaman riwayat",
+        "description": "Label sakelar untuk mengaktifkan halaman riwayat."
+    },
+    "historyPageExplain": {
+        "message": "Simpan rekaman unduhan Anda secara lokal.",
+        "description": "Penjelasan opsi halaman riwayat."
+    },
+    "clearHistoryButton": {
+        "message": "Hapus riwayat",
+        "description": "Label tombol untuk menghapus riwayat unduhan."
+    },
+    "noHistory": {
+        "message": "Riwayat unduhan tidak ditemukan.",
+        "description": "Pesan yang ditampilkan saat riwayat unduhan kosong."
+    },
     "cancelButton": {
         "message": "Batal",
         "description": "The text of the cancel button during an active download."

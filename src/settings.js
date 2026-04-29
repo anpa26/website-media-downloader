@@ -16,7 +16,7 @@ async function initializeSettings() {
         'url-detection', 'mime-detection', 'hide-segments', 'only-media',
         'download-method', 'media-cache', 'stream-download',
         'stream-quality', 'mpd-fix', 'open-preference',
-        'filename-template'
+        'filename-template', 'history-page'
     ];
 
     for (const setting of settings) {

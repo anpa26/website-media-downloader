@@ -561,5 +561,25 @@
     "renameDialogCancelButton": {
         "message": "Abbrechen",
         "description": "The text of the cancel button in the rename dialog."
+    },
+    "historyTab": {
+        "message": "History",
+        "description": "The name of the history tab in the popup."
+    },
+    "historyPageTitle": {
+        "message": "Enable history page",
+        "description": "The label of the switch to enable the history page."
+    },
+    "historyPageExplain": {
+        "message": "Keep a local record of your downloads.",
+        "description": "The explanation of the history page option."
+    },
+    "clearHistoryButton": {
+        "message": "Clear history",
+        "description": "The label of the button to clear the download history."
+    },
+    "noHistory": {
+        "message": "No download history found.",
+        "description": "The message shown when the download history is empty."
     }
 }

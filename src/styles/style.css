@@ -21,11 +21,12 @@ mdui-tabs {
     background-color: rgb(var(--mdui-color-surface));
     border-bottom: 1px solid rgb(var(--mdui-color-outline-variant));
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
+    padding-left: 0;
 }
 
 mdui-tab {
-    min-width: 120px;
+    min-width: auto;
 }
 
 mdui-tab-panel {
@@ -195,12 +196,34 @@ mdui-segmented-button:not([selected]):hover {
     color: rgb(var(--mdui-color-primary));
 }
 
-.media-item-content {
-    padding: 14px 16px;
-    display: flex;
+.media-item.expanded {
     flex-direction: column;
-    gap: 10px;
+    align-items: stretch;
+    padding: 12px;
+}
+
+.media-item.expanded .media-preview-container {
+    display: none; /* Hide small preview when expanded */
+}
+
+.inline-preview-area {
     width: 100%;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: black;
+    aspect-ratio: 16 / 9;
+    display: none;
+}
+
+.media-item.expanded .inline-preview-area {
+    display: block;
+}
+
+.inline-preview-area video {
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
 .media-actions {
