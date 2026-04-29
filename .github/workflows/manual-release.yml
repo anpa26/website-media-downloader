@@ -31,7 +31,16 @@ jobs:
           SHA="${{ github.event.inputs.commit_sha }}"
           TITLE=$(git log -1 --pretty=%s "$SHA")
           BODY=$(git log -1 --pretty=%b "$SHA")
-          echo "title=$TITLE" >> $GITHUB_OUTPUT
+          
+          # Use provided release_name or fallback to commit title
+          CUSTOM_NAME="${{ github.event.inputs.release_name }}"
+          if [ -n "$CUSTOM_NAME" ]; then
+            FINAL_NAME="$CUSTOM_NAME"
+          else
+            FINAL_NAME="$TITLE"
+          fi
+          
+          echo "release_name=$FINAL_NAME" >> $GITHUB_OUTPUT
           
           if [ -z "$BODY" ]; then
             echo "body=$TITLE" >> $GITHUB_OUTPUT
@@ -52,7 +61,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.event.inputs.tag_name }}
-          name: ${{ steps.commit_info.outputs.title }}
+          name: ${{ steps.commit_info.outputs.release_name }}
           body: ${{ steps.commit_info.outputs.body }}
           files: addon.xpi
           target_commitish: ${{ github.event.inputs.commit_sha }}
