@@ -1,24 +1,24 @@
 {
   "en": {
-    "headline": "What's New (v1.5.8+)",
+    "headline": "What's New (v1.5.9)",
     "changes": [
       "Optimized IndexedDB storage with chunk buffering and batching for faster downloads and reconstruction",
-      "Added media detection notifications with in-page toast fallback",
-      "Enhanced download history with source tracking and automatic link refresh",
-      "Added an 'About' page with contributor information",
-      "Updated UI components and layout for a better user experience",
-      "Improved background fetch reliability and metadata management"
+      "Fixed duplicate media items in UI by grouping and clearing quality variants together",
+      "Added 'Speed boost' (parallel downloads) with configurable connection count",
+      "Improved download persistence with state storage and auto-resume support",
+      "Updated UI to automatically remove items upon successful completion",
+      "Enhanced history tracking and background fetch reliability"
     ]
   },
   "id": {
-    "headline": "Yang Baru (v1.5.8+)",
+    "headline": "Yang Baru (v1.5.9)",
     "changes": [
       "Optimalisasi penyimpanan IndexedDB dengan buffering dan batching untuk unduhan dan rekonstruksi lebih cepat",
-      "Penambahan notifikasi deteksi media dengan fallback toast di dalam halaman",
-      "Peningkatan riwayat unduhan dengan pelacakan sumber dan pembaruan tautan otomatis",
-      "Penambahan halaman 'Tentang' dengan informasi kontributor",
-      "Pembaruan komponen dan tata letak UI untuk pengalaman pengguna yang lebih baik",
-      "Peningkatan keandalan fetch latar belakang dan manajemen metadata"
+      "Memperbaiki item media duplikat di UI dengan pengelompokan dan penghapusan varian kualitas sekaligus",
+      "Penambahan 'Peningkatan kecepatan' (unduhan paralel) dengan jumlah koneksi yang dapat dikonfigurasi",
+      "Peningkatan persistensi unduhan dengan penyimpanan status dan dukungan lanjutkan otomatis",
+      "Pembaruan UI untuk menghapus item secara otomatis setelah unduhan berhasil",
+      "Peningkatan pelacakan riwayat dan keandalan pengambilan latar belakang"
     ]
   }
 }
