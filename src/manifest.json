@@ -1,7 +1,7 @@
 {
   "name": "Website Media Downloader",
   "manifest_version": 3,
-  "version": "1.5.8",
+  "version": "1.5.9",
   "description": "A powerful tool to download videos, music, and live streams from any website. Usage: 1. Play media on a website, 2. Click the extension icon to detect links, 3. Choose quality and click Download. Supports HLS/M3U8, MPD, and offline conversion.",
   "browser_specific_settings": {
     "gecko": {
