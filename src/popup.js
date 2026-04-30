@@ -363,6 +363,7 @@ function loadMediaList() {
     const videoExtensions = [".3g2", ".3gp", ".asx", ".avi", ".divx", ".4v", ".flv", ".ismv", ".m2t", ".m2ts", ".m2v", ".m4s", ".m4v", ".mk3d", ".mkv", ".mng", ".mov", ".mp2v", ".mp4", ".mp4v", ".mpe", ".mpeg", ".mpeg1", ".mpeg2", ".mpeg4", ".mpg", ".mxf", ".ogm", ".ogv", ".qt", ".rm", ".swf", ".ts", ".vob", ".vp9", ".webm", ".wmv"]
     const audioExtensions = [".3ga", ".aac", ".ac3", ".adts", ".aif", ".aiff", ".alac", ".ape", ".asf", ".au", ".dts", ".f4a", ".f4b", ".flac", ".isma", ".it", ".m4a", ".m4b", ".m4r", ".mid", ".mka", ".mod", ".mp1", ".mp2", ".mp3", ".mp4a", ".mpa", ".mpga", ".oga", ".ogg", ".ogx", ".opus", ".ra", ".shn", ".spx", ".vorbis", ".wav", ".weba", ".wma", ".xm"];
     const streamExtensions = [".f4f", ".f4m", ".m3u8", ".mpd", ".smil"];
+    const subtitleExtensions = [".vtt", ".srt", ".ass", ".ssa"];
 
     const mediaGroups = new Map();
     for (const rawUrl in mediaRequests) {
@@ -377,12 +378,13 @@ function loadMediaList() {
       const isVideo = videoExtensions.some(ext => path.endsWith(ext)) || requests.some(req => req.responseHeaders?.find(h => h.name.toLowerCase() === "content-type" && h.value.startsWith("video/")));
       const isAudio = audioExtensions.some(ext => path.endsWith(ext)) || requests.some(req => req.responseHeaders?.find(h => h.name.toLowerCase() === "content-type" && h.value.startsWith("audio/")));
       const isStream = streamExtensions.some(ext => path.endsWith(ext)) || requests.some(req => req.responseHeaders?.find(h => h.name.toLowerCase() === "content-type" && (h.value.includes("mpegurl") || h.value.includes("dash+xml"))));
+      const isSubtitle = subtitleExtensions.some(ext => path.endsWith(ext)) || requests.some(req => req.responseHeaders?.find(h => h.name.toLowerCase() === "content-type" && (h.value.includes("vtt") || h.value.includes("subrip") || h.value.includes("ass"))));
 
-      if (onlyMedia && !isVideo && !isAudio && !isStream) continue;
+      if (onlyMedia && !isVideo && !isAudio && !isStream && !isSubtitle) continue;
       
       // Use URL without common tracking params as identity to distinguish qualities
       const identity = rawUrl.split('?')[0]; 
-      if (!mediaGroups.has(identity)) mediaGroups.set(identity, { requests: [], isVideo, isAudio, isStream });
+      if (!mediaGroups.has(identity)) mediaGroups.set(identity, { requests: [], isVideo, isAudio, isStream, isSubtitle });
       const group = mediaGroups.get(identity);
       
       requests.forEach(req => {
@@ -408,7 +410,8 @@ function loadMediaList() {
           bestRequest: group.requests[0], 
           isVideo: group.isVideo, 
           isAudio: group.isAudio, 
-          isStream: group.isStream 
+          isStream: group.isStream,
+          isSubtitle: group.isSubtitle
         });
     });
     
@@ -421,7 +424,7 @@ function loadMediaList() {
     }
 
     for (const item of flattenedRequests) {
-      const { bestRequest, isVideo, isAudio, isStream } = item;
+      const { bestRequest, isVideo, isAudio, isStream, isSubtitle } = item;
       const mediaURL = new URL(bestRequest.originalUrl);
       const mediaDiv = document.createElement('mdui-list-item');
       mediaDiv.setAttribute('nonclickable', 'true');
@@ -480,6 +483,8 @@ function loadMediaList() {
 
         if (isAudio) {
           path.setAttribute('d', 'M400-120q-66 0-113-47t-47-113q0-66 47-113t113-47q23 0 42.5 5.5T480-418v-422h240v160H560v400q0 66-47 113t-113 47Z');
+        } else if (isSubtitle) {
+          path.setAttribute('d', 'M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm120-120h120v-40H280v40Zm0-80h120v-40H280v40Zm280 80h120v-40H560v40Zm0-80h120v-40H560v40ZM160-240v-480 480Z');
         } else {
           path.setAttribute('d', 'M40-480q0-92 34.5-172T169-791.5q60-59.5 140-94T480-920q91 0 171 34.5t140 94Q851-732 885.5-652T920-480h-80q0-75-28.5-140.5T734-735q-49-49-114.5-77T480-840q-74 0-139.5 28T226-735q-49 49-77.5 114.5T120-480H40Zm160 0q0-118 82-199t198-81q116 0 198 81t82 199h-80q0-83-58.5-141.5T480-680q-83 0-141.5 58.5T280-480h-80ZM360-64l-56-56 136-136v-132q-27-12-43.5-37T380-480q0-42 29-71t71-29q42 0 71 29t29 71q0 30-16.5 55T520-388v132l136 136-56 56-120-120L360-64Z');
         }
@@ -538,6 +543,7 @@ function loadMediaList() {
       
       const prvBtn = document.createElement('mdui-segmented-button');
       prvBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="m380-300 280-180-280-180v360ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg></mdui-icon>Preview`;
+      if (isSubtitle) prvBtn.style.display = 'none';
       
       let hlsLarge = null;
       prvBtn.addEventListener('click', () => {

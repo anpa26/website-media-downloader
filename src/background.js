@@ -19,7 +19,12 @@ const mediaTypes = [
     "audio/ogg",
     "audio/x-ms-wma",
     "application/vnd.apple.mpegurl",
-    "application/x-mpegURL"
+    "application/x-mpegURL",
+    "text/vtt",
+    "application/x-subrip",
+    "text/srt",
+    "application/x-ass",
+    "text/x-ass"
 ];
 
 let urlList = [];
@@ -188,8 +193,9 @@ async function storeChunkInCache(downloadId, chunkIndex, data) {
 const videoExtensions = [".3g2", ".3gp", ".asx", ".avi", ".divx", ".4v", ".flv", ".ismv", ".m2t", ".m2ts", ".m2v", ".m4s", ".m4v", ".mk3d", ".mkv", ".mng", ".mov", ".mp2v", ".mp4", ".mp4v", ".mpe", ".mpeg", ".mpeg1", ".mpeg2", ".mpeg4", ".mpg", ".mxf", ".ogm", ".ogv", ".qt", ".rm", ".swf", ".ts", ".vob", ".vp9", ".webm", ".wmv"];
 const audioExtensions = [".3ga", ".aac", ".ac3", ".adts", ".aif", ".aiff", ".alac", ".ape", ".asf", ".au", ".dts", ".f4a", ".f4b", ".flac", ".isma", ".it", ".m4a", ".m4b", ".m4r", ".mid", ".mka", ".mod", ".mp1", ".mp2", ".mp3", ".mp4a", ".mpa", ".mpga", ".oga", ".ogg", ".ogx", ".opus", ".ra", ".shn", ".spx", ".vorbis", ".wav", ".weba", ".wma", ".xm"];
 const streamExtensions = [".f4f", ".f4m", ".m3u8", ".mpd", ".smil"];
+const subtitleExtensions = [".vtt", ".srt", ".ass", ".ssa"];
 
-const allExtensions = videoExtensions.concat(audioExtensions, streamExtensions);
+const allExtensions = videoExtensions.concat(audioExtensions, streamExtensions, subtitleExtensions);
 // build a safe regex from extensions (escape dots already present)
 const extPattern = allExtensions.map(e => e.replace(/^\./, '').replace(/\+/g, '\\+')).join('|');
 const detectionRegex = new RegExp('\\.(?:' + extPattern + ')(?:[?#].*)?$', 'i');
@@ -467,8 +473,9 @@ async function showMediaNotification(details, settings) {
     const isVideo = contentType.startsWith('video/') || videoExtensions.some(ext => url.toLowerCase().includes(ext));
     const isAudio = contentType.startsWith('audio/') || audioExtensions.some(ext => url.toLowerCase().includes(ext));
     const isStream = streamExtensions.some(ext => url.toLowerCase().includes(ext)) || contentType.includes('mpegurl') || contentType.includes('dash+xml');
+    const isSubtitle = subtitleExtensions.some(ext => url.toLowerCase().includes(ext)) || contentType.includes('vtt') || contentType.includes('subrip') || contentType.includes('ass');
 
-    if (settings.onlyMedia && !isVideo && !isAudio && !isStream) return;
+    if (settings.onlyMedia && !isVideo && !isAudio && !isStream && !isSubtitle) return;
 
     // Filter by hideSegments setting
     const isSegment = url.toLowerCase().includes('.ts') || (contentLength > 0 && contentLength < 1048576 && contentType === 'video/mp2t');

@@ -226,11 +226,11 @@
         "description": "Label kotak centang untuk menyembunyikan segmen siaran."
     },
     "onlyMediaTitle": {
-        "message": "Hanya tampilkan video dan audio",
+        "message": "Hanya tampilkan media (video, audio, subtitle)",
         "description": "Judul pengaturan 'Hanya tampilkan video dan audio'."
     },
     "onlyMediaExplain": {
-        "message": "Sembunyikan semua permintaan yang tidak teridentifikasi jelas sebagai video, audio, atau siaran (misal manifest). Hapus centang jika ingin melihat semua permintaan yang difilter.",
+        "message": "Sembunyikan semua permintaan yang tidak teridentifikasi jelas sebagai video, audio, subtitle, atau siaran (misal manifest). Hapus centang jika ingin melihat semua permintaan yang difilter.",
         "description": "Penjelasan pengaturan 'Hanya tampilkan video dan audio'."
     },
     "mediaNotificationTitle": {
