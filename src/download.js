@@ -69,11 +69,19 @@ async function triggerDownload() {
                         const range = IDBKeyRange.bound([cacheKey, 0], [cacheKey, Infinity]);
                         const cursorRequest = chunkStore.openCursor(range);
 
+                        let lastUpdate = Date.now();
                         await new Promise((resolveChunk, rejectChunk) => {
                             cursorRequest.onsuccess = (e) => {
                                 const cursor = e.target.result;
                                 if (cursor) {
                                     chunks.push(cursor.value.data);
+                                    
+                                    const now = Date.now();
+                                    if (now - lastUpdate > 500) {
+                                        statusText.textContent = `Reconstructing file: gathered ${chunks.length} segments...`;
+                                        lastUpdate = now;
+                                    }
+                                    
                                     cursor.continue();
                                 } else {
                                     resolveChunk();

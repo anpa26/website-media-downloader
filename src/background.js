@@ -53,7 +53,7 @@ function openCacheDB() {
 
 async function storeInCache(url, blob, mime) {
     try {
-        const db = await openCacheDB();
+        const db = await getDB();
         const tx = db.transaction([STORE_NAME], "readwrite");
         const store = tx.objectStore(STORE_NAME);
         const item = {
@@ -79,25 +79,34 @@ async function getDB() {
     return cachedDB;
 }
 
-async function storeChunkInCache(downloadId, chunkIndex, data) {
+async function storeChunksInCache(downloadId, chunks) {
     try {
         const db = await getDB();
-        const tx = db.transaction([CHUNK_STORE_NAME], "readwrite");
-        const store = tx.objectStore(CHUNK_STORE_NAME);
-        const item = {
-            downloadId: downloadId,
-            chunkIndex: chunkIndex,
-            data: data,
-            timestamp: Date.now()
-        };
         return new Promise((resolve, reject) => {
-            const req = store.put(item);
-            req.onsuccess = () => resolve();
-            req.onerror = () => reject(req.error);
+            const tx = db.transaction([CHUNK_STORE_NAME], "readwrite");
+            const store = tx.objectStore(CHUNK_STORE_NAME);
+            
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+            tx.onabort = () => reject(new Error("Transaction aborted"));
+
+            for (const chunk of chunks) {
+                const item = {
+                    downloadId: downloadId,
+                    chunkIndex: chunk.index,
+                    data: chunk.data,
+                    timestamp: Date.now()
+                };
+                store.put(item);
+            }
         });
     } catch (e) {
-        console.error("Failed to store chunk in cache:", e);
+        console.error("Failed to store chunks in cache:", e);
     }
+}
+
+async function storeChunkInCache(downloadId, chunkIndex, data) {
+    return storeChunksInCache(downloadId, [{ index: chunkIndex, data: data }]);
 }
 // -------------------------------------------------------------------------------
 
@@ -1067,19 +1076,43 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
         const writeQueue = [];
         const MAX_WRITE_QUEUE = 3; 
 
+        let currentBuffer = [];
+        let currentBufferSize = 0;
+        const BUFFER_THRESHOLD = 1024 * 1024; // 1MB buffer
+
+        async function flushBuffer() {
+            if (currentBuffer.length === 0) return;
+            const bufferToSource = currentBuffer;
+            const sizeToSource = currentBufferSize;
+            currentBuffer = [];
+            currentBufferSize = 0;
+
+            const combined = new Uint8Array(sizeToSource);
+            let offset = 0;
+            for (const b of bufferToSource) {
+                combined.set(b, offset);
+                offset += b.length;
+            }
+            
+            const writePromise = storeChunkInCache(downloadId, chunkIndex++, combined);
+            writeQueue.push(writePromise);
+            if (writeQueue.length >= MAX_WRITE_QUEUE) {
+                await writeQueue.shift();
+            }
+        }
+
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
             
-            const currentChunk = value;
-            const currentChunkIndex = chunkIndex++;
-
-            loaded += currentChunk.length;
+            currentBuffer.push(value);
+            currentBufferSize += value.length;
+            loaded += value.length;
             activeDownloads.set(downloadId, { loaded, total, abortController, url: url });
 
-            // Update UI immediately (every 50ms)
+            // Update UI frequently
             const now = Date.now();
-            if (now - lastReportTime > 50) {
+            if (now - lastReportTime > 100) {
                 lastReportTime = now;
                 browser.runtime.sendMessage({
                     action: 'downloadProgress',
@@ -1090,15 +1123,12 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
                 }).catch(() => {});
             }
 
-            // Write to IndexedDB without blocking the next network read immediately
-            const writePromise = storeChunkInCache(downloadId, currentChunkIndex, currentChunk);
-            writeQueue.push(writePromise);
-            
-            // Allow the network to stay a few chunks ahead of the disk
-            if (writeQueue.length >= MAX_WRITE_QUEUE) {
-                await writeQueue.shift();
+            if (currentBufferSize >= BUFFER_THRESHOLD) {
+                await flushBuffer();
             }
         }
+        
+        await flushBuffer();
         
         // Ensure all pending writes finish
         await Promise.all(writeQueue);
@@ -1278,6 +1308,8 @@ function attachCacheListener() {
         return;
     }
 
+    const requestBuffers = new Map(); // requestId -> { chunks: [], size: 0, index: 0 }
+
     cacheListener = (details) => {
         try {
             // quick checks; avoid any async storage calls here
@@ -1296,25 +1328,50 @@ function attachCacheListener() {
                 return;
             }
 
-            let chunkIndex = 0;
             const downloadId = details.url; // For auto-cache, we use URL as ID
+            requestBuffers.set(details.requestId, { chunks: [], size: 0, index: 0 });
+
+            const flushBuffer = async (reqId) => {
+                const state = requestBuffers.get(reqId);
+                if (!state || state.chunks.length === 0) return;
+
+                const combined = new Uint8Array(state.size);
+                let offset = 0;
+                for (const b of state.chunks) {
+                    combined.set(new Uint8Array(b), offset);
+                    offset += b.byteLength;
+                }
+                const currentIndex = state.index++;
+                state.chunks = [];
+                state.size = 0;
+
+                await storeChunkInCache(downloadId, currentIndex, combined);
+            };
 
             filter.ondata = (event) => {
                 try {
                     // Write back to browser IMMEDIATELY to avoid blocking rendering
                     filter.write(event.data);
                     
-                    // Store chunk in IndexedDB (non-blocking)
-                    storeChunkInCache(downloadId, chunkIndex++, event.data);
+                    const state = requestBuffers.get(details.requestId);
+                    if (state) {
+                        state.chunks.push(event.data);
+                        state.size += event.data.byteLength;
+
+                        if (state.size >= 1024 * 1024) { // 1MB buffer
+                            flushBuffer(details.requestId).catch(err => console.error("Failed to flush buffer:", err));
+                        }
+                    }
                 } catch (e) {
                     console.error("Error writing chunk back to filter:", e);
                 }
             };
             filter.onstop = async () => {
                 try {
+                    await flushBuffer(details.requestId);
+                    requestBuffers.delete(details.requestId);
                     filter.disconnect();
                     // Store metadata in cache to signal chunked download
-                    // We don't have the full blob here anymore, and that's the point.
                     await storeInCache(downloadId, null, 'application/octet-stream');
                     console.log("Cached response chunks for:", details.url);
                 } catch (e) {

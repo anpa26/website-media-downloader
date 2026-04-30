@@ -68,6 +68,13 @@ async function fetchWithCache(url, options = {}) {
                   const cursor = e.target.result;
                   if (cursor) {
                       chunks.push(cursor.value.data);
+                      
+                      // For very large files in cache, we could log progress but 
+                      // fetchWithCache is usually for segments. Still good to have.
+                      if (chunks.length % 50 === 0) {
+                          console.debug(`Reconstructing cached segments: ${chunks.length}...`);
+                      }
+                      
                       cursor.continue();
                   } else {
                       resolveChunk();
