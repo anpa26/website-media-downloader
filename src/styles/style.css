@@ -191,9 +191,24 @@ mdui-segmented-button:not([selected]):hover {
     display: none;
 }
 
-.media-preview-icon {
-    font-size: 24px;
-    color: rgb(var(--mdui-color-primary));
+.media-item [slot="headline"] {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.media-item [slot="description"] {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.media-item-content {
+    flex: 1;
+    min-width: 0; /* Critical for ellipsis in flex containers */
+    padding-right: 8px;
 }
 
 .media-item.expanded {
@@ -287,4 +302,12 @@ mdui-bottom-app-bar {
     cursor: pointer;
     background: none;
     padding: 0;
+}
+
+#history-list [slot="headline"],
+#history-list [slot="description"] {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
 }
