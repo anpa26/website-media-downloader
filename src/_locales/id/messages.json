@@ -89,6 +89,10 @@
         "message": "Pratinjau",
         "description": "Teks tombol pratinjau dalam daftar media."
     },
+    "audioOnly": {
+        "message": "Hanya Audio",
+        "description": "Teks tombol ekstraksi hanya audio dalam daftar media."
+    },
     "downloadMedia": {
         "message": "Unduh",
         "description": "Teks tombol unduh dalam daftar media."

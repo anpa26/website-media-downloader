@@ -150,7 +150,7 @@ function updateSegmentProgressStatus(loadingBar, processed, total) {
  * Uses either browser.downloads API or fetch depending on the download method.
  * Most of the code here is chatGPT so good luck finding out what it does lol (ㆆ_ㆆ)
  */
-async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar, request, customFilename = null) {
+async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar, request, customFilename = null, audioOnly = false) {
   const getText = async (url) => {
     const fetchOptions = {
       headers: Object.fromEntries(headers.map(h => [h.name, h.value])),
@@ -541,37 +541,51 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
   let globalTotalSegments = 0;
   let globalProcessedSegments = 0;
 
-
-  // Count segments first
-  globalTotalSegments += await countSegments(videoUrl);
-
-  if (audioUrl) {
-    globalTotalSegments += await countSegments(audioUrl);
-  }
-
-  // Then download video
-  const { blob: videoBlob, ext } = await downloadSegments(videoUrl);
-  const baseFileName = customFilename ? (customFilename.substring(0, customFilename.lastIndexOf('.')) || customFilename) : getFileName(m3u8Url);
-  const videoBlobUrl = URL.createObjectURL(videoBlob);
-
-  if (downloadMethod === "browser") {
-    await browser.downloads.download({
-      url: videoBlobUrl,
-      filename: audioUrl ? `${baseFileName}_video${ext}` : `${baseFileName}${ext}`
-    });
+  if (audioOnly) {
+    if (!audioUrl) {
+       // If no separate audio track, we download the video segments and return the blob for extraction
+       globalTotalSegments = await countSegments(videoUrl);
+       const { blob } = await downloadSegments(videoUrl);
+       return { blob }; 
+    }
+    globalTotalSegments = await countSegments(audioUrl);
   } else {
-    const videoAnchor = document.createElement("a");
-    videoAnchor.href = videoBlobUrl;
-    videoAnchor.download = audioUrl ? `${baseFileName}_video${ext}` : `${baseFileName}${ext}`;
-    document.body.appendChild(videoAnchor);
-    videoAnchor.click();
-    document.body.removeChild(videoAnchor);
+    // Count segments for both if needed
+    globalTotalSegments += await countSegments(videoUrl);
+    if (audioUrl) {
+      globalTotalSegments += await countSegments(audioUrl);
+    }
   }
 
-  URL.revokeObjectURL(videoBlobUrl); // Clean up the blob URL after download
+  // Then download video (only if not audioOnly)
+  let videoBlob, ext;
+  if (!audioOnly) {
+    const videoResult = await downloadSegments(videoUrl);
+    videoBlob = videoResult.blob;
+    ext = videoResult.ext;
+    
+    const baseFileName = customFilename ? (customFilename.substring(0, customFilename.lastIndexOf('.')) || customFilename) : getFileName(m3u8Url);
+    const videoBlobUrl = URL.createObjectURL(videoBlob);
 
+    if (downloadMethod === "browser") {
+      await browser.downloads.download({
+        url: videoBlobUrl,
+        filename: audioUrl ? `${baseFileName}_video${ext}` : `${baseFileName}${ext}`
+      });
+    } else {
+      const videoAnchor = document.createElement("a");
+      videoAnchor.href = videoBlobUrl;
+      videoAnchor.download = audioUrl ? `${baseFileName}_video${ext}` : `${baseFileName}${ext}`;
+      document.body.appendChild(videoAnchor);
+      videoAnchor.click();
+      document.body.removeChild(videoAnchor);
+    }
+
+    URL.revokeObjectURL(videoBlobUrl); // Clean up the blob URL after download
+  }
 
   if (audioUrl) {
+    const baseFileName = customFilename ? (customFilename.substring(0, customFilename.lastIndexOf('.')) || customFilename) : getFileName(m3u8Url);
     loadingBar.setAttribute('aria-label', browser.i18n.getMessage("downloadingAudioSnackbar"));
     const snackbar = document.createElement('mdui-snackbar');
     snackbar.setAttribute('open', true);
@@ -585,21 +599,28 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
 
     // Save both blobs separately
     const audioBlobUrl = URL.createObjectURL(audioBlob);
+    const audioExt = audioOnly ? ".mp3" : "_audio.mp4";
+    const audioFullFileName = audioOnly ? (customFilename || `${baseFileName}${audioExt}`) : `${baseFileName}${audioExt}`;
 
     if (downloadMethod === "browser") {
       await browser.downloads.download({
         url: audioBlobUrl,
-        filename: `${baseFileName}_audio.mp4`
+        filename: audioFullFileName
       });
     } else {
       const audioAnchor = document.createElement("a");
       audioAnchor.href = audioBlobUrl;
-      audioAnchor.download = `${baseFileName}_audio.mp4`;
+      audioAnchor.download = audioFullFileName;
       document.body.appendChild(audioAnchor);
       audioAnchor.click();
       document.body.removeChild(audioAnchor);
     }
-    showDialog(browser.i18n.getMessage("splitAudioVideoDownloadCompleteDescription", [new Option(baseFileName).innerHTML, ext]), browser.i18n.getMessage("splitAudioVideoDownloadCompleteTitle"), { error: `✅ Downloaded separate audio and video files for "${baseFileName}".`, urls: { video: videoBlobUrl, audio: audioBlobUrl, m3u8: m3u8Url }, request: request, downloadMethod: downloadMethod });
+    
+    if (audioOnly) {
+        showDialog(`✅ Audio extracted successfully: ${audioFullFileName}`, "Success");
+    } else {
+        showDialog(browser.i18n.getMessage("splitAudioVideoDownloadCompleteDescription", [new Option(baseFileName).innerHTML, ext]), browser.i18n.getMessage("splitAudioVideoDownloadCompleteTitle"), { error: `✅ Downloaded separate audio and video files for "${baseFileName}".`, urls: { video: URL.createObjectURL(videoBlob), audio: audioBlobUrl, m3u8: m3u8Url }, request: request, downloadMethod: downloadMethod });
+    }
     URL.revokeObjectURL(audioBlobUrl); // Clean up the blob URLs
     return;
   }

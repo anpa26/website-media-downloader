@@ -89,6 +89,10 @@
         "message": "Preview",
         "description": "The text of the preview button in the media list."
     },
+    "audioOnly": {
+        "message": "Audio-Only",
+        "description": "The text of the audio-only extraction button in the media list."
+    },
     "downloadMedia": {
         "message": "Download",
         "description": "The text of the download button in the media list."

@@ -497,16 +497,6 @@ function loadMediaList() {
       const cardContent = document.createElement('div');
       cardContent.classList.add('media-item-content');
 
-      // Create large inline preview area
-      const inlinePreview = document.createElement('div');
-      inlinePreview.classList.add('inline-preview-area');
-      const largeVideo = document.createElement('video');
-      largeVideo.controls = true;
-      inlinePreview.appendChild(largeVideo);
-      mediaDiv.appendChild(inlinePreview);
-      
-      mediaDiv.appendChild(cardContent);
-
       const headline = document.createElement('div');
       headline.setAttribute('slot', 'headline');
       headline.textContent = getFileName(bestRequest.originalUrl);
@@ -518,6 +508,15 @@ function loadMediaList() {
       const humanSize = getHumanReadableSize(bestRequest.size);
       description.textContent = `${mediaURL.hostname} • ${humanSize} • ${timeStr}`;
       cardContent.appendChild(description);
+
+      const inlinePreview = document.createElement('div');
+      inlinePreview.classList.add('inline-preview-area');
+      const largeVideo = document.createElement('video');
+      largeVideo.controls = true;
+      inlinePreview.appendChild(largeVideo);
+      mediaDiv.appendChild(inlinePreview);
+
+      mediaDiv.appendChild(cardContent);
 
       const actionsArea = document.createElement('div');
       actionsArea.classList.add('media-actions');
@@ -574,7 +573,16 @@ function loadMediaList() {
           }
       });
 
+      const audioBtn = document.createElement('mdui-segmented-button');
+      audioBtn.id = 'audio-only-button';
+      audioBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M400-120q-66 0-113-47t-47-113q0-66 47-113t113-47q23 0 42.5 5.5T480-418v-422h240v160H560v400q0 66-47 113t-113 47Z"/></svg></mdui-icon>${browser.i18n.getMessage("audioOnly") || "Audio-Only"}`;
+      audioBtn.addEventListener('click', () => {
+        downloadAudioOnly(bestRequest.originalUrl, mediaDiv, bestRequest.size);
+      });
+      if (!isVideo && !isStream) audioBtn.style.display = 'none';
+
       buttonGroup.appendChild(dlBtn);
+      buttonGroup.appendChild(audioBtn);
       buttonGroup.appendChild(prvBtn);
       actionsArea.appendChild(buttonGroup);
       mediaContainer.appendChild(mediaDiv);
@@ -843,6 +851,201 @@ function getHumanReadableSize(size) {
   let i = 0;
   while (sizeInBytes > 1024 && i < units.length - 1) { sizeInBytes /= 1024; i++; }
   return `${sizeInBytes.toFixed(2)} ${units[i]}`;
+}
+
+async function audioBufferToWav(buffer, onProgress) {
+  let numOfChan = buffer.numberOfChannels,
+      length = buffer.length * numOfChan * 2 + 44,
+      buffer_out = new ArrayBuffer(length),
+      view = new DataView(buffer_out),
+      channels = [], i, sample,
+      offset = 0,
+      pos = 0;
+
+  function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
+  function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
+
+  setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157);
+  setUint32(0x20746d66); setUint32(16); setUint16(1); setUint16(numOfChan);
+  setUint32(buffer.sampleRate); setUint32(buffer.sampleRate * 2 * numOfChan);
+  setUint16(numOfChan * 2); setUint16(16); setUint32(0x61746164);
+  setUint32(length - pos - 4);
+
+  for(i = 0; i < buffer.numberOfChannels; i++) channels.push(buffer.getChannelData(i));
+  
+  const totalSamples = buffer.length;
+  const batchSize = 100000; 
+
+  while(offset < totalSamples) {
+    let end = Math.min(offset + batchSize, totalSamples);
+    for(; offset < end; offset++) {
+      for(i = 0; i < numOfChan; i++) {
+        sample = Math.max(-1, Math.min(1, channels[i][offset]));
+        sample = (sample < 0 ? sample * 0x8000 : sample * 0x7FFF);
+        view.setInt16(pos, sample, true);
+        pos += 2;
+      }
+    }
+    
+    if (onProgress) onProgress(offset / totalSamples);
+    await new Promise(resolve => setTimeout(resolve, 0));
+  }
+  
+  return new Blob([buffer_out], {type: "audio/wav"});
+}
+
+async function extractAudioFromBlob(blob, filename, downloadMethod, loadingBar) {
+  let statusInfo = null;
+  if (loadingBar) {
+      loadingBar.setAttribute('indeterminate', 'true');
+      statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
+      if (statusInfo) statusInfo.textContent = "Decoding audio... Please wait (this can be slow for large files).";
+  }
+
+  // Force a small pause so the browser has time to paint the status above
+  await new Promise(r => setTimeout(r, 200));
+
+  const arrayBuffer = await blob.arrayBuffer();
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  
+  try {
+      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      if (loadingBar) {
+          loadingBar.removeAttribute('indeterminate');
+          loadingBar.max = 100;
+      }
+
+      const wavBlob = await audioBufferToWav(audioBuffer, (progress) => {
+          if (loadingBar) {
+              const percent = Math.round(progress * 100);
+              loadingBar.value = percent;
+              if (statusInfo) statusInfo.textContent = `Encoding: ${percent}%`;
+          }
+      });
+      
+      const wavUrl = URL.createObjectURL(wavBlob);
+      
+      if (downloadMethod === "browser") {
+        await browser.downloads.download({ url: wavUrl, filename: filename });
+      } else {
+        const a = document.createElement("a");
+        a.href = wavUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }
+      URL.revokeObjectURL(wavUrl);
+  } catch (e) {
+      throw new Error("Failed to extract audio. " + e.message);
+  } finally {
+      try { audioCtx.close(); } catch(e) {}
+  }
+}
+
+async function downloadAudioOnly(url, mediaDiv, specificSize) {
+  let wakeLock = null;
+  try { wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
+
+  try {
+   const requests = await browser.runtime.sendMessage({ action: 'getMediaRequests', url: url });
+   const targetRequest = requests[url]?.find(r => r.size === specificSize) || requests[url]?.[0];
+   if(!targetRequest) throw new Error("Data lost");
+
+   const defaultName = getFileName(url, 100);
+   const template = await browser.storage.local.get('filename-template').then(res => res['filename-template']);
+   let finalName = defaultName;
+
+   if (template) {
+       finalName = await generateTemplateName(template, url, defaultName);
+   }
+   
+   const lastDotIdx = finalName.lastIndexOf('.');
+   let audioExt = ".wav";
+   const isStream = url.toLowerCase().includes('.m3u8') || url.toLowerCase().includes('.mpd');
+
+   if (lastDotIdx !== -1) {
+       finalName = finalName.substring(0, lastDotIdx) + audioExt;
+   } else {
+       finalName += audioExt;
+   }
+
+   const newName = await showRenameDialog(finalName);
+   if (newName === null) return; 
+
+   updateDownloadingCount(1);
+   const loadingBar = document.createElement('mdui-linear-progress');
+   const statusInfo = document.createElement('div');
+   statusInfo.className = 'download-status-info';
+   statusInfo.style.fontSize = '12px';
+   statusInfo.style.marginTop = '4px';
+   statusInfo.style.textAlign = 'center';
+   
+   mediaDiv.dataset.url = url; 
+   mediaDiv.appendChild(loadingBar);
+   mediaDiv.appendChild(statusInfo);
+   loadingBar.style.width = '100%';
+   loadingBar.setAttribute('indeterminate', 'true');
+   
+   // Manually populate UI cache to ensure finishDownloadUI works
+   uiCache.set(url, { element: mediaDiv, loadingBar, statusInfo });
+
+   const downloadMethod = await browser.storage.local.get('download-method').then(res => res['download-method']);
+
+   if (isStream) {
+      if (url.toLowerCase().includes('.m3u8')) {
+          const result = await downloadM3U8Offline(url, targetRequest.responseHeaders, downloadMethod, loadingBar, targetRequest, newName, true);
+          if (result && result.blob) {
+              await extractAudioFromBlob(result.blob, newName, downloadMethod, loadingBar);
+          }
+      } else {
+          showDialog("Audio-only extraction for DASH (.mpd) is not yet supported. Only HLS (.m3u8) and direct files are supported.", "Not Supported");
+          finishDownloadUI(url);
+          return;
+      }
+   } else {
+      try {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          
+          const contentLength = +(response.headers.get('Content-Length') || 0);
+          const reader = response.body.getReader();
+          let receivedLength = 0;
+          let chunks = [];
+          
+          loadingBar.removeAttribute('indeterminate');
+          if (contentLength > 0) loadingBar.max = contentLength;
+
+          while(true) {
+            const {done, value} = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            receivedLength += value.length;
+            
+            if (contentLength > 0) {
+                loadingBar.value = receivedLength;
+                const percent = Math.round((receivedLength / contentLength) * 100);
+                statusInfo.textContent = `Downloading: ${percent}% (${(receivedLength/1048576).toFixed(1)}MB / ${(contentLength/1048576).toFixed(1)}MB)`;
+            } else {
+                statusInfo.textContent = `Downloading: ${(receivedLength/1048576).toFixed(1)}MB`;
+            }
+          }
+          
+          const blob = new Blob(chunks);
+          statusInfo.textContent = "Download complete. Preparing extraction...";
+          await new Promise(r => setTimeout(r, 500)); // Small pause to let user see it's done
+          await extractAudioFromBlob(blob, newName, downloadMethod, loadingBar);
+      } catch (e) {
+          throw new Error("Download failed: " + e.message);
+      }
+   }
+   finishDownloadUI(url, true);
+  } catch (error) {
+    showDialog("Audio-only extraction error: " + error.message);
+    finishDownloadUI(url);
+  } finally {
+    if (wakeLock) wakeLock.release();
+  }
 }
 
 async function downloadFile(url, mediaDiv, specificSize) {
