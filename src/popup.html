@@ -158,6 +158,24 @@
                 <mdui-switch id="media-cache"></mdui-switch>
               </div>
               <mdui-divider></mdui-divider>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="speedBoostTitle">Speed boost</h3>
+                  <p data-translate="speedBoostExplain">Parallel downloads for faster speed.</p>
+                </div>
+                <mdui-switch id="speed-boost"></mdui-switch>
+              </div>
+              <mdui-divider></mdui-divider>
+              <div class="setting-item vertical">
+                 <h3 data-translate="connectionsTitle">Parallel connections</h3>
+                 <mdui-segmented-button-group id="connections-group" select-strategy="single" full-width>
+                    <mdui-segmented-button value="2">2</mdui-segmented-button>
+                    <mdui-segmented-button value="4">4</mdui-segmented-button>
+                    <mdui-segmented-button value="8">8</mdui-segmented-button>
+                    <mdui-segmented-button value="16">16</mdui-segmented-button>
+                 </mdui-segmented-button-group>
+              </div>
+              <mdui-divider></mdui-divider>
               <div class="setting-item vertical">
                  <h3 data-translate="streamDownloadTitle">Stream preference</h3>
                  <mdui-segmented-button-group id="stream-download-group" select-strategy="single" full-width>

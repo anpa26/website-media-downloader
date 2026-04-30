@@ -26,6 +26,80 @@ let urlList = [];
 let headersSentListener, headersReceivedListener;
 const activeDownloads = new Map(); // url -> { loaded, total }
 
+// ---------- Persistent Download State Helpers ----------
+async function saveDownloadState(downloadId, data) {
+    const res = await browser.storage.local.get('pending-downloads');
+    const pending = res['pending-downloads'] || {};
+    pending[downloadId] = {
+        url: data.url,
+        filename: data.filename,
+        total: data.total,
+        loaded: data.loaded,
+        originalRequest: data.originalRequest,
+        chunkIndex: data.chunkIndex || 0,
+        timestamp: Date.now(),
+        isParallel: !!data.isParallel
+    };
+    await browser.storage.local.set({ 'pending-downloads': pending });
+}
+
+async function removeDownloadState(downloadId) {
+    const res = await browser.storage.local.get('pending-downloads');
+    const pending = res['pending-downloads'] || {};
+    delete pending[downloadId];
+    await browser.storage.local.set({ 'pending-downloads': pending });
+}
+
+async function removeMediaRequest(url) {
+    if (!url) return;
+    try {
+        const baseUrl = url.split('?')[0];
+        const res = await browser.storage.session.get(null);
+        
+        // Get all currently active download URLs
+        const activeUrls = new Set();
+        for (const val of activeDownloads.values()) {
+            if (val.url) activeUrls.add(val.url);
+        }
+
+        const keysToRemove = [];
+        for (const key in res) {
+            // Match same base URL (identity) and ensure it's not active
+            if (key.split('?')[0] === baseUrl && !activeUrls.has(key)) {
+                keysToRemove.push(key);
+            }
+        }
+
+        if (keysToRemove.length > 0) {
+            await browser.storage.session.remove(keysToRemove);
+        }
+    } catch (e) {
+        console.error("Error in removeMediaRequest:", e);
+        // Fallback to exact match if something goes wrong
+        browser.storage.session.remove(url).catch(() => {});
+    }
+}
+
+async function resumeInterruptedDownloads() {
+    const res = await browser.storage.local.get('pending-downloads');
+    const pending = res['pending-downloads'] || {};
+    const ids = Object.keys(pending);
+    
+    if (ids.length > 0) {
+        console.log(`Found ${ids.length} interrupted downloads. Resuming...`);
+        for (const id of ids) {
+            const data = pending[id];
+            // Small delay between resumes to avoid overwhelming
+            setTimeout(() => {
+                handleFetchDownload(data.url, data.filename, data.originalRequest, id, true);
+            }, 1000);
+        }
+    }
+}
+
+// Run resume on startup
+resumeInterruptedDownloads();
+
 // ---------- IndexedDB helpers (same DB used by offlineStreamConvert.js) ----------
 const DB_NAME = "MediaCacheDB";
 const STORE_NAME = "network-cache";
@@ -873,6 +947,9 @@ browser.downloads.onChanged.addListener((delta) => {
             url: item.url,
             error: errorMsg
         }).catch(() => {});
+        if (delta.state.current === 'complete') {
+            removeMediaRequest(item.url);
+        }
         activeDownloads.delete(delta.id);
     } else {
         browser.runtime.sendMessage({
@@ -947,21 +1024,20 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 break;
             }
         }
-        
+
         if (targetId) {
             const item = activeDownloads.get(targetId);
             if (isNative) {
                 browser.downloads.cancel(targetId);
                 activeDownloads.delete(targetId);
-                // browser.downloads.onChanged will handle sending downloadError/USER_CANCELED
             } else if (item && item.abortController) {
                 item.abortController.abort();
                 activeDownloads.delete(targetId);
+                removeDownloadState(targetId);
             }
         }
         return true;
     }
-
     if (message.action === 'getActiveDownloads') {
         const downloadsObj = {};
         for (let [id, value] of activeDownloads) {
@@ -1013,9 +1089,170 @@ browser.tabs.onRemoved.addListener((tabId) => {
     }
 });
 
-async function handleFetchDownload(url, filename, originalRequest = null, providedId = null) {
+async function handleParallelFetchDownload(url, filename, total, connections, baseOptions, downloadId, providedContentType = null) {
+    const abortController = new AbortController();
+    baseOptions.signal = abortController.signal;
+
+    try {
+        activeDownloads.set(downloadId, { loaded: 0, total: total, abortController: abortController, url: url });
+        await saveDownloadState(downloadId, { url, filename, total, loaded: 0, originalRequest: null, isParallel: true });
+
+        const partSize = Math.ceil(total / connections);
+        const BUFFER_THRESHOLD = 1024 * 1024; // 1MB buffer
+        let totalLoaded = 0;
+        let lastReportTime = 0;
+
+        const partPromises = [];
+
+        for (let i = 0; i < connections; i++) {
+            const start = i * partSize;
+            const end = Math.min((i + 1) * partSize - 1, total - 1);
+            if (start >= total) break;
+
+            partPromises.push((async (partIndex) => {
+                const partOptions = {
+                    ...baseOptions,
+                    headers: {
+                        ...baseOptions.headers,
+                        'Range': `bytes=${start}-${end}`
+                    }
+                };
+
+                const response = await fetch(url, partOptions);
+                if (!response.ok && response.status !== 206) {
+                    throw new Error(`Part ${partIndex} failed with status ${response.status}`);
+                }
+
+                const reader = response.body.getReader();
+                let localChunkIndex = 0;
+                let currentBuffer = [];
+                let currentBufferSize = 0;
+
+                async function flushPartBuffer() {
+                    if (currentBuffer.length === 0) return;
+                    const combined = new Uint8Array(currentBufferSize);
+                    let offset = 0;
+                    for (const b of currentBuffer) {
+                        combined.set(b, offset);
+                        offset += b.length;
+                    }
+                    
+                    // Use a unique chunk index for this part to keep ordering
+                    // partIndex * 1,000,000 allows 1TB per part with 1MB chunks
+                    const globalChunkIndex = (partIndex * 1000000) + localChunkIndex++;
+                    await storeChunkInCache(downloadId, globalChunkIndex, combined);
+                    
+                    currentBuffer = [];
+                    currentBufferSize = 0;
+                    
+                    // Periodically update state in storage
+                    saveDownloadState(downloadId, { url, filename, total, loaded: totalLoaded, originalRequest: null, isParallel: true });
+                }
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    currentBuffer.push(value);
+                    currentBufferSize += value.length;
+                    totalLoaded += value.length;
+
+                    // Update global progress
+                    activeDownloads.set(downloadId, { loaded: totalLoaded, total: total, abortController, url: url });
+                    
+                    const now = Date.now();
+                    if (now - lastReportTime > 200) {
+                        lastReportTime = now;
+                        browser.runtime.sendMessage({
+                            action: 'downloadProgress',
+                            id: downloadId,
+                            url: url,
+                            loaded: totalLoaded,
+                            total: total
+                        }).catch(() => {});
+                    }
+
+                    if (currentBufferSize >= BUFFER_THRESHOLD) {
+                        await flushPartBuffer();
+                    }
+                }
+                await flushPartBuffer();
+            })(i));
+        }
+
+        await Promise.all(partPromises);
+
+        // Final progress report
+        browser.runtime.sendMessage({
+            action: 'downloadProgress',
+            id: downloadId,
+            url: url,
+            loaded: totalLoaded,
+            total: total
+        }).catch(() => {});
+
+        const finalFilename = filename || getFileName(url);
+        const contentType = providedContentType || baseOptions.headers['Content-Type'] || 'application/octet-stream';
+        await storeInCache(downloadId, null, contentType);
+        
+        pendingSaveQueue.push({ id: downloadId, url, filename: finalFilename });
+        processSaveQueue();
+
+        activeDownloads.delete(downloadId);
+        removeDownloadState(downloadId);
+        removeMediaRequest(url);
+        browser.runtime.sendMessage({ action: 'downloadComplete', id: downloadId, url: url }).catch(() => {});
+
+    } catch (error) {
+        activeDownloads.delete(downloadId);
+        if (error.name !== 'AbortError') {
+            console.error("Parallel download failed:", error);
+            browser.runtime.sendMessage({ action: 'downloadError', url: url, error: error.message }).catch(() => {});
+        }
+    }
+}
+
+async function handleFetchDownload(url, filename, originalRequest = null, providedId = null, isResuming = false) {
+    const settings = await browser.storage.local.get(['speed-boost', 'connections']);
+    const speedBoostEnabled = settings['speed-boost'] === '1';
+    const connections = parseInt(settings['connections'] || '4', 10);
+
     const abortController = new AbortController();
     const downloadId = providedId || ('dl_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
+    
+    let resumeOffset = 0;
+    let chunkIndex = 0;
+
+    if (isResuming) {
+        try {
+            const db = await getDB();
+            const tx = db.transaction([CHUNK_STORE_NAME], "readonly");
+            const store = tx.objectStore(CHUNK_STORE_NAME);
+            const range = IDBKeyRange.bound([downloadId, 0], [downloadId, Infinity]);
+            const cursorRequest = store.openCursor(range, "prev"); // Get last chunk
+            
+            const lastChunk = await new Promise((resolve) => {
+                cursorRequest.onsuccess = (e) => resolve(e.target.result ? e.target.result.value : null);
+                cursorRequest.onerror = () => resolve(null);
+            });
+
+            if (lastChunk) {
+                chunkIndex = lastChunk.chunkIndex + 1;
+                // We need the total loaded bytes to resume correctly
+                const allChunksTx = db.transaction([CHUNK_STORE_NAME], "readonly");
+                const allChunksStore = allChunksTx.objectStore(CHUNK_STORE_NAME);
+                const allChunksReq = allChunksStore.getAll(range);
+                const chunks = await new Promise(r => {
+                    allChunksReq.onsuccess = () => r(allChunksReq.result);
+                    allChunksReq.onerror = () => r([]);
+                });
+                resumeOffset = chunks.reduce((acc, c) => acc + c.data.length, 0);
+            }
+        } catch (e) {
+            console.error("Failed to calculate resume offset:", e);
+        }
+    }
+
     try {
         const fetchOptions = {
             method: originalRequest ? originalRequest.method : 'GET',
@@ -1024,10 +1261,14 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
             signal: abortController.signal
         };
 
+        if (resumeOffset > 0) {
+            fetchOptions.headers['Range'] = `bytes=${resumeOffset}-`;
+        }
+
         if (originalRequest && originalRequest.requestHeaders) {
             originalRequest.requestHeaders.forEach(h => {
                 const name = h.name.toLowerCase();
-                if (name !== 'cookie' && name !== 'referer') {
+                if (name !== 'cookie' && name !== 'referer' && name !== 'range') {
                     fetchOptions.headers[h.name] = h.value;
                 }
             });
@@ -1061,17 +1302,36 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
         }
 
         const response = await fetch(url, fetchOptions);
-        if (!response.ok) throw new Error("Server error: " + response.status);
+        if (!response.ok && response.status !== 206) throw new Error("Server error: " + response.status);
 
         const contentLength = response.headers.get('content-length');
-        const total = contentLength ? parseInt(contentLength, 10) : 0;
+        const total = (contentLength ? parseInt(contentLength, 10) : 0) + resumeOffset;
+        const acceptRanges = response.headers.get('accept-ranges');
+        const supportsRanges = acceptRanges === 'bytes';
+        const contentType = response.headers.get('content-type');
+
+        if (!isResuming && speedBoostEnabled && supportsRanges && total > 2 * 1024 * 1024 && connections > 1) {
+            // Cancel current single stream and switch to parallel
+            // We use reader.cancel() if supported or just abort the controller
+            if (response.body && response.body.cancel) {
+                response.body.cancel();
+            } else {
+                abortController.abort();
+            }
+            
+            // Re-prepare options for parallel (new signal)
+            const parallelOptions = { ...fetchOptions };
+            delete parallelOptions.signal; 
+            
+            return handleParallelFetchDownload(url, filename, total, connections, parallelOptions, downloadId, contentType);
+        }
         
-        activeDownloads.set(downloadId, { loaded: 0, total: total, abortController: abortController, url: url });
+        activeDownloads.set(downloadId, { loaded: resumeOffset, total: total, abortController: abortController, url: url });
+        await saveDownloadState(downloadId, { url, filename, total, loaded: resumeOffset, originalRequest });
 
         const reader = response.body.getReader();
-        let loaded = 0;
+        let loaded = resumeOffset;
         let lastReportTime = 0;
-        let chunkIndex = 0;
         
         const writeQueue = [];
         const MAX_WRITE_QUEUE = 3; 
@@ -1099,6 +1359,8 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
             if (writeQueue.length >= MAX_WRITE_QUEUE) {
                 await writeQueue.shift();
             }
+            // Periodically update state in storage
+            saveDownloadState(downloadId, { url, filename, total, loaded, originalRequest });
         }
 
         while (true) {
@@ -1144,29 +1406,28 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
         const finalFilename = filename || getFileName(url);
 
         // Store metadata in cache to signal chunked download
-        await storeInCache(downloadId, null, response.headers.get('content-type'));
+        await storeInCache(downloadId, null, contentType);
         
         // Add to queue instead of opening immediately
         pendingSaveQueue.push({ id: downloadId, url, filename: finalFilename });
         processSaveQueue();
 
         activeDownloads.delete(downloadId);
+        removeDownloadState(downloadId);
+        removeMediaRequest(url);
         browser.runtime.sendMessage({ action: 'downloadComplete', id: downloadId, url: url }).catch(() => {});
 
     } catch (error) {
         // Find the downloadId if possible to cleanup
-        let targetId = null;
-        for (let [id, val] of activeDownloads) {
-            if (val.url === url) {
-                targetId = id;
-                break;
-            }
-        }
+        let targetId = downloadId;
         if (targetId) activeDownloads.delete(targetId);
         
-        console.error("Background fetch download failed:", error);
-        const errorMsg = (error.name === 'AbortError') ? 'USER_CANCELED' : error.message;
-        browser.runtime.sendMessage({ action: 'downloadError', url: url, error: errorMsg }).catch(() => {});
+        if (error.name === 'AbortError') {
+            console.log("Download aborted by user or system.");
+        } else {
+            console.error("Background fetch download failed:", error);
+            browser.runtime.sendMessage({ action: 'downloadError', url: url, error: error.message }).catch(() => {});
+        }
     }
 }
 

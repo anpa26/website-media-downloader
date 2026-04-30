@@ -133,9 +133,9 @@ browser.runtime.onMessage.addListener((message) => {
   if (message.action === 'downloadProgress') {
     updateProgressUI(message.id || message.url, message.loaded, message.total);
   } else if (message.action === 'downloadComplete') {
-    finishDownloadUI(message.id || message.url);
+    finishDownloadUI(message.id || message.url, true);
   } else if (message.action === 'downloadError') {
-    finishDownloadUI(message.id || message.url);
+    finishDownloadUI(message.id || message.url, false);
     if (message.error === "USER_CANCELED") {
       if (typeof mdui !== 'undefined' && mdui.snackbar) {
         mdui.snackbar({
@@ -192,18 +192,34 @@ function updateProgressUI(id, loaded, total) {
   }
 }
 
-function finishDownloadUI(id) {
+function finishDownloadUI(id, isSuccess = false) {
   const itemData = uiCache.get(id);
   if (itemData) {
       const { element, loadingBar, statusInfo } = itemData;
-      if (loadingBar && loadingBar.parentNode === element) element.removeChild(loadingBar);
-      if (statusInfo && statusInfo.parentNode === element) element.removeChild(statusInfo);
       
-      const dlBtn = element.querySelector('#download-button');
-      if (dlBtn) {
-        dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>Download`;
-        dlBtn.classList.remove('cancel-active');
-        dlBtn.disabled = false;
+      const isPreviewing = element.classList.contains('expanded') || 
+                          element.querySelector('.media-preview-container.playing');
+
+      if (isSuccess && !isPreviewing) {
+          // Remove from list if download was successful and not being previewed
+          element.parentNode.removeChild(element);
+          
+          // Check if list is empty now
+          const mediaContainer = document.getElementById('media-list');
+          if (mediaContainer.querySelectorAll('.media-item').length === 0) {
+            mediaContainer.innerHTML = `<div style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
+          }
+      } else {
+          // Standard cleanup if failed or being previewed
+          if (loadingBar && loadingBar.parentNode === element) element.removeChild(loadingBar);
+          if (statusInfo && statusInfo.parentNode === element) element.removeChild(statusInfo);
+          
+          const dlBtn = element.querySelector('#download-button');
+          if (dlBtn) {
+            dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>Download`;
+            dlBtn.classList.remove('cancel-active');
+            dlBtn.disabled = false;
+          }
       }
       uiCache.delete(id);
       updateDownloadingCount(-1);
@@ -214,17 +230,28 @@ function finishDownloadUI(id) {
   const mediaItems = document.querySelectorAll('.media-item');
   mediaItems.forEach(item => {
     if (item.dataset.downloadId === id || item.dataset.url === id) {
-      const loadingBar = item.querySelector('mdui-linear-progress');
-      const statusInfo = item.querySelector('.download-status-info');
-      if (loadingBar) item.removeChild(loadingBar);
-      if (statusInfo) item.removeChild(statusInfo);
+      const isPreviewing = item.classList.contains('expanded') || 
+                          item.querySelector('.media-preview-container.playing');
 
-      // Reset button to Download
-      const dlBtn = item.querySelector('#download-button');
-      if (dlBtn) {
-        dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>Download`;
-        dlBtn.classList.remove('cancel-active');
-        dlBtn.disabled = false;
+      if (isSuccess && !isPreviewing) {
+        item.parentNode.removeChild(item);
+        
+        const mediaContainer = document.getElementById('media-list');
+        if (mediaContainer.querySelectorAll('.media-item').length === 0) {
+          mediaContainer.innerHTML = `<div style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
+        }
+      } else {
+        const loadingBar = item.querySelector('mdui-linear-progress');
+        const statusInfo = item.querySelector('.download-status-info');
+        if (loadingBar) item.removeChild(loadingBar);
+        if (statusInfo) item.removeChild(statusInfo);
+
+        const dlBtn = item.querySelector('#download-button');
+        if (dlBtn) {
+          dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>Download`;
+          dlBtn.classList.remove('cancel-active');
+          dlBtn.disabled = false;
+        }
       }
 
       updateDownloadingCount(-1);

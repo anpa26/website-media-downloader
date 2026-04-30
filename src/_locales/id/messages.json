@@ -604,5 +604,17 @@
     "downloadCancelled": {
         "message": "Unduhan dibatalkan",
         "description": "The message shown when a download is manually cancelled."
+    },
+    "speedBoostTitle": {
+        "message": "Peningkatan kecepatan (Unduhan paralel)",
+        "description": "The title of the speed boost setting."
+    },
+    "speedBoostExplain": {
+        "message": "Unduh beberapa bagian file secara bersamaan. Hanya berfungsi jika server mendukung permintaan jangkauan.",
+        "description": "The explanation of the speed boost setting."
+    },
+    "connectionsTitle": {
+        "message": "Koneksi paralel",
+        "description": "The title of the connections setting."
     }
 }

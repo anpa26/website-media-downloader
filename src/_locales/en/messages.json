@@ -638,5 +638,17 @@
     "downloadCancelled": {
         "message": "Download cancelled",
         "description": "The message shown when a download is manually cancelled."
+    },
+    "speedBoostTitle": {
+        "message": "Speed boost (Parallel downloads)",
+        "description": "The title of the speed boost setting."
+    },
+    "speedBoostExplain": {
+        "message": "Download multiple parts of the file at the same time. Only works if the server supports range requests.",
+        "description": "The explanation of the speed boost setting."
+    },
+    "connectionsTitle": {
+        "message": "Parallel connections",
+        "description": "The title of the connections setting."
     }
 }

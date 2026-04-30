@@ -585,5 +585,17 @@
     "noHistory": {
         "message": "No download history found.",
         "description": "The message shown when the download history is empty."
+    },
+    "speedBoostTitle": {
+        "message": "Speed boost (Parallel downloads)",
+        "description": "The title of the speed boost setting."
+    },
+    "speedBoostExplain": {
+        "message": "Download multiple parts of the file at the same time. Only works if the server supports range requests.",
+        "description": "The explanation of the speed boost setting."
+    },
+    "connectionsTitle": {
+        "message": "Parallel connections",
+        "description": "The title of the connections setting."
     }
 }

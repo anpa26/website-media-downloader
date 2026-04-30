@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function initializeSettings() {
     const settings = [
         'url-detection', 'mime-detection', 'hide-segments', 'only-media',
-        'media-notification', 'download-method', 'media-cache', 'stream-download',
+        'media-notification', 'download-method', 'media-cache', 'speed-boost', 'connections', 'stream-download',
         'stream-quality', 'mpd-fix', 'open-preference',
         'filename-template', 'history-page'
     ];
@@ -27,6 +27,14 @@ async function initializeSettings() {
         if (value === undefined) {
             if (['url-detection', 'mime-detection', 'only-media', 'history-page', 'media-notification'].includes(setting)) {
                 value = '1';
+                browser.storage.local.set({ [setting]: value });
+            }
+            if (setting === 'speed-boost') {
+                value = '0'; // Default off
+                browser.storage.local.set({ [setting]: value });
+            }
+            if (setting === 'connections') {
+                value = '4'; // Default 4 connections
                 browser.storage.local.set({ [setting]: value });
             }
         }
@@ -52,7 +60,8 @@ async function initializeSettings() {
         if (group) {
             const defaultValue = setting === 'open-preference' ? 'tab' : 
                                 (setting === 'download-method' ? 'browser' : 
-                                (setting === 'stream-quality' ? 'highest' : 'stream'));
+                                (setting === 'stream-quality' ? 'highest' : 
+                                (setting === 'connections' ? '4' : 'stream')));
             const activeValue = value || defaultValue;
             
             // Atur nilai grup
