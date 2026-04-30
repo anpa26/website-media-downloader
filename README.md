@@ -16,14 +16,17 @@ This tool is provided for educational and personal use only. **Users are solely 
 ## Key Features
 
 - **Multi-Format Support:** Detects everything from standard MP4/MP3 files to advanced HLS (M3U8) and DASH (MPD) streams.
-- **Offline Stream Conversion:** Automatically converts fragmented streams (HLS/DASH) into playable offline files (TS or ZIP).
-- **Smart Download History:** Keeps a local record of your downloads, tracks the original source page, and automatically refreshes expired links when you revisit the page.
-- **Real-Time Notifications:** Instant system or in-page notifications when media is detected, allowing you to download without opening the extension menu.
-- **Material Design UI:** A clean, modern, and intuitive interface powered by MDUI.
-- **Filename Templates:** Customize how your files are named using dynamic placeholders like `{title}`, `{host}`, `{date}`, and `{time}`.
+- **Speed Boost (Parallel Downloads):** Significantly increase download speeds by fetching multiple segments of a file simultaneously. You can configure the number of concurrent connections in settings.
+- **Improved Persistence:** Enhanced download stability with auto-resume support and background state storage, ensuring large or interrupted downloads complete reliably.
+- **Optimized Storage:** High-performance IndexedDB engine with chunk buffering and batching for faster file reconstruction and reduced browser memory usage.
+- **Offline Stream Conversion:** Automatically converts fragmented HLS/DASH streams into playable offline files (TS or ZIP) locally in your browser.
+- **Smart Quality Grouping:** Automatically groups different quality variants of the same media to keep your detection list clean and organized.
+- **Download History:** Keeps a local record of your downloads, tracks the original source page, and automatically refreshes expired links when you revisit the page.
+- **Real-Time Notifications:** Optional system or in-page notifications when media is detected.
+- **Customizable UI:** Clean Material Design 3 interface with customizable theme colors and the option to open as a dedicated tab or a popup.
+- **Filename Templates:** Fully customizable naming using dynamic placeholders like `{title}`, `{name}`, `{host}`, `{date}`, and `{time}`.
 - **Advanced Detection:** Multiple detection methods (URL-based and MIME-based) to ensure even hidden media is found.
-- **Media Previewer:** Preview the detected video or audio directly within the extension before downloading.
-- **Header Spoofing:** Automatically handles Referer and Origin headers to bypass simple hotlinking protections.
+- **Header Spoofing:** Automatically handles Referer and Origin headers to bypass common hotlinking protections.
 - **Completely Private:** No tracking, no data collection. All processing happens locally on your device.
 
 ---
@@ -48,6 +51,18 @@ The extension includes a powerful history management system:
 - **Automatic Link Refresh:** If a download link expires (e.g., token expiration), simply click **"Visit Page"** in your history. As soon as you play the video again, the extension will automatically update the history record with the latest working link.
 - **Deduplication:** Keeps your history clean by automatically replacing old entries with the newest detection for the same media.
 - **One-Click Re-download:** Quickly re-download any previously captured media directly from the History tab.
+
+---
+
+## Advanced Settings
+
+- **Speed Boost:** Toggle parallel downloads. When enabled, the extension will split large files into multiple chunks and download them at the same time, maxing out your bandwidth.
+- **Connections:** Choose how many parallel connections to use (e.g., 2, 4, 8). Higher values are faster but may be blocked by some servers.
+- **Stream Download Method:**
+    - **Offline Conversion (Recommended):** Fetches all segments and combines them into a single file locally. Supports pausing and resuming.
+    - **Direct Manifest:** Provides the raw .m3u8 or .mpd link for use in external players like VLC.
+- **Appearance:** Change the primary theme color to match your preference.
+- **Open Preference:** Choose whether the extension opens in a small popup or a full-sized browser tab.
 
 ---
 
