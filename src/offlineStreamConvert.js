@@ -111,6 +111,42 @@ async function fetchWithCache(url, options = {}) {
 // ----------------------------------------
 
 /**
+ * Helper class for parallel execution with concurrency limit.
+ */
+class ParallelQueue {
+  constructor(concurrency) {
+    this.concurrency = concurrency;
+    this.running = 0;
+    this.queue = [];
+  }
+
+  add(task) {
+    return new Promise((resolve, reject) => {
+      this.queue.push(async () => {
+        try {
+          const result = await task();
+          resolve(result);
+        } catch (err) {
+          reject(err);
+        }
+      });
+      this.next();
+    });
+  }
+
+  next() {
+    while (this.running < this.concurrency && this.queue.length > 0) {
+      const task = this.queue.shift();
+      this.running++;
+      task().finally(() => {
+        this.running--;
+        this.next();
+      });
+    }
+  }
+}
+
+/**
  * Update the status text below the loading bar.
  */
 function updateProgressStatus(loadingBar, loaded, total) {
@@ -365,173 +401,146 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
       }
     }
 
-    // process items sequentially
-    for (let idx = 0; idx < items.length; idx++) {
-      const it = items[idx];
+    // --- Parallel Download Setup ---
+    const settings = await browser.storage.local.get(['speed-boost', 'connections']);
+    const isParallel = settings['speed-boost'] === '1';
+    const concurrency = isParallel ? parseInt(settings['connections'] || '4', 10) : 1;
+    const queue = new ParallelQueue(concurrency);
+
+    // encryption state
+    let currentKeyBuffer = null;
+    let currentKeyUri = null;
+    let currentKeyIV = null;
+    let currentMap = null;
+
+    // First pass: Pre-resolve keys and maps sequentially (they are small)
+    // and associate each segment with its required context
+    const segmentsToDownload = [];
+    let segmentSeqCounter = 0;
+
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
 
       if (it.type === 'key') {
-        // parse attributes: METHOD=..., URI="...", IV=0x...
         const line = it.raw;
         const method = (line.match(/METHOD=([^,]*)/) || [null, null])[1];
         const uriMatch = line.match(/URI="([^"]+)"/);
         const ivMatch = line.match(/IV=0x([0-9a-fA-F]+)/);
 
-        if (!method) {
-          // If method not present, treat it as NONE to be safe
+        if (!method || method === 'NONE') {
           currentKeyBuffer = null;
           currentKeyUri = null;
           currentKeyIV = null;
-          continue;
-        }
-
-        if (method === 'NONE') {
-          currentKeyBuffer = null;
-          currentKeyUri = null;
-          currentKeyIV = null;
-          continue;
-        }
-
-        if (method === 'AES-128') {
-          if (!uriMatch) {
-            throw new Error('AES-128 key line without URI');
-          }
-          const keyHref = new URL(uriMatch[1], playlistUrl).href;
-
-          // parse IV if present
-          if (ivMatch) {
-            const ivHex = ivMatch[1];
-            const ivBytes = Uint8Array.from(ivHex.match(/.{1,2}/g).map(b => parseInt(b, 16)));
-            // If shorter than 16, pad left with zeros (shouldn't normally happen)
-            if (ivBytes.length < 16) {
-              const padded = new Uint8Array(16);
-              padded.set(ivBytes, 16 - ivBytes.length);
-              currentKeyIV = padded;
+        } else if (method === 'AES-128') {
+          if (uriMatch) {
+            const keyHref = new URL(uriMatch[1], playlistUrl).href;
+            if (ivMatch) {
+              const ivHex = ivMatch[1];
+              currentKeyIV = Uint8Array.from(ivHex.match(/.{1,2}/g).map(b => parseInt(b, 16)));
             } else {
-              currentKeyIV = ivBytes;
+              currentKeyIV = null;
             }
-          } else {
-            currentKeyIV = null; // use sequence-derived IV for segments when needed
-          }
 
-          // Only fetch key if URI changed (key rotation)
-          if (keyHref !== currentKeyUri) {
-            currentKeyBuffer = await fetchAndDecodeKey(keyHref);
-            currentKeyUri = keyHref;
-
-            // debug
-            try {
-              const kb = new Uint8Array(currentKeyBuffer);
-              console.debug('Fetched HLS key from', keyHref, 'len=', kb.byteLength, 'hex=', Array.from(kb).map(b => b.toString(16).padStart(2, '0')).join(''));
-            } catch (e) { /* ignore */ }
+            if (keyHref !== currentKeyUri) {
+              currentKeyBuffer = await fetchAndDecodeKey(keyHref, fetchOpts);
+              currentKeyUri = keyHref;
+            }
           }
-          continue;
         }
-
-        // unsupported METHOD — clear key for safety
-        currentKeyBuffer = null;
-        currentKeyUri = null;
-        currentKeyIV = null;
         continue;
       }
 
       if (it.type === 'map') {
-        // parse URI
         const mapUriMatch = it.raw.match(/URI="([^"]+)"/);
-        if (!mapUriMatch) continue;
-        const mapHref = new URL(mapUriMatch[1], playlistUrl).href;
-
-        const mapRes = await fetchWithCache(mapHref, fetchOpts);
-        let mapData = new Uint8Array(await mapRes.arrayBuffer());
-
-        // determine container from map if not set
-        if (!container) {
-          const ct = (mapRes.headers.get && mapRes.headers.get('content-type') || '').toLowerCase();
-          if (ct.includes('mp4') || ct.includes('iso') || ct.includes('fmp4')) container = 'fmp4';
-          else {
-            const hdr = String.fromCharCode(...mapData.slice(4, 8));
-            if (hdr === 'ftyp' || hdr === 'styp') container = 'fmp4';
+        if (mapUriMatch) {
+          const mapHref = new URL(mapUriMatch[1], playlistUrl).href;
+          const mapRes = await fetchWithCache(mapHref, fetchOpts);
+          let mapData = new Uint8Array(await mapRes.arrayBuffer());
+          
+          if (currentKeyBuffer) {
+            const iv = currentKeyIV ? currentKeyIV : makeSequenceIV(0);
+            mapData = await decryptSegment(mapData, currentKeyBuffer, iv);
           }
+          currentMap = mapData;
         }
-
-        // decrypt map if key active
-        if (currentKeyBuffer) {
-          // build IV for map: if currentKeyIV provided, use it; else IV for init per spec usually sequence "0"
-          const iv = currentKeyIV
-            ? currentKeyIV
-            : makeSequenceIV(0); // use sequence 0 for initial map when IV not present
-
-          mapData = await decryptSegment(mapData, currentKeyBuffer, iv);
-        }
-
-        parts.push(mapData);
-        // mark container as fmp4 (init -> fmp4)
-        container = container || 'fmp4';
         continue;
       }
 
       if (it.type === 'segment') {
-        // fetch the segment
-        const segUrl = it.uri;
-        const res = await fetchWithCache(segUrl, fetchOpts);
+        segmentsToDownload.push({
+          uri: it.uri,
+          index: segmentSeqCounter,
+          key: currentKeyBuffer ? { buffer: currentKeyBuffer, iv: currentKeyIV } : null,
+          map: currentMap
+        });
+        segmentSeqCounter++;
+        // Maps in HLS usually apply only once or until next map. 
+        // We'll clear currentMap after assigning it to ensure it's only prepended once per segment group if needed,
+        // but HLS initialization segments are usually handled specifically.
+        // For fMP4, the map (init segment) should be the very first part.
+        currentMap = null; 
+      }
+    }
+
+    const parts = new Array(segmentsToDownload.length);
+    const firstPartMap = segmentsToDownload[0]?.map; // Save for fMP4 detection
+
+    const downloadTask = async (seg) => {
+      try {
+        const res = await fetchWithCache(seg.uri, fetchOpts);
         let arr = new Uint8Array(await res.arrayBuffer());
 
-        // container detection from first segment if unknown
-        if (!container && processedSegmentIndex === 0) {
-          const ct = (res.headers.get && res.headers.get('content-type') || '').toLowerCase();
-          if (ct.includes('mp4') || ct.includes('iso') || ct.includes('fmp4')) container = 'fmp4';
-          else if (arr[0] === 0x47) container = 'ts';
-          else {
-            const hdr = String.fromCharCode(...arr.slice(4, 8));
-            if (hdr === 'ftyp' || hdr === 'styp') container = 'fmp4';
-            else container = 'unknown';
-          }
+        if (seg.key) {
+          const seq = mediaSeq + seg.index + 1;
+          const iv = seg.key.iv ? seg.key.iv : makeSequenceIV(seq);
+          arr = await decryptSegment(arr, seg.key.buffer, iv);
         }
 
-        // decrypt only if we currently have a key
-        if (currentKeyBuffer) {
-          // determine IV: currentKeyIV or sequence-based (mediaSeq + processedSegmentIndex)
-          const seq = mediaSeq + processedSegmentIndex + 1;
-          const iv = currentKeyIV
-            ? currentKeyIV
-            : makeSequenceIV(seq);
-
-          try {
-            console.debug('key hex', Array.from(new Uint8Array(currentKeyBuffer)).map(b => b.toString(16).padStart(2, '0')).join(''), 'iv hex', Array.from(iv).map(b => b.toString(16).padStart(2, '0')).join(''), 'for segment seq', seq, 'url', segUrl);
-            console.debug('iv used for segment:', Array.from(iv).map(b => b.toString(16).padStart(2, '0')).join(''));
-
-            arr = await decryptSegment(arr, currentKeyBuffer, iv);
-          } catch (e) {
-            throw new Error(`Decryption failed for segment ${segUrl}: ${e.message || e}`);
-          }
+        if (seg.map) {
+           const combined = new Uint8Array(seg.map.byteLength + arr.byteLength);
+           combined.set(seg.map, 0);
+           combined.set(arr, seg.map.byteLength);
+           arr = combined;
         }
 
-        parts.push(arr);
-        processedSegmentIndex++;
+        parts[seg.index] = arr;
 
-        // update loading bar
         if (loadingBar) {
           globalProcessedSegments++;
           loadingBar.removeAttribute('indeterminate');
-          loadingBar.setAttribute(
-            'value',
-            Math.min(1, globalProcessedSegments / globalTotalSegments)
-          );
+          loadingBar.setAttribute('value', Math.min(1, globalProcessedSegments / globalTotalSegments));
           updateSegmentProgressStatus(loadingBar, globalProcessedSegments, globalTotalSegments);
         }
-
-        continue;
+      } catch (e) {
+        console.error(`Segment download failed: ${seg.uri}`, e);
+        throw e;
       }
-    } // end for items
+    };
 
-    // create final blob and extension
-    if (container === 'fmp4') {
-      const finalBlob = new Blob(parts, { type: "video/mp4" });
-      return { blob: finalBlob, ext: '.mp4' };
-    } else {
-      const finalBlob = new Blob(parts, { type: "video/mp2t" });
-      return { blob: finalBlob, ext: '.ts' };
+    const tasks = segmentsToDownload.map(seg => queue.add(() => downloadTask(seg)));
+    await Promise.all(tasks);
+
+    // Filter out any undefined parts just in case
+    const filteredParts = parts.filter(p => p !== undefined);
+    
+    // Container detection
+    if (filteredParts.length > 0) {
+       const firstArr = filteredParts[0];
+       if (firstArr[0] === 0x47) container = 'ts';
+       else {
+          // Check for ftyp/styp in first few bytes (could be shifted by map)
+          const searchArea = firstArr.slice(0, 32);
+          const hex = Array.from(searchArea).map(b => b.toString(16).padStart(2, '0')).join('');
+          if (hex.includes('66747970') || hex.includes('73747970')) container = 'fmp4'; // 'ftyp' or 'styp'
+       }
     }
-  }
+
+    if (container === 'fmp4') {
+      return { blob: new Blob(filteredParts, { type: "video/mp4" }), ext: '.mp4' };
+    } else {
+      return { blob: new Blob(filteredParts, { type: "video/mp2t" }), ext: '.ts' };
+    }
+  };
 
   async function countSegments(playlistUrl) {
     const text = await getText(playlistUrl);
@@ -1039,7 +1048,13 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
       loadingBar.setAttribute("max", prev + n);
     }
 
-    for (const d of downloads) {
+    // --- Parallel Download Setup ---
+    const settings = await browser.storage.local.get(['speed-boost', 'connections']);
+    const isParallel = settings['speed-boost'] === '1';
+    const concurrency = isParallel ? parseInt(settings['connections'] || '4', 10) : 1;
+    const queue = new ParallelQueue(concurrency);
+
+    const downloadDirectTask = async (d) => {
       const url = new URL(d.rep.baseURL, mpdBase).href;
       // Determine filename: prefer extension from baseURL, otherwise fallback
       let candidate = baseName;
@@ -1078,13 +1093,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
         }
       });
 
-      // If we had been indeterminate and now we have bytes, clear indeterminate
-      if (sawUnknownLength) {
-        // If we discovered content-length for this file earlier it would have added to max.
-        // We still remove indeterminate so the bar shows bytes progress accumulation.
-        loadingBar.removeAttribute("indeterminate");
-      }
-
       // Trigger download for this file
       const blob = new Blob([buffer]);
       const objectUrl = URL.createObjectURL(blob);
@@ -1099,7 +1107,11 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
         a.remove();
       }
       URL.revokeObjectURL(objectUrl);
-    }
+    };
+
+    // Run direct downloads in parallel
+    const directTasks = downloads.map(d => queue.add(() => downloadDirectTask(d)));
+    await Promise.all(directTasks);
 
     // Finalize progress bar
     const finalMax = Number(loadingBar.getAttribute("max")) || downloadedBytes || 1;
@@ -1348,72 +1360,91 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
   const mpdFixEnabled = (await browser.storage.local.get("mpd-fix").then((result) => result["mpd-fix"])) === "1";
   const repIdToLocalName = {};
 
-  // Process tasks sequentially (streaming)
-  for (const t of tasks) {
+  // --- Parallel Download Setup ---
+  const parallelSettings = await browser.storage.local.get(['speed-boost', 'connections']);
+  const isParallel = parallelSettings['speed-boost'] === '1';
+  const concurrency = isParallel ? parseInt(parallelSettings['connections'] || '4', 10) : 1;
+  const queue = new ParallelQueue(concurrency);
+
+  const zipEntries = new Array(); // We'll need to keep order or just append
+  // Since order in ZIP doesn't strictly matter for playback, we can just push as they finish,
+  // but let's try to keep some order for the file system.
+
+  const processTask = async (t) => {
     if (t.type === "template") {
       // init
       console.log(">>> Fetching template init:", t.info.initUrl);
       const initBuf = await fetchWithProgress(t.info.initUrl);
       zipEntries.push({ name: prefixedName(t.info.initZipPath), input: initBuf });
 
-      // segments
-      for (let i = 0; i < t.info.segmentUrls.length; i++) {
-        const segUrl = t.info.segmentUrls[i];
-        const segZipPath = t.info.mediaZipPaths[i];
-        console.log(`>>> Fetching template segment #${i + 1}:`, segUrl);
-        const buf = await fetchWithProgress(segUrl);
-        zipEntries.push({ name: prefixedName(segZipPath), input: buf });
-        
-        globalProcessedSegments++;
-        loadingBar.setAttribute("value", globalProcessedSegments);
-        updateSegmentProgressStatus(loadingBar, globalProcessedSegments, globalTotalSegments);
-      }
+      // segments (Parallelize segments within task if needed, but let's just queue them)
+      const segTasks = t.info.segmentUrls.map((segUrl, i) => {
+        return queue.add(async () => {
+          const segZipPath = t.info.mediaZipPaths[i];
+          console.log(`>>> Fetching template segment #${i + 1}:`, segUrl);
+          const buf = await fetchWithProgress(segUrl);
+          zipEntries.push({ name: prefixedName(segZipPath), input: buf });
+          
+          globalProcessedSegments++;
+          loadingBar.setAttribute("value", globalProcessedSegments);
+          updateSegmentProgressStatus(loadingBar, globalProcessedSegments, globalTotalSegments);
+        });
+      });
+      await Promise.all(segTasks);
 
     } else if (t.type === "base") {
-      console.log(">>> Fetching SegmentBase file (single-file MP4):", t.url);
-      let lastReceivedForFile = 0;
-      const arrayBuffer = await fetchWithProgress(t.url, {
-        onStart: (contentLength) => {
-          if (contentLength && contentLength > 0) addToMax(contentLength);
-          else loadingBar.setAttribute("indeterminate", "");
-        },
-        onChunk: (received) => {
-          const delta = received - lastReceivedForFile;
-          lastReceivedForFile = received;
-          downloadedBytes += delta;
-          const max = Number(loadingBar.getAttribute("max")) || 0;
-          if (max > 0) {
-            loadingBar.setAttribute("value", downloadedBytes);
-            updateProgressStatus(loadingBar, downloadedBytes, max);
-          } else {
-            updateProgressStatus(loadingBar, downloadedBytes, 0);
-          }
-        }
+      await queue.add(async () => {
+          console.log(">>> Fetching SegmentBase file (single-file MP4):", t.url);
+          let lastReceivedForFile = 0;
+          const arrayBuffer = await fetchWithProgress(t.url, {
+            onStart: (contentLength) => {
+              if (contentLength && contentLength > 0) addToMax(contentLength);
+              else loadingBar.setAttribute("indeterminate", "");
+            },
+            onChunk: (received) => {
+              const delta = received - lastReceivedForFile;
+              lastReceivedForFile = received;
+              downloadedBytes += delta;
+              const max = Number(loadingBar.getAttribute("max")) || 0;
+              if (max > 0) {
+                loadingBar.setAttribute("value", downloadedBytes);
+                updateProgressStatus(loadingBar, downloadedBytes, max);
+              } else {
+                updateProgressStatus(loadingBar, downloadedBytes, 0);
+              }
+            }
+          });
+
+          const finalZipName = prefixedName(t.zipName);
+          zipEntries.push({ name: finalZipName, input: arrayBuffer });
+          if (mpdFixEnabled) repIdToLocalName[t.rep.id] = t.zipName;
       });
-
-      const finalZipName = prefixedName(t.zipName);
-      zipEntries.push({ name: finalZipName, input: arrayBuffer });
-
-      if (mpdFixEnabled) repIdToLocalName[t.rep.id] = t.zipName;
     } else if (t.type === "list") {
       console.log(">>> Fetching SegmentList init:", t.info.initUrl);
       const initBuf = await fetchWithProgress(t.info.initUrl);
       zipEntries.push({ name: prefixedName(t.info.initZipPath), input: initBuf });
 
-      for (let i = 0; i < t.info.segmentUrls.length; i++) {
-        const segUrl = t.info.segmentUrls[i];
-        const segZipPath = t.info.segmentZipPaths[i];
+      const segTasks = t.info.segmentUrls.map((segUrl, i) => {
+        return queue.add(async () => {
+            const segZipPath = t.info.segmentZipPaths[i];
+            console.log(`>>> Fetching SegmentList segment #${i + 1}:`, segUrl);
+            const buf = await fetchWithProgress(segUrl);
+            zipEntries.push({ name: prefixedName(segZipPath), input: buf });
 
-        console.log(`>>> Fetching SegmentList segment #${i + 1}:`, segUrl);
-        const buf = await fetchWithProgress(segUrl);
-        zipEntries.push({ name: prefixedName(segZipPath), input: buf });
-
-        globalProcessedSegments++;
-        loadingBar.setAttribute("value", globalProcessedSegments);
-        updateSegmentProgressStatus(loadingBar, globalProcessedSegments, globalTotalSegments);
-      }
+            globalProcessedSegments++;
+            loadingBar.setAttribute("value", globalProcessedSegments);
+            updateSegmentProgressStatus(loadingBar, globalProcessedSegments, globalTotalSegments);
+        });
+      });
+      await Promise.all(segTasks);
+      
       if (mpdFixEnabled) repIdToLocalName[t.rep.id] = { type: "list", init: t.info.initZipPath, segments: t.info.segmentZipPaths };
     }
+  };
+
+  // Run top-level tasks. Note: for templates/lists, internal segments are also queued.
+  for (const t of tasks) {
+    await processTask(t);
   }
 
   // mpd-fix rewrite if needed

@@ -991,9 +991,18 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
    uiCache.set(url, { element: mediaDiv, loadingBar, statusInfo });
 
    const downloadMethod = await browser.storage.local.get('download-method').then(res => res['download-method']);
+   const streamPref = await browser.storage.local.get('stream-download').then(res => res['stream-download'] || 'offline');
 
    if (isStream) {
       if (url.toLowerCase().includes('.m3u8')) {
+          if (streamPref === 'offline') {
+              browser.tabs.create({
+                  url: browser.runtime.getURL(`stream_downloader.html?url=${encodeURIComponent(url)}&size=${encodeURIComponent(specificSize || '')}&filename=${encodeURIComponent(newName)}&audioOnly=true`),
+                  active: true
+              });
+              finishDownloadUI(url, true);
+              return;
+          }
           const result = await downloadM3U8Offline(url, targetRequest.responseHeaders, downloadMethod, loadingBar, targetRequest, newName, true);
           if (result && result.blob) {
               await extractAudioFromBlob(result.blob, newName, downloadMethod, loadingBar);

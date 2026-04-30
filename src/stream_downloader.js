@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const streamUrl = urlParams.get('url');
     const size = urlParams.get('size');
+    const audioOnly = urlParams.get('audioOnly') === 'true';
     
     if (!streamUrl) {
         document.getElementById('status-header').textContent = "Error";
@@ -48,7 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 2. Start the appropriate offline download
         if (streamUrl.toLowerCase().includes('.m3u8')) {
-            await downloadM3U8Offline(streamUrl, headers, downloadMethod, loadingBar, request, customFilename);
+            await downloadM3U8Offline(streamUrl, headers, downloadMethod, loadingBar, request, customFilename, audioOnly);
         } else if (streamUrl.toLowerCase().includes('.mpd')) {
             await downloadMPDOffline(streamUrl, headers, downloadMethod, loadingBar, request, customFilename);
         } else {

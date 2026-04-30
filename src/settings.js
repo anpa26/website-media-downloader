@@ -61,7 +61,8 @@ async function initializeSettings() {
             const defaultValue = setting === 'open-preference' ? 'tab' : 
                                 (setting === 'download-method' ? 'browser' : 
                                 (setting === 'stream-quality' ? 'highest' : 
-                                (setting === 'connections' ? '4' : 'stream')));
+                                (setting === 'connections' ? '4' : 
+                                (setting === 'stream-download' ? 'offline' : 'stream'))));
             const activeValue = value || defaultValue;
             
             // Atur nilai grup
