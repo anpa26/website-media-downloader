@@ -77,12 +77,6 @@ Since this version is customized and not from the official store, you need to al
 
 *Note: This usually works in Firefox Developer Edition, Nightly, or Android (via custom collections).*
 
-### Chrome / Edge / Chromium Browsers
-1. Download the source code or the latest release.
-2. Go to `chrome://extensions/` (or `edge://extensions/`).
-3. Enable **Developer Mode**.
-4. Click **Load unpacked** and select the `src` folder.
-
 ---
 
 ## Supported Formats
