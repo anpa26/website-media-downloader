@@ -346,6 +346,32 @@ function showDialog(message, title = null, extraActions = []) {
   });
 }
 
+function showQRCode(url) {
+  const typeNumber = 0;
+  const errorCorrectionLevel = 'L';
+  const qr = qrcode(typeNumber, errorCorrectionLevel);
+  qr.addData(url);
+  qr.make();
+  
+  const qrImageTag = qr.createImgTag(5);
+  const container = document.createElement('div');
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.alignItems = 'center';
+  container.style.gap = '16px';
+  container.style.padding = '16px 0';
+  container.innerHTML = `
+    <div style="background: white; padding: 12px; border-radius: 8px;">
+      ${qrImageTag}
+    </div>
+    <div style="word-break: break-all; font-size: 12px; opacity: 0.7; text-align: center; max-width: 250px;">
+      ${url}
+    </div>
+  `;
+  
+  showDialog(container.outerHTML, browser.i18n.getMessage("qrCodeDialogTitle") || "Scan QR Code");
+}
+
 function loadMediaList() {
   const mediaContainer = document.getElementById('media-list');
   const loadingSpinner = document.getElementById('loading-media-list');
@@ -526,6 +552,19 @@ function loadMediaList() {
       const humanSize = getHumanReadableSize(bestRequest.size);
       description.textContent = `${mediaURL.hostname} • ${humanSize} • ${timeStr}`;
       cardContent.appendChild(description);
+
+      const qrBtn = document.createElement('mdui-button-icon');
+      qrBtn.style.position = 'absolute';
+      qrBtn.style.right = '4px';
+      qrBtn.style.top = '12px';
+      qrBtn.style.opacity = '0.6';
+      qrBtn.innerHTML = `<mdui-icon><svg viewBox="0 -960 960 960"><path d="M120-120v-240h80v160h160v80H120Zm0-480v-240h240v80H200v160h-80Zm480 480v-80h160v-160h80v240H600Zm160-480v-160H600v-80h240v240h-80ZM280-280v-120h120v120H280Zm0-280v-120h120v120H280Zm280 280v-120h120v120H560Zm0-280v-120h120v120H560Z"/></svg></mdui-icon>`;
+      qrBtn.title = browser.i18n.getMessage("qrCodeButton") || "QR Code";
+      qrBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showQRCode(bestRequest.originalUrl);
+      });
+      cardContent.appendChild(qrBtn);
 
       const inlinePreview = document.createElement('div');
       inlinePreview.classList.add('inline-preview-area');
@@ -756,6 +795,14 @@ async function loadHistoryList() {
     });
     endIconArea.appendChild(downloadBtn);
 
+    const qrHistoryBtn = document.createElement('mdui-button-icon');
+    qrHistoryBtn.innerHTML = `<mdui-icon><svg viewBox="0 -960 960 960"><path d="M120-120v-240h80v160h160v80H120Zm0-480v-240h240v80H200v160h-80Zm480 480v-80h160v-160h80v240H600Zm160-480v-160H600v-80h240v240h-80ZM280-280v-120h120v120H280Zm0-280v-120h120v120H280Zm280 280v-120h120v120H560Zm0-280v-120h120v120H560Z"/></svg></mdui-icon>`;
+    qrHistoryBtn.title = browser.i18n.getMessage("qrCodeButton") || "QR Code";
+    qrHistoryBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showQRCode(item.url);
+    });
+
     const deleteBtn = document.createElement('mdui-button-icon');
     deleteBtn.innerHTML = `<mdui-icon><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></mdui-icon>`;
     deleteBtn.addEventListener('click', async (e) => {
@@ -767,6 +814,7 @@ async function loadHistoryList() {
     });
 
     endIconArea.appendChild(linkBtn);
+    endIconArea.appendChild(qrHistoryBtn);
     endIconArea.appendChild(deleteBtn);
     historyItem.appendChild(endIconArea);
 

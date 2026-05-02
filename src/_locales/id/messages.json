@@ -620,5 +620,17 @@
     "connectionsTitle": {
         "message": "Koneksi paralel",
         "description": "The title of the connections setting."
+    },
+    "qrCodeButton": {
+        "message": "Kode QR",
+        "description": "The text of the QR code button in the media list."
+    },
+    "qrCodeDialogTitle": {
+        "message": "Pindai Kode QR",
+        "description": "The headline of the QR code dialog."
+    },
+    "qrCodeDialogDescription": {
+        "message": "Pindai kode QR ini dengan HP Anda untuk membuka URL media.",
+        "description": "The description in the QR code dialog."
     }
 }

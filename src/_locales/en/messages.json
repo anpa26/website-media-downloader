@@ -654,5 +654,17 @@
     "connectionsTitle": {
         "message": "Parallel connections",
         "description": "The title of the connections setting."
+    },
+    "qrCodeButton": {
+        "message": "QR Code",
+        "description": "The text of the QR code button in the media list."
+    },
+    "qrCodeDialogTitle": {
+        "message": "Scan QR Code",
+        "description": "The headline of the QR code dialog."
+    },
+    "qrCodeDialogDescription": {
+        "message": "Scan this QR code with your mobile phone to open the media URL.",
+        "description": "The description in the QR code dialog."
     }
 }
