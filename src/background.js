@@ -1230,7 +1230,10 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
 
     } catch (error) {
         activeDownloads.delete(downloadId);
-        if (error.name !== 'AbortError') {
+        if (error.name === 'AbortError') {
+            console.log("Parallel download aborted.");
+            browser.runtime.sendMessage({ action: 'downloadError', url: url, error: 'USER_CANCELED' }).catch(() => {});
+        } else {
             console.error("Parallel download failed:", error);
             browser.runtime.sendMessage({ action: 'downloadError', url: url, error: error.message }).catch(() => {});
         }
@@ -1449,6 +1452,7 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
         
         if (error.name === 'AbortError') {
             console.log("Download aborted by user or system.");
+            browser.runtime.sendMessage({ action: 'downloadError', url: url, error: 'USER_CANCELED' }).catch(() => {});
         } else {
             console.error("Background fetch download failed:", error);
             browser.runtime.sendMessage({ action: 'downloadError', url: url, error: error.message }).catch(() => {});

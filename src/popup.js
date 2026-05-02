@@ -357,8 +357,10 @@ function finishDownloadUI(id, isSuccess = false) {
           }
       } else {
           // Standard cleanup if failed or being previewed
-          if (loadingBar && loadingBar.parentNode === element) element.removeChild(loadingBar);
-          if (statusInfo && statusInfo.parentNode === element) element.removeChild(statusInfo);
+          const bar = element.querySelector('mdui-linear-progress');
+          const info = element.querySelector('.download-status-info');
+          if (bar) bar.remove();
+          if (info) info.remove();
           
           const dlBtn = element.querySelector('#download-button');
           if (dlBtn) {
@@ -387,10 +389,10 @@ function finishDownloadUI(id, isSuccess = false) {
           mediaContainer.innerHTML = `<div style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
         }
       } else {
-        const loadingBar = item.querySelector('mdui-linear-progress');
-        const statusInfo = item.querySelector('.download-status-info');
-        if (loadingBar) item.removeChild(loadingBar);
-        if (statusInfo) item.removeChild(statusInfo);
+        const bar = item.querySelector('mdui-linear-progress');
+        const info = item.querySelector('.download-status-info');
+        if (bar) bar.remove();
+        if (info) info.remove();
 
         const dlBtn = item.querySelector('#download-button');
         if (dlBtn) {
