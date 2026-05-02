@@ -1554,14 +1554,6 @@ browser.action.onClicked.addListener((tab) => {
     });
 });
 
-browser.runtime.onInstalled.addListener((details) => {
-    if (details.reason === 'install') {
-        browser.tabs.create({
-            url: browser.runtime.getURL('installed.md'),
-        });
-    }
-});
-
 browser.runtime.onStartup.addListener(initListener);
 
 browser.runtime.setUninstallURL(`https://github.com/anpa26/website-media-downloader`);
