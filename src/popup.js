@@ -304,15 +304,30 @@ function updateProgressUI(id, loaded, total) {
     const mediaItems = document.querySelectorAll('.media-item');
     for (const el of mediaItems) {
       if (el.dataset.downloadId === id || el.dataset.url === id) {
-        const loadingBar = el.querySelector('mdui-linear-progress');
-        const statusInfo = el.querySelector('.download-status-info');
-        if (loadingBar && statusInfo) {
-          item = { loadingBar, statusInfo, element: el };
-          uiCache.set(id, item);
-          // Also cache by the other identifier if possible
-          if (el.dataset.downloadId) uiCache.set(el.dataset.downloadId, item);
-          if (el.dataset.url) uiCache.set(el.dataset.url, item);
+        let progressContainer = el.querySelector('.download-progress-container');
+        if (!progressContainer) {
+          progressContainer = document.createElement('div');
+          progressContainer.className = 'download-progress-container';
+          el.appendChild(progressContainer);
         }
+
+        let loadingBar = progressContainer.querySelector('mdui-linear-progress');
+        if (!loadingBar) {
+          loadingBar = document.createElement('mdui-linear-progress');
+          progressContainer.appendChild(loadingBar);
+        }
+
+        let statusInfo = progressContainer.querySelector('.download-status-info');
+        if (!statusInfo) {
+          statusInfo = document.createElement('div');
+          statusInfo.className = 'download-status-info';
+          progressContainer.appendChild(statusInfo);
+        }
+
+        item = { loadingBar, statusInfo, element: el, progressContainer };
+        uiCache.set(id, item);
+        if (el.dataset.downloadId) uiCache.set(el.dataset.downloadId, item);
+        if (el.dataset.url) uiCache.set(el.dataset.url, item);
         break;
       }
     }
@@ -341,26 +356,20 @@ function updateProgressUI(id, loaded, total) {
 function finishDownloadUI(id, isSuccess = false) {
   const itemData = uiCache.get(id);
   if (itemData) {
-      const { element, loadingBar, statusInfo } = itemData;
+      const { element, progressContainer } = itemData;
       
       const isPreviewing = element.classList.contains('expanded') || 
                           element.querySelector('.media-preview-container.playing');
 
       if (isSuccess && !isPreviewing) {
-          // Remove from list if download was successful and not being previewed
-          element.parentNode.removeChild(element);
+          element.remove();
           
-          // Check if list is empty now
           const mediaContainer = document.getElementById('media-list');
           if (mediaContainer.querySelectorAll('.media-item').length === 0) {
-            mediaContainer.innerHTML = `<div style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
+            mediaContainer.innerHTML = `<div id="no-media-detected" style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
           }
       } else {
-          // Standard cleanup if failed or being previewed
-          const bar = element.querySelector('mdui-linear-progress');
-          const info = element.querySelector('.download-status-info');
-          if (bar) bar.remove();
-          if (info) info.remove();
+          if (progressContainer) progressContainer.remove();
           
           const dlBtn = element.querySelector('#download-button');
           if (dlBtn) {
@@ -374,7 +383,6 @@ function finishDownloadUI(id, isSuccess = false) {
       return;
   }
   
-  // Fallback if not in cache
   const mediaItems = document.querySelectorAll('.media-item');
   mediaItems.forEach(item => {
     if (item.dataset.downloadId === id || item.dataset.url === id) {
@@ -382,17 +390,15 @@ function finishDownloadUI(id, isSuccess = false) {
                           item.querySelector('.media-preview-container.playing');
 
       if (isSuccess && !isPreviewing) {
-        item.parentNode.removeChild(item);
+        item.remove();
         
         const mediaContainer = document.getElementById('media-list');
         if (mediaContainer.querySelectorAll('.media-item').length === 0) {
-          mediaContainer.innerHTML = `<div style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
+          mediaContainer.innerHTML = `<div id="no-media-detected" style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
         }
       } else {
-        const bar = item.querySelector('mdui-linear-progress');
-        const info = item.querySelector('.download-status-info');
-        if (bar) bar.remove();
-        if (info) info.remove();
+        const progressContainer = item.querySelector('.download-progress-container');
+        if (progressContainer) progressContainer.remove();
 
         const dlBtn = item.querySelector('#download-button');
         if (dlBtn) {
@@ -547,8 +553,8 @@ function filterAndRenderMediaList(query = '') {
   let visibleCount = 0;
   items.forEach(item => {
     // Get text content safely
-    const headline = (item.querySelector('[slot="headline"]')?.textContent || '').toLowerCase();
-    const description = (item.querySelector('[slot="description"]')?.textContent || '').toLowerCase();
+    const headline = (item.querySelector('.media-headline')?.textContent || '').toLowerCase();
+    const description = (item.querySelector('.media-description')?.textContent || '').toLowerCase();
     const url = (item.dataset.url || '').toLowerCase();
     
     // Check if query matches title, description, or URL/extension
@@ -706,32 +712,24 @@ function loadMediaList() {
     for (const item of flattenedRequests) {
       const { bestRequest, isVideo, isAudio, isStream, isSubtitle } = item;
       const mediaURL = new URL(bestRequest.originalUrl);
-      const mediaDiv = document.createElement('mdui-list-item');
-      mediaDiv.setAttribute('nonclickable', 'true');
+      
+      const mediaDiv = document.createElement('div');
       mediaDiv.classList.add('media-item');
-      mediaDiv.dataset.url = bestRequest.originalUrl; // Set for progress tracking
+      mediaDiv.dataset.url = bestRequest.originalUrl;
       mediaDiv.dataset.size = bestRequest.size;
 
-      // Checkbox for multi-select
+      // --- Header Section ---
+      const header = document.createElement('div');
+      header.classList.add('media-item-header');
+
       const checkbox = document.createElement('mdui-checkbox');
       checkbox.classList.add('media-checkbox');
-      checkbox.setAttribute('slot', 'icon');
-      checkbox.style.marginRight = '8px';
       checkbox.addEventListener('change', () => updateSelectedCount());
-      mediaDiv.appendChild(checkbox);
+      header.appendChild(checkbox);
 
       const previewContainer = document.createElement('div');
       previewContainer.classList.add('media-preview-container');
-      // Changed to 'icon' slot too, but MDUI might have issues with multiple items in slot.
-      // Let's use a wrapper for the icon slot.
-      const iconWrapper = document.createElement('div');
-      iconWrapper.setAttribute('slot', 'icon');
-      iconWrapper.style.display = 'flex';
-      iconWrapper.style.alignItems = 'center';
-      iconWrapper.appendChild(checkbox);
-      iconWrapper.appendChild(previewContainer);
-      mediaDiv.appendChild(iconWrapper);
-
+      
       if (isVideo || isStream) {
         previewContainer.classList.add('video');
         const video = document.createElement('video');
@@ -746,7 +744,6 @@ function loadMediaList() {
         previewContainer.addEventListener('click', (e) => {
           e.stopPropagation();
           if (video.paused) {
-            // Pause all other playing videos first
             document.querySelectorAll('.media-preview-container.playing video').forEach(v => {
               v.pause();
               v.parentElement.classList.remove('playing');
@@ -789,36 +786,35 @@ function loadMediaList() {
         mediaIconContainer.appendChild(mediaIcon);
         previewContainer.appendChild(mediaIconContainer);
       }
-      mediaDiv.appendChild(previewContainer);
+      header.appendChild(previewContainer);
 
-      const cardContent = document.createElement('div');
-      cardContent.classList.add('media-item-content');
+      const info = document.createElement('div');
+      info.classList.add('media-item-info');
 
       const headline = document.createElement('div');
-      headline.setAttribute('slot', 'headline');
+      headline.classList.add('media-headline');
       headline.textContent = getFileName(bestRequest.originalUrl);
-      cardContent.appendChild(headline);
+      info.appendChild(headline);
 
       const description = document.createElement('div');
-      description.setAttribute('slot', 'description');
+      description.classList.add('media-description');
       const timeStr = new Date(bestRequest.timeStamp).toLocaleTimeString();
       const humanSize = getHumanReadableSize(bestRequest.size);
       description.textContent = `${mediaURL.hostname} • ${humanSize} • ${timeStr}`;
-      cardContent.appendChild(description);
+      info.appendChild(description);
+      header.appendChild(info);
 
       const qrBtn = document.createElement('mdui-button-icon');
-      qrBtn.style.position = 'absolute';
-      qrBtn.style.right = '4px';
-      qrBtn.style.top = '12px';
-      qrBtn.style.opacity = '0.6';
       qrBtn.innerHTML = `<mdui-icon><svg viewBox="0 -960 960 960"><path d="M120-120v-240h80v160h160v80H120Zm0-480v-240h240v80H200v160h-80Zm480 480v-80h160v-160h80v240H600Zm160-480v-160H600v-80h240v240h-80ZM280-280v-120h120v120H280Zm0-280v-120h120v120H280Zm280 280v-120h120v120H560Zm0-280v-120h120v120H560Z"/></svg></mdui-icon>`;
       qrBtn.title = browser.i18n.getMessage("qrCodeButton") || "QR Code";
       qrBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         showQRCode(bestRequest.originalUrl);
       });
-      cardContent.appendChild(qrBtn);
+      header.appendChild(qrBtn);
+      mediaDiv.appendChild(header);
 
+      // --- Inline Preview Section ---
       const inlinePreview = document.createElement('div');
       inlinePreview.classList.add('inline-preview-area');
       const largeVideo = document.createElement('video');
@@ -826,11 +822,11 @@ function loadMediaList() {
       inlinePreview.appendChild(largeVideo);
       mediaDiv.appendChild(inlinePreview);
 
-      mediaDiv.appendChild(cardContent);
-
-      const actionsArea = document.createElement('div');
-      actionsArea.classList.add('media-actions');
-      cardContent.appendChild(actionsArea);
+      // --- Actions Section ---
+      const actionsWrapper = document.createElement('div');
+      actionsWrapper.classList.add('media-actions-wrapper');
+      const actions = document.createElement('div');
+      actions.classList.add('media-actions');
 
       const buttonGroup = document.createElement('mdui-segmented-button-group');
       buttonGroup.style.width = '100%';
@@ -841,7 +837,6 @@ function loadMediaList() {
       dlBtn.addEventListener('click', () => {
         if (dlBtn.classList.contains('cancel-active')) {
           browser.runtime.sendMessage({ action: 'cancelDownload', url: bestRequest.originalUrl });
-          // Provide immediate feedback
           dlBtn.disabled = true;
           const statusInfo = mediaDiv.querySelector('.download-status-info');
           if (statusInfo) statusInfo.textContent = browser.i18n.getMessage("downloadCancelled") || "Cancelling...";
@@ -894,7 +889,10 @@ function loadMediaList() {
       buttonGroup.appendChild(dlBtn);
       buttonGroup.appendChild(audioBtn);
       buttonGroup.appendChild(prvBtn);
-      actionsArea.appendChild(buttonGroup);
+      actions.appendChild(buttonGroup);
+      actionsWrapper.appendChild(actions);
+      mediaDiv.appendChild(actionsWrapper);
+
       mediaContainer.appendChild(mediaDiv);
     }
 
@@ -961,33 +959,36 @@ async function loadHistoryList() {
   }
 
   history.forEach((item, index) => {
-    const historyItem = document.createElement('mdui-list-item');
-    historyItem.setAttribute('nonclickable', 'true');
+    const historyItem = document.createElement('div');
+    historyItem.classList.add('media-item');
     
+    const header = document.createElement('div');
+    header.classList.add('media-item-header');
+
     const iconContainer = document.createElement('mdui-icon');
-    iconContainer.setAttribute('slot', 'icon');
+    iconContainer.classList.add('media-preview-icon');
     iconContainer.innerHTML = `<svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>`;
-    historyItem.appendChild(iconContainer);
+    header.appendChild(iconContainer);
+
+    const info = document.createElement('div');
+    info.classList.add('media-item-info');
 
     const headline = document.createElement('div');
-    headline.setAttribute('slot', 'headline');
-    // Priority: use the filename (which now includes {title} from background) 
-    // or fallback to the original URL-based filename
+    headline.classList.add('media-headline');
     headline.textContent = item.filename || getFileName(item.url);
-    historyItem.appendChild(headline);
+    info.appendChild(headline);
 
     const description = document.createElement('div');
-    description.setAttribute('slot', 'description');
+    description.classList.add('media-description');
     const dateStr = new Date(item.timestamp).toLocaleString();
-    // Show page title and hostname in description if available to make it easier to find
     const siteInfo = item.pageTitle ? `${item.pageTitle} • ` : "";
     description.textContent = `${siteInfo}${dateStr}`;
-    historyItem.appendChild(description);
+    info.appendChild(description);
+    header.appendChild(info);
 
-    const endIconArea = document.createElement('div');
-    endIconArea.setAttribute('slot', 'end-icon');
-    endIconArea.style.display = 'flex';
-    endIconArea.style.gap = '4px';
+    const actions = document.createElement('div');
+    actions.style.display = 'flex';
+    actions.style.gap = '4px';
 
     const linkBtn = document.createElement('mdui-button-icon');
     linkBtn.innerHTML = `<mdui-icon><svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg></mdui-icon>`;
@@ -1001,8 +1002,8 @@ async function loadHistoryList() {
       });
     });
 
-    const visitBtn = document.createElement('mdui-button-icon');
     if (item.pageUrl) {
+      const visitBtn = document.createElement('mdui-button-icon');
       visitBtn.innerHTML = `<mdui-icon><svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg></mdui-icon>`;
       visitBtn.title = browser.i18n.getMessage("historyVisitPage") || "Visit Page";
       visitBtn.addEventListener('click', (e) => {
@@ -1017,7 +1018,7 @@ async function loadHistoryList() {
           browser.tabs.create({ url: item.pageUrl });
         }, 2000);
       });
-      endIconArea.appendChild(visitBtn);
+      actions.appendChild(visitBtn);
     }
 
     const downloadBtn = document.createElement('mdui-button-icon');
@@ -1025,7 +1026,6 @@ async function loadHistoryList() {
     downloadBtn.title = browser.i18n.getMessage("downloadMedia") || "Download";
     downloadBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      // Re-download using the stored URL (which might have been auto-updated)
       browser.storage.local.get(['download-method'], (res) => {
         const method = res['download-method'] || 'browser';
         if (method === 'fetch') {
@@ -1046,7 +1046,7 @@ async function loadHistoryList() {
         }
       });
     });
-    endIconArea.appendChild(downloadBtn);
+    actions.appendChild(downloadBtn);
 
     const qrHistoryBtn = document.createElement('mdui-button-icon');
     qrHistoryBtn.innerHTML = `<mdui-icon><svg viewBox="0 -960 960 960"><path d="M120-120v-240h80v160h160v80H120Zm0-480v-240h240v80H200v160h-80Zm480 480v-80h160v-160h80v240H600Zm160-480v-160H600v-80h240v240h-80ZM280-280v-120h120v120H280Zm0-280v-120h120v120H280Zm280 280v-120h120v120H560Zm0-280v-120h120v120H560Z"/></svg></mdui-icon>`;
@@ -1066,11 +1066,12 @@ async function loadHistoryList() {
       loadHistoryList();
     });
 
-    endIconArea.appendChild(linkBtn);
-    endIconArea.appendChild(qrHistoryBtn);
-    endIconArea.appendChild(deleteBtn);
-    historyItem.appendChild(endIconArea);
+    actions.appendChild(linkBtn);
+    actions.appendChild(qrHistoryBtn);
+    actions.appendChild(deleteBtn);
+    header.appendChild(actions);
 
+    historyItem.appendChild(header);
     historyContainer.appendChild(historyItem);
   });
 }
@@ -1292,22 +1293,23 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
    const newName = await showRenameDialog(finalName);
    if (newName === null) return; 
 
-   updateDownloadingCount(1);
-   const loadingBar = document.createElement('mdui-linear-progress');
-   const statusInfo = document.createElement('div');
-   statusInfo.className = 'download-status-info';
-   statusInfo.style.fontSize = '12px';
-   statusInfo.style.marginTop = '4px';
-   statusInfo.style.textAlign = 'center';
-   
-   mediaDiv.dataset.url = url; 
-   mediaDiv.appendChild(loadingBar);
-   mediaDiv.appendChild(statusInfo);
-   loadingBar.style.width = '100%';
-   loadingBar.setAttribute('indeterminate', 'true');
-   
-   // Manually populate UI cache to ensure finishDownloadUI works
-   uiCache.set(url, { element: mediaDiv, loadingBar, statusInfo });
+    updateDownloadingCount(1);
+    const progressContainer = document.createElement('div');
+    progressContainer.className = 'download-progress-container';
+    
+    const loadingBar = document.createElement('mdui-linear-progress');
+    const statusInfo = document.createElement('div');
+    statusInfo.className = 'download-status-info';
+
+    progressContainer.appendChild(loadingBar);
+    progressContainer.appendChild(statusInfo);
+    mediaDiv.appendChild(progressContainer);
+    
+    loadingBar.style.width = '100%';
+    loadingBar.setAttribute('indeterminate', 'true');
+
+    // Manually populate UI cache to ensure finishDownloadUI works
+    uiCache.set(url, { element: mediaDiv, loadingBar, statusInfo, progressContainer });
 
    const downloadMethod = await browser.storage.local.get('download-method').then(res => res['download-method']);
    const streamPref = await browser.storage.local.get('stream-download').then(res => res['stream-download'] || 'offline');
@@ -1413,21 +1415,22 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false) {
     }
 
     updateDownloadingCount(1);
+    const progressContainer = document.createElement('div');
+    progressContainer.className = 'download-progress-container';
+
     const loadingBar = document.createElement('mdui-linear-progress');
     const statusInfo = document.createElement('div');
     statusInfo.className = 'download-status-info';
-    statusInfo.style.fontSize = '12px';
-    statusInfo.style.marginTop = '4px';
-    statusInfo.style.textAlign = 'center';
 
-    mediaDiv.dataset.url = url; // Set for progress tracking
-    mediaDiv.appendChild(loadingBar);
-    mediaDiv.appendChild(statusInfo);
+    progressContainer.appendChild(loadingBar);
+    progressContainer.appendChild(statusInfo);
+    mediaDiv.appendChild(progressContainer);
+    
     loadingBar.style.width = '100%';
     loadingBar.setAttribute('indeterminate', 'true');
 
     // Manually populate UI cache to ensure finishDownloadUI works if started silenty
-    if (silent) uiCache.set(url, { element: mediaDiv, loadingBar, statusInfo });
+    uiCache.set(url, { element: mediaDiv, loadingBar, statusInfo, progressContainer });
 
     const tabs = await browser.tabs.query({ active: true, currentWindow: true });
     const activeTab = tabs[0];

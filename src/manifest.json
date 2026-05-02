@@ -15,14 +15,14 @@
   },
   "permissions": [
     "storage",
+    "unlimitedStorage",
+    "downloads",
+    "notifications",
+    "activeTab",
     "webRequest",
     "webRequestBlocking",
     "webRequestFilterResponse",
-    "unlimitedStorage",
-    "scripting",
-    "activeTab",
-    "downloads",
-    "notifications"
+    "scripting"
   ],
   "optional_permissions": [
   ],

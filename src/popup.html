@@ -57,37 +57,40 @@
           <mdui-circular-progress></mdui-circular-progress>
         </div>
 
-        <div id="media-controls" style="padding: 16px 16px 8px; display: flex; flex-direction: column; gap: 8px;">
-          <mdui-text-field id="search-bar" variant="outlined" label="Search by name or format (e.g. mp4, m3u8)" clearable style="border-radius: 28px;">
+        <div id="media-controls" style="display: none;">
+          <mdui-text-field id="search-bar" variant="outlined" label="Search by name or format" clearable>
             <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></mdui-icon>
           </mdui-text-field>
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+          <div id="selected-info-bar">
             <div style="display: flex; align-items: center; gap: 4px;">
               <mdui-checkbox id="select-all-checkbox"></mdui-checkbox>
-              <span id="selected-count" style="font-size: 12px; opacity: 0.7;">0 selected</span>
+              <span id="selected-count" style="font-size: 12px; opacity: 0.7; font-weight: 500;">0 selected</span>
             </div>
-            <div style="display: flex; gap: 8px;">
-              <mdui-button variant="text" id="download-selected" style="display: none;" data-translate="downloadSelectedButton">Download Selected</mdui-button>
-              <mdui-button variant="text" id="cancel-selected" style="display: none; color: rgb(var(--mdui-color-error));" data-translate="cancelSelectedButton">Cancel Selected</mdui-button>
+            <div style="display: flex; gap: 4px;">
+              <mdui-button variant="text" id="download-selected" style="display: none;" data-translate="downloadSelectedButton">Download</mdui-button>
+              <mdui-button variant="text" id="cancel-selected" style="display: none; color: rgb(var(--mdui-color-error));" data-translate="cancelSelectedButton">Cancel</mdui-button>
               <mdui-button variant="text" id="delete-selected" style="display: none; color: rgb(var(--mdui-color-error));" data-translate="deleteSelectedButton">Delete</mdui-button>
+              <mdui-button variant="filled" id="download-all" data-translate="downloadAllButton" style="--mdui-shape-corner-extra-small: 16px; height: 32px;">Download All</mdui-button>
               <mdui-button variant="text" id="cancel-all" style="display: none; color: rgb(var(--mdui-color-error));" data-translate="cancelAllButton">Cancel All</mdui-button>
-              <mdui-button variant="text" id="download-all" data-translate="downloadAllButton">Download All</mdui-button>
             </div>
           </div>
         </div>
 
         <div id="media-list">
-          <!-- List items will be injected here by popup.js -->
+          <div id="no-media-detected">
+            <mdui-icon><svg viewBox="0 0 24 24"><path d="M18 15v3H6v-3H4v3c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-3h-2zm-1-4l-1.41-1.41L13 12.17V4h-2v8.17L8.41 9.59 7 11l5 5 5-5z"/></svg></mdui-icon>
+            <div data-translate="noMediaDetected">No media detected on this page. Play a video to detect links.</div>
+          </div>
         </div>
 
         <mdui-bottom-app-bar>
-          <div class="bottom-right">
+          <div class="bottom-content">
             <mdui-button-icon id="help-button">
               <mdui-icon>
                 <svg viewBox="0 -960 960 960"><path d="M480-280q17 0 28.5-11.5T520-320q0-17-11.5-28.5T480-360q-17 0-28.5 11.5T440-320q0 17 11.5 28.5T480-280Zm-40-160h80q0-32 6.5-52.5T560-542q30-26 45-50.5t15-57.5q0-58-41-94t-101-36q-59 0-98.5 34.5T329-647l68 31q13-31 36.5-47.5T481-680q26 0 42.5 15.5T540-628q0 20-11.5 37.5T500-562q-40 33-50 56.5t-10 65.5Zm40 360q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>
               </mdui-icon>
             </mdui-button-icon>
-            <div class="bottom-buttons-right">
+            <div class="bottom-actions">
               <mdui-button variant="tonal" id="clear-list" data-translate="clearListButton">Clear list</mdui-button>
               <mdui-button variant="filled" id="refresh-list" data-translate="refreshListButton">Refresh list</mdui-button>
             </div>
