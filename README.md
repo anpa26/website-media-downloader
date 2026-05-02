@@ -1,6 +1,6 @@
-# Website Media Downloader (Unleashed)
+# Website Media Downloader
 
-A powerful, open-source browser extension designed to detect and download virtually any media (audio, video, and streams) played in your browser. This version is a customized and improved fork of the original "Website Media Downloader".
+A powerful, open-source browser extension designed to detect and download virtually any media (audio, video, and streams) played in your browser. This version is a customized and improved fork of the original project, [media-downloader-unleashed](https://github.com/helloyanis/media-downloader-unleashed).
 
 > [!WARNING]
 > **YouTube is NOT supported.** Due to legal restrictions and proprietary streaming methods, this extension does not work on YouTube.
@@ -103,4 +103,13 @@ Since this version is customized and not from the official store, you need to al
 - **UI Framework:** [MDUI](https://www.mdui.org/)
 - **Libraries:** [HLS.js](https://github.com/video-dev/hls.js/), [client-zip](https://github.com/jimmywarting/client-zip)
 
-Licensed under the MIT License.
+---
+
+### License Information
+
+This project is a **derivative work**. 
+
+- The overall project and all new modifications are licensed under the **GNU General Public License v3.0 (GPL-3.0)**. See the [LICENSE.md](LICENSE.md) file for details.
+- This project contains original components and core logic from the original **media-downloader-unleashed** which was licensed under the **MIT License**. A copy of the original MIT license can be found in [licenses/ORIGINAL_LICENSE](licenses/ORIGINAL_LICENSE).
+
+By using, modifying, or distributing this software, you agree to abide by the terms of both licenses where applicable.
