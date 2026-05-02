@@ -259,7 +259,19 @@ browser.runtime.onMessage.addListener((message) => {
   } else if (message.action === 'downloadComplete') {
     finishDownloadUI(message.id || message.url, true);
   } else if (message.action === 'downloadError') {
-    finishDownloadUI(message.id || message.url, false);
+    const id = message.id || message.url;
+    const itemData = uiCache.get(id);
+    
+    // Cleanup UI if the item exists
+    finishDownloadUI(id, false);
+    
+    // SILENT MODE: If this error is for an item NOT currently being tracked in the popup UI,
+    // we ignore it to prevent "phantom" error popups that annoy the user.
+    if (!itemData && !document.querySelector(`.media-item[data-url="${message.url}"]`)) {
+      console.debug("Ignored background download error for untracked item:", message.url);
+      return;
+    }
+
     if (message.error === "USER_CANCELED") {
       if (typeof mdui !== 'undefined' && mdui.snackbar) {
         mdui.snackbar({
@@ -269,7 +281,17 @@ browser.runtime.onMessage.addListener((message) => {
       }
       return;
     }
-    showDialog(browser.i18n.getMessage("downloadError", [message.error]) || ("Download error: " + message.error));
+    
+    // Use snackbar for non-critical errors to be less intrusive, 
+    // but keep dialog for explicit download attempts that failed.
+    if (typeof mdui !== 'undefined' && mdui.snackbar) {
+      mdui.snackbar({
+        message: browser.i18n.getMessage("downloadError", [message.error]) || ("Download error: " + message.error),
+        placement: "top"
+      });
+    } else {
+      showDialog(browser.i18n.getMessage("downloadError", [message.error]) || ("Download error: " + message.error));
+    }
   }
 });
 
