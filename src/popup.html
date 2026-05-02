@@ -57,6 +57,25 @@
           <mdui-circular-progress></mdui-circular-progress>
         </div>
 
+        <div id="media-controls" style="padding: 16px 16px 8px; display: flex; flex-direction: column; gap: 8px;">
+          <mdui-text-field id="search-bar" variant="outlined" label="Search by name or format (e.g. mp4, m3u8)" clearable style="border-radius: 28px;">
+            <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></mdui-icon>
+          </mdui-text-field>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <mdui-checkbox id="select-all-checkbox"></mdui-checkbox>
+              <span id="selected-count" style="font-size: 12px; opacity: 0.7;">0 selected</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <mdui-button variant="text" id="download-selected" style="display: none;" data-translate="downloadSelectedButton">Download Selected</mdui-button>
+              <mdui-button variant="text" id="cancel-selected" style="display: none; color: rgb(var(--mdui-color-error));" data-translate="cancelSelectedButton">Cancel Selected</mdui-button>
+              <mdui-button variant="text" id="delete-selected" style="display: none; color: rgb(var(--mdui-color-error));" data-translate="deleteSelectedButton">Delete</mdui-button>
+              <mdui-button variant="text" id="cancel-all" style="display: none; color: rgb(var(--mdui-color-error));" data-translate="cancelAllButton">Cancel All</mdui-button>
+              <mdui-button variant="text" id="download-all" data-translate="downloadAllButton">Download All</mdui-button>
+            </div>
+          </div>
+        </div>
+
         <div id="media-list">
           <!-- List items will be injected here by popup.js -->
         </div>

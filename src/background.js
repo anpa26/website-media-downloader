@@ -1530,6 +1530,10 @@ browser.runtime.onMessage.addListener((message) => {
         }).catch(e => {
             console.error("Failed to clear IndexedDB cache:", e);
         });
+    } else if (message.action === 'removeMedia') {
+        if (message.url) {
+            browser.storage.session.remove(message.url);
+        }
     }
 });
 

@@ -147,7 +147,7 @@ mdui-segmented-button:not([selected]):hover {
 
 /* Media Items */
 .media-item {
-    display: flex !important;
+    display: flex;
     margin: 10px 16px;
     border-radius: var(--app-border-radius);
     background-color: rgb(var(--mdui-color-surface-container-low));
@@ -156,6 +156,28 @@ mdui-segmented-button:not([selected]):hover {
     overflow: hidden;
     padding-left: 12px;
     align-items: center;
+}
+
+.media-checkbox {
+    margin-right: 4px;
+}
+
+#media-controls {
+    background-color: rgb(var(--mdui-color-surface));
+    z-index: 5;
+    position: sticky;
+    top: 0;
+    border-bottom: 1px solid rgb(var(--mdui-color-outline-variant));
+}
+
+#search-bar {
+    --mdui-shape-corner-extra-small: 28px;
+    --mdui-shape-corner-small: 28px;
+    --mdui-shape-corner-medium: 28px;
+}
+
+#search-bar::part(input) {
+    border-radius: 28px;
 }
 
 .media-preview-container {

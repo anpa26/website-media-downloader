@@ -23,6 +23,7 @@ if (typeof browser === 'undefined') {
 
 let downloadingCount = 0;
 let ratingCount = 0;
+let allMediaRequests = []; // Global storage for filtering
 sessionStorage.setItem('shownYoutubeAlert', 0); 
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -42,6 +43,111 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   loadMediaList();
+  
+  // Search bar logic
+  document.getElementById('search-bar').addEventListener('input', (e) => {
+    filterAndRenderMediaList(e.target.value);
+  });
+
+  // Select all logic
+  document.getElementById('select-all-checkbox').addEventListener('change', (e) => {
+    const isChecked = e.target.checked;
+    const items = document.querySelectorAll('.media-item:not([style*="display: none"])');
+    items.forEach(item => {
+      const cb = item.querySelector('.media-checkbox');
+      if (cb) cb.checked = isChecked;
+    });
+    updateSelectedCount();
+  });
+
+  // Download selected logic
+  document.getElementById('download-selected').addEventListener('click', async () => {
+    const allCheckboxes = document.querySelectorAll('.media-item .media-checkbox');
+    const selectedCheckboxes = Array.from(allCheckboxes).filter(cb => cb.checked);
+    if (selectedCheckboxes.length === 0) return;
+
+    for (const cb of selectedCheckboxes) {
+      const itemElement = cb.closest('.media-item');
+      const url = itemElement.dataset.url;
+      const size = itemElement.dataset.size;
+      await downloadFile(url, itemElement, size, true); 
+    }
+  });
+
+  // Download all logic
+  document.getElementById('download-all').addEventListener('click', async () => {
+    const items = document.querySelectorAll('.media-item');
+    const visibleItems = Array.from(items).filter(item => item.style.display !== 'none');
+    if (visibleItems.length === 0) return;
+
+    for (const itemElement of visibleItems) {
+      const url = itemElement.dataset.url;
+      const size = itemElement.dataset.size;
+      // Skip if already downloading
+      if (itemElement.querySelector('mdui-linear-progress')) continue;
+      await downloadFile(url, itemElement, size, true);
+    }
+  });
+
+  // Delete selected logic
+  document.getElementById('delete-selected').addEventListener('click', async () => {
+    const allCheckboxes = document.querySelectorAll('.media-item .media-checkbox');
+    const selectedCheckboxes = Array.from(allCheckboxes).filter(cb => cb.checked);
+    if (selectedCheckboxes.length === 0) return;
+
+    for (const cb of selectedCheckboxes) {
+      const itemElement = cb.closest('.media-item');
+      const url = itemElement.dataset.url;
+      
+      // Remove from background storage
+      browser.runtime.sendMessage({ action: 'removeMedia', url: url });
+      
+      // Remove from UI
+      itemElement.remove();
+    }
+    
+    updateSelectedCount();
+    
+    const mediaContainer = document.getElementById('media-list');
+    if (mediaContainer.querySelectorAll('.media-item').length === 0) {
+      mediaContainer.innerHTML = `<div id="no-media-detected" style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
+    }
+  });
+
+  // Cancel selected logic
+  document.getElementById('cancel-selected').addEventListener('click', () => {
+    const allCheckboxes = document.querySelectorAll('.media-item .media-checkbox');
+    const selectedCheckboxes = Array.from(allCheckboxes).filter(cb => cb.checked);
+    selectedCheckboxes.forEach(cb => {
+      const itemElement = cb.closest('.media-item');
+      if (itemElement.querySelector('mdui-linear-progress')) {
+        const url = itemElement.dataset.url;
+        browser.runtime.sendMessage({ action: 'cancelDownload', url: url });
+        
+        // Immediate UI feedback
+        const dlBtn = itemElement.querySelector('#download-button');
+        if (dlBtn) dlBtn.disabled = true;
+        const statusInfo = itemElement.querySelector('.download-status-info');
+        if (statusInfo) statusInfo.textContent = browser.i18n.getMessage("downloadCancelled") || "Cancelling...";
+      }
+    });
+  });
+
+  // Cancel all logic
+  document.getElementById('cancel-all').addEventListener('click', () => {
+    const activeItems = document.querySelectorAll('.media-item mdui-linear-progress');
+    activeItems.forEach(progress => {
+      const itemElement = progress.closest('.media-item');
+      const url = itemElement.dataset.url;
+      browser.runtime.sendMessage({ action: 'cancelDownload', url: url });
+      
+      const dlBtn = itemElement.querySelector('#download-button');
+      if (dlBtn) dlBtn.disabled = true;
+      const statusInfo = itemElement.querySelector('.download-status-info');
+      if (statusInfo) statusInfo.textContent = browser.i18n.getMessage("downloadCancelled") || "Cancelling...";
+    });
+  });
+
   document.getElementById('navbar').addEventListener('change', (event) => {
     const selectedTab = document.getElementById('navbar').value;
     sessionStorage.setItem('activeTab', selectedTab);
@@ -301,6 +407,11 @@ async function dismissRatingBanner() {
 function updateDownloadingCount(change) {
   downloadingCount = Math.max(0, downloadingCount + change);
   document.title = downloadingCount > 0 ? `${downloadingCount}` : "Website Media Downloader";
+  
+  const cancelAllBtn = document.getElementById('cancel-all');
+  if (cancelAllBtn) {
+    cancelAllBtn.style.display = downloadingCount > 0 ? 'inline-flex' : 'none';
+  }
 }
 
 function showDialog(message, title = null, extraActions = []) {
@@ -372,14 +483,109 @@ function showQRCode(url) {
   showDialog(container.outerHTML, browser.i18n.getMessage("qrCodeDialogTitle") || "Scan QR Code");
 }
 
+function updateSelectedCount() {
+  const allCheckboxes = document.querySelectorAll('.media-item .media-checkbox');
+  const selectedItems = Array.from(allCheckboxes).filter(cb => cb.checked);
+  const selectedCount = selectedItems.length;
+  
+  document.getElementById('selected-count').textContent = `${selectedCount} selected`;
+  const downloadSelectedBtn = document.getElementById('download-selected');
+  const deleteSelectedBtn = document.getElementById('delete-selected');
+  const cancelSelectedBtn = document.getElementById('cancel-selected');
+  
+  const hasActiveSelected = selectedItems.some(cb => 
+    cb.closest('.media-item').querySelector('mdui-linear-progress')
+  );
+
+  if (selectedCount > 0) {
+    downloadSelectedBtn.style.display = 'inline-flex';
+    deleteSelectedBtn.style.display = 'inline-flex';
+    cancelSelectedBtn.style.display = hasActiveSelected ? 'inline-flex' : 'none';
+  } else {
+    downloadSelectedBtn.style.display = 'none';
+    deleteSelectedBtn.style.display = 'none';
+    cancelSelectedBtn.style.display = 'none';
+  }
+}
+
+function filterAndRenderMediaList(query = '') {
+  const mediaContainer = document.getElementById('media-list');
+  const items = mediaContainer.querySelectorAll('.media-item');
+  const endMsg = document.getElementById('end-of-media-list');
+  const noMediaDetectedMsg = document.getElementById('no-media-detected');
+  const lowerQuery = query.trim().toLowerCase();
+
+  // Hide the initial "No media detected" message if we are searching
+  if (noMediaDetectedMsg) {
+    noMediaDetectedMsg.style.display = lowerQuery ? 'none' : 'block';
+  }
+
+  let visibleCount = 0;
+  items.forEach(item => {
+    // Get text content safely
+    const headline = (item.querySelector('[slot="headline"]')?.textContent || '').toLowerCase();
+    const description = (item.querySelector('[slot="description"]')?.textContent || '').toLowerCase();
+    const url = (item.dataset.url || '').toLowerCase();
+    
+    // Check if query matches title, description, or URL/extension
+    const isMatch = !lowerQuery || 
+                    headline.includes(lowerQuery) || 
+                    description.includes(lowerQuery) || 
+                    url.includes(lowerQuery);
+    
+    if (isMatch) {
+      item.style.setProperty('display', 'flex', 'important');
+      visibleCount++;
+    } else {
+      item.style.setProperty('display', 'none', 'important');
+      // Uncheck hidden items to avoid accidental downloads
+      const cb = item.querySelector('.media-checkbox');
+      if (cb) cb.checked = false;
+    }
+  });
+
+  // Handle "No matches found" message
+  let noMatchesMsg = document.getElementById('no-matches-msg');
+  if (visibleCount === 0 && lowerQuery) {
+    if (!noMatchesMsg) {
+      noMatchesMsg = document.createElement('div');
+      noMatchesMsg.id = 'no-matches-msg';
+      noMatchesMsg.style.padding = '60px 20px';
+      noMatchesMsg.style.textAlign = 'center';
+      noMatchesMsg.style.opacity = '0.8';
+      noMatchesMsg.textContent = 'No matches found for "' + query + '"';
+      mediaContainer.appendChild(noMatchesMsg);
+    }
+  } else if (noMatchesMsg) {
+    noMatchesMsg.remove();
+  }
+
+  // Hide end message if searching or if no items match
+  if (endMsg) {
+    if (lowerQuery || visibleCount === 0) {
+      endMsg.style.display = 'none';
+    } else {
+      endMsg.style.display = 'block';
+    }
+  }
+  
+  updateSelectedCount();
+}
+
 function loadMediaList() {
   const mediaContainer = document.getElementById('media-list');
   const loadingSpinner = document.getElementById('loading-media-list');
   const globalLoading = document.getElementById('loading');
   const mainContent = document.getElementById('main-content');
+  const mediaControls = document.getElementById('media-controls');
 
   if (loadingSpinner) loadingSpinner.style.display = 'block';
   
+  // Reset search and select all
+  document.getElementById('search-bar').value = '';
+  document.getElementById('select-all-checkbox').checked = false;
+  updateSelectedCount();
+
   // Preserve active download items to avoid flickering
   const activeItems = new Map();
   mediaContainer.querySelectorAll('.media-item').forEach(item => {
@@ -398,10 +604,15 @@ function loadMediaList() {
     if (!mediaRequests || Object.keys(mediaRequests).length === 0) {
         if (loadingSpinner) loadingSpinner.style.display = 'none';
         if (activeItems.size === 0) {
-          mediaContainer.innerHTML = `<div style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
+          mediaContainer.innerHTML = `<div id="no-media-detected" style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
+          if (mediaControls) mediaControls.style.display = 'none';
+        } else {
+          if (mediaControls) mediaControls.style.display = 'flex';
         }
         return;
     }
+
+    if (mediaControls) mediaControls.style.display = 'flex';
 
     const onlyMedia = (await browser.storage.local.get('only-media'))['only-media'] !== '0'; // Default to true
     const videoExtensions = [".3g2", ".3gp", ".asx", ".avi", ".divx", ".4v", ".flv", ".ismv", ".m2t", ".m2ts", ".m2v", ".m4s", ".m4v", ".mk3d", ".mkv", ".mng", ".mov", ".mp2v", ".mp4", ".mp4v", ".mpe", ".mpeg", ".mpeg1", ".mpeg2", ".mpeg4", ".mpg", ".mxf", ".ogm", ".ogv", ".qt", ".rm", ".swf", ".ts", ".vob", ".vp9", ".webm", ".wmv"]
@@ -460,6 +671,7 @@ function loadMediaList() {
     });
     
     flattenedRequests.sort((a, b) => (parseInt(b.bestRequest.size) || 0) - (parseInt(a.bestRequest.size) || 0));
+    allMediaRequests = flattenedRequests; // Store for filtering if needed later
 
     if (flattenedRequests.length === 0 && activeItems.size === 0) {
       if (loadingSpinner) loadingSpinner.style.display = 'none';
@@ -474,10 +686,27 @@ function loadMediaList() {
       mediaDiv.setAttribute('nonclickable', 'true');
       mediaDiv.classList.add('media-item');
       mediaDiv.dataset.url = bestRequest.originalUrl; // Set for progress tracking
+      mediaDiv.dataset.size = bestRequest.size;
+
+      // Checkbox for multi-select
+      const checkbox = document.createElement('mdui-checkbox');
+      checkbox.classList.add('media-checkbox');
+      checkbox.setAttribute('slot', 'icon');
+      checkbox.style.marginRight = '8px';
+      checkbox.addEventListener('change', () => updateSelectedCount());
+      mediaDiv.appendChild(checkbox);
 
       const previewContainer = document.createElement('div');
       previewContainer.classList.add('media-preview-container');
-      previewContainer.setAttribute('slot', 'icon');
+      // Changed to 'icon' slot too, but MDUI might have issues with multiple items in slot.
+      // Let's use a wrapper for the icon slot.
+      const iconWrapper = document.createElement('div');
+      iconWrapper.setAttribute('slot', 'icon');
+      iconWrapper.style.display = 'flex';
+      iconWrapper.style.alignItems = 'center';
+      iconWrapper.appendChild(checkbox);
+      iconWrapper.appendChild(previewContainer);
+      mediaDiv.appendChild(iconWrapper);
 
       if (isVideo || isStream) {
         previewContainer.classList.add('video');
@@ -1123,7 +1352,7 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
   }
 }
 
-async function downloadFile(url, mediaDiv, specificSize) {
+async function downloadFile(url, mediaDiv, specificSize, silent = false) {
   let wakeLock = null;
   try { wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
 
@@ -1149,12 +1378,15 @@ async function downloadFile(url, mediaDiv, specificSize) {
         finalName = await generateTemplateName(template, url, defaultName);
     }
 
-    // Show Rename Dialog
-    const newName = await showRenameDialog(finalName);
-    if (newName === null) {
-        finishDownloadUI(mediaDiv.dataset.downloadId);
-        return;
-    } // User cancelled
+    // Show Rename Dialog (skip if silent)
+    let newName = finalName;
+    if (!silent) {
+      newName = await showRenameDialog(finalName);
+      if (newName === null) {
+          finishDownloadUI(mediaDiv.dataset.downloadId);
+          return;
+      } // User cancelled
+    }
 
     updateDownloadingCount(1);
     const loadingBar = document.createElement('mdui-linear-progress');
@@ -1169,6 +1401,9 @@ async function downloadFile(url, mediaDiv, specificSize) {
     mediaDiv.appendChild(statusInfo);
     loadingBar.style.width = '100%';
     loadingBar.setAttribute('indeterminate', 'true');
+
+    // Manually populate UI cache to ensure finishDownloadUI works if started silenty
+    if (silent) uiCache.set(url, { element: mediaDiv, loadingBar, statusInfo });
 
     const tabs = await browser.tabs.query({ active: true, currentWindow: true });
     const activeTab = tabs[0];

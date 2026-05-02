@@ -666,5 +666,25 @@
     "qrCodeDialogDescription": {
         "message": "Scan this QR code with your mobile phone to open the media URL.",
         "description": "The description in the QR code dialog."
+    },
+    "downloadSelectedButton": {
+        "message": "Download Selected",
+        "description": "The label of the button to download all selected media items."
+    },
+    "deleteSelectedButton": {
+        "message": "Delete",
+        "description": "The label of the button to delete selected media items from the list."
+    },
+    "downloadAllButton": {
+        "message": "Download All",
+        "description": "The label of the button to download all media items in the list."
+    },
+    "cancelSelectedButton": {
+        "message": "Cancel Selected",
+        "description": "The label of the button to cancel selected active downloads."
+    },
+    "cancelAllButton": {
+        "message": "Cancel All",
+        "description": "The label of the button to cancel all active downloads."
     }
 }
