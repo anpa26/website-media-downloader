@@ -21,10 +21,49 @@ if (typeof browser === 'undefined') {
   var browser = chrome;
 }
 
+// Session storage polyfill/fallback
+if (!browser.storage.session) {
+  browser.storage.session = {
+      get: (keys, cb) => browser.storage.local.get(keys, cb),
+      set: (obj, cb) => browser.storage.local.set(obj, cb),
+      remove: (keys, cb) => browser.storage.local.remove(keys, cb),
+      clear: (cb) => browser.storage.local.clear(cb)
+  };
+}
+
 let downloadingCount = 0;
 let ratingCount = 0;
-let allMediaRequests = []; // Global storage for filtering
-sessionStorage.setItem('shownYoutubeAlert', 0); 
+let allMediaRequests = []; // Original data
+let allFilteredRequests = []; // Data after search filtering
+let renderedCount = 0;
+const CHUNK_SIZE = 20;
+let intersectionObserver = null;
+const uiCache = new Map();
+
+async function spoofedFetch(url, options = {}) {
+  try {
+    const headers = await browser.runtime.sendMessage({ action: 'getSpoofedHeaders', url: url });
+    if (headers) {
+      options.headers = options.headers || {};
+      if (headers.cookie) options.headers['Cookie'] = headers.cookie;
+      if (headers.referer) {
+        options.headers['Referer'] = headers.referer;
+        options.referrer = headers.referer;
+      }
+      if (headers.origin) options.headers['Origin'] = headers.origin;
+      options.credentials = 'include';
+    }
+  } catch (e) {
+    console.warn("Failed to get spoofed headers, falling back to normal fetch:", e);
+  }
+  return fetch(url, options);
+}
+
+window.activeCancellations = new Set();
+window.activeCancellations.restoreCallbacks = new Map();
+window.activeCancellations.setRestoreCallback = (url, cb) => {
+  window.activeCancellations.restoreCallbacks.set(url, cb);
+};
 
 document.addEventListener('DOMContentLoaded', async () => {
   const colorResult = await browser.storage.local.get('theme-color');
@@ -102,6 +141,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Remove from background storage
       browser.runtime.sendMessage({ action: 'removeMedia', url: url });
       
+      // Remove from local data
+      allMediaRequests = allMediaRequests.filter(item => item.bestRequest.originalUrl !== url);
+      allFilteredRequests = allFilteredRequests.filter(item => item.bestRequest.originalUrl !== url);
+
       // Remove from UI
       itemElement.remove();
     }
@@ -109,7 +152,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateSelectedCount();
     
     const mediaContainer = document.getElementById('media-list');
-    if (mediaContainer.querySelectorAll('.media-item').length === 0) {
+    if (allFilteredRequests.length === 0 && mediaContainer.querySelectorAll('.media-item').length === 0) {
       mediaContainer.innerHTML = `<div id="no-media-detected" style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
     }
   });
@@ -227,7 +270,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('remind-me-later-button').addEventListener('click', async () => {
     const ratingBanner = document.getElementById('rating-banner');
     ratingBanner.style.display = 'none';
-    await browser.storage.local.set({ 'install-date': Temporal.Now.plainDateISO().toString() });
+    await browser.storage.local.set({ 'install-date': new Date().toISOString() });
   });
 
   document.getElementById('rate-now-button').addEventListener('click', async () => {
@@ -294,8 +337,6 @@ browser.runtime.onMessage.addListener((message) => {
     }
   }
 });
-
-const uiCache = new Map();
 
 function updateProgressUI(id, loaded, total) {
   let item = uiCache.get(id);
@@ -414,18 +455,21 @@ function finishDownloadUI(id, isSuccess = false) {
 }
 
 async function checkAndShowRatingBanner() {
-  if(typeof Temporal !== 'undefined') {
-    const installData = await browser.storage.local.get('install-date');
-    if (!installData['install-date']) {
-      await browser.storage.local.set({ 'install-date': Temporal.Now.plainDateISO().toString() });
-      return;
-    }
-    const installDate = Temporal.PlainDate.from(installData['install-date']);
-    const hasRated = (await browser.storage.local.get('has-rated'))['has-rated'];
-    const now = Temporal.Now.plainDateISO();
-    if (now.since(installDate).days >= 7 && !hasRated) {
-      document.getElementById('rating-banner').removeAttribute("style");
-    }
+  const installData = await browser.storage.local.get('install-date');
+  if (!installData['install-date']) {
+    await browser.storage.local.set({ 'install-date': new Date().toISOString() });
+    return;
+  }
+  
+  const installDate = new Date(installData['install-date']);
+  const hasRated = (await browser.storage.local.get('has-rated'))['has-rated'];
+  const now = new Date();
+  
+  const diffTime = Math.abs(now - installDate);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays >= 7 && !hasRated) {
+    document.getElementById('rating-banner').removeAttribute("style");
   }
 }
 
@@ -539,78 +583,357 @@ function updateSelectedCount() {
 }
 
 function filterAndRenderMediaList(query = '') {
-  const mediaContainer = document.getElementById('media-list');
-  const items = mediaContainer.querySelectorAll('.media-item');
-  const endMsg = document.getElementById('end-of-media-list');
-  const noMediaDetectedMsg = document.getElementById('no-media-detected');
   const lowerQuery = query.trim().toLowerCase();
-
-  // Hide the initial "No media detected" message if we are searching
-  if (noMediaDetectedMsg) {
-    noMediaDetectedMsg.style.display = lowerQuery ? 'none' : 'block';
+  
+  if (!lowerQuery) {
+    allFilteredRequests = [...allMediaRequests];
+  } else {
+    allFilteredRequests = allMediaRequests.filter(item => {
+      const { bestRequest } = item;
+      const headline = getFileName(bestRequest.originalUrl).toLowerCase();
+      const url = bestRequest.originalUrl.toLowerCase();
+      const hostname = new URL(bestRequest.originalUrl).hostname.toLowerCase();
+      
+      return headline.includes(lowerQuery) || url.includes(lowerQuery) || hostname.includes(lowerQuery);
+    });
   }
 
-  let visibleCount = 0;
-  items.forEach(item => {
-    // Get text content safely
-    const headline = (item.querySelector('.media-headline')?.textContent || '').toLowerCase();
-    const description = (item.querySelector('.media-description')?.textContent || '').toLowerCase();
-    const url = (item.dataset.url || '').toLowerCase();
-    
-    // Check if query matches title, description, or URL/extension
-    const isMatch = !lowerQuery || 
-                    headline.includes(lowerQuery) || 
-                    description.includes(lowerQuery) || 
-                    url.includes(lowerQuery);
-    
-    if (isMatch) {
-      item.style.setProperty('display', 'flex', 'important');
-      visibleCount++;
-    } else {
-      item.style.setProperty('display', 'none', 'important');
-      // Uncheck hidden items to avoid accidental downloads
-      const cb = item.querySelector('.media-checkbox');
-      if (cb) cb.checked = false;
+  renderInitialList();
+}
+
+function renderInitialList() {
+  const mediaContainer = document.getElementById('media-list');
+  const mediaControls = document.getElementById('media-controls');
+  const query = document.getElementById('search-bar').value.trim();
+
+  // Preserve active downloads
+  const activeItems = [];
+  mediaContainer.querySelectorAll('.media-item').forEach(item => {
+    if (item.querySelector('mdui-linear-progress')) {
+      activeItems.push(item);
     }
   });
 
-  // Handle "No matches found" message
-  let noMatchesMsg = document.getElementById('no-matches-msg');
-  if (visibleCount === 0 && lowerQuery) {
-    if (!noMatchesMsg) {
-      noMatchesMsg = document.createElement('div');
-      noMatchesMsg.id = 'no-matches-msg';
-      noMatchesMsg.style.padding = '60px 20px';
-      noMatchesMsg.style.textAlign = 'center';
-      noMatchesMsg.style.opacity = '0.8';
-      noMatchesMsg.textContent = 'No matches found for "' + query + '"';
-      mediaContainer.appendChild(noMatchesMsg);
+  mediaContainer.innerHTML = '';
+  activeItems.forEach(item => mediaContainer.appendChild(item));
+
+  renderedCount = 0;
+
+  if (allFilteredRequests.length === 0 && activeItems.length === 0) {
+    if (query) {
+      mediaContainer.innerHTML = `<div id="no-matches-msg" style="padding: 60px 20px; text-align: center; opacity: 0.8;">No matches found for "${query}"</div>`;
+    } else {
+      mediaContainer.innerHTML = `<div id="no-media-detected" style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
+      if (mediaControls) mediaControls.style.display = 'none';
     }
-  } else if (noMatchesMsg) {
-    noMatchesMsg.remove();
+    return;
   }
 
-  // Hide end message if searching or if no items match
-  if (endMsg) {
-    if (lowerQuery || visibleCount === 0) {
-      endMsg.style.display = 'none';
-    } else {
-      endMsg.style.display = 'block';
+  if (mediaControls) mediaControls.style.display = 'flex';
+  renderNextChunk();
+}
+
+function renderNextChunk() {
+  const mediaContainer = document.getElementById('media-list');
+  const fragment = document.createDocumentFragment();
+  const nextChunk = allFilteredRequests.slice(renderedCount, renderedCount + CHUNK_SIZE);
+  const selectAllChecked = document.getElementById('select-all-checkbox').checked;
+
+  nextChunk.forEach(item => {
+    const mediaDiv = createMediaItem(item);
+    if (selectAllChecked) {
+      const cb = mediaDiv.querySelector('.media-checkbox');
+      if (cb) cb.checked = true;
     }
+    fragment.appendChild(mediaDiv);
+  });
+
+  // Remove old sentinel
+  const oldSentinel = document.getElementById('infinite-scroll-sentinel');
+  if (oldSentinel) oldSentinel.remove();
+
+  // Remove old end message if exists (we'll re-add it if needed)
+  const oldEndMsg = document.getElementById('end-of-media-list');
+  if (oldEndMsg) oldEndMsg.remove();
+
+  mediaContainer.appendChild(fragment);
+  renderedCount += nextChunk.length;
+
+  if (renderedCount < allFilteredRequests.length) {
+    const sentinel = document.createElement('div');
+    sentinel.id = 'infinite-scroll-sentinel';
+    sentinel.style.height = '20px';
+    mediaContainer.appendChild(sentinel);
+
+    if (!intersectionObserver) {
+      intersectionObserver = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+          renderNextChunk();
+        }
+      }, { rootMargin: '200px' });
+    }
+    intersectionObserver.observe(sentinel);
+  } else if (allFilteredRequests.length > 0) {
+    const endMsg = document.createElement('div');
+    endMsg.id = "end-of-media-list";
+    endMsg.style.textAlign = 'center';
+    endMsg.style.padding = '20px 0 100px';
+    endMsg.innerHTML = browser.i18n.getMessage("endOfMediaList");
+    mediaContainer.appendChild(endMsg);
   }
-  
+
   updateSelectedCount();
 }
 
-function loadMediaList() {
+function createMediaItem(item) {
+  const { bestRequest, isVideo, isAudio, isStream, isSubtitle } = item;
+  const mediaURL = new URL(bestRequest.originalUrl);
+  
+  const mediaDiv = document.createElement('div');
+  mediaDiv.classList.add('media-item');
+  mediaDiv.dataset.url = bestRequest.originalUrl;
+  mediaDiv.dataset.size = bestRequest.size;
+
+  // --- Header Section ---
+  const header = document.createElement('div');
+  header.classList.add('media-item-header');
+
+  const checkbox = document.createElement('mdui-checkbox');
+  checkbox.classList.add('media-checkbox');
+  checkbox.addEventListener('change', () => updateSelectedCount());
+  header.appendChild(checkbox);
+
+  const previewContainer = document.createElement('div');
+  previewContainer.classList.add('media-preview-container');
+  
+  if (isVideo || isStream) {
+    previewContainer.classList.add('video');
+    const video = document.createElement('video');
+    video.src = isStream ? "" : bestRequest.originalUrl;
+    video.preload = "metadata";
+    video.muted = true;
+    video.playsInline = true;
+    if (!isStream) video.currentTime = 0.1;
+    previewContainer.appendChild(video);
+    
+    let hls = null;
+    previewContainer.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (video.paused) {
+        document.querySelectorAll('.media-preview-container.playing video').forEach(v => {
+          v.pause();
+          v.parentElement.classList.remove('playing');
+        });
+
+        if (isStream && !video.src) {
+          if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+            hls = new Hls();
+            hls.loadSource(bestRequest.originalUrl);
+            hls.attachMedia(video);
+          } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = bestRequest.originalUrl;
+          }
+        }
+        
+        video.muted = false;
+        video.play().then(() => {
+          previewContainer.classList.add('playing');
+        }).catch(err => console.error("Playback failed:", err));
+      } else {
+        video.pause();
+        previewContainer.classList.remove('playing');
+      }
+    });
+  } else if (item.isImage) {
+    const img = document.createElement('img');
+    img.src = bestRequest.originalUrl;
+    img.loading = "lazy";
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.objectFit = "cover";
+    previewContainer.appendChild(img);
+  } else {
+    const mediaIconContainer = document.createElement('mdui-icon');
+    mediaIconContainer.classList.add('media-preview-icon');
+    const mediaIcon = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
+    mediaIcon.setAttribute('viewBox', '0 -960 960 960');
+    let path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
+
+    if (isAudio) {
+      path.setAttribute('d', 'M400-120q-66 0-113-47t-47-113q0-66 47-113t113-47q23 0 42.5 5.5T480-418v-422h240v160H560v400q0 66-47 113t-113 47Z');
+    } else if (isSubtitle) {
+      path.setAttribute('d', 'M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm120-120h120v-40H280v40Zm0-80h120v-40H280v40Zm280 80h120v-40H560v40Zm0-80h120v-40H560v40ZM160-240v-480 480Z');
+    } else {
+      path.setAttribute('d', 'M40-480q0-92 34.5-172T169-791.5q60-59.5 140-94T480-920q91 0 171 34.5t140 94Q851-732 885.5-652T920-480h-80q0-75-28.5-140.5T734-735q-49-49-114.5-77T480-840q-74 0-139.5 28T226-735q-49 49-77.5 114.5T120-480H40Zm160 0q0-118 82-199t198-81q116 0 198 81t82 199h-80q0-83-58.5-141.5T480-680q-83 0-141.5 58.5T280-480h-80ZM360-64l-56-56 136-136v-132q-27-12-43.5-37T380-480q0-42 29-71t71-29q42 0 71 29t29 71q0 30-16.5 55T520-388v132l136 136-56 56-120-120L360-64Z');
+    }
+    mediaIcon.appendChild(path);
+    mediaIconContainer.appendChild(mediaIcon);
+    previewContainer.appendChild(mediaIconContainer);
+  }
+  header.appendChild(previewContainer);
+
+  const info = document.createElement('div');
+  info.classList.add('media-item-info');
+
+  const headline = document.createElement('div');
+  headline.classList.add('media-headline');
+  headline.textContent = getFileName(bestRequest.originalUrl);
+  info.appendChild(headline);
+
+  const description = document.createElement('div');
+  description.classList.add('media-description');
+  const timeStr = new Date(bestRequest.timeStamp).toLocaleTimeString();
+  const humanSize = getHumanReadableSize(bestRequest.size);
+  description.textContent = `${mediaURL.hostname} • ${humanSize} • ${timeStr}`;
+  info.appendChild(description);
+  header.appendChild(info);
+
+  const qrBtn = document.createElement('mdui-button-icon');
+  qrBtn.innerHTML = `<mdui-icon><svg viewBox="0 -960 960 960"><path d="M120-120v-240h80v160h160v80H120Zm0-480v-240h240v80H200v160h-80Zm480 480v-80h160v-160h80v240H600Zm160-480v-160H600v-80h240v240h-80ZM280-280v-120h120v120H280Zm0-280v-120h120v120H280Zm280 280v-120h120v120H560Zm0-280v-120h120v120H560Z"/></svg></mdui-icon>`;
+  qrBtn.title = browser.i18n.getMessage("qrCodeButton") || "QR Code";
+  qrBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showQRCode(bestRequest.originalUrl);
+  });
+  header.appendChild(qrBtn);
+  mediaDiv.appendChild(header);
+
+  // --- Inline Preview Section ---
+  const inlinePreview = document.createElement('div');
+  inlinePreview.classList.add('inline-preview-area');
+  const largeVideo = document.createElement('video');
+  largeVideo.controls = true;
+  inlinePreview.appendChild(largeVideo);
+  mediaDiv.appendChild(inlinePreview);
+
+  // --- Actions Section ---
+  const actionsWrapper = document.createElement('div');
+  actionsWrapper.classList.add('media-actions-wrapper');
+  const actions = document.createElement('div');
+  actions.classList.add('media-actions');
+
+  const buttonGroup = document.createElement('mdui-segmented-button-group');
+  buttonGroup.style.width = '100%';
+
+  const dlBtn = document.createElement('mdui-segmented-button');
+  dlBtn.id = 'download-button';
+  dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>Download`;
+  dlBtn.addEventListener('click', () => {
+    if (dlBtn.classList.contains('cancel-active')) {
+      browser.runtime.sendMessage({ action: 'cancelDownload', url: bestRequest.originalUrl });
+      dlBtn.disabled = true;
+      const statusInfo = mediaDiv.querySelector('.download-status-info');
+      if (statusInfo) statusInfo.textContent = browser.i18n.getMessage("downloadCancelled") || "Cancelling...";
+    } else {
+      downloadFile(bestRequest.originalUrl, mediaDiv, bestRequest.size);
+    }
+  });
+  
+  const prvBtn = document.createElement('mdui-segmented-button');
+  prvBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="m380-300 280-180-280-180v360ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg></mdui-icon>Preview`;
+  if (isSubtitle) prvBtn.style.display = 'none';
+  
+  let hlsLarge = null;
+  prvBtn.addEventListener('click', () => {
+      const isExpanded = mediaDiv.classList.toggle('expanded');
+      
+      if (isExpanded) {
+        if (item.isImage) {
+          largeVideo.style.display = 'none';
+          let largeImg = inlinePreview.querySelector('img');
+          if (!largeImg) {
+            largeImg = document.createElement('img');
+            largeImg.style.width = "100%";
+            largeImg.style.height = "100%";
+            largeImg.style.objectFit = "contain";
+            inlinePreview.appendChild(largeImg);
+          }
+          largeImg.src = bestRequest.originalUrl;
+          largeImg.style.display = 'block';
+        } else {
+          const largeImg = inlinePreview.querySelector('img');
+          if (largeImg) largeImg.style.display = 'none';
+          largeVideo.style.display = 'block';
+          
+          if (isStream) {
+            if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+              hlsLarge = new Hls();
+              hlsLarge.loadSource(bestRequest.originalUrl);
+              hlsLarge.attachMedia(largeVideo);
+            } else if (largeVideo.canPlayType('application/vnd.apple.mpegurl')) {
+              largeVideo.src = bestRequest.originalUrl;
+            }
+          } else {
+            largeVideo.src = bestRequest.originalUrl;
+          }
+          largeVideo.play().catch(e => console.warn("Auto-play failed:", e));
+        }
+        prvBtn.setAttribute('selected', '');
+      } else {
+        largeVideo.pause();
+        largeVideo.src = "";
+        const largeImg = inlinePreview.querySelector('img');
+        if (largeImg) largeImg.src = "";
+        
+        if (hlsLarge) {
+          hlsLarge.destroy();
+          hlsLarge = null;
+        }
+        prvBtn.removeAttribute('selected');
+      }
+  });
+
+  const audioBtn = document.createElement('mdui-segmented-button');
+  audioBtn.id = 'audio-only-button';
+  audioBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M400-120q-66 0-113-47t-47-113q0-66 47-113t113-47q23 0 42.5 5.5T480-418v-422h240v160H560v400q0 66-47 113t-113 47Z"/></svg></mdui-icon>${browser.i18n.getMessage("audioOnly") || "Audio-Only"}`;
+  audioBtn.addEventListener('click', () => {
+    downloadAudioOnly(bestRequest.originalUrl, mediaDiv, bestRequest.size);
+  });
+  if (!isVideo && !isStream) audioBtn.style.display = 'none';
+
+  buttonGroup.appendChild(dlBtn);
+  buttonGroup.appendChild(audioBtn);
+  buttonGroup.appendChild(prvBtn);
+  actions.appendChild(buttonGroup);
+  actionsWrapper.appendChild(actions);
+  mediaDiv.appendChild(actionsWrapper);
+
+  // Sync with uiCache for updates
+  uiCache.set(bestRequest.originalUrl, { element: mediaDiv });
+
+  return mediaDiv;
+}
+
+function getMediaType(url, responseHeaders) {
+    const urlLower = url.toLowerCase();
+    const contentType = responseHeaders?.find(h => h.name.toLowerCase() === "content-type")?.value?.toLowerCase() || "";
+    
+    const videoExtensions = [".3g2", ".3gp", ".asx", ".avi", ".divx", ".4v", ".flv", ".ismv", ".m2t", ".m2ts", ".m2v", ".m4s", ".m4v", ".mk3d", ".mkv", ".mng", ".mov", ".mp2v", ".mp4", ".mp4v", ".mpe", ".mpeg", ".mpeg1", ".mpeg2", ".mpeg4", ".mpg", ".mxf", ".ogm", ".ogv", ".qt", ".rm", ".swf", ".ts", ".vob", ".vp9", ".webm", ".wmv"];
+    const audioExtensions = [".3ga", ".aac", ".ac3", ".adts", ".aif", ".aiff", ".alac", ".ape", ".asf", ".au", ".dts", ".f4a", ".f4b", ".flac", ".isma", ".it", ".m4a", ".m4b", ".m4r", ".mid", ".mka", ".mod", ".mp1", ".mp2", ".mp3", ".mp4a", ".mpa", ".mpga", ".oga", ".ogg", ".ogx", ".opus", ".ra", ".shn", ".spx", ".vorbis", ".wav", ".weba", ".wma", ".xm"];
+    const streamExtensions = [".f4f", ".f4m", ".m3u8", ".mpd", ".smil"];
+    const subtitleExtensions = [".vtt", ".srt", ".ass", ".ssa", ".ttml", ".dfxp"];
+    const imageExtensions = [".webp", ".png", ".jpg", ".jpeg", ".gif"];
+
+    if (contentType.startsWith('video/') || videoExtensions.some(ext => urlLower.includes(ext))) return 'video';
+    if (contentType.startsWith('audio/') || audioExtensions.some(ext => urlLower.includes(ext))) return 'audio';
+    if (contentType.startsWith('image/') || imageExtensions.some(ext => urlLower.includes(ext))) return 'image';
+    if (streamExtensions.some(ext => urlLower.includes(ext)) || contentType.includes('mpegurl') || contentType.includes('dash+xml')) return 'stream';
+    if (subtitleExtensions.some(ext => urlLower.includes(ext)) || contentType.includes('vtt') || contentType.includes('subrip') || contentType.includes('ass') || contentType.includes('ttml') || contentType.includes('dfxp')) return 'subtitle';
+    
+    return null;
+}
+
+async function loadMediaList() {
   const mediaContainer = document.getElementById('media-list');
   const loadingSpinner = document.getElementById('loading-media-list');
   const globalLoading = document.getElementById('loading');
   const mainContent = document.getElementById('main-content');
   const mediaControls = document.getElementById('media-controls');
 
+  if (globalLoading) globalLoading.style.display = 'none';
+  if (mainContent) mainContent.style.display = 'block';
   if (loadingSpinner) loadingSpinner.style.display = 'block';
-  
+
   // Reset search and select all
   document.getElementById('search-bar').value = '';
   document.getElementById('select-all-checkbox').checked = false;
@@ -627,10 +950,11 @@ function loadMediaList() {
   mediaContainer.innerHTML = ''; 
   activeItems.forEach(item => mediaContainer.appendChild(item));
 
-  browser.runtime.sendMessage({ action: 'getMediaRequests' }).then(async (mediaRequests) => {
+  try {
+    const mediaRequests = await browser.runtime.sendMessage({ action: 'getMediaRequests' });
     if (globalLoading) globalLoading.style.display = 'none';
     if (mainContent) mainContent.style.display = 'block';
-    
+
     if (!mediaRequests || Object.keys(mediaRequests).length === 0) {
         if (loadingSpinner) loadingSpinner.style.display = 'none';
         if (activeItems.size === 0) {
@@ -639,285 +963,96 @@ function loadMediaList() {
         } else {
           if (mediaControls) mediaControls.style.display = 'flex';
         }
+        allMediaRequests = [];
+        allFilteredRequests = [];
         return;
     }
 
-    if (mediaControls) mediaControls.style.display = 'flex';
-
-    const onlyMedia = (await browser.storage.local.get('only-media'))['only-media'] !== '0'; // Default to true
-    const videoExtensions = [".3g2", ".3gp", ".asx", ".avi", ".divx", ".4v", ".flv", ".ismv", ".m2t", ".m2ts", ".m2v", ".m4s", ".m4v", ".mk3d", ".mkv", ".mng", ".mov", ".mp2v", ".mp4", ".mp4v", ".mpe", ".mpeg", ".mpeg1", ".mpeg2", ".mpeg4", ".mpg", ".mxf", ".ogm", ".ogv", ".qt", ".rm", ".swf", ".ts", ".vob", ".vp9", ".webm", ".wmv"]
-    const audioExtensions = [".3ga", ".aac", ".ac3", ".adts", ".aif", ".aiff", ".alac", ".ape", ".asf", ".au", ".dts", ".f4a", ".f4b", ".flac", ".isma", ".it", ".m4a", ".m4b", ".m4r", ".mid", ".mka", ".mod", ".mp1", ".mp2", ".mp3", ".mp4a", ".mpa", ".mpga", ".oga", ".ogg", ".ogx", ".opus", ".ra", ".shn", ".spx", ".vorbis", ".wav", ".weba", ".wma", ".xm"];
-    const streamExtensions = [".f4f", ".f4m", ".m3u8", ".mpd", ".smil"];
-    const subtitleExtensions = [".vtt", ".srt", ".ass", ".ssa"];
-
+    const settings = await browser.storage.local.get(['only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle']);
+    
     const mediaGroups = new Map();
     for (const rawUrl in mediaRequests) {
       if (activeItems.has(rawUrl)) continue;
 
-      let mediaURL;
-      try { mediaURL = new URL(rawUrl); } catch (e) { continue; }
       const requests = mediaRequests[rawUrl];
       if (!Array.isArray(requests) || requests.length === 0) continue;
-
-      const path = mediaURL.pathname.toLowerCase();
-      const isVideo = videoExtensions.some(ext => path.endsWith(ext)) || requests.some(req => req.responseHeaders?.find(h => h.name.toLowerCase() === "content-type" && h.value.startsWith("video/")));
-      const isAudio = audioExtensions.some(ext => path.endsWith(ext)) || requests.some(req => req.responseHeaders?.find(h => h.name.toLowerCase() === "content-type" && h.value.startsWith("audio/")));
-      const isStream = streamExtensions.some(ext => path.endsWith(ext)) || requests.some(req => req.responseHeaders?.find(h => h.name.toLowerCase() === "content-type" && (h.value.includes("mpegurl") || h.value.includes("dash+xml"))));
-      const isSubtitle = subtitleExtensions.some(ext => path.endsWith(ext)) || requests.some(req => req.responseHeaders?.find(h => h.name.toLowerCase() === "content-type" && (h.value.includes("vtt") || h.value.includes("subrip") || h.value.includes("ass"))));
-
-      if (onlyMedia && !isVideo && !isAudio && !isStream && !isSubtitle) continue;
       
-      // Use URL without common tracking params as identity to distinguish qualities
-      const identity = rawUrl.split('?')[0]; 
-      if (!mediaGroups.has(identity)) mediaGroups.set(identity, { requests: [], isVideo, isAudio, isStream, isSubtitle });
+      const type = getMediaType(rawUrl, requests[requests.length - 1].responseHeaders);
+      if (!type) continue;
+
+      // Filter based on settings
+      if (type === 'video' && settings['only-video'] === '0') continue;
+      if (type === 'audio' && settings['only-audio'] === '0') continue;
+      if (type === 'stream' && settings['only-stream'] === '0') continue;
+      if (type === 'image' && settings['only-image'] === '0') continue;
+      if (type === 'subtitle' && settings['only-subtitle'] === '0') continue;
+
+      // Primary Key for deduplication: Filename (case-insensitive)
+      // This is the most reliable way to catch duplicates with different query params
+      const fileName = getFileName(rawUrl, 255).toLowerCase();
+      const identity = fileName;
+
+      if (!mediaGroups.has(identity)) {
+        mediaGroups.set(identity, { requests: [], type });
+      }
       const group = mediaGroups.get(identity);
-      
+
       requests.forEach(req => {
-        const existingIdx = group.requests.findIndex(r => r.originalUrl === rawUrl);
-        if (existingIdx === -1) {
-          group.requests.push({ ...req, originalUrl: rawUrl });
+        const currentReq = { ...req, originalUrl: rawUrl };
+        const currentSize = parseInt(req.size) || 0;
+
+        if (group.requests.length === 0) {
+          group.requests.push(currentReq);
         } else {
-          // If we see the same URL again, keep the one with the larger size (better detection)
-          const currentSize = parseInt(req.size) || 0;
-          const existingSize = parseInt(group.requests[existingIdx].size) || 0;
+          // If we already have a request with this filename, only keep the one with the largest size
+          const existingSize = parseInt(group.requests[0].size) || 0;
           if (currentSize > existingSize) {
-            group.requests[existingIdx] = { ...req, originalUrl: rawUrl };
+            group.requests[0] = currentReq;
           }
         }
       });
     }
 
-    // Flatten and sort globally by size
     const flattenedRequests = [];
     mediaGroups.forEach(group => {
-        group.requests.sort((a, b) => (parseInt(b.size) || 0) - (parseInt(a.size) || 0));
+        // Sort within group to find largest size
+        group.requests.sort((a, b) => {
+          const sizeA = parseInt(a.size) || 0;
+          const sizeB = parseInt(b.size) || 0;
+          return sizeB - sizeA;
+        });
+
         flattenedRequests.push({ 
           bestRequest: group.requests[0], 
-          isVideo: group.isVideo, 
-          isAudio: group.isAudio, 
-          isStream: group.isStream,
-          isSubtitle: group.isSubtitle
+          type: group.type,
+          isVideo: group.type === 'video', 
+          isAudio: group.type === 'audio', 
+          isStream: group.type === 'stream',
+          isSubtitle: group.type === 'subtitle',
+          isImage: group.type === 'image'
         });
     });
-    
+
     flattenedRequests.sort((a, b) => (parseInt(b.bestRequest.size) || 0) - (parseInt(a.bestRequest.size) || 0));
-    allMediaRequests = flattenedRequests; // Store for filtering if needed later
-
-    if (flattenedRequests.length === 0 && activeItems.size === 0) {
-      if (loadingSpinner) loadingSpinner.style.display = 'none';
-      mediaContainer.innerHTML = `<div style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
-      return;
-    }
-
-    for (const item of flattenedRequests) {
-      const { bestRequest, isVideo, isAudio, isStream, isSubtitle } = item;
-      const mediaURL = new URL(bestRequest.originalUrl);
-      
-      const mediaDiv = document.createElement('div');
-      mediaDiv.classList.add('media-item');
-      mediaDiv.dataset.url = bestRequest.originalUrl;
-      mediaDiv.dataset.size = bestRequest.size;
-
-      // --- Header Section ---
-      const header = document.createElement('div');
-      header.classList.add('media-item-header');
-
-      const checkbox = document.createElement('mdui-checkbox');
-      checkbox.classList.add('media-checkbox');
-      checkbox.addEventListener('change', () => updateSelectedCount());
-      header.appendChild(checkbox);
-
-      const previewContainer = document.createElement('div');
-      previewContainer.classList.add('media-preview-container');
-      
-      if (isVideo || isStream) {
-        previewContainer.classList.add('video');
-        const video = document.createElement('video');
-        video.src = isStream ? "" : bestRequest.originalUrl;
-        video.preload = "metadata";
-        video.muted = true;
-        video.playsInline = true;
-        if (!isStream) video.currentTime = 0.1;
-        previewContainer.appendChild(video);
-        
-        let hls = null;
-        previewContainer.addEventListener('click', (e) => {
-          e.stopPropagation();
-          if (video.paused) {
-            document.querySelectorAll('.media-preview-container.playing video').forEach(v => {
-              v.pause();
-              v.parentElement.classList.remove('playing');
-            });
-
-            if (isStream && !video.src) {
-              if (Hls.isSupported()) {
-                hls = new Hls();
-                hls.loadSource(bestRequest.originalUrl);
-                hls.attachMedia(video);
-              } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = bestRequest.originalUrl;
-              }
-            }
-            
-            video.muted = false;
-            video.play().then(() => {
-              previewContainer.classList.add('playing');
-            }).catch(err => console.error("Playback failed:", err));
-          } else {
-            video.pause();
-            previewContainer.classList.remove('playing');
-          }
-        });
-      } else {
-        const mediaIconContainer = document.createElement('mdui-icon');
-        mediaIconContainer.classList.add('media-preview-icon');
-        const mediaIcon = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
-        mediaIcon.setAttribute('viewBox', '0 -960 960 960');
-        let path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-
-        if (isAudio) {
-          path.setAttribute('d', 'M400-120q-66 0-113-47t-47-113q0-66 47-113t113-47q23 0 42.5 5.5T480-418v-422h240v160H560v400q0 66-47 113t-113 47Z');
-        } else if (isSubtitle) {
-          path.setAttribute('d', 'M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm120-120h120v-40H280v40Zm0-80h120v-40H280v40Zm280 80h120v-40H560v40Zm0-80h120v-40H560v40ZM160-240v-480 480Z');
-        } else {
-          path.setAttribute('d', 'M40-480q0-92 34.5-172T169-791.5q60-59.5 140-94T480-920q91 0 171 34.5t140 94Q851-732 885.5-652T920-480h-80q0-75-28.5-140.5T734-735q-49-49-114.5-77T480-840q-74 0-139.5 28T226-735q-49 49-77.5 114.5T120-480H40Zm160 0q0-118 82-199t198-81q116 0 198 81t82 199h-80q0-83-58.5-141.5T480-680q-83 0-141.5 58.5T280-480h-80ZM360-64l-56-56 136-136v-132q-27-12-43.5-37T380-480q0-42 29-71t71-29q42 0 71 29t29 71q0 30-16.5 55T520-388v132l136 136-56 56-120-120L360-64Z');
-        }
-        mediaIcon.appendChild(path);
-        mediaIconContainer.appendChild(mediaIcon);
-        previewContainer.appendChild(mediaIconContainer);
-      }
-      header.appendChild(previewContainer);
-
-      const info = document.createElement('div');
-      info.classList.add('media-item-info');
-
-      const headline = document.createElement('div');
-      headline.classList.add('media-headline');
-      headline.textContent = getFileName(bestRequest.originalUrl);
-      info.appendChild(headline);
-
-      const description = document.createElement('div');
-      description.classList.add('media-description');
-      const timeStr = new Date(bestRequest.timeStamp).toLocaleTimeString();
-      const humanSize = getHumanReadableSize(bestRequest.size);
-      description.textContent = `${mediaURL.hostname} • ${humanSize} • ${timeStr}`;
-      info.appendChild(description);
-      header.appendChild(info);
-
-      const qrBtn = document.createElement('mdui-button-icon');
-      qrBtn.innerHTML = `<mdui-icon><svg viewBox="0 -960 960 960"><path d="M120-120v-240h80v160h160v80H120Zm0-480v-240h240v80H200v160h-80Zm480 480v-80h160v-160h80v240H600Zm160-480v-160H600v-80h240v240h-80ZM280-280v-120h120v120H280Zm0-280v-120h120v120H280Zm280 280v-120h120v120H560Zm0-280v-120h120v120H560Z"/></svg></mdui-icon>`;
-      qrBtn.title = browser.i18n.getMessage("qrCodeButton") || "QR Code";
-      qrBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        showQRCode(bestRequest.originalUrl);
-      });
-      header.appendChild(qrBtn);
-      mediaDiv.appendChild(header);
-
-      // --- Inline Preview Section ---
-      const inlinePreview = document.createElement('div');
-      inlinePreview.classList.add('inline-preview-area');
-      const largeVideo = document.createElement('video');
-      largeVideo.controls = true;
-      inlinePreview.appendChild(largeVideo);
-      mediaDiv.appendChild(inlinePreview);
-
-      // --- Actions Section ---
-      const actionsWrapper = document.createElement('div');
-      actionsWrapper.classList.add('media-actions-wrapper');
-      const actions = document.createElement('div');
-      actions.classList.add('media-actions');
-
-      const buttonGroup = document.createElement('mdui-segmented-button-group');
-      buttonGroup.style.width = '100%';
-
-      const dlBtn = document.createElement('mdui-segmented-button');
-      dlBtn.id = 'download-button';
-      dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>Download`;
-      dlBtn.addEventListener('click', () => {
-        if (dlBtn.classList.contains('cancel-active')) {
-          browser.runtime.sendMessage({ action: 'cancelDownload', url: bestRequest.originalUrl });
-          dlBtn.disabled = true;
-          const statusInfo = mediaDiv.querySelector('.download-status-info');
-          if (statusInfo) statusInfo.textContent = browser.i18n.getMessage("downloadCancelled") || "Cancelling...";
-        } else {
-          downloadFile(bestRequest.originalUrl, mediaDiv, bestRequest.size);
-        }
-      });
-      
-      const prvBtn = document.createElement('mdui-segmented-button');
-      prvBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="m380-300 280-180-280-180v360ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg></mdui-icon>Preview`;
-      if (isSubtitle) prvBtn.style.display = 'none';
-      
-      let hlsLarge = null;
-      prvBtn.addEventListener('click', () => {
-          const isExpanded = mediaDiv.classList.toggle('expanded');
-          
-          if (isExpanded) {
-            if (isStream) {
-              if (Hls.isSupported()) {
-                hlsLarge = new Hls();
-                hlsLarge.loadSource(bestRequest.originalUrl);
-                hlsLarge.attachMedia(largeVideo);
-              } else if (largeVideo.canPlayType('application/vnd.apple.mpegurl')) {
-                largeVideo.src = bestRequest.originalUrl;
-              }
-            } else {
-              largeVideo.src = bestRequest.originalUrl;
-            }
-            largeVideo.play().catch(e => console.warn("Auto-play failed:", e));
-            prvBtn.setAttribute('selected', '');
-          } else {
-            largeVideo.pause();
-            largeVideo.src = "";
-            if (hlsLarge) {
-              hlsLarge.destroy();
-              hlsLarge = null;
-            }
-            prvBtn.removeAttribute('selected');
-          }
-      });
-
-      const audioBtn = document.createElement('mdui-segmented-button');
-      audioBtn.id = 'audio-only-button';
-      audioBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M400-120q-66 0-113-47t-47-113q0-66 47-113t113-47q23 0 42.5 5.5T480-418v-422h240v160H560v400q0 66-47 113t-113 47Z"/></svg></mdui-icon>${browser.i18n.getMessage("audioOnly") || "Audio-Only"}`;
-      audioBtn.addEventListener('click', () => {
-        downloadAudioOnly(bestRequest.originalUrl, mediaDiv, bestRequest.size);
-      });
-      if (!isVideo && !isStream) audioBtn.style.display = 'none';
-
-      buttonGroup.appendChild(dlBtn);
-      buttonGroup.appendChild(audioBtn);
-      buttonGroup.appendChild(prvBtn);
-      actions.appendChild(buttonGroup);
-      actionsWrapper.appendChild(actions);
-      mediaDiv.appendChild(actionsWrapper);
-
-      mediaContainer.appendChild(mediaDiv);
-    }
+    allMediaRequests = flattenedRequests;
+    allFilteredRequests = [...allMediaRequests];
 
     if (loadingSpinner) loadingSpinner.style.display = 'none';
-    const endMsg = document.createElement('div');
-    endMsg.id = "end-of-media-list";
-    endMsg.style.textAlign = 'center';
-    endMsg.style.padding = '20px 0 100px';
-    endMsg.innerHTML = browser.i18n.getMessage("endOfMediaList");
-    mediaContainer.appendChild(endMsg);
+    renderInitialList();
 
     // Restore active downloads UI
-    browser.runtime.sendMessage({ action: 'getActiveDownloads' }).then((activeDownloads) => {
-      if (!activeDownloads) return;
+    const activeDownloads = await browser.runtime.sendMessage({ action: 'getActiveDownloads' });
+    if (activeDownloads) {
       Object.keys(activeDownloads).forEach(id => {
         const downloadData = activeDownloads[id];
         const url = downloadData.url;
 
-        // Find the item. Match by id if available, or by URL
         const item = Array.from(document.querySelectorAll('.media-item')).find(el =>
           el.dataset.downloadId === id || el.dataset.url === url || url.startsWith(el.dataset.url.split('?')[0])
         );
 
         if (item && !item.querySelector('mdui-linear-progress')) {
-          item.dataset.downloadId = id; // Sync with background ID
+          item.dataset.downloadId = id;
           item.dataset.url = url; 
           const loadingBar = document.createElement('mdui-linear-progress');
           const statusInfo = document.createElement('div');
@@ -928,7 +1063,6 @@ function loadMediaList() {
           item.appendChild(loadingBar);
           item.appendChild(statusInfo);
 
-          // Restore Cancel button state
           const dlBtn = item.querySelector('#download-button');
           if (dlBtn) {
             dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></mdui-icon>${browser.i18n.getMessage("cancelButton") || "Cancel"}`;
@@ -939,7 +1073,13 @@ function loadMediaList() {
           updateProgressUI(id, downloadData.loaded, downloadData.total);
         }
       });
-    });  });
+    }
+  } catch (err) {
+    console.error("Error loading media list:", err);
+    if (globalLoading) globalLoading.style.display = 'none';
+    if (mainContent) mainContent.style.display = 'block';
+    if (loadingSpinner) loadingSpinner.style.display = 'none';
+  }
 }
 
 function clearMediaList() {
@@ -950,6 +1090,7 @@ async function loadHistoryList() {
   const historyContainer = document.getElementById('history-list');
   const historyResult = await browser.storage.local.get('download-history');
   const history = historyResult['download-history'] || [];
+  const settings = await browser.storage.local.get(['only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle']);
 
   historyContainer.innerHTML = '';
 
@@ -958,7 +1099,19 @@ async function loadHistoryList() {
     return;
   }
 
+  let visibleCount = 0;
   history.forEach((item, index) => {
+    // Determine type for history item (either from property or URL)
+    const type = item.mediaType || getMediaType(item.url, []);
+    
+    // Filter based on settings
+    if (type === 'video' && settings['only-video'] === '0') return;
+    if (type === 'audio' && settings['only-audio'] === '0') return;
+    if (type === 'stream' && settings['only-stream'] === '0') return;
+    if (type === 'image' && settings['only-image'] === '0') return;
+    if (type === 'subtitle' && settings['only-subtitle'] === '0') return;
+    
+    visibleCount++;
     const historyItem = document.createElement('div');
     historyItem.classList.add('media-item');
     
@@ -1074,6 +1227,10 @@ async function loadHistoryList() {
     historyItem.appendChild(header);
     historyContainer.appendChild(historyItem);
   });
+
+  if (visibleCount === 0 && history.length > 0) {
+    historyContainer.innerHTML = `<div style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noHistory") || "No items found for the current filters."}</div>`;
+  }
 }
 
 async function clearHistory() {
@@ -1088,60 +1245,94 @@ async function loadAboutPage() {
     const data = await response.json();
     
     let html = `
-      <div style="padding: 16px; display: flex; flex-direction: column; gap: 20px;">
-        <div style="text-align: center;">
-          <h1 style="margin: 0; font-size: 1.5rem; color: rgb(var(--mdui-color-primary));">${data.extension.name}</h1>
-          <p style="opacity: 0.7; margin-top: 4px;">Version ${browser.runtime.getManifest().version}</p>
-          <p style="font-size: 0.9rem; line-height: 1.5; margin-top: 12px;">${data.extension.description}</p>
+      <div style="padding: 16px; display: flex; flex-direction: column; gap: 24px;">
+        <div style="text-align: center; padding: 24px 16px; background: var(--surface-low); border-radius: var(--app-border-radius); border: 1px solid rgb(var(--mdui-color-outline-variant));">
+          <div style="width: 48px; height: 48px; margin: 0 auto 16px; color: var(--primary);">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+          </div>
+          <h1 style="margin: 0; font-size: 1.4rem; font-weight: 700; color: rgb(var(--mdui-color-on-surface));">${data.extension.name}</h1>
+          <div style="display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 4px 12px; background: rgb(var(--mdui-color-secondary-container)); color: rgb(var(--mdui-color-on-secondary-container)); border-radius: 20px; font-size: 0.75rem; font-weight: 600;">
+            <svg viewBox="0 0 24 24" fill="currentColor" style="width: 14px; height: 14px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            Version ${browser.runtime.getManifest().version}
+          </div>
+          <p style="font-size: 0.9rem; line-height: 1.6; margin-top: 16px; color: var(--on-surface-variant);">${data.extension.description}</p>
         </div>
     `;
 
+    // Authors Section
     html += `
         <div style="display: flex; flex-direction: column; gap: 12px;">
-          <h2 style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: rgb(var(--mdui-color-primary)); margin: 0 8px;">Authors & Contributors</h2>
+          <h2 style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary); margin: 0 8px;">Maintained By</h2>
     `;
 
-    data.authors.forEach((author) => {
-      html += `
-        <mdui-card variant="filled" style="padding: 16px !important; margin-bottom: 8px;">
-          <div style="display: flex; gap: 16px; align-items: center;">
-            <mdui-avatar src="${author.avatar}"></mdui-avatar>
+    // First author (Lead Developer)
+    const lead = data.authors[0];
+    html += `
+        <mdui-card variant="filled" style="padding: 20px !important; background-color: rgb(var(--mdui-color-primary-container)); border: none; overflow: visible;">
+          <div style="display: flex; gap: 16px; align-items: center; position: relative;">
+            <mdui-avatar src="${lead.avatar}" style="width: 56px; height: 56px; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></mdui-avatar>
             <div style="flex-grow: 1;">
-              <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <b style="font-size: 1.1rem;">${author.name}</b>
-                <span style="font-size: 0.75rem; opacity: 0.6; font-weight: 700; text-transform: uppercase;">${author.role}</span>
-              </div>
-              <p style="margin: 4px 0 8px; font-size: 0.85rem; line-height: 1.4;">${author.description}</p>
-              <div style="display: flex; gap: 8px; margin-left: -12px;">
-                <mdui-button variant="text" href="${author.github}" target="_blank">
-                  <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></mdui-icon> GitHub
-                </mdui-button>
-              </div>
+              <b style="font-size: 1.1rem; color: rgb(var(--mdui-color-on-primary-container));">${lead.name}</b>
+              <p style="margin: 8px 0 0; font-size: 0.85rem; line-height: 1.5; color: rgb(var(--mdui-color-on-primary-container)); opacity: 0.9;">${lead.description}</p>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; align-self: stretch; justify-content: center; min-width: 80px;">
+              <span style="font-size: 0.65rem; color: rgb(var(--mdui-color-on-primary-container)); opacity: 0.7; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; position: absolute; top: -4px; right: 0;">${lead.role}</span>
+              <mdui-button-icon variant="filled" style="--mdui-color-primary: var(--mdui-color-on-primary-container); --mdui-color-on-primary: var(--mdui-color-primary-container); flex-shrink: 0;" href="${lead.github}" target="_blank">
+                <svg viewBox="0 0 24 24" style="fill: currentColor;"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+              </mdui-button-icon>
             </div>
           </div>
         </mdui-card>
+    `;
+
+    // Other authors (Legacy)
+    if (data.authors.length > 1) {
+      html += `
+        <h2 style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--on-surface-variant); margin: 12px 8px 0;">Legacy Contributions</h2>
+        <mdui-list style="background: transparent;">
       `;
-    });
+      
+      data.authors.slice(1).forEach((author) => {
+        html += `
+          <mdui-list-item nonclickable style="border-radius: 12px; margin-bottom: 4px;">
+            <mdui-avatar slot="icon" src="${author.avatar}" style="width: 32px; height: 32px;"></mdui-avatar>
+            <div style="font-weight: 600; font-size: 0.9rem;">${author.name}</div>
+            <div slot="description" style="font-size: 0.8rem; opacity: 0.7;">${author.description}</div>
+            <mdui-button-icon slot="end-icon" href="${author.github}" target="_blank">
+              <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: currentColor;"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+            </mdui-button-icon>
+          </mdui-list-item>
+        `;
+      });
+      
+      html += `</mdui-list>`;
+    }
 
     html += `
         </div>
         <div style="display: flex; flex-direction: column; gap: 8px;">
-          <h2 style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: rgb(var(--mdui-color-primary)); margin: 8px 8px 0;">Useful Links</h2>
-          <mdui-list>
+          <h2 style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary); margin: 8px 8px 0;">Useful Links</h2>
+          <mdui-list style="background: var(--surface-low); border-radius: 16px; border: 1px solid rgb(var(--mdui-color-outline-variant)); overflow: hidden;">
     `;
 
-    data.links.forEach(link => {
+    data.links.forEach((link, index) => {
       html += `
-        <mdui-list-item href="${link.url}" target="_blank">
+        <mdui-list-item href="${link.url}" target="_blank" style="${index < data.links.length - 1 ? 'border-bottom: 1px solid rgb(var(--mdui-color-outline-variant));' : ''}">
           <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="${link.icon}"/></svg></mdui-icon>
           ${link.label}
-          <mdui-icon slot="end-icon"><svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg></mdui-icon>
+          <div slot="end-icon" style="width: 18px; height: 18px; opacity: 0.5;">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+          </div>
         </mdui-list-item>
       `;
     });
 
     html += `
           </mdui-list>
+        </div>
+        
+        <div style="text-align: center; margin-top: 12px; opacity: 0.5; font-size: 0.7rem;">
+          Released under ${data.extension.license} License
         </div>
       </div>
     `;
@@ -1279,7 +1470,7 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
    if (template) {
        finalName = await generateTemplateName(template, url, defaultName);
    }
-   
+
    const lastDotIdx = finalName.lastIndexOf('.');
    let audioExt = ".wav";
    const isStream = url.toLowerCase().includes('.m3u8') || url.toLowerCase().includes('.mpd');
@@ -1293,10 +1484,49 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
    const newName = await showRenameDialog(finalName);
    if (newName === null) return; 
 
+    // Update button to Cancel
+    const dlBtn = mediaDiv.querySelector('#audio-only-button');
+    if (dlBtn) {
+      const originalText = dlBtn.innerHTML;
+      dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></mdui-icon>${browser.i18n.getMessage("cancelButton") || "Cancel"}`;
+      dlBtn.classList.add('cancel-active');
+      
+      // Store the original listener to restore it later if needed, 
+      // but for now we replace the click behavior entirely for the duration of download
+      const cancelHandler = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        window.activeCancellations.add(url);
+        dlBtn.disabled = true;
+        const statusInfo = mediaDiv.querySelector('.download-status-info');
+        if (statusInfo) statusInfo.textContent = browser.i18n.getMessage("downloadCancelled") || "Cancelling...";
+      };
+      
+      // Use a fresh listener to avoid conflicts
+      const newDlBtn = dlBtn.cloneNode(true);
+      dlBtn.parentNode.replaceChild(newDlBtn, dlBtn);
+      newDlBtn.addEventListener('click', cancelHandler);
+      
+      // Helper to restore the button
+      const restoreButton = () => {
+        const resetBtn = newDlBtn.cloneNode(true);
+        resetBtn.innerHTML = originalText;
+        resetBtn.classList.remove('cancel-active');
+        resetBtn.disabled = false;
+        resetBtn.onclick = null; // Clear any inline handlers
+        resetBtn.addEventListener('click', () => {
+          downloadAudioOnly(url, mediaDiv, specificSize);
+        });
+        newDlBtn.parentNode.replaceChild(resetBtn, newDlBtn);
+      };
+      
+      window.activeCancellations.setRestoreCallback?.(url, restoreButton);
+    }
+
     updateDownloadingCount(1);
     const progressContainer = document.createElement('div');
     progressContainer.className = 'download-progress-container';
-    
+
     const loadingBar = document.createElement('mdui-linear-progress');
     const statusInfo = document.createElement('div');
     statusInfo.className = 'download-status-info';
@@ -1304,15 +1534,15 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
     progressContainer.appendChild(loadingBar);
     progressContainer.appendChild(statusInfo);
     mediaDiv.appendChild(progressContainer);
-    
+
     loadingBar.style.width = '100%';
     loadingBar.setAttribute('indeterminate', 'true');
 
     // Manually populate UI cache to ensure finishDownloadUI works
     uiCache.set(url, { element: mediaDiv, loadingBar, statusInfo, progressContainer });
 
-   const downloadMethod = await browser.storage.local.get('download-method').then(res => res['download-method']);
-   const streamPref = await browser.storage.local.get('stream-download').then(res => res['stream-download'] || 'offline');
+    const downloadMethod = await browser.storage.local.get('download-method').then(res => res['download-method']);
+    const streamPref = await browser.storage.local.get('stream-download').then(res => res['stream-download'] || 'offline');
 
    if (isStream) {
       if (url.toLowerCase().includes('.m3u8')) {
@@ -1325,6 +1555,7 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
               return;
           }
           const result = await downloadM3U8Offline(url, targetRequest.responseHeaders, downloadMethod, loadingBar, targetRequest, newName, true);
+          if (window.activeCancellations.has(url)) throw new Error("Cancelled");
           if (result && result.blob) {
               await extractAudioFromBlob(result.blob, newName, downloadMethod, loadingBar);
           }
@@ -1335,23 +1566,27 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
       }
    } else {
       try {
-          const response = await fetch(url);
+          const response = await spoofedFetch(url);
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          
+
           const contentLength = +(response.headers.get('Content-Length') || 0);
           const reader = response.body.getReader();
           let receivedLength = 0;
           let chunks = [];
-          
+
           loadingBar.removeAttribute('indeterminate');
           if (contentLength > 0) loadingBar.max = contentLength;
 
           while(true) {
+            if (window.activeCancellations.has(url)) {
+              reader.cancel();
+              throw new Error("Cancelled");
+            }
             const {done, value} = await reader.read();
             if (done) break;
             chunks.push(value);
             receivedLength += value.length;
-            
+
             if (contentLength > 0) {
                 loadingBar.value = receivedLength;
                 const percent = Math.round((receivedLength / contentLength) * 100);
@@ -1360,24 +1595,30 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
                 statusInfo.textContent = `Downloading: ${(receivedLength/1048576).toFixed(1)}MB`;
             }
           }
-          
+
           const blob = new Blob(chunks);
           statusInfo.textContent = "Download complete. Preparing extraction...";
           await new Promise(r => setTimeout(r, 500)); // Small pause to let user see it's done
+          if (window.activeCancellations.has(url)) throw new Error("Cancelled");
           await extractAudioFromBlob(blob, newName, downloadMethod, loadingBar);
       } catch (e) {
-          throw new Error("Download failed: " + e.message);
+          throw new Error(e.message === "Cancelled" ? "Cancelled" : "Download failed: " + e.message);
       }
    }
    finishDownloadUI(url, true);
   } catch (error) {
-    showDialog("Audio-only extraction error: " + error.message);
+    if (error.message !== "Cancelled") {
+      showDialog("Audio-only extraction error: " + error.message);
+    }
     finishDownloadUI(url);
   } finally {
+    const restoreCb = window.activeCancellations.restoreCallbacks.get(url);
+    if (restoreCb) restoreCb();
+    window.activeCancellations.restoreCallbacks.delete(url);
+    window.activeCancellations.delete(url);
     if (wakeLock) wakeLock.release();
   }
 }
-
 async function downloadFile(url, mediaDiv, specificSize, silent = false) {
   let wakeLock = null;
   try { wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}

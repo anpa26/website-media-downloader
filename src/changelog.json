@@ -1,24 +1,32 @@
 {
   "en": {
-    "headline": "What's New (v1.5.9)",
+    "headline": "What's New (v1.6.5)",
     "changes": [
-      "Optimized IndexedDB storage with chunk buffering and batching for faster downloads and reconstruction",
-      "Fixed duplicate media items in UI by grouping and clearing quality variants together",
-      "Added 'Speed boost' (parallel downloads) with configurable connection count",
-      "Improved download persistence with state storage and auto-resume support",
-      "Updated UI to automatically remove items upon successful completion",
-      "Enhanced history tracking and background fetch reliability"
+      "Complete UI overhaul using Material Design 3 (MDUI) components",
+      "New DOM-based media detection engine for scanning tags, backgrounds, and data-attributes",
+      "Enhanced header spoofing (Referer, Origin, Cookies) to bypass hotlinking protections",
+      "Synchronized and standardized media extension lists across the entire project",
+      "Added granular filtering toggles for Video, Audio, Stream, Image, and Subtitles",
+      "Integrated QR Code sharing for easy media transfer to mobile devices",
+      "Added real-time search and multi-select batch actions (Download/Delete)",
+      "Improved download stability and fixed infinite auto-resume loops",
+      "Optimized media deduplication logic using filename-based identity",
+      "Updated localization for all supported languages (DE, EN, FR, ID, PT)"
     ]
   },
   "id": {
-    "headline": "Yang Baru (v1.5.9)",
+    "headline": "Yang Baru (v1.6.5)",
     "changes": [
-      "Optimalisasi penyimpanan IndexedDB dengan buffering dan batching untuk unduhan dan rekonstruksi lebih cepat",
-      "Memperbaiki item media duplikat di UI dengan pengelompokan dan penghapusan varian kualitas sekaligus",
-      "Penambahan 'Peningkatan kecepatan' (unduhan paralel) dengan jumlah koneksi yang dapat dikonfigurasi",
-      "Peningkatan persistensi unduhan dengan penyimpanan status dan dukungan lanjutkan otomatis",
-      "Pembaruan UI untuk menghapus item secara otomatis setelah unduhan berhasil",
-      "Peningkatan pelacakan riwayat dan keandalan pengambilan latar belakang"
+      "Overhaul total antarmuka pengguna menggunakan komponen Material Design 3 (MDUI)",
+      "Mesin deteksi media baru berbasis DOM untuk memindai tag, background, dan atribut-data",
+      "Peningkatan spoofing header (Referer, Origin, Cookies) untuk melewati proteksi hotlinking",
+      "Sinkronisasi dan standarisasi daftar ekstensi media di seluruh file proyek",
+      "Penambahan toggle filter granular untuk Video, Audio, Stream, Gambar, dan Subtitle",
+      "Integrasi berbagi Kode QR untuk transfer media yang mudah ke perangkat seluler",
+      "Penambahan pencarian real-time dan aksi batch multi-pilih (Unduh/Hapus)",
+      "Peningkatan stabilitas unduhan dan perbaikan loop auto-resume yang bermasalah",
+      "Optimasi logika deduplikasi media menggunakan identitas berbasis nama file",
+      "Pembaruan lokalisasi untuk semua bahasa yang didukung (DE, EN, FR, ID, PT)"
     ]
   }
 }

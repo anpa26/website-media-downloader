@@ -6,19 +6,19 @@
   },
   "authors": [
     {
-      "role": "Original Creator",
-      "name": "helloyanis",
-      "github": "https://github.com/helloyanis",
-      "avatar": "https://avatars.githubusercontent.com/u/40769776",
-      "description": "The original creator of the extension who built the entire core engine and media detection logic."
-    },
-    {
       "role": "Lead Developer",
       "name": "anpa26",
       "github": "https://github.com/anpa26",
       "repo": "https://github.com/anpa26/website-media-downloader",
       "avatar": "https://avatars.githubusercontent.com/u/278016362",
       "description": "A lead developer focused on improving and modernizing the extension, adding features like bg downloads, history, and UI enhancements to bring it to its current state."
+    },
+    {
+      "role": "Legacy Contributor",
+      "name": "helloyanis",
+      "github": "https://github.com/helloyanis",
+      "avatar": "https://avatars.githubusercontent.com/u/40769776",
+      "description": "Contributed to the early versions of the project's core engine."
     }
   ],
   "links": [

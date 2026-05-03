@@ -247,13 +247,45 @@
         "message": "Hide stream segments in the media list",
         "description": "The label of the checkbox to enable hiding stream segments in the media list."
     },
-    "onlyMediaTitle": {
-        "message": "Only show media (video, audio, subtitles)",
-        "description": "The title of the 'Only show video and audio' setting."
+    "onlyVideoTitle": {
+        "message": "Show video",
+        "description": "Toggle visibility of video files"
     },
-    "onlyMediaExplain": {
-        "message": "Hide all requests that are not clearly identified as video, audio, subtitles, or streams (e.g. manifests). Uncheck this if you want to see all filtered requests.",
-        "description": "The explanation for the 'Only show video and audio' setting."
+    "onlyVideoExplain": {
+        "message": "Show detected video files in the list.",
+        "description": "Explains what the video filter does"
+    },
+    "onlyAudioTitle": {
+        "message": "Show audio",
+        "description": "Toggle visibility of audio files"
+    },
+    "onlyAudioExplain": {
+        "message": "Show detected audio files in the list.",
+        "description": "Explains what the audio filter does"
+    },
+    "onlyStreamTitle": {
+        "message": "Show streams",
+        "description": "Toggle visibility of stream files"
+    },
+    "onlyStreamExplain": {
+        "message": "Show detected media streams (HLS, DASH).",
+        "description": "Explains what the stream filter does"
+    },
+    "onlyImageTitle": {
+        "message": "Show images",
+        "description": "Toggle visibility of image files"
+    },
+    "onlyImageExplain": {
+        "message": "Show detected image files (WebP, PNG, JPG, GIF).",
+        "description": "Explains what the image filter does"
+    },
+    "onlySubtitleTitle": {
+        "message": "Show subtitles",
+        "description": "Toggle visibility of subtitle files"
+    },
+    "onlySubtitleExplain": {
+        "message": "Show detected subtitle and caption files.",
+        "description": "Explains what the subtitle filter does"
     },
     "mediaNotificationTitle": {
         "message": "Media detected!",
@@ -368,7 +400,7 @@
         "description": "The third part of the credits description."
     },
     "creditsDescription4": {
-        "message": "created by helloyanis, improved by anpa26",
+        "message": "maintained and developed by anpa26",
         "description": "The fourth part of the credits description."
     },
     "creditsDescription5": {

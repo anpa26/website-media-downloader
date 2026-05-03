@@ -229,13 +229,45 @@
         "message": "Sembunyikan segmen siaran di daftar media",
         "description": "Label kotak centang untuk menyembunyikan segmen siaran."
     },
-    "onlyMediaTitle": {
-        "message": "Hanya tampilkan media (video, audio, subtitle)",
-        "description": "Judul pengaturan 'Hanya tampilkan video dan audio'."
+    "onlyVideoTitle": {
+        "message": "Tampilkan video",
+        "description": "Toggle visibility of video files"
     },
-    "onlyMediaExplain": {
-        "message": "Sembunyikan semua permintaan yang tidak teridentifikasi jelas sebagai video, audio, subtitle, atau siaran (misal manifest). Hapus centang jika ingin melihat semua permintaan yang difilter.",
-        "description": "Penjelasan pengaturan 'Hanya tampilkan video dan audio'."
+    "onlyVideoExplain": {
+        "message": "Tampilkan file video yang terdeteksi di daftar.",
+        "description": "Menjelaskan kegunaan filter video"
+    },
+    "onlyAudioTitle": {
+        "message": "Tampilkan audio",
+        "description": "Toggle visibility of audio files"
+    },
+    "onlyAudioExplain": {
+        "message": "Tampilkan file audio yang terdeteksi di daftar.",
+        "description": "Menjelaskan kegunaan filter audio"
+    },
+    "onlyStreamTitle": {
+        "message": "Tampilkan stream",
+        "description": "Toggle visibility of stream files"
+    },
+    "onlyStreamExplain": {
+        "message": "Tampilkan stream media (HLS, DASH) yang terdeteksi.",
+        "description": "Menjelaskan kegunaan filter stream"
+    },
+    "onlyImageTitle": {
+        "message": "Tampilkan gambar",
+        "description": "Toggle visibility of image files"
+    },
+    "onlyImageExplain": {
+        "message": "Tampilkan file gambar (WebP, PNG, JPG, GIF) yang terdeteksi.",
+        "description": "Menjelaskan kegunaan filter gambar"
+    },
+    "onlySubtitleTitle": {
+        "message": "Tampilkan subtitle",
+        "description": "Toggle visibility of subtitle files"
+    },
+    "onlySubtitleExplain": {
+        "message": "Tampilkan file subtitle dan takarir yang terdeteksi.",
+        "description": "Menjelaskan kegunaan filter subtitle"
     },
     "mediaNotificationTitle": {
         "message": "Media terdeteksi!",
@@ -350,7 +382,7 @@
         "description": "Bagian ketiga deskripsi kredit."
     },
     "creditsDescription4": {
-        "message": "dibuat oleh helloyanis, dikembangkan lebih lanjut oleh anpa26",
+        "message": "dipelihara dan dikembangkan oleh anpa26",
         "description": "Bagian keempat deskripsi kredit."
     },
     "creditsDescription5": {

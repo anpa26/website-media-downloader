@@ -235,6 +235,46 @@
         "message": "Stream-Segmente in der Medienliste ausblenden",
         "description": "The label of the checkbox to enable hiding stream segments in the media list."
     },
+    "onlyVideoTitle": {
+        "message": "Video anzeigen",
+        "description": "Toggle visibility of video files"
+    },
+    "onlyVideoExplain": {
+        "message": "Erkannte Videodateien in der Liste anzeigen.",
+        "description": "Erklärt, was der Videofilter bewirkt"
+    },
+    "onlyAudioTitle": {
+        "message": "Audio anzeigen",
+        "description": "Toggle visibility of audio files"
+    },
+    "onlyAudioExplain": {
+        "message": "Erkannte Audiodateien in der Liste anzeigen.",
+        "description": "Erklärt, was der Audiofilter bewirkt"
+    },
+    "onlyStreamTitle": {
+        "message": "Streams anzeigen",
+        "description": "Toggle visibility of stream files"
+    },
+    "onlyStreamExplain": {
+        "message": "Erkannte Medienstreams (HLS, DASH) anzeigen.",
+        "description": "Erklärt, was der Streamfilter bewirkt"
+    },
+    "onlyImageTitle": {
+        "message": "Bilder anzeigen",
+        "description": "Toggle visibility of image files"
+    },
+    "onlyImageExplain": {
+        "message": "Erkannte Bilddateien (WebP, PNG, JPG, GIF) anzeigen.",
+        "description": "Erklärt, was der Bildfilter bewirkt"
+    },
+    "onlySubtitleTitle": {
+        "message": "Untertitel anzeigen",
+        "description": "Toggle visibility of subtitle files"
+    },
+    "onlySubtitleExplain": {
+        "message": "Erkannte Untertitel- und Beschriftungsdateien anzeigen.",
+        "description": "Erklärt, was der Untertitelfilter bewirkt"
+    },
     "streamDownloadTitle": {
         "message": "Stream-Download Einstellungen",
         "description": "Stream download title."
@@ -331,7 +371,7 @@
         "description": "Credits part 3."
     },
     "creditsDescription4": {
-        "message": "erstellt von helloyanis, verbessert von anpa26",
+        "message": "gepflegt und entwickelt von anpa26",
         "description": "Credits part 4."
     },
     "creditsDescription5": {

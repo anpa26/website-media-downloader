@@ -31,7 +31,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function initializeSettings() {
     const settings = [
-        'url-detection', 'mime-detection', 'hide-segments', 'only-media',
+        'url-detection', 'mime-detection', 'hide-segments', 
+        'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle',
         'media-notification', 'download-method', 'media-cache', 'speed-boost', 'connections', 'stream-download',
         'stream-quality', 'mpd-fix', 'open-preference',
         'filename-template', 'history-page'
@@ -43,8 +44,17 @@ async function initializeSettings() {
 
         // Default values for new settings
         if (value === undefined) {
-            if (['url-detection', 'mime-detection', 'only-media', 'history-page', 'media-notification'].includes(setting)) {
+            const defaultsEnabled = [
+                'url-detection', 'mime-detection', 'history-page', 
+                'media-notification', 'only-video', 'only-audio', 'only-stream'
+            ];
+            if (defaultsEnabled.includes(setting)) {
                 value = '1';
+                browser.storage.local.set({ [setting]: value });
+            }
+            // Images and subtitles off by default to avoid clutter unless requested
+            if (['only-image', 'only-subtitle'].includes(setting)) {
+                value = '0';
                 browser.storage.local.set({ [setting]: value });
             }
             if (setting === 'speed-boost') {
