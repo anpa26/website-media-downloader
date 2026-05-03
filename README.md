@@ -1,130 +1,122 @@
 # Website Media Downloader
 
-A powerful, open-source browser extension designed to detect and download virtually any media (audio, video, and streams) played in your browser. This project is a modern, feature-rich version focused on speed, stability, and a premium user experience.
+## Introduction
 
-> [!WARNING]
-> **YouTube is NOT supported.** Due to legal restrictions and proprietary streaming methods, this extension does not work on YouTube.
+Website Media Downloader is a comprehensive, professional-grade browser extension engineered for the sophisticated identification and acquisition of digital media assets across the modern web. Developed as a high-performance alternative to traditional media scrapers, this tool integrates advanced network interception and Document Object Model (DOM) analysis to provide a seamless experience for capturing video, audio, images, and complex streaming protocols.
 
----
-
-## Disclaimer
-
-This tool is provided for educational and personal use only. **Users are solely responsible for their actions and any consequences resulting from the use of this tool.** The developers are not responsible for any misuse, legal issues, or copyright violations. It is the user's responsibility to ensure compliance with the terms of service of any website visited and all applicable laws.
+The project is built on the principles of technical transparency and user privacy. All operations, including the reconstruction of segmented streams and the decryption of protected content, are executed locally within the client's browser environment. This architectural choice eliminates the need for external processing servers, thereby ensuring data integrity and minimizing latency during the media acquisition lifecycle.
 
 ---
 
-## What's New in Version 1.6.x
+## Technical Architecture and Core Features
 
-- **UI Overhaul:** A complete visual modernization using Material Design 3, providing a more fluid and professional experience.
-- **Batch Processing:** Added multi-select support allowing users to download or delete multiple media items simultaneously.
-- **Instant Search:** Powerful real-time filtering to find specific media in long detection lists.
-- **QR Code Sharing:** Easily transfer detected download links to your mobile device by scanning a generated QR code.
-- **Enhanced Stability:** Major bug fixes for the auto-resume engine, ensuring interrupted background downloads are handled more reliably.
-- **Performance:** Refined RAM usage and faster list rendering for sites with hundreds of detected segments.
+### 1. Advanced Detection Methodologies
 
----
+The application utilizes a multi-tiered approach to identify media assets that are often obscured by modern web frameworks:
 
-## Key Features
+- Network Traffic Interception: By leveraging low-level browser APIs, the extension monitors real-time network requests. This allows for the detection of high-bitrate media files and dynamic streaming manifests (M3U8 and MPD) that are generated during runtime and do not exist as static elements in the page source.
+- Deep DOM Reciprocal Scanning: The engine performs an exhaustive search of the page's structural elements. This includes scanning standard HTML5 tags (video, audio, source, img, track), anchor links (a), and even custom data attributes (e.g., data-src, data-original, data-srcset) typically employed by lazy-loading libraries and modern JavaScript frameworks.
+- CSS Asset Identification: The scanner inspects computed styles across all DOM elements to identify media assets embedded via CSS properties, such as background-image and border-image.
 
-- **Search & Filter:** Instantly find specific media by name, format, or hostname using the integrated search bar.
-- **Batch Actions (Multi-Select):** Select multiple detected items at once to download, delete, or cancel in bulk, saving you time.
-- **Mobile Sharing (QR Code):** Generate a QR code for any detected link to instantly scan and download the media on your smartphone or tablet.
-- **Speed Boost (Parallel Downloads):** Significantly increase download speeds by fetching multiple segments of a file simultaneously. You can configure concurrent connections (up to 16) in settings.
-- **Modern UI:** Fully redesigned Material Design 3 interface with smooth animations, intuitive card layouts, and customizable theme colors.
-- **Enhanced Persistence:** Industry-leading download stability with background state management and intelligent auto-resume for interrupted fetches.
-- **Optimized Storage:** High-performance IndexedDB engine with 1MB chunk buffering for faster reconstruction and minimal RAM impact.
-- **Offline Stream Conversion:** Locally converts fragmented HLS (M3U8) and DASH (MPD) streams into playable files (TS or ZIP) without external servers.
-- **Smart Quality Grouping:** Automatically merges different quality variants of the same media to keep your detection list clean and focused.
-- **Download History:** Tracks source pages, titles, and timestamps. Features an automatic "Link Refresh" that updates expired URLs when you revisit a page.
-- **Real-Time Notifications:** Optional system or in-page "Toasts" when media is detected, allowing one-click downloads without opening the extension.
-- **Filename Templates:** Dynamic naming using placeholders like `{title}`, `{name}`, `{host}`, `{date}`, and `{time}`.
-- **Advanced Detection:** Dual-mode detection (URL-based and MIME-based) captures even the most elusive media requests.
-- **Header Spoofing:** Intelligent Referer and Origin management to bypass hotlinking protections seamlessly.
-- **Privacy Focused:** No tracking, no external API calls, no data collection. Everything stays on your machine.
+### 2. High-Fidelity Stream Reconstruction
+
+The extension features a robust engine designed specifically for handling segmented media delivery protocols:
+
+- HTTP Live Streaming (HLS/M3U8): The system identifies both master and media playlists. It provides a variant selection interface that allows users to target specific resolutions or bandwidths. The engine is capable of handling AES-128 encrypted segments, performing local decryption and merging them into a standardized container format (MP4 or TS).
+- Dynamic Adaptive Streaming over HTTP (DASH/MPD): The extension parses complex XML-based MPD manifests to extract adaptation sets for video and audio. Users can acquire these tracks individually or package them into a standardized ZIP archive structure, facilitating local playback in compatible media players like VLC.
+- Parallel Download Acceleration: To maximize throughput, the extension implements a multi-threaded fetching mechanism. By establishing multiple concurrent connections, the tool can download individual media segments in parallel, significantly reducing the total time required for high-definition stream acquisition.
+
+### 3. Sophisticated Request Simulation
+
+To bypass server-side security measures such as hotlinking protections and Referer-based blocking, the extension employs advanced header spoofing. It dynamically replicates the original request context—including Referer, Origin, and Cookie headers—ensuring that the download request appears legitimate to the hosting server.
 
 ---
 
 ## How to Use
 
-1. **Navigate:** Visit any website containing the video or audio you want to download.
-2. **Play:** Start playing the media. The extension needs the media to start loading to "catch" the request.
-3. **Capture:** Click the extension icon in your toolbar. A list of detected media will appear.
-4. **Choose:** Select your preferred quality or file size. You can also use the **search bar** to filter items or the **checkboxes** to select multiple items for batch downloading.
-5. **Download:** Click the **Download** button on a single item, or use the **"Download All"** / **"Download Selected"** buttons for bulk actions.
-   - For streams, you may be asked to choose between "Direct Manifest" or "Offline Conversion".
-   - For MPD/DASH, it will package the stream into a ZIP file for local playback.
+### 1. Downloading Videos and Audio
+- Navigate: Go to the website containing the video or audio you want to save.
+- Play: Start the media playback. This triggers the network requests that the extension needs to capture the link.
+- Detect: Click the Website Media Downloader icon in your browser toolbar.
+- Download: Choose your preferred quality or format from the list and hit the download button.
+
+### 2. Downloading Images (Scroll to Detect)
+- Navigate: Open the page or link with the images you wish to download.
+- Scroll: Simply scroll down the page. The extension's content detector will automatically "see" and capture images as they load or appear on your screen.
+- Select: Click the extension icon and use the "Image" filter to view all detected visual assets.
+- Batch Save: Select the images you want and download them individually or in bulk.
 
 ---
 
-## Smart Download History
+## Comprehensive Format Support
 
-The extension includes a powerful history management system:
+Website Media Downloader supports an expansive array of digital formats, ensuring compatibility with virtually any media encountered online:
 
-- **Source Tracking:** Every download is saved along with its original page title and URL.
-- **Automatic Link Refresh:** If a download link expires (e.g., token expiration), simply click **"Visit Page"** in your history. As soon as you play the video again, the extension will automatically update the history record with the latest working link.
-- **Deduplication:** Keeps your history clean by automatically replacing old entries with the newest detection for the same media.
-- **One-Click Re-download:** Quickly re-download any previously captured media directly from the History tab.
-
----
-
-## Advanced Settings
-
-- **Speed Boost:** Toggle parallel downloads. When enabled, the extension will split large files into multiple chunks and download them at the same time, maxing out your bandwidth.
-- **Connections:** Choose how many parallel connections to use (e.g., 2, 4, 8). Higher values are faster but may be blocked by some servers.
-- **Stream Download Method:**
-    - **Offline Conversion (Recommended):** Fetches all segments and combines them into a single file locally. Supports pausing and resuming.
-    - **Direct Manifest:** Provides the raw .m3u8 or .mpd link for use in external players like VLC.
-- **Appearance:** Change the primary theme color to match your preference.
-- **Open Preference:** Choose whether the extension opens in a small popup or a full-sized browser tab.
+- Video Content: mp4, mkv, webm, avi, mov, flv, wmv, ts, m4v, 3gp, 3g2, asx, divx, m2t, m2ts, m2v, m4s, mk3d, mng, mp2v, mp4v, mpeg, mpg, mxf, ogm, ogv, qt, rm, swf, vob, and vp9.
+- Audio Content: mp3, aac, flac, wav, ogg, m4a, opus, ac3, adts, aif, aiff, alac, ape, asf, au, dts, f4a, f4b, isma, it, m4b, m4r, mid, mka, mod, mp1, mp2, mp4a, mpa, mpga, oga, ogx, ra, shn, spx, vorbis, weba, wma, and xm.
+- Streaming Protocols: m3u8 (HLS), mpd (DASH), f4m (HDS), f4f, smil, and ism/isml.
+- Visual Assets: webp, png, jpg, jpeg, gif, and svg.
+- Textual/Subtitle Assets: vtt, srt, ass, ssa, ttml, and dfxp.
 
 ---
 
-## Installation
+## Installation Guidelines
 
-### Firefox (Installation of Unsigned XPI)
-Since this version is customized and not from the official store, you need to allow unsigned extensions in Firefox:
-1. Open Firefox and type `about:config` in the address bar.
-2. Search for `xpinstall.signatures.required`.
-3. Set it to `false` by double-clicking it.
-4. Now you can install the `.xpi` file via `about:addons` -> Gear icon -> "Install Add-on From File...".
+Website Media Downloader is optimized for the Firefox browser ecosystem, including Firefox for Android.
 
-*Note: This usually works in Firefox Developer Edition, Nightly, or Android (via custom collections).*
+### Firefox Desktop (Windows, macOS, Linux)
 
----
+1. Configuration: Enter about:config in the address bar. Search for the preference xpinstall.signatures.required and set its value to false.
+2. Extension Management: Navigate to about:addons.
+3. Installation: Select the gear icon and click "Install Add-on From File...". Choose the extension package from your local storage.
 
-## Supported Formats
+### Firefox Android
 
-- **Video:** `mp4`, `mkv`, `mov`, `webm`, `ts`, `avi`, `flv`, `m4v`, `3gp`, `3g2`, `asx`, `divx`, `m2t`, `m2ts`, `m2v`, `m4s`, `mk3d`, `mng`, `mp2v`, `mp4v`, `mpeg`, `mpg`, `mxf`, `ogm`, `ogv`, `qt`, `rm`, `swf`, `vob`, `vp9`, `wmv`.
-- **Audio:** `mp3`, `aac`, `ogg`, `wav`, `flac`, `m4a`, `opus`, `ac3`, `adts`, `aif`, `aiff`, `alac`, `ape`, `asf`, `au`, `dts`, `f4a`, `f4b`, `isma`, `it`, `m4b`, `m4r`, `mid`, `mka`, `mod`, `mp1`, `mp2`, `mp4a`, `mpa`, `mpga`, `oga`, `ogx`, `ra`, `shn`, `spx`, `vorbis`, `weba`, `wma`, `xm`.
-- **Streams:** `m3u8` (HLS), `mpd` (DASH), `f4m` (HDS), `f4f`, `smil`, `ism/isml`.
-- **Images:** `webp`, `png`, `jpg`, `jpeg`, `gif`.
-- **Subtitle:** `vtt`, `srt`, `ass`, `ssa`, `ttml`, `dfxp`.
+1. Debug Menu Activation: Navigate to Settings > About Firefox. Tap the Firefox logo sequentially five times to unlock the Debug menu.
+2. Collection Configuration: Access Settings > Custom Add-on Collection. Input the appropriate Collection ID and Collection Name from your AMO (Add-ons Mozilla) profile.
+3. Deployment: The extension will become available for installation within the standard Add-ons menu.
 
 ---
 
-## Troubleshooting
+## Security and Permission Model
 
-- **Media not detected?** Try refreshing the page and playing the video again. If it still doesn't show up, go to **Settings** and enable "Detection via server's MIME response".
-- **Download fails?** Some sites use DRM (Digital Rights Management) or encryption. This extension cannot download encrypted content (like Netflix or Amazon Prime).
-- **Broken files?** If a converted stream doesn't play, try downloading the "Direct Manifest" and playing it with **VLC Media Player**.
+To ensure optimal performance and feature availability, the extension requires the following permissions:
 
----
-
-## Credits & License
-
-- **Lead Developer:** [anpa26](https://github.com/anpa26)
-- **Legacy Components:** Based on early core logic by helloyanis.
-- **UI Framework:** [MDUI](https://www.mdui.org/) (Material Design 3)
-- **Icons:** [Material Design Icons](https://fonts.google.com/icons) (Google)
-- **Libraries:** [HLS.js](https://github.com/video-dev/hls.js/), [client-zip](https://github.com/jimmywarting/client-zip)
+- webRequest / webRequestBlocking: Necessary for the interception of network headers and media link discovery.
+- storage / unlimitedStorage: Required for local data persistence, including user configurations, download history, and IndexedDB caching for large streams.
+- downloads: Enables the extension to pass processed media blobs to the browser's native download manager.
+- scripting: Facilitates the injection of the DOM scanning engine into web pages.
+- host_permissions (<all_urls>): Allows the extension to operate globally across all web domains.
 
 ---
 
-### License Information
+## Legal Considerations and Limitations
 
-This project is a **derivative work**. 
+- YouTube Compliance: In accordance with legal requirements and platform policies, this extension does not support media acquisition from YouTube.
+- DRM (Digital Rights Management): Content protected by encryption technologies such as Widevine, PlayReady, or FairPlay cannot be downloaded. The extension will notify the user if DRM protection is detected.
+- User Responsibility: The user assumes all legal responsibility for the use of this tool. It is mandatory to comply with the terms of service of any website visited and all relevant copyright legislation.
 
-- The overall project and all new modifications are licensed under the **GNU General Public License v3.0 (GPL-3.0)**. See the [LICENSE.md](LICENSE.md) file for details.
-- This project contains original components and core logic from the original **media-downloader-unleashed** which was licensed under the **MIT License**. A copy of the original MIT license can be found in [licenses/ORIGINAL_LICENSE](licenses/ORIGINAL_LICENSE).
+---
 
-By using, modifying, or distributing this software, you agree to abide by the terms of both licenses where applicable.
+## Credits and Attributions
+
+### Development and Repository
+
+- Lead Developer: anpa26 (https://github.com/anpa26)
+- Legacy Contributor: helloyanis (https://github.com/helloyanis)
+- Official Repository: https://github.com/anpa26/website-media-downloader
+
+### Software Libraries
+
+- Material Design Framework: MDUI (https://www.mdui.org/)
+- HLS Engine: HLS.js (https://github.com/video-dev/hls.js/)
+- ZIP Management: client-zip (https://github.com/Touffy/client-zip)
+- QR Generation: QRCode.js (https://github.com/davidshimjs/qrcodejs)
+
+### Iconography
+
+- Extension Iconography: The application icons are derived from the Google Material Symbols and Icons library (https://fonts.google.com/icons), utilized under the Apache License 2.0. The specific SVG implementations have been customized for the Website Media Downloader user interface.
+
+---
+
+Copyright (C) 2026 anpa26. This project is licensed under the GNU General Public License v3.0.
