@@ -24,6 +24,16 @@ if (typeof browser === 'undefined') {
     var browser = chrome;
 }
 
+// Session storage polyfill/fallback for browsers that don't support it (e.g. some Android browsers)
+if (!browser.storage.session) {
+    browser.storage.session = {
+        get: (keys, cb) => browser.storage.local.get(keys, cb),
+        set: (obj, cb) => browser.storage.local.set(obj, cb),
+        remove: (keys, cb) => browser.storage.local.remove(keys, cb),
+        clear: (cb) => browser.storage.local.clear(cb)
+    };
+}
+
 const mediaTypes = [
     "video/x-flv",
     "video/x-msvideo",
@@ -42,7 +52,9 @@ const mediaTypes = [
     "application/x-subrip",
     "text/srt",
     "application/x-ass",
-    "text/x-ass"
+    "text/x-ass",
+    "application/ttml+xml",
+    "application/x-dfxp+xml"
 ];
 
 let urlList = [];
@@ -211,9 +223,10 @@ async function storeChunkInCache(downloadId, chunkIndex, data) {
 const videoExtensions = [".3g2", ".3gp", ".asx", ".avi", ".divx", ".4v", ".flv", ".ismv", ".m2t", ".m2ts", ".m2v", ".m4s", ".m4v", ".mk3d", ".mkv", ".mng", ".mov", ".mp2v", ".mp4", ".mp4v", ".mpe", ".mpeg", ".mpeg1", ".mpeg2", ".mpeg4", ".mpg", ".mxf", ".ogm", ".ogv", ".qt", ".rm", ".swf", ".ts", ".vob", ".vp9", ".webm", ".wmv"];
 const audioExtensions = [".3ga", ".aac", ".ac3", ".adts", ".aif", ".aiff", ".alac", ".ape", ".asf", ".au", ".dts", ".f4a", ".f4b", ".flac", ".isma", ".it", ".m4a", ".m4b", ".m4r", ".mid", ".mka", ".mod", ".mp1", ".mp2", ".mp3", ".mp4a", ".mpa", ".mpga", ".oga", ".ogg", ".ogx", ".opus", ".ra", ".shn", ".spx", ".vorbis", ".wav", ".weba", ".wma", ".xm"];
 const streamExtensions = [".f4f", ".f4m", ".m3u8", ".mpd", ".smil"];
-const subtitleExtensions = [".vtt", ".srt", ".ass", ".ssa"];
+const subtitleExtensions = [".vtt", ".srt", ".ass", ".ssa", ".ttml", ".dfxp"];
+const imageExtensions = [".webp", ".png", ".jpg", ".jpeg", ".gif"];
+const allExtensions = videoExtensions.concat(audioExtensions, streamExtensions, subtitleExtensions, imageExtensions);
 
-const allExtensions = videoExtensions.concat(audioExtensions, streamExtensions, subtitleExtensions);
 // build a safe regex from extensions (escape dots already present)
 const extPattern = allExtensions.map(e => e.replace(/^\./, '').replace(/\+/g, '\\+')).join('|');
 const detectionRegex = new RegExp('\\.(?:' + extPattern + ')(?:[?#].*)?$', 'i');
@@ -227,18 +240,30 @@ function isFlagEnabled(val) {
     return val === '1' || val === 1 || val === true || val === 'true';
 }
 
-// Intercept and store headers for potential downloads, and re-inject them for Native downloads
+// Intercept and store headers for potential downloads, and re-inject them for Native downloads and previews
 browser.webRequest.onBeforeSendHeaders.addListener(
     (details) => {
-        // 1. Capture headers for every request to use later if it becomes a download
+        // 1. Capture headers for every request to use later if it becomes a download or preview
         const cookie = details.requestHeaders.find(h => h.name.toLowerCase() === 'cookie')?.value;
         const referer = details.requestHeaders.find(h => h.name.toLowerCase() === 'referer')?.value;
-        if (cookie || referer) {
-            urlToHeaderMap.set(details.url, { cookie, referer });
+        const origin = details.requestHeaders.find(h => h.name.toLowerCase() === 'origin')?.value;
+        
+        if (cookie || referer || origin) {
+            urlToHeaderMap.set(details.url, { cookie, referer, origin });
         }
 
-        // 2. If this is a download request triggered by the extension or browser's downloader
-        if (details.type === 'other' || details.url.includes('download')) {
+        // 2. Spoof headers if this is a download OR a request from the extension (for previews/fetch)
+        const isFromExtension = details.initiator?.startsWith('chrome-extension://') || 
+                               details.originUrl?.startsWith('moz-extension://') ||
+                               details.url.includes('blob:chrome-extension://');
+        
+        const isMediaRequest = details.type === 'media' || 
+                               details.type === 'xmlhttprequest' || 
+                               details.type === 'other' ||
+                               details.url.includes('download') ||
+                               detectionRegex.test(details.url);
+
+        if (isMediaRequest || isFromExtension) {
             const stored = urlToHeaderMap.get(details.url);
             if (stored) {
                 if (stored.cookie) {
@@ -254,6 +279,29 @@ browser.webRequest.onBeforeSendHeaders.addListener(
                         if (h.name.toLowerCase() === 'referer') { h.value = stored.referer; hasReferer = true; break; }
                     }
                     if (!hasReferer) details.requestHeaders.push({ name: 'Referer', value: stored.referer });
+                    
+                    // Also try to set referrer for extension requests
+                    if (isFromExtension) {
+                        // Some browsers don't allow setting Referer header directly but might use this
+                        details.referrer = stored.referer;
+                    }
+                }
+                if (stored.origin) {
+                    let hasOrigin = false;
+                    for (let h of details.requestHeaders) {
+                        if (h.name.toLowerCase() === 'origin') { h.value = stored.origin; hasOrigin = true; break; }
+                    }
+                    if (!hasOrigin) details.requestHeaders.push({ name: 'Origin', value: stored.origin });
+                }
+                
+                // Also fix Sec-Fetch headers for extension/media requests to avoid blocks
+                if (isFromExtension || isMediaRequest) {
+                    details.requestHeaders = details.requestHeaders.filter(h => 
+                        !['sec-fetch-site', 'sec-fetch-mode', 'sec-fetch-dest'].includes(h.name.toLowerCase())
+                    );
+                    details.requestHeaders.push({ name: 'Sec-Fetch-Site', value: 'same-origin' });
+                    details.requestHeaders.push({ name: 'Sec-Fetch-Mode', value: 'no-cors' });
+                    details.requestHeaders.push({ name: 'Sec-Fetch-Dest', value: 'video' });
                 }
             }
         }
@@ -268,13 +316,21 @@ browser.webRequest.onBeforeSendHeaders.addListener(
 
 // get local settings
 function getSettings(callback) {
-    browser.storage.local.get(['mime-detection', 'url-detection', 'media-notification', 'hide-segments', 'only-media', 'filename-template'], function (result) {
+    browser.storage.local.get([
+        'mime-detection', 'url-detection', 'media-notification', 'hide-segments', 
+        'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle',
+        'filename-template'
+    ], function (result) {
         callback({
             mimeDetection: isFlagEnabled(result['mime-detection']),
             urlDetection: isFlagEnabled(result['url-detection']),
             mediaNotification: isFlagEnabled(result['media-notification']),
             hideSegments: isFlagEnabled(result['hide-segments']),
-            onlyMedia: isFlagEnabled(result['only-media']),
+            onlyVideo: isFlagEnabled(result['only-video']),
+            onlyAudio: isFlagEnabled(result['only-audio']),
+            onlyStream: isFlagEnabled(result['only-stream']),
+            onlyImage: isFlagEnabled(result['only-image']),
+            onlySubtitle: isFlagEnabled(result['only-subtitle']),
             filenameTemplate: result['filename-template'] || ''
         });
     });
@@ -354,9 +410,40 @@ function injectNotificationScript(tabId, filename, url) {
     }).catch(() => {});
 }
 
+function getMediaType(url, contentType) {
+    if (!url) return null;
+    const urlLower = url.toLowerCase();
+    const mimeLower = (contentType || '').toLowerCase();
+
+    // Ignore extension internal assets and blob URLs from the extension itself
+    if (urlLower.startsWith('chrome-extension://') || 
+        urlLower.startsWith('moz-extension://') || 
+        urlLower.startsWith('blob:chrome-extension://') || 
+        urlLower.startsWith('blob:moz-extension://')) {
+        return null;
+    }
+    
+    if (mimeLower.startsWith('video/') || videoExtensions.some(ext => urlLower.includes(ext))) return 'video';
+    if (mimeLower.startsWith('audio/') || audioExtensions.some(ext => urlLower.includes(ext))) return 'audio';
+    
+    // Explicitly exclude SVG to avoid cluttering with icons/logos
+    if (mimeLower === 'image/svg+xml' || urlLower.includes('.svg')) return null;
+    if (mimeLower.startsWith('image/') || imageExtensions.some(ext => urlLower.includes(ext))) return 'image';
+    
+    if (streamExtensions.some(ext => urlLower.includes(ext)) || mimeLower.includes('mpegurl') || mimeLower.includes('dash+xml')) return 'stream';
+    if (subtitleExtensions.some(ext => urlLower.includes(ext)) || mimeLower.includes('vtt') || mimeLower.includes('subrip') || mimeLower.includes('ass') || mimeLower.includes('ttml') || mimeLower.includes('dfxp')) return 'subtitle';
+    
+    return null;
+}
+
 async function addToHistory(item) {
     const result = await browser.storage.local.get('history-page');
     if (result['history-page'] !== '1') return;
+
+    // Ensure item has a media type for filtering
+    if (!item.mediaType) {
+        item.mediaType = getMediaType(item.url, '');
+    }
 
     const historyResult = await browser.storage.local.get('download-history');
     let history = historyResult['download-history'] || [];
@@ -487,13 +574,23 @@ async function showMediaNotification(details, settings) {
     let contentType = responseHeaders.find(h => h.name.toLowerCase() === 'content-type')?.value || '';
     let contentLength = parseInt(responseHeaders.find(h => h.name.toLowerCase() === 'content-length')?.value || '0');
 
-    // Filter by onlyMedia setting
-    const isVideo = contentType.startsWith('video/') || videoExtensions.some(ext => url.toLowerCase().includes(ext));
-    const isAudio = contentType.startsWith('audio/') || audioExtensions.some(ext => url.toLowerCase().includes(ext));
-    const isStream = streamExtensions.some(ext => url.toLowerCase().includes(ext)) || contentType.includes('mpegurl') || contentType.includes('dash+xml');
-    const isSubtitle = subtitleExtensions.some(ext => url.toLowerCase().includes(ext)) || contentType.includes('vtt') || contentType.includes('subrip') || contentType.includes('ass');
+    // Filter by individual media type settings
+    const mediaType = getMediaType(url, contentType);
+    const isVideo = mediaType === 'video';
+    const isAudio = mediaType === 'audio';
+    const isImage = mediaType === 'image';
+    const isStream = mediaType === 'stream';
+    const isSubtitle = mediaType === 'subtitle';
 
-    if (settings.onlyMedia && !isVideo && !isAudio && !isStream && !isSubtitle) return;
+    // Only show if the respective category toggle is ON
+    if (isVideo && !settings.onlyVideo) return;
+    if (isAudio && !settings.onlyAudio) return;
+    if (isStream && !settings.onlyStream) return;
+    if (isImage && !settings.onlyImage) return;
+    if (isSubtitle && !settings.onlySubtitle) return;
+
+    // Discard if it doesn't match any known media category
+    if (!mediaType) return;
 
     // Filter by hideSegments setting
     const isSegment = url.toLowerCase().includes('.ts') || (contentLength > 0 && contentLength < 1048576 && contentType === 'video/mp2t');
@@ -531,7 +628,7 @@ async function showMediaNotification(details, settings) {
 
     browser.notifications.create({
         type: "basic",
-        iconUrl: browser.runtime.getURL("icons/file_save.svg"),
+        iconUrl: browser.runtime.getURL("src/icons/icon.svg"),
         title: browser.i18n.getMessage("mediaNotificationTitle") || "Media detected!",
         message: displayFilename,
         buttons: [
@@ -852,10 +949,15 @@ function initListener() {
                 const mimeMatches = (
                     contentType.startsWith('audio/') ||
                     contentType.startsWith('video/') ||
-                    contentType === 'application/vnd.apple.mpegurl' ||
-                    contentType === 'application/x-mpegurl' ||
-                    contentType === 'application/dash+xml' ||
-                    contentType === 'application/octet-stream' // <-- treat generic binary as potential media (or segments)
+                    contentType.startsWith('image/') ||
+                    contentType.includes('mpegurl') ||
+                    contentType.includes('dash+xml') ||
+                    contentType.includes('vtt') ||
+                    contentType.includes('subrip') ||
+                    contentType.includes('ass') ||
+                    contentType.includes('ttml') ||
+                    contentType.includes('dfxp') ||
+                    contentType === 'application/octet-stream' // treat generic binary as potential media
                 );
 
                 const urlMatches = detectionRegex.test(decodeURI(details.url));
@@ -1027,11 +1129,46 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
         return;
     }
+    if (message.action === 'reportDetectedMedia') {
+        const { urls } = message;
+        if (!urls || !Array.isArray(urls)) return;
+
+        browser.storage.session.get(null, (items) => {
+            const updates = {};
+            let hasNew = false;
+            
+            urls.forEach(url => {
+                if (!items[url]) {
+                    updates[url] = [{
+                        url: url,
+                        method: 'GET',
+                        requestHeaders: null,
+                        responseHeaders: null,
+                        requestBody: null,
+                        cookie: '',
+                        size: 'unknown',
+                        timeStamp: Date.now()
+                    }];
+                    hasNew = true;
+                }
+            });
+
+            if (hasNew) {
+                browser.storage.session.set(updates);
+            }
+        });
+        return;
+    }
     if (message.action === 'getMediaRequests') {
         browser.storage.session.get(null, function (items) {
             sendResponse(items);
         });
         return true; // Indicate that the response will be sent asynchronously
+    }
+
+    if (message.action === 'getSpoofedHeaders') {
+        sendResponse(urlToHeaderMap.get(message.url) || null);
+        return true;
     }
 
     if (message.action === 'startFetchDownload') {
@@ -1303,11 +1440,18 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
             });
         }
 
-        // Add cookies and referer if available
+        // Add cookies, referer and origin if available
         const storedHeaders = urlToHeaderMap.get(url);
         if (storedHeaders) {
+            if (storedHeaders.cookie) {
+                fetchOptions.headers['Cookie'] = storedHeaders.cookie;
+            }
             if (storedHeaders.referer) {
                 fetchOptions.referrer = storedHeaders.referer;
+                fetchOptions.headers['Referer'] = storedHeaders.referer;
+            }
+            if (storedHeaders.origin) {
+                fetchOptions.headers['Origin'] = storedHeaders.origin;
             }
         }
         
@@ -1464,18 +1608,6 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
     }
 }
 
-// Help Native downloads by injecting headers from the original request
-browser.webRequest.onBeforeSendHeaders.addListener(
-    (details) => {
-        // If this is a download request triggered by the extension
-        if (details.type === 'other' || details.url.includes('download')) {
-            // We could try to match URL and inject cookies here if needed
-        }
-        return { requestHeaders: details.requestHeaders };
-    },
-    { urls: ["<all_urls>"] },
-    ["blocking", "requestHeaders"]
-);
 
 // Set default settings on install
 browser.runtime.onInstalled.addListener(async (details) => {

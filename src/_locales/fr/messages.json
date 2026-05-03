@@ -235,6 +235,46 @@
         "message": "Masquer les segments de streams dans la liste des médias",
         "description": "The label of the checkbox to enable hiding stream segments in the media list."
     },
+    "onlyVideoTitle": {
+        "message": "Afficher la vidéo",
+        "description": "Toggle visibility of video files"
+    },
+    "onlyVideoExplain": {
+        "message": "Afficher les fichiers vidéo détectés dans la liste.",
+        "description": "Explique l'utilité du filtre vidéo"
+    },
+    "onlyAudioTitle": {
+        "message": "Afficher l'audio",
+        "description": "Toggle visibility of audio files"
+    },
+    "onlyAudioExplain": {
+        "message": "Afficher les fichiers audio détectés dans la liste.",
+        "description": "Explique l'utilité du filtre audio"
+    },
+    "onlyStreamTitle": {
+        "message": "Afficher les flux",
+        "description": "Toggle visibility of stream files"
+    },
+    "onlyStreamExplain": {
+        "message": "Afficher les flux multimédias détectés (HLS, DASH).",
+        "description": "Explique l'utilité du filtre de flux"
+    },
+    "onlyImageTitle": {
+        "message": "Afficher les images",
+        "description": "Toggle visibility of image files"
+    },
+    "onlyImageExplain": {
+        "message": "Afficher les fichiers image détectés (WebP, PNG, JPG, GIF).",
+        "description": "Explique l'utilité du filtre d'image"
+    },
+    "onlySubtitleTitle": {
+        "message": "Afficher les sous-titres",
+        "description": "Toggle visibility of subtitle files"
+    },
+    "onlySubtitleExplain": {
+        "message": "Afficher les fichiers de sous-titres et de légendes détectés.",
+        "description": "Explique l'utilité du filtre de sous-titres"
+    },
     "streamDownloadTitle": {
         "message": "Préférence de téléchargement des flux (streams)",
         "description": "The title of the stream download preference section in the settings tab."
@@ -331,7 +371,7 @@
         "description": "The third part of the credits description."
     },
     "creditsDescription4": {
-        "message": "créé par helloyanis, amélioré par anpa26",
+        "message": "maintenu et développé par anpa26",
         "description": "The fourth part of the credits description."
     },
     "creditsDescription5": {

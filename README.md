@@ -1,6 +1,6 @@
 # Website Media Downloader
 
-A powerful, open-source browser extension designed to detect and download virtually any media (audio, video, and streams) played in your browser. This version is a customized and improved fork of the original project, [media-downloader-unleashed](https://github.com/helloyanis/media-downloader-unleashed).
+A powerful, open-source browser extension designed to detect and download virtually any media (audio, video, and streams) played in your browser. This project is a modern, feature-rich version focused on speed, stability, and a premium user experience.
 
 > [!WARNING]
 > **YouTube is NOT supported.** Due to legal restrictions and proprietary streaming methods, this extension does not work on YouTube.
@@ -94,10 +94,11 @@ Since this version is customized and not from the official store, you need to al
 
 ## Supported Formats
 
-- **Video:** `mp4`, `mkv`, `mov`, `webm`, `ts`, `avi`, `flv`, `m4v`, `mpeg`, and many more.
-- **Audio:** `mp3`, `aac`, `ogg`, `wav`, `flac`, `m4a`, `opus`, etc.
-- **Streams:** `m3u8` (HLS), `mpd` (DASH).
-- **Subtitle:** `VTT`, `SRT`, `ASS`, `SSA`.
+- **Video:** `mp4`, `mkv`, `mov`, `webm`, `ts`, `avi`, `flv`, `m4v`, `3gp`, `3g2`, `asx`, `divx`, `m2t`, `m2ts`, `m2v`, `m4s`, `mk3d`, `mng`, `mp2v`, `mp4v`, `mpeg`, `mpg`, `mxf`, `ogm`, `ogv`, `qt`, `rm`, `swf`, `vob`, `vp9`, `wmv`.
+- **Audio:** `mp3`, `aac`, `ogg`, `wav`, `flac`, `m4a`, `opus`, `ac3`, `adts`, `aif`, `aiff`, `alac`, `ape`, `asf`, `au`, `dts`, `f4a`, `f4b`, `isma`, `it`, `m4b`, `m4r`, `mid`, `mka`, `mod`, `mp1`, `mp2`, `mp4a`, `mpa`, `mpga`, `oga`, `ogx`, `ra`, `shn`, `spx`, `vorbis`, `weba`, `wma`, `xm`.
+- **Streams:** `m3u8` (HLS), `mpd` (DASH), `f4m` (HDS), `f4f`, `smil`, `ism/isml`.
+- **Images:** `webp`, `png`, `jpg`, `jpeg`, `gif`.
+- **Subtitle:** `vtt`, `srt`, `ass`, `ssa`, `ttml`, `dfxp`.
 
 ---
 
@@ -111,9 +112,10 @@ Since this version is customized and not from the official store, you need to al
 
 ## Credits & License
 
-- **Original Creator:** [helloyanis](https://github.com/helloyanis)
-- **Improved by:** [anpa26](https://github.com/anpa26)
-- **UI Framework:** [MDUI](https://www.mdui.org/)
+- **Lead Developer:** [anpa26](https://github.com/anpa26)
+- **Legacy Components:** Based on early core logic by helloyanis.
+- **UI Framework:** [MDUI](https://www.mdui.org/) (Material Design 3)
+- **Icons:** [Material Design Icons](https://fonts.google.com/icons) (Google)
 - **Libraries:** [HLS.js](https://github.com/video-dev/hls.js/), [client-zip](https://github.com/jimmywarting/client-zip)
 
 ---

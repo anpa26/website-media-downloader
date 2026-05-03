@@ -70,7 +70,7 @@ mdui-tab-panel {
 /* Search Bar & Controls */
 #media-controls {
     background-color: rgb(var(--mdui-color-surface));
-    padding: 16px;
+    padding: 20px 16px 16px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -263,10 +263,12 @@ mdui-card {
     display: block;
 }
 
-.inline-preview-area video {
+.inline-preview-area video,
+.inline-preview-area img {
     width: 100%;
     height: 100%;
     display: block;
+    object-fit: contain;
 }
 
 /* Progress & Status */

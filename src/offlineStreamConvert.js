@@ -48,6 +48,26 @@ function openCacheDB() {
   });
 }
 
+// --- Network & Spoofing Helpers ---
+async function spoofedFetch(url, options = {}) {
+  try {
+    const headers = await chrome.runtime.sendMessage({ action: 'getSpoofedHeaders', url: url });
+    if (headers) {
+      options.headers = options.headers || {};
+      if (headers.cookie) options.headers['Cookie'] = headers.cookie;
+      if (headers.referer) {
+        options.headers['Referer'] = headers.referer;
+        options.referrer = headers.referer;
+      }
+      if (headers.origin) options.headers['Origin'] = headers.origin;
+      options.credentials = 'include';
+    }
+  } catch (e) {
+    console.warn("Failed to get spoofed headers, falling back to normal fetch:", e);
+  }
+  return fetch(url, options);
+}
+
 /**
  * Tries to fetch from IndexedDB cache first.
  * If missing, falls back to network fetch.
@@ -56,7 +76,7 @@ async function fetchWithCache(url, options = {}) {
   const isIncognito = (typeof browser !== 'undefined' && browser.extension && browser.extension.inIncognitoContext) || false;
   if (isIncognito || (await browser.storage.local.get("media-cache").then((result) => result["media-cache"])) !== "1") {
     // Bypass cache in incognito/private mode or if media-cache is disabled
-    return fetch(url, options);
+    return spoofedFetch(url, options);
   }
 
   try {
@@ -124,7 +144,7 @@ async function fetchWithCache(url, options = {}) {
   }
 
   // Fallback to standard network request
-  return fetch(url, options);
+  return spoofedFetch(url, options);
 }
 // ----------------------------------------
 
@@ -504,6 +524,9 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
     const firstPartMap = segmentsToDownload[0]?.map; // Save for fMP4 detection
 
     const downloadTask = async (seg) => {
+      if (window.activeCancellations && window.activeCancellations.has(m3u8Url)) {
+        throw new Error("Cancelled");
+      }
       try {
         const res = await fetchWithCache(seg.uri, fetchOpts);
         let arr = new Uint8Array(await res.arrayBuffer());

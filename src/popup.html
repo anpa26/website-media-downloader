@@ -70,7 +70,7 @@
               <mdui-button variant="text" id="download-selected" style="display: none;" data-translate="downloadSelectedButton">Download</mdui-button>
               <mdui-button variant="text" id="cancel-selected" style="display: none; color: rgb(var(--mdui-color-error));" data-translate="cancelSelectedButton">Cancel</mdui-button>
               <mdui-button variant="text" id="delete-selected" style="display: none; color: rgb(var(--mdui-color-error));" data-translate="deleteSelectedButton">Delete</mdui-button>
-              <mdui-button variant="filled" id="download-all" data-translate="downloadAllButton" style="--mdui-shape-corner-extra-small: 16px; height: 32px;">Download All</mdui-button>
+              <mdui-button variant="filled" id="download-all" data-translate="downloadAllButton" style="--mdui-shape-corner-extra-small: 16px; height: 32px; margin-top: 4px;">Download All</mdui-button>
               <mdui-button variant="text" id="cancel-all" style="display: none; color: rgb(var(--mdui-color-error));" data-translate="cancelAllButton">Cancel All</mdui-button>
             </div>
           </div>
@@ -158,10 +158,42 @@
               <mdui-divider></mdui-divider>
               <div class="setting-item">
                 <div class="setting-text">
-                  <h3 data-translate="onlyMediaTitle">Only show video and audio</h3>
-                  <p data-translate="onlyMediaExplain">Hide non-media requests.</p>
+                  <h3 data-translate="onlyVideoTitle">Show video</h3>
+                  <p data-translate="onlyVideoExplain">Show detected video files in the list.</p>
                 </div>
-                <mdui-switch id="only-media"></mdui-switch>
+                <mdui-switch id="only-video"></mdui-switch>
+              </div>
+              <mdui-divider></mdui-divider>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="onlyAudioTitle">Show audio</h3>
+                  <p data-translate="onlyAudioExplain">Show detected audio files in the list.</p>
+                </div>
+                <mdui-switch id="only-audio"></mdui-switch>
+              </div>
+              <mdui-divider></mdui-divider>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="onlyStreamTitle">Show streams</h3>
+                  <p data-translate="onlyStreamExplain">Show detected media streams (HLS, DASH).</p>
+                </div>
+                <mdui-switch id="only-stream"></mdui-switch>
+              </div>
+              <mdui-divider></mdui-divider>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="onlyImageTitle">Show images</h3>
+                  <p data-translate="onlyImageExplain">Show detected image files (WebP, PNG, JPG, GIF).</p>
+                </div>
+                <mdui-switch id="only-image"></mdui-switch>
+              </div>
+              <mdui-divider></mdui-divider>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="onlySubtitleTitle">Show subtitles</h3>
+                  <p data-translate="onlySubtitleExplain">Show detected subtitle and caption files.</p>
+                </div>
+                <mdui-switch id="only-subtitle"></mdui-switch>
               </div>
               <mdui-divider></mdui-divider>
               <div class="setting-item">
