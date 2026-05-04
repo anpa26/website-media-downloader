@@ -24,6 +24,15 @@ if (typeof browser === 'undefined') {
     var browser = chrome;
 }
 
+// Import client-zip if not already loaded (needed for Chrome Service Worker)
+if (typeof downloadZip === 'undefined') {
+    try {
+        importScripts('libraries/client-zip.js');
+    } catch (e) {
+        console.error("Failed to import client-zip.js:", e);
+    }
+}
+
 // Session storage polyfill/fallback for browsers that don't support it (e.g. some Android browsers)
 if (!browser.storage.session) {
     browser.storage.session = {
@@ -1176,6 +1185,13 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true;
     }
 
+    if (message.action === 'startDownloadAll') {
+        const downloadId = 'zip_' + Date.now();
+        handleDownloadAllAsZip(message.items, downloadId);
+        sendResponse({ downloadId });
+        return true;
+    }
+
     if (message.action === 'cancelDownload') {
         let targetId = null;
         let isNative = false;
@@ -1214,6 +1230,78 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true;
     }
 });
+
+async function handleDownloadAllAsZip(items, downloadId) {
+    try {
+        const zipEntries = [];
+        activeDownloads.set(downloadId, { loaded: 0, total: items.length, url: 'zip://' + downloadId, isZip: true });
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            const url = item.url;
+            const filename = item.filename;
+
+            // Update progress
+            browser.runtime.sendMessage({
+                action: 'zipProgress',
+                id: downloadId,
+                loaded: i,
+                total: items.length,
+                status: 'downloading',
+                currentFile: filename
+            }).catch(() => {});
+
+            // Fetch the item with spoofed headers
+            const storedHeaders = urlToHeaderMap.get(url);
+            const fetchOptions = {
+                credentials: 'include',
+                headers: {}
+            };
+            if (storedHeaders) {
+                if (storedHeaders.cookie) fetchOptions.headers['Cookie'] = storedHeaders.cookie;
+                if (storedHeaders.referer) {
+                    fetchOptions.headers['Referer'] = storedHeaders.referer;
+                    fetchOptions.referrer = storedHeaders.referer;
+                }
+                if (storedHeaders.origin) fetchOptions.headers['Origin'] = storedHeaders.origin;
+            }
+
+            const response = await fetch(url, fetchOptions);
+            if (!response.ok) throw new Error(`Failed to download ${url}`);
+            
+            const blob = await response.blob();
+            zipEntries.push({ name: filename, input: blob });
+
+            activeDownloads.get(downloadId).loaded = i + 1;
+        }
+
+        // Generate Zip
+        browser.runtime.sendMessage({
+            action: 'zipProgress',
+            id: downloadId,
+            loaded: items.length,
+            total: items.length,
+            status: 'generating'
+        }).catch(() => {});
+
+        const zipBlob = await downloadZip(zipEntries).blob();
+        const zipName = `downloads_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`;
+
+        // Store Zip in IndexedDB
+        await storeInCache(downloadId, zipBlob, "application/zip");
+        
+        pendingSaveQueue.push({ id: downloadId, url: 'zip://' + downloadId, filename: zipName });
+        processSaveQueue();
+
+        activeDownloads.delete(downloadId);
+        browser.runtime.sendMessage({ action: 'zipComplete', id: downloadId, filename: zipName }).catch(() => {});
+
+    } catch (error) {
+        console.error("Background ZIP error:", error);
+        activeDownloads.delete(downloadId);
+        browser.runtime.sendMessage({ action: 'zipError', id: downloadId, error: error.message }).catch(() => {});
+    }
+}
 
 function getFileName(url, maxLength = 30) {
     try {

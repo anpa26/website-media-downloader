@@ -726,5 +726,55 @@
     "cancelAllButton": {
         "message": "Cancel All",
         "description": "The label of the button to cancel all active downloads."
+    },
+    "zipPreparing": {
+        "message": "Preparing $COUNT$ files...",
+        "description": "Message shown when starting to prepare files for ZIP archive.",
+        "placeholders": {
+            "COUNT": {
+                "content": "$1",
+                "example": "5"
+            }
+        }
+    },
+    "zipDownloading": {
+        "message": "Downloading $INDEX$/$TOTAL$: $FILENAME$",
+        "description": "Progress message during ZIP download.",
+        "placeholders": {
+            "INDEX": {
+                "content": "$1",
+                "example": "1"
+            },
+            "TOTAL": {
+                "content": "$2",
+                "example": "5"
+            },
+            "FILENAME": {
+                "content": "$3",
+                "example": "video.mp4"
+            }
+        }
+    },
+    "zipGenerating": {
+        "message": "Generating ZIP archive...",
+        "description": "Message shown when generating the ZIP file from downloaded blobs."
+    },
+    "zipComplete": {
+        "message": "Download complete!",
+        "description": "Message shown when the ZIP download is finished."
+    },
+    "zipError": {
+        "message": "Error creating ZIP: $ERROR$",
+        "description": "Error message shown when ZIP creation fails.",
+        "placeholders": {
+            "ERROR": {
+                "content": "$1",
+                "example": "Network error"
+            }
+        }
+    },
+    "zipStartedInBackground": {
+        "message": "ZIP download started in background",
+        "description": "Notification message when the ZIP download process is moved to the background script."
     }
 }

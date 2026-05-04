@@ -672,5 +672,75 @@
     "qrCodeDialogDescription": {
         "message": "Pindai kode QR ini dengan HP Anda untuk membuka URL media.",
         "description": "The description in the QR code dialog."
+    },
+    "downloadSelectedButton": {
+        "message": "Unduh Terpilih",
+        "description": "The label of the button to download all selected media items."
+    },
+    "deleteSelectedButton": {
+        "message": "Hapus",
+        "description": "The label of the button to delete selected media items from the list."
+    },
+    "downloadAllButton": {
+        "message": "Unduh Semua",
+        "description": "The label of the button to download all media items in the list."
+    },
+    "cancelSelectedButton": {
+        "message": "Batalkan Terpilih",
+        "description": "The label of the button to cancel selected active downloads."
+    },
+    "cancelAllButton": {
+        "message": "Batalkan Semua",
+        "description": "The label of the button to cancel all active downloads."
+    },
+    "zipPreparing": {
+        "message": "Menyiapkan $COUNT$ file...",
+        "description": "Pesan saat mulai menyiapkan file untuk arsip ZIP.",
+        "placeholders": {
+            "COUNT": {
+                "content": "$1",
+                "example": "5"
+            }
+        }
+    },
+    "zipDownloading": {
+        "message": "Mengunduh $INDEX$/$TOTAL$: $FILENAME$",
+        "description": "Pesan kemajuan selama pengunduhan ZIP.",
+        "placeholders": {
+            "INDEX": {
+                "content": "$1",
+                "example": "1"
+            },
+            "TOTAL": {
+                "content": "$2",
+                "example": "5"
+            },
+            "FILENAME": {
+                "content": "$3",
+                "example": "video.mp4"
+            }
+        }
+    },
+    "zipGenerating": {
+        "message": "Membuat arsip ZIP...",
+        "description": "Pesan saat membuat file ZIP dari blob yang diunduh."
+    },
+    "zipComplete": {
+        "message": "Unduhan selesai!",
+        "description": "Pesan saat pengunduhan ZIP selesai."
+  },
+    "zipError": {
+        "message": "Gagal membuat ZIP: $ERROR$",
+        "description": "Pesan kesalahan saat pembuatan ZIP gagal.",
+        "placeholders": {
+            "ERROR": {
+                "content": "$1",
+                "example": "Kesalahan jaringan"
+            }
+        }
+    },
+    "zipStartedInBackground": {
+        "message": "Pengunduhan ZIP dimulai di latar belakang",
+        "description": "Pesan notifikasi saat proses unduhan ZIP dipindahkan ke skrip latar belakang."
     }
 }

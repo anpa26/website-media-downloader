@@ -105,7 +105,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const selectedCheckboxes = Array.from(allCheckboxes).filter(cb => cb.checked);
     if (selectedCheckboxes.length === 0) return;
 
-    for (const cb of selectedCheckboxes) {
+    if (selectedCheckboxes.length > 1) {
+      const items = selectedCheckboxes.map(cb => cb.closest('.media-item'));
+      await downloadAllAsZip(items);
+    } else {
+      const cb = selectedCheckboxes[0];
       const itemElement = cb.closest('.media-item');
       const url = itemElement.dataset.url;
       const size = itemElement.dataset.size;
@@ -119,11 +123,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const visibleItems = Array.from(items).filter(item => item.style.display !== 'none');
     if (visibleItems.length === 0) return;
 
-    for (const itemElement of visibleItems) {
+    if (visibleItems.length > 1) {
+      await downloadAllAsZip(visibleItems);
+    } else {
+      const itemElement = visibleItems[0];
       const url = itemElement.dataset.url;
       const size = itemElement.dataset.size;
       // Skip if already downloading
-      if (itemElement.querySelector('mdui-linear-progress')) continue;
+      if (itemElement.querySelector('mdui-linear-progress')) return;
       await downloadFile(url, itemElement, size, true);
     }
   });
@@ -277,6 +284,37 @@ document.addEventListener('DOMContentLoaded', async () => {
 browser.runtime.onMessage.addListener((message) => {
   if (message.action === 'downloadProgress') {
     updateProgressUI(message.id || message.url, message.loaded, message.total);
+  } else if (message.action === 'zipProgress') {
+    const progressContainer = document.getElementById('global-progress-container');
+    const progressBar = document.getElementById('global-progress-bar');
+    const progressText = document.getElementById('global-progress-text');
+
+    progressContainer.style.display = 'flex';
+    progressBar.value = (message.loaded / message.total);
+    
+    if (message.status === 'downloading') {
+      progressText.textContent = browser.i18n.getMessage("zipDownloading", [(message.loaded + 1).toString(), message.total.toString(), message.currentFile]);
+    } else if (message.status === 'generating') {
+      progressBar.value = 0.95;
+      progressText.textContent = browser.i18n.getMessage("zipGenerating");
+    }
+  } else if (message.action === 'zipComplete') {
+    const progressContainer = document.getElementById('global-progress-container');
+    const progressBar = document.getElementById('global-progress-bar');
+    const progressText = document.getElementById('global-progress-text');
+
+    progressBar.value = 1;
+    progressText.textContent = browser.i18n.getMessage("zipComplete");
+    setTimeout(() => {
+      progressContainer.style.display = 'none';
+    }, 3000);
+  } else if (message.action === 'zipError') {
+    const progressContainer = document.getElementById('global-progress-container');
+    const progressText = document.getElementById('global-progress-text');
+    progressText.textContent = browser.i18n.getMessage("zipError", [message.error]);
+    setTimeout(() => {
+      progressContainer.style.display = 'none';
+    }, 5000);
   } else if (message.action === 'downloadComplete') {
     finishDownloadUI(message.id || message.url, true);
   } else if (message.action === 'downloadError') {
@@ -1309,6 +1347,65 @@ async function loadAboutPage() {
   } catch (error) {
     console.error("Failed to load about page:", error);
     container.innerHTML = `<div style="padding: 40px; text-align: center;">Failed to load About page information.</div>`;
+  }
+}
+
+async function downloadAllAsZip(items) {
+  if (items.length === 0) return;
+
+  const downloadItems = [];
+  const progressContainer = document.getElementById('global-progress-container');
+  const progressBar = document.getElementById('global-progress-bar');
+  const progressText = document.getElementById('global-progress-text');
+
+  try {
+    progressContainer.style.display = 'flex';
+    progressBar.value = 0;
+    progressText.textContent = browser.i18n.getMessage("zipPreparing", [items.length]);
+
+    for (let i = 0; i < items.length; i++) {
+      const itemElement = items[i];
+      const url = itemElement.dataset.url;
+      const originalFileName = getFileName(url, 100); 
+      
+      // Ensure unique filenames
+      let filename = originalFileName;
+      let counter = 1;
+      while (downloadItems.some(e => e.filename === filename)) {
+        const parts = originalFileName.split('.');
+        if (parts.length > 1) {
+          const ext = parts.pop();
+          filename = `${parts.join('.')}_${counter}.${ext}`;
+        } else {
+          filename = `${originalFileName}_${counter}`;
+        }
+        counter++;
+      }
+
+      downloadItems.push({ url, filename });
+    }
+
+    // Send message to background to handle the ZIP process
+    browser.runtime.sendMessage({
+      action: 'startDownloadAll',
+      items: downloadItems
+    });
+
+    // Notify user that it's starting in background
+    if (typeof mdui !== 'undefined' && mdui.snackbar) {
+      mdui.snackbar({
+        message: browser.i18n.getMessage("zipStartedInBackground") || "ZIP download started in background",
+        placement: "top"
+      });
+    }
+
+  } catch (error) {
+    console.error('ZIP background start error:', error);
+    progressText.textContent = browser.i18n.getMessage("zipError", [error.message]);
+    progressBar.value = 0;
+    setTimeout(() => {
+      progressContainer.style.display = 'none';
+    }, 5000);
   }
 }
 
