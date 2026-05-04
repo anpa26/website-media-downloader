@@ -1,122 +1,110 @@
 # Website Media Downloader
 
-## Introduction
+[![Version](https://img.shields.io/badge/version-1.6.5-blue.svg)](src/manifest.json)
+[![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE.md)
+[![Platform](https://img.shields.io/badge/platform-Firefox%20%7C%20Android-orange.svg)](#installation)
 
-Website Media Downloader is a comprehensive, professional-grade browser extension engineered for the sophisticated identification and acquisition of digital media assets across the modern web. Developed as a high-performance alternative to traditional media scrapers, this tool integrates advanced network interception and Document Object Model (DOM) analysis to provide a seamless experience for capturing video, audio, images, and complex streaming protocols.
+Website Media Downloader is a professional-grade browser extension engineered for the identification and acquisition of digital media assets across the modern web. The tool integrates advanced network interception and Deep DOM analysis to capture video, audio, images, and complex streaming protocols.
 
-The project is built on the principles of technical transparency and user privacy. All operations, including the reconstruction of segmented streams and the decryption of protected content, are executed locally within the client's browser environment. This architectural choice eliminates the need for external processing servers, thereby ensuring data integrity and minimizing latency during the media acquisition lifecycle.
-
----
-
-## Technical Architecture and Core Features
-
-### 1. Advanced Detection Methodologies
-
-The application utilizes a multi-tiered approach to identify media assets that are often obscured by modern web frameworks:
-
-- Network Traffic Interception: By leveraging low-level browser APIs, the extension monitors real-time network requests. This allows for the detection of high-bitrate media files and dynamic streaming manifests (M3U8 and MPD) that are generated during runtime and do not exist as static elements in the page source.
-- Deep DOM Reciprocal Scanning: The engine performs an exhaustive search of the page's structural elements. This includes scanning standard HTML5 tags (video, audio, source, img, track), anchor links (a), and even custom data attributes (e.g., data-src, data-original, data-srcset) typically employed by lazy-loading libraries and modern JavaScript frameworks.
-- CSS Asset Identification: The scanner inspects computed styles across all DOM elements to identify media assets embedded via CSS properties, such as background-image and border-image.
-
-### 2. High-Fidelity Stream Reconstruction
-
-The extension features a robust engine designed specifically for handling segmented media delivery protocols:
-
-- HTTP Live Streaming (HLS/M3U8): The system identifies both master and media playlists. It provides a variant selection interface that allows users to target specific resolutions or bandwidths. The engine is capable of handling AES-128 encrypted segments, performing local decryption and merging them into a standardized container format (MP4 or TS).
-- Dynamic Adaptive Streaming over HTTP (DASH/MPD): The extension parses complex XML-based MPD manifests to extract adaptation sets for video and audio. Users can acquire these tracks individually or package them into a standardized ZIP archive structure, facilitating local playback in compatible media players like VLC.
-- Parallel Download Acceleration: To maximize throughput, the extension implements a multi-threaded fetching mechanism. By establishing multiple concurrent connections, the tool can download individual media segments in parallel, significantly reducing the total time required for high-definition stream acquisition.
-
-### 3. Sophisticated Request Simulation
-
-To bypass server-side security measures such as hotlinking protections and Referer-based blocking, the extension employs advanced header spoofing. It dynamically replicates the original request context—including Referer, Origin, and Cookie headers—ensuring that the download request appears legitimate to the hosting server.
+Designed with a focus on privacy and technical transparency, all operations—including stream reconstruction and local decryption—are executed entirely within the client's browser environment. No external processing servers are utilized, ensuring data integrity and user privacy.
 
 ---
+
+## Key Features
+- **QR Code Sharing**: Generate QR codes for any detected media to easily transfer links to mobile devices.
+- **Batch Operations**: Multi-select support for downloading or removing multiple items at once.
+- **Advanced Filtering**: Filter results by category: Video, Audio, Streams, Images, or Subtitles.
+- **Real-time Search**: Instantly find specific files using the integrated search bar.
+- **Intelligent Deduplication**: Automatically hides duplicate media entries based on filename and metadata.
+- **Offline Stream Conversion**: Merges stream segments (HLS/DASH) locally in the browser.
 
 ## How to Use
-
-### 1. Downloading Videos and Audio
-- Navigate: Go to the website containing the video or audio you want to save.
-- Play: Start the media playback. This triggers the network requests that the extension needs to capture the link.
-- Detect: Click the Website Media Downloader icon in your browser toolbar.
-- Download: Choose your preferred quality or format from the list and hit the download button.
-
-### 2. Downloading Images (Scroll to Detect)
-- Navigate: Open the page or link with the images you wish to download.
-- Scroll: Simply scroll down the page. The extension's content detector will automatically "see" and capture images as they load or appear on your screen.
-- Select: Click the extension icon and use the "Image" filter to view all detected visual assets.
-- Batch Save: Select the images you want and download them individually or in bulk.
+1. **Detection**: Navigate to any website with media content. The extension automatically detects assets in the background.
+2. **Access**: Click the extension icon to open the popup interface.
+3. **Manage**: Use the search bar or category filters to find specific media.
+4. **Download**: Click the download icon for individual files, or use checkboxes for batch downloads.
+5. **Share**: Use the QR code icon to quickly share media links to other devices.
 
 ---
 
-## Comprehensive Format Support
+## Disclaimer
 
-Website Media Downloader supports an expansive array of digital formats, ensuring compatibility with virtually any media encountered online:
-
-- Video Content: mp4, mkv, webm, avi, mov, flv, wmv, ts, m4v, 3gp, 3g2, asx, divx, m2t, m2ts, m2v, m4s, mk3d, mng, mp2v, mp4v, mpeg, mpg, mxf, ogm, ogv, qt, rm, swf, vob, and vp9.
-- Audio Content: mp3, aac, flac, wav, ogg, m4a, opus, ac3, adts, aif, aiff, alac, ape, asf, au, dts, f4a, f4b, isma, it, m4b, m4r, mid, mka, mod, mp1, mp2, mp4a, mpa, mpga, oga, ogx, ra, shn, spx, vorbis, weba, wma, and xm.
-- Streaming Protocols: m3u8 (HLS), mpd (DASH), f4m (HDS), f4f, smil, and ism/isml.
-- Visual Assets: webp, png, jpg, jpeg, gif, and svg.
-- Textual/Subtitle Assets: vtt, srt, ass, ssa, ttml, and dfxp.
+- **User Responsibility**: The use of this tool is entirely at the user's own risk. Users are responsible for ensuring their actions comply with the terms of service of the websites they visit and all applicable laws and regulations. The developers assume no liability for any misuse of this tool.
+- **Non-Supported Platforms**: This extension **does not support YouTube** or any other platforms that are explicitly restricted by technical or legal limitations. It is intended for use only on websites where media acquisition is permitted.
 
 ---
 
-## Installation Guidelines
+## Technical Features (v1.6.5)
 
-Website Media Downloader is optimized for the Firefox browser ecosystem, including Firefox for Android.
+### UI Architecture
+The interface has been completely overhauled using Material Design 3 (MDUI) components, providing a responsive and standardized user experience.
 
-### Firefox Desktop (Windows, macOS, Linux)
+### Detection Methodology
+- Network Traffic Interception: Monitors real-time network requests to identify high-bitrate media and dynamic streaming manifests (M3U8 and MPD).
+- Deep DOM Scanning: Systematically inspects HTML5 tags, custom data attributes, and elements managed by lazy-loading frameworks.
+- CSS Analysis: Identifies media assets embedded within computed styles, such as background and border images.
 
-1. Configuration: Enter about:config in the address bar. Search for the preference xpinstall.signatures.required and set its value to false.
-2. Extension Management: Navigate to about:addons.
-3. Installation: Select the gear icon and click "Install Add-on From File...". Choose the extension package from your local storage.
+### Stream Reconstruction
+- HLS (M3U8): Supports master and media playlists with variant selection for specific resolutions. It handles local AES-128 decryption and merges segments into standardized containers.
+- DASH (MPD): Parses XML-based manifests to extract video and audio adaptation sets.
+- Parallel Acquisition: Implements a multi-threaded fetching mechanism to optimize throughput and reduce download duration.
+
+### Request Simulation
+The extension utilizes header management (Referer, Origin, and Cookies) to replicate the original request context, ensuring compatibility with servers that implement access restrictions based on request origins.
+
+---
+
+## Supported Formats
+
+| Category | Formats |
+| :--- | :--- |
+| **Video** | mp4, mkv, webm, avi, mov, flv, ts, m4v, 3gp, mpeg, mpg, vob, vp9 |
+| **Audio** | mp3, aac, flac, wav, ogg, m4a, opus, ac3, m4b, mka, vorbis |
+| **Streams** | m3u8 (HLS), mpd (DASH), f4m (HDS), ism/isml |
+| **Images** | webp, png, jpg, jpeg, gif, svg |
+| **Subtitles** | vtt, srt, ass, ssa, ttml |
+
+---
+
+## Installation
+
+Website Media Downloader is optimized for the Firefox ecosystem.
+
+### Firefox Desktop
+1. Navigate to `about:config` and set `xpinstall.signatures.required` to `false`.
+2. Open `about:addons` and select "Install Add-on From File...".
+3. Select the extension package from your local directory.
 
 ### Firefox Android
-
-1. Debug Menu Activation: Navigate to Settings > About Firefox. Tap the Firefox logo sequentially five times to unlock the Debug menu.
-2. Collection Configuration: Access Settings > Custom Add-on Collection. Input the appropriate Collection ID and Collection Name from your AMO (Add-ons Mozilla) profile.
-3. Deployment: The extension will become available for installation within the standard Add-ons menu.
-
----
-
-## Security and Permission Model
-
-To ensure optimal performance and feature availability, the extension requires the following permissions:
-
-- webRequest / webRequestBlocking: Necessary for the interception of network headers and media link discovery.
-- storage / unlimitedStorage: Required for local data persistence, including user configurations, download history, and IndexedDB caching for large streams.
-- downloads: Enables the extension to pass processed media blobs to the browser's native download manager.
-- scripting: Facilitates the injection of the DOM scanning engine into web pages.
-- host_permissions (<all_urls>): Allows the extension to operate globally across all web domains.
+1. **Signature Configuration**: Navigate to `about:config` in the address bar. Search for `xpinstall.signatures.required` and set it to `false`.
+2. **Activate Debug Menu**: Navigate to Settings > About Firefox. Tap the Firefox logo five times sequentially to unlock the Debug menu.
+3. **Configure Collection**: Access Settings > Custom Add-on Collection. Input the required Collection ID and Collection Name from your AMO profile.
+4. **Deployment**: The extension will be available for installation within the standard Add-ons menu.
 
 ---
 
-## Legal Considerations and Limitations
+## Security and Privacy Model
 
-- YouTube Compliance: In accordance with legal requirements and platform policies, this extension does not support media acquisition from YouTube.
-- DRM (Digital Rights Management): Content protected by encryption technologies such as Widevine, PlayReady, or FairPlay cannot be downloaded. The extension will notify the user if DRM protection is detected.
-- User Responsibility: The user assumes all legal responsibility for the use of this tool. It is mandatory to comply with the terms of service of any website visited and all relevant copyright legislation.
+- Local Execution: All media processing, merging, and decryption are performed client-side.
+- Zero Telemetry: No browsing data, media URLs, or user history are transmitted to external servers.
+- Permission Scope: Requires `webRequest` for discovery, `storage` for configuration, and `downloads` for file acquisition.
 
 ---
 
 ## Credits and Attributions
 
-### Development and Repository
-
-- Lead Developer: anpa26 (https://github.com/anpa26)
-- Legacy Contributor: helloyanis (https://github.com/helloyanis)
-- Official Repository: https://github.com/anpa26/website-media-downloader
+- Lead Developer: [anpa26](https://github.com/anpa26)
+- Legacy Contributor: [helloyanis](https://github.com/helloyanis)
 
 ### Software Libraries
-
-- Material Design Framework: MDUI (https://www.mdui.org/)
-- HLS Engine: HLS.js (https://github.com/video-dev/hls.js/)
-- ZIP Management: client-zip (https://github.com/Touffy/client-zip)
-- QR Generation: QRCode.js (https://github.com/davidshimjs/qrcodejs)
+- Material Design Framework: [MDUI](https://www.mdui.org/)
+- HLS Engine: [HLS.js](https://github.com/video-dev/hls.js/)
+- ZIP Management: [client-zip](https://github.com/Touffy/client-zip)
+- QR Generation: [QRCode.js](https://github.com/davidshimjs/qrcodejs)
 
 ### Iconography
-
-- Extension Iconography: The application icons are derived from the Google Material Symbols and Icons library (https://fonts.google.com/icons), utilized under the Apache License 2.0. The specific SVG implementations have been customized for the Website Media Downloader user interface.
+- Extension Iconography: Icons are derived from the Google Material Symbols and Icons library, utilized under the Apache License 2.0. Specific SVG implementations have been customized for the user interface.
 
 ---
 
-Copyright (C) 2026 anpa26. This project is licensed under the GNU General Public License v3.0.
+Copyright (C) 2026 anpa26. Licensed under the [GNU General Public License v3.0](LICENSE.md).
