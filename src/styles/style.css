@@ -40,16 +40,17 @@ body {
     overflow-x: hidden;
 }
 
-/* Tabs & Layout */
 mdui-tabs {
     background-color: rgb(var(--mdui-color-surface));
     border-bottom: 1px solid rgb(var(--mdui-color-outline-variant));
-    display: flex;
-    justify-content: flex-start;
-    padding-left: 0;
+    width: 100%;
     position: sticky;
     top: 0;
     z-index: 100;
+}
+
+mdui-tabs::part(container) {
+    justify-content: center;
 }
 
 mdui-tab {
@@ -67,7 +68,6 @@ mdui-tab-panel {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Search Bar & Controls */
 #media-controls {
     background-color: rgb(var(--mdui-color-surface));
     padding: 20px 16px 16px;
@@ -90,7 +90,6 @@ mdui-tab-panel {
     padding: 0 4px;
 }
 
-/* Settings container */
 #settings-container {
     display: flex;
     flex-direction: column;
@@ -117,6 +116,7 @@ mdui-tab-panel {
     align-items: center;
     gap: 8px;
     opacity: 0.8;
+    padding-left: 4px;
 }
 
 mdui-card {
@@ -155,7 +155,6 @@ mdui-card {
     line-height: 1.4;
 }
 
-/* Media Items - REFINED */
 .media-item {
     margin: 12px 16px;
     border-radius: var(--app-border-radius);
@@ -250,7 +249,6 @@ mdui-card {
     gap: 8px;
 }
 
-/* Expanded Preview */
 .inline-preview-area {
     width: 100%;
     background: #000;
@@ -271,7 +269,6 @@ mdui-card {
     object-fit: contain;
 }
 
-/* Progress & Status */
 .download-progress-container {
     padding: 0 12px 12px;
     display: flex;
@@ -291,7 +288,6 @@ mdui-linear-progress {
     height: 4px;
 }
 
-/* Bottom Bar */
 mdui-bottom-app-bar {
     border-top: 1px solid rgb(var(--mdui-color-outline-variant));
     background-color: rgb(var(--mdui-color-surface-container-high));
@@ -312,7 +308,6 @@ mdui-bottom-app-bar {
     gap: 12px;
 }
 
-/* Common UI */
 #loading, #loading-media-list {
     padding: 100px 20px;
     opacity: 0.6;
@@ -340,10 +335,8 @@ mdui-bottom-app-bar {
     overflow: hidden;
 }
 
-/* Segmented Button Selection Fix */
 mdui-segmented-button[selected]::part(button) {
     background-color: rgba(var(--mdui-color-primary), 0.12) !important;
     color: var(--primary) !important;
     font-weight: 600;
 }
-

@@ -1,5 +1,19 @@
 /*
-    offscreen.js - Hidden document handler for background downloads.
+    website-media-downloader - A versatile tool to detect and download videos, music, and streams from almost any website.
+    Copyright (C) 2026 anpa26
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 if (typeof browser === 'undefined') {
@@ -24,15 +38,14 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         handleOffscreenDownload(id, filename)
             .then(() => sendResponse({ success: true }))
             .catch((error) => sendResponse({ success: false, error: error.message }));
-        return true; // Keep message channel open for async response
+        return true;
     }
 });
 
 async function handleOffscreenDownload(id, filename) {
     try {
         const db = await openCacheDB();
-        
-        // 1. Get metadata
+
         const item = await new Promise((resolve, reject) => {
             const tx = db.transaction([STORE_NAME], "readonly");
             const store = tx.objectStore(STORE_NAME);
@@ -43,14 +56,13 @@ async function handleOffscreenDownload(id, filename) {
 
         if (!item) throw new Error("Download metadata not found in DB");
 
-        // 2. Gather chunks
         const chunks = [];
         await new Promise((resolve, reject) => {
             const tx = db.transaction([CHUNK_STORE_NAME], "readonly");
             const store = tx.objectStore(CHUNK_STORE_NAME);
             const range = IDBKeyRange.bound([id, 0], [id, Infinity]);
             const request = store.openCursor(range);
-            
+
             request.onsuccess = (event) => {
                 const cursor = event.target.result;
                 if (cursor) {
@@ -65,7 +77,7 @@ async function handleOffscreenDownload(id, filename) {
 
         if (chunks.length === 0 && !item.data) throw new Error("No chunks found for download");
 
-        const finalBlob = chunks.length > 0 
+        const finalBlob = chunks.length > 0
             ? new Blob(chunks, { type: item.mime || "application/octet-stream" })
             : item.data;
 
@@ -77,8 +89,7 @@ async function handleOffscreenDownload(id, filename) {
                 filename: filename,
                 saveAs: false
             });
-            
-            // Cleanup after a long delay to allow the system download manager to pick it up
+
             setTimeout(() => {
                 URL.revokeObjectURL(objectUrl);
             }, 60000);

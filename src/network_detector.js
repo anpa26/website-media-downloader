@@ -16,15 +16,10 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-// Description: This file contains the code to intercept media requests and responses and store them in session storage.
-// The code is executed in the background script of the extension.
-
-// Check for the existence of the browser object and use chrome if not found
 if (typeof browser === 'undefined') {
     var browser = chrome;
 }
 
-// Import client-zip if not already loaded (needed for Chrome Service Worker)
 if (typeof downloadZip === 'undefined') {
     try {
         importScripts('libraries/client-zip.js');
@@ -33,7 +28,6 @@ if (typeof downloadZip === 'undefined') {
     }
 }
 
-// Session storage polyfill/fallback for browsers that don't support it (e.g. some Android browsers)
 if (!browser.storage.session) {
     browser.storage.session = {
         get: (keys, cb) => browser.storage.local.get(keys, cb),
@@ -68,9 +62,8 @@ const mediaTypes = [
 
 let urlList = [];
 let headersSentListener, headersReceivedListener;
-const activeDownloads = new Map(); // url -> { loaded, total }
+const activeDownloads = new Map();
 
-// ---------- Persistent Download State Helpers ----------
 async function saveDownloadState(downloadId, data) {
     const res = await browser.storage.local.get('pending-downloads');
     const pending = res['pending-downloads'] || {};
@@ -99,8 +92,7 @@ async function removeMediaRequest(url) {
     try {
         const baseUrl = url.split('?')[0];
         const res = await browser.storage.session.get(null);
-        
-        // Get all currently active download URLs
+
         const activeUrls = new Set();
         for (const val of activeDownloads.values()) {
             if (val.url) activeUrls.add(val.url);
@@ -108,7 +100,7 @@ async function removeMediaRequest(url) {
 
         const keysToRemove = [];
         for (const key in res) {
-            // Match same base URL (identity) and ensure it's not active
+
             if (key.split('?')[0] === baseUrl && !activeUrls.has(key)) {
                 keysToRemove.push(key);
             }
@@ -119,7 +111,7 @@ async function removeMediaRequest(url) {
         }
     } catch (e) {
         console.error("Error in removeMediaRequest:", e);
-        // Fallback to exact match if something goes wrong
+
         browser.storage.session.remove(url).catch(() => {});
     }
 }
@@ -128,12 +120,11 @@ async function resumeInterruptedDownloads() {
     const res = await browser.storage.local.get('pending-downloads');
     const pending = res['pending-downloads'] || {};
     const ids = Object.keys(pending);
-    
+
     if (ids.length > 0) {
-        console.log(`Found ${ids.length} interrupted downloads. Resuming...`);
         for (const id of ids) {
             const data = pending[id];
-            // Small delay between resumes to avoid overwhelming
+
             setTimeout(() => {
                 handleFetchDownload(data.url, data.filename, data.originalRequest, id, true);
             }, 1000);
@@ -141,17 +132,15 @@ async function resumeInterruptedDownloads() {
     }
 }
 
-// Run resume on startup
 resumeInterruptedDownloads();
 
-// ---------- IndexedDB helpers (same DB used by offlineStreamConvert.js) ----------
 const DB_NAME = "MediaCacheDB";
 const STORE_NAME = "network-cache";
 const CHUNK_STORE_NAME = "download-chunks";
 
 function openCacheDB() {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, 3); // Upgrade version to add store
+        const request = indexedDB.open(DB_NAME, 3);
         request.onerror = (event) => reject(event.target.error || "IDB Open Error");
         request.onblocked = () => {
             console.warn("IndexedDB upgrade blocked by other tabs. Please close them.");
@@ -203,7 +192,7 @@ async function storeChunksInCache(downloadId, chunks) {
         return new Promise((resolve, reject) => {
             const tx = db.transaction([CHUNK_STORE_NAME], "readwrite");
             const store = tx.objectStore(CHUNK_STORE_NAME);
-            
+
             tx.oncomplete = () => resolve();
             tx.onerror = () => reject(tx.error);
             tx.onabort = () => reject(new Error("Transaction aborted"));
@@ -226,9 +215,7 @@ async function storeChunksInCache(downloadId, chunks) {
 async function storeChunkInCache(downloadId, chunkIndex, data) {
     return storeChunksInCache(downloadId, [{ index: chunkIndex, data: data }]);
 }
-// -------------------------------------------------------------------------------
 
-// ----- extension lists for url-detection -----
 const videoExtensions = [".3g2", ".3gp", ".asx", ".avi", ".divx", ".4v", ".flv", ".ismv", ".m2t", ".m2ts", ".m2v", ".m4s", ".m4v", ".mk3d", ".mkv", ".mng", ".mov", ".mp2v", ".mp4", ".mp4v", ".mpe", ".mpeg", ".mpeg1", ".mpeg2", ".mpeg4", ".mpg", ".mxf", ".ogm", ".ogv", ".qt", ".rm", ".swf", ".ts", ".vob", ".vp9", ".webm", ".wmv"];
 const audioExtensions = [".3ga", ".aac", ".ac3", ".adts", ".aif", ".aiff", ".alac", ".ape", ".asf", ".au", ".dts", ".f4a", ".f4b", ".flac", ".isma", ".it", ".m4a", ".m4b", ".m4r", ".mid", ".mka", ".mod", ".mp1", ".mp2", ".mp3", ".mp4a", ".mpa", ".mpga", ".oga", ".ogg", ".ogx", ".opus", ".ra", ".shn", ".spx", ".vorbis", ".wav", ".weba", ".wma", ".xm"];
 const streamExtensions = [".f4f", ".f4m", ".m3u8", ".mpd", ".smil"];
@@ -236,38 +223,66 @@ const subtitleExtensions = [".vtt", ".srt", ".ass", ".ssa", ".ttml", ".dfxp"];
 const imageExtensions = [".webp", ".png", ".jpg", ".jpeg", ".gif"];
 const allExtensions = videoExtensions.concat(audioExtensions, streamExtensions, subtitleExtensions, imageExtensions);
 
-// build a safe regex from extensions (escape dots already present)
 const extPattern = allExtensions.map(e => e.replace(/^\./, '').replace(/\+/g, '\\+')).join('|');
 const detectionRegex = new RegExp('\\.(?:' + extPattern + ')(?:[?#].*)?$', 'i');
 const temporaryHeaderMap = new Map();
 const temporaryRequestBodyMap = new Map();
 const temporaryCookieMap = new Map();
-const urlToHeaderMap = new Map(); // Store URL -> { Cookie, Referer }
+const urlToHeaderMap = new Map();
 
-// helper to interpret setting values
+async function loadPersistentHeaders() {
+    try {
+        const res = await browser.storage.session.get('urlToHeaderMap');
+        if (res.urlToHeaderMap) {
+            for (const [url, headers] of Object.entries(res.urlToHeaderMap)) {
+                urlToHeaderMap.set(url, headers);
+            }
+        }
+    } catch (e) {
+        console.warn("Failed to load persistent headers:", e);
+    }
+}
+loadPersistentHeaders();
+
+async function savePersistentHeaders() {
+    try {
+        const obj = Object.fromEntries(urlToHeaderMap);
+
+        const keys = Object.keys(obj);
+        if (keys.length > 200) {
+            const keysToRemove = keys.slice(0, keys.length - 200);
+            keysToRemove.forEach(k => urlToHeaderMap.delete(k));
+            await browser.storage.session.set({ 'urlToHeaderMap': Object.fromEntries(urlToHeaderMap) });
+        } else {
+            await browser.storage.session.set({ 'urlToHeaderMap': obj });
+        }
+    } catch (e) {
+        console.warn("Failed to save persistent headers:", e);
+    }
+}
+
 function isFlagEnabled(val) {
     return val === '1' || val === 1 || val === true || val === 'true';
 }
 
-// Intercept and store headers for potential downloads, and re-inject them for Native downloads and previews
 browser.webRequest.onBeforeSendHeaders.addListener(
     (details) => {
-        // 1. Capture headers for every request to use later if it becomes a download or preview
+
         const cookie = details.requestHeaders.find(h => h.name.toLowerCase() === 'cookie')?.value;
         const referer = details.requestHeaders.find(h => h.name.toLowerCase() === 'referer')?.value;
         const origin = details.requestHeaders.find(h => h.name.toLowerCase() === 'origin')?.value;
-        
+
         if (cookie || referer || origin) {
             urlToHeaderMap.set(details.url, { cookie, referer, origin });
+            savePersistentHeaders();
         }
 
-        // 2. Spoof headers if this is a download OR a request from the extension (for previews/fetch)
-        const isFromExtension = details.initiator?.startsWith('chrome-extension://') || 
+        const isFromExtension = details.initiator?.startsWith('chrome-extension://') ||
                                details.originUrl?.startsWith('moz-extension://') ||
                                details.url.includes('blob:chrome-extension://');
-        
-        const isMediaRequest = details.type === 'media' || 
-                               details.type === 'xmlhttprequest' || 
+
+        const isMediaRequest = details.type === 'media' ||
+                               details.type === 'xmlhttprequest' ||
                                details.type === 'other' ||
                                details.url.includes('download') ||
                                detectionRegex.test(details.url);
@@ -288,10 +303,9 @@ browser.webRequest.onBeforeSendHeaders.addListener(
                         if (h.name.toLowerCase() === 'referer') { h.value = stored.referer; hasReferer = true; break; }
                     }
                     if (!hasReferer) details.requestHeaders.push({ name: 'Referer', value: stored.referer });
-                    
-                    // Also try to set referrer for extension requests
+
                     if (isFromExtension) {
-                        // Some browsers don't allow setting Referer header directly but might use this
+
                         details.referrer = stored.referer;
                     }
                 }
@@ -302,10 +316,9 @@ browser.webRequest.onBeforeSendHeaders.addListener(
                     }
                     if (!hasOrigin) details.requestHeaders.push({ name: 'Origin', value: stored.origin });
                 }
-                
-                // Also fix Sec-Fetch headers for extension/media requests to avoid blocks
+
                 if (isFromExtension || isMediaRequest) {
-                    details.requestHeaders = details.requestHeaders.filter(h => 
+                    details.requestHeaders = details.requestHeaders.filter(h =>
                         !['sec-fetch-site', 'sec-fetch-mode', 'sec-fetch-dest'].includes(h.name.toLowerCase())
                     );
                     details.requestHeaders.push({ name: 'Sec-Fetch-Site', value: 'same-origin' });
@@ -314,7 +327,7 @@ browser.webRequest.onBeforeSendHeaders.addListener(
                 }
             }
         }
-        
+
         if (cookie) temporaryCookieMap.set(details.requestId, cookie);
 
         return { requestHeaders: details.requestHeaders };
@@ -323,10 +336,9 @@ browser.webRequest.onBeforeSendHeaders.addListener(
     ["blocking", "requestHeaders"]
 );
 
-// get local settings
 function getSettings(callback) {
     browser.storage.local.get([
-        'mime-detection', 'url-detection', 'media-notification', 'hide-segments', 
+        'mime-detection', 'url-detection', 'media-notification', 'hide-segments',
         'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle',
         'filename-template'
     ], function (result) {
@@ -345,17 +357,17 @@ function getSettings(callback) {
     });
 }
 
-const notificationUrls = new Map(); // notificationId -> { url, tabId }
-const notifiedUrls = new Map(); // tabId -> Set of URLs
-const lastNotificationTime = new Map(); // tabId -> timestamp
+const notificationUrls = new Map();
+const notifiedUrls = new Map();
+const lastNotificationTime = new Map();
 
 function injectNotificationScript(tabId, filename, url) {
     if (!browser.scripting) return;
-    
+
     browser.scripting.executeScript({
         target: { tabId: tabId },
         func: (name, downloadUrl, dlLabel) => {
-            // Find existing toasts and shift them up
+
             const existingToasts = document.querySelectorAll('.mdu-toast');
             existingToasts.forEach(t => {
                 const currentBottom = parseInt(t.style.bottom);
@@ -424,24 +436,22 @@ function getMediaType(url, contentType) {
     const urlLower = url.toLowerCase();
     const mimeLower = (contentType || '').toLowerCase();
 
-    // Ignore extension internal assets and blob URLs from the extension itself
-    if (urlLower.startsWith('chrome-extension://') || 
-        urlLower.startsWith('moz-extension://') || 
-        urlLower.startsWith('blob:chrome-extension://') || 
+    if (urlLower.startsWith('chrome-extension://') ||
+        urlLower.startsWith('moz-extension://') ||
+        urlLower.startsWith('blob:chrome-extension://') ||
         urlLower.startsWith('blob:moz-extension://')) {
         return null;
     }
-    
+
     if (mimeLower.startsWith('video/') || videoExtensions.some(ext => urlLower.includes(ext))) return 'video';
     if (mimeLower.startsWith('audio/') || audioExtensions.some(ext => urlLower.includes(ext))) return 'audio';
-    
-    // Explicitly exclude SVG to avoid cluttering with icons/logos
+
     if (mimeLower === 'image/svg+xml' || urlLower.includes('.svg')) return null;
     if (mimeLower.startsWith('image/') || imageExtensions.some(ext => urlLower.includes(ext))) return 'image';
-    
+
     if (streamExtensions.some(ext => urlLower.includes(ext)) || mimeLower.includes('mpegurl') || mimeLower.includes('dash+xml')) return 'stream';
     if (subtitleExtensions.some(ext => urlLower.includes(ext)) || mimeLower.includes('vtt') || mimeLower.includes('subrip') || mimeLower.includes('ass') || mimeLower.includes('ttml') || mimeLower.includes('dfxp')) return 'subtitle';
-    
+
     return null;
 }
 
@@ -449,27 +459,24 @@ async function addToHistory(item) {
     const result = await browser.storage.local.get('history-page');
     if (result['history-page'] !== '1') return;
 
-    // Ensure item has a media type for filtering
     if (!item.mediaType) {
         item.mediaType = getMediaType(item.url, '');
     }
 
     const historyResult = await browser.storage.local.get('download-history');
     let history = historyResult['download-history'] || [];
-    
+
     item.timestamp = item.timestamp || Date.now();
-    
-    // Remove if exactly same URL or (same pageUrl AND same filename)
-    // This handles deduplication: old entry is replaced by the newest one
-    const existingIndex = history.findIndex(h => 
-        h.url === item.url || 
+
+    const existingIndex = history.findIndex(h =>
+        h.url === item.url ||
         (h.pageUrl === item.pageUrl && h.filename === item.filename)
     );
-    
+
     if (existingIndex !== -1) {
         history.splice(existingIndex, 1);
     }
-    
+
     history.unshift(item);
     if (history.length > 100) history = history.slice(0, 100);
     await browser.storage.local.set({ 'download-history': history });
@@ -506,12 +513,12 @@ async function autoUpdateHistoryLink(pageUrl, filename, newUrl, tabId) {
     let updated = false;
 
     for (let i = 0; i < history.length; i++) {
-        // Match by pageUrl and filename to find the right record to update
+
         if (history[i].pageUrl === pageUrl && history[i].filename === filename) {
             if (history[i].url !== newUrl) {
                 history[i].url = newUrl;
                 history[i].timestamp = Date.now();
-                // Move updated item to top
+
                 const item = history.splice(i, 1)[0];
                 history.unshift(item);
                 updated = true;
@@ -542,8 +549,7 @@ async function generateTemplateName(template, url, originalName, tabId) {
     const now = new Date();
     const dateStr = now.toISOString().split('T')[0];
     const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
-    
-    // Extract name without extension for {name}
+
     const lastDotIdx = originalName.lastIndexOf('.');
     const nameWithoutExt = lastDotIdx !== -1 ? originalName.substring(0, lastDotIdx) : originalName;
     const ext = lastDotIdx !== -1 ? originalName.substring(lastDotIdx) : '';
@@ -554,13 +560,11 @@ async function generateTemplateName(template, url, originalName, tabId) {
         .replace(/{date}/g, dateStr)
         .replace(/{time}/g, timeStr)
         .replace(/{name}/g, nameWithoutExt);
-    
-    // Ensure extension is kept if not in template and not already present
+
     if (ext && !result.toLowerCase().endsWith(ext.toLowerCase())) {
         result += ext;
     }
 
-    // Basic filename sanitization
     return result.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_');
 }
 
@@ -574,7 +578,6 @@ async function showMediaNotification(details, settings) {
     // Use base URL (without query/hash) to identify the video to avoid spamming segments
     const baseUrl = url.split('?')[0].split('#')[0];
 
-    // Check if we already notified for this specific video in this tab
     if (!notifiedUrls.has(tabId)) notifiedUrls.set(tabId, new Set());
     const tabNotified = notifiedUrls.get(tabId);
     if (tabNotified.has(baseUrl)) return;
@@ -583,7 +586,6 @@ async function showMediaNotification(details, settings) {
     let contentType = responseHeaders.find(h => h.name.toLowerCase() === 'content-type')?.value || '';
     let contentLength = parseInt(responseHeaders.find(h => h.name.toLowerCase() === 'content-length')?.value || '0');
 
-    // Filter by individual media type settings
     const mediaType = getMediaType(url, contentType);
     const isVideo = mediaType === 'video';
     const isAudio = mediaType === 'audio';
@@ -591,22 +593,19 @@ async function showMediaNotification(details, settings) {
     const isStream = mediaType === 'stream';
     const isSubtitle = mediaType === 'subtitle';
 
-    // Only show if the respective category toggle is ON
     if (isVideo && !settings.onlyVideo) return;
     if (isAudio && !settings.onlyAudio) return;
     if (isStream && !settings.onlyStream) return;
     if (isImage && !settings.onlyImage) return;
     if (isSubtitle && !settings.onlySubtitle) return;
 
-    // Discard if it doesn't match any known media category
     if (!mediaType) return;
 
-    // Filter by hideSegments setting
     const isSegment = url.toLowerCase().includes('.ts') || (contentLength > 0 && contentLength < 1048576 && contentType === 'video/mp2t');
     if (settings.hideSegments && isSegment) return;
 
     const now = Date.now();
-    // Short cooldown (2 seconds) just to prevent overlapping toasts for multiple videos detected simultaneously
+
     if (lastNotificationTime.has(tabId) && (now - lastNotificationTime.get(tabId) < 2000)) {
         return;
     }
@@ -621,18 +620,16 @@ async function showMediaNotification(details, settings) {
         displayFilename = await generateTemplateName(settings.filenameTemplate, url, originalFilename, tabId);
     }
 
-    // NEW: Automatically update history link if we found a match for this page and filename
     let pageUrl = "";
     try {
         const tab = await browser.tabs.get(tabId);
         if (tab) pageUrl = tab.url;
     } catch (e) {}
-    
+
     if (pageUrl) {
         autoUpdateHistoryLink(pageUrl, displayFilename, url, tabId);
     }
-    
-    // Fallback: Inject in-page toast for environments where browser.notifications might not work (e.g. Firefox Android)
+
     injectNotificationScript(tabId, displayFilename, url);
 
     browser.notifications.create({
@@ -703,10 +700,9 @@ browser.notifications.onClicked.addListener((notificationId) => {
     notificationUrls.delete(notificationId);
 });
 
-// Helper: convert ArrayBuffer to base64 safely in chunks
 function arrayBufferToBase64(buffer) {
     const bytes = new Uint8Array(buffer);
-    const chunkSize = 0x8000; // 32KB chunks
+    const chunkSize = 0x8000;
     let binary = '';
     for (let i = 0; i < bytes.length; i += chunkSize) {
         const chunk = bytes.subarray(i, i + chunkSize);
@@ -718,7 +714,7 @@ function arrayBufferToBase64(buffer) {
 let beforeRequestListener, beforeSendHeadersListener;
 
 function initListener() {
-    // Clear indexedDB cache on init to avoid stale data
+
     openCacheDB().then(db => {
         const tx = db.transaction([STORE_NAME], "readwrite");
         const store = tx.objectStore(STORE_NAME);
@@ -726,17 +722,14 @@ function initListener() {
     }).catch(e => {
         console.error("Failed to clear IndexedDB cache on init:", e);
     });
-    // Decide which urls we will watch for onSendHeaders/onHeadersReceived - keep default <all_urls>
+
     urlList = ["<all_urls>"];
 
-    // Read settings and then attach listeners accordingly
     getSettings(function (settings) {
         const mimeEnabled = !!settings.mimeDetection;
         const urlEnabled = !!settings.urlDetection;
 
-        console.log('initListener settings: mimeEnabled=', mimeEnabled, 'urlEnabled=', urlEnabled);
 
-        // Remove existing listeners if present
         if (headersSentListener) {
             try { browser.webRequest.onSendHeaders.removeListener(headersSentListener); } catch (e) { }
         }
@@ -759,13 +752,12 @@ function initListener() {
                 temporaryRequestBodyMap.delete(details.requestId);
             }
         };
-        // Ensure we don't duplicate cleanup listeners if initListener runs multiple times
+
         if (!browser.webRequest.onCompleted.hasListener(cleanupListener)) {
             browser.webRequest.onCompleted.addListener(cleanupListener, { urls: ["<all_urls>"] });
             browser.webRequest.onErrorOccurred.addListener(cleanupListener, { urls: ["<all_urls>"] });
         }
 
-        // NEW: capture request bodies in onBeforeRequest (formData or raw bytes).
         beforeRequestListener = function (details) {
             try {
                 if (!details || !details.requestBody) return;
@@ -773,12 +765,12 @@ function initListener() {
                 const rb = details.requestBody;
 
                 if (rb.formData) {
-                    // formData is an object of arrays; safe to store directly
+
                     temporaryRequestBodyMap.set(details.requestId, { type: 'formData', data: rb.formData });
                 } else if (rb.raw && rb.raw.length) {
-                    // raw may contain an ArrayBuffer/Uint8Array in .bytes
+
                     try {
-                        // Combine all raw parts into one ArrayBuffer (if multiple)
+
                         let totalLen = 0;
                         for (let part of rb.raw) {
                             if (part && part.bytes) {
@@ -786,10 +778,10 @@ function initListener() {
                             }
                         }
                         if (totalLen === 0) {
-                            // nothing to store
+
                             return;
                         }
-                        // create combined buffer
+
                         const combined = new Uint8Array(totalLen);
                         let offset = 0;
                         for (let part of rb.raw) {
@@ -809,7 +801,6 @@ function initListener() {
             }
         };
 
-        // Attach beforeRequest listener to capture requestBody. Guard for availability.
         try {
             if (browser.webRequest && browser.webRequest.onBeforeRequest && !browser.webRequest.onBeforeRequest.hasListener(beforeRequestListener)) {
                 browser.webRequest.onBeforeRequest.addListener(
@@ -825,7 +816,7 @@ function initListener() {
         beforeSendHeadersListener = async function (details) {
             const protocol = new URL(details.originUrl).protocol
             if(protocol === 'moz-extension:' || protocol === 'chrome-extension:') {
-                // Requests is from extension itself, so try to add cookies
+
                 try {
                     const cookie = temporaryCookieMap.get(details.requestId) || '';
                     if (cookie) {
@@ -837,15 +828,14 @@ function initListener() {
                 }
             }
             else {
-                // For non-extension requests, we rely on onHeadersReceived to get cookies from response
+
                 console.debug("Details:", details);
 
                 const cookie = details.requestHeaders.find(h => h.name.toLowerCase() === 'cookie')?.value || '';
                 if (cookie) {
                     console.debug("Request already has Cookie header:", cookie);
                 }
-                
-                //Store the cookies from request headers into the corresponding request object in existingRequests
+
                 temporaryCookieMap.set(details.requestId, cookie);
 
             }
@@ -857,44 +847,34 @@ function initListener() {
             { urls: urlList },
             ['requestHeaders', 'blocking']
         );
-        console.log("Attached onBeforeSendHeaders listener.");
 
         headersSentListener = async function (details) {
             try {
-                // [NEW] Always capture headers to the temporary map first
+
                 if (details.requestHeaders) {
                     temporaryHeaderMap.set(details.requestId, details.requestHeaders);
                 }
 
                 const urlMatches = detectionRegex.test(decodeURI(details.url));
 
-                // If neither flag is enabled -> save all (original behavior)
                 if (!mimeEnabled && !urlEnabled) {
-                    // Save as before
+
                 } else {
-                    // If url-detection enabled and URL matches -> save
+
                     if (!urlEnabled || (urlEnabled && !urlMatches)) {
-                        // If url-detection enabled but URL doesn't match, and mime-detection is enabled,
-                        // then we should NOT save now (wait for onHeadersReceived). So skip saving here.
+
                         if (urlEnabled && mimeEnabled && !urlMatches) {
-                            // wait for onHeadersReceived to decide
+
                             return;
                         }
                         if (mimeEnabled && !urlEnabled) {
                             return;
                         }
-                        // If urlEnabled is true and urlMatches is true -> fallthrough to save
-                        // Otherwise, if logic reaches here but conditions didn't match, skip
+
                     }
                 }
 
-                // At this point either:
-                // - neither flag set (=> save all), or
-                // - urlEnabled && urlMatches (=> save), or
-                // - both enabled and urlMatches (=> save)
-                // [NEW] Retrieve any cached request body
                 const cachedBody = temporaryRequestBodyMap.get(details.requestId) || null;
-                
 
                 let mediaRequest = {
                     url: details.url,
@@ -910,12 +890,10 @@ function initListener() {
                 browser.storage.session.get(details.url, function (result) {
                     let existingRequests = result[details.url] || [];
 
-                    // push the new request
                     existingRequests.push(mediaRequest);
                     let requestsObj = {};
                     requestsObj[details.url] = existingRequests;
                     browser.storage.session.set(requestsObj);
-                    console.log('Media request intercepted (onSendHeaders):', mediaRequest);
                 });
             } catch (e) {
                 console.error("Error in onSendHeaders handler:", e);
@@ -928,17 +906,15 @@ function initListener() {
             ['requestHeaders']
         );
 
-        // onHeadersReceived: used to update size/responseHeaders and also to save requests when mime-detection triggers
         headersReceivedListener = async function (details) {
             try {
-                // Extract content-length and content-type (if present)
+
                 const responseHeaders = details.responseHeaders || [];
                 let size = 'unknown';
-                
+
                 let mediaSizeHeader = responseHeaders.find(header => header.name && header.name.toLowerCase() === 'content-length');
                 if (mediaSizeHeader) size = mediaSizeHeader.value;
 
-                // Better size detection: check Content-Range for total size (e.g., bytes 0-1023/1000000)
                 let contentRangeHeader = responseHeaders.find(header => header.name && header.name.toLowerCase() === 'content-range');
                 if (contentRangeHeader && contentRangeHeader.value.includes('/')) {
                     const totalSize = contentRangeHeader.value.split('/').pop();
@@ -950,7 +926,6 @@ function initListener() {
                 let contentTypeHeader = responseHeaders.find(header => header.name && header.name.toLowerCase() === 'content-type');
                 let contentType = contentTypeHeader ? (contentTypeHeader.value || '').toLowerCase() : '';
 
-                // Normalize contentType (strip parameters)
                 if (contentType.indexOf(';') !== -1) {
                     contentType = contentType.split(';')[0].trim().toLowerCase();
                 }
@@ -966,19 +941,17 @@ function initListener() {
                     contentType.includes('ass') ||
                     contentType.includes('ttml') ||
                     contentType.includes('dfxp') ||
-                    contentType === 'application/octet-stream' // treat generic binary as potential media
+                    contentType === 'application/octet-stream'
                 );
 
                 const urlMatches = detectionRegex.test(decodeURI(details.url));
 
-                // Retrieve existing stored requests for this URL (if any)
                 browser.storage.session.get(details.url, function (result) {
                     let existingRequests = result[details.url] || [];
 
-                    // Try to find a previously created request to update it
                     let updated = false;
                     for (let request of existingRequests) {
-                        // If the request has no size / responseHeaders yet, update it
+
                         if (!request.size && (!request.responseHeaders || request.responseHeaders === null)) {
                             request.size = size;
                             request.responseHeaders = responseHeaders;
@@ -987,15 +960,6 @@ function initListener() {
                             break;
                         }
                     }
-
-                    // Decide whether to add a new request entry in cases where onSendHeaders did not add one:
-                    // - If neither flag set -> onSendHeaders already added, so we should have updated above.
-                    // - If mime-detection only and mimeMatches -> add new entry here
-                    // - If both enabled and neither matched onSendHeaders but mimeMatches now -> add
-                    // - If url-detection only, we would have saved at onSendHeaders; no need to add here.
-                    // So add if:
-                    // (mimeEnabled && mimeMatches) OR (urlEnabled && urlMatches AND no existing request present)
-                    // but guard against duplicates: only push if `updated` is false AND the saving condition matches.
 
                     getSettings(async function (currentSettings) {
                         const mimeEnabledNow = !!currentSettings.mimeDetection;
@@ -1009,7 +973,7 @@ function initListener() {
                         })();
 
                         if (!updated && shouldSaveNow) {
-                            // [NEW] Retrieve the stashed request headers and request body using requestId
+
                             const cachedHeaders = temporaryHeaderMap.get(details.requestId) || null;
                             const cachedBody = temporaryRequestBodyMap.get(details.requestId) || null;
 
@@ -1018,22 +982,19 @@ function initListener() {
                                 method: details.method || 'GET',
                                 requestHeaders: cachedHeaders,
                                 responseHeaders: responseHeaders,
-                                requestBody: cachedBody, // <-- now populated if available
+                                requestBody: cachedBody,
                                 cookie: temporaryCookieMap.get(details.requestId) || '',
                                 size: size,
                                 timeStamp: details.timeStamp
                             };
                             existingRequests.push(mediaRequest);
-                            console.log('Media request added (onHeadersReceived):', mediaRequest);
                         } else if (updated) {
-                            console.log('Media response updated (onHeadersReceived) for', details.url);
                         }
 
                         let requestsObj = {};
                         requestsObj[details.url] = existingRequests;
                         browser.storage.session.set(requestsObj);
 
-                        // NEW: Show notification if media was detected
                         if (shouldSaveNow || updated) {
                             showMediaNotification(details, currentSettings);
                         }
@@ -1052,14 +1013,13 @@ function initListener() {
     });
 }
 
-// Track native downloads
 browser.downloads.onCreated.addListener((downloadItem) => {
     if (downloadItem.url && (downloadItem.url.startsWith('http') || downloadItem.url.startsWith('blob'))) {
-        activeDownloads.set(downloadItem.id, { 
-            url: downloadItem.url, 
-            loaded: 0, 
+        activeDownloads.set(downloadItem.id, {
+            url: downloadItem.url,
+            loaded: 0,
             total: downloadItem.totalBytes,
-            isNative: true 
+            isNative: true
         });
     }
 });
@@ -1098,7 +1058,6 @@ browser.downloads.onChanged.addListener((delta) => {
     }
 });
 
-// Send media request data to the popup (session storage is not shared between background and popup scripts)
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'addToHistory') {
         addToHistory(message.item);
@@ -1145,7 +1104,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         browser.storage.session.get(null, (items) => {
             const updates = {};
             let hasNew = false;
-            
+
             urls.forEach(url => {
                 if (!items[url]) {
                     updates[url] = [{
@@ -1172,7 +1131,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         browser.storage.session.get(null, function (items) {
             sendResponse(items);
         });
-        return true; // Indicate that the response will be sent asynchronously
+        return true;
     }
 
     if (message.action === 'getSpoofedHeaders') {
@@ -1229,53 +1188,135 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse(downloadsObj);
         return true;
     }
+
+    if (message.action === 'confirmZipSkipResponse') {
+        if (window.zipConfirmResolver) {
+            window.zipConfirmResolver(message.result);
+            delete window.zipConfirmResolver;
+        }
+        return true;
+    }
 });
+
+async function askUserToContinue(filename, error) {
+    return new Promise((resolve) => {
+        window.zipConfirmResolver = resolve;
+        browser.runtime.sendMessage({
+            action: 'confirmZipSkip',
+            filename: filename,
+            error: error
+        }).catch(() => {
+
+            if (window.zipConfirmResolver) {
+                window.zipConfirmResolver(false);
+                delete window.zipConfirmResolver;
+            }
+        });
+
+        setTimeout(() => {
+            if (window.zipConfirmResolver === resolve) {
+                resolve(false);
+                delete window.zipConfirmResolver;
+            }
+        }, 30000);
+    });
+}
 
 async function handleDownloadAllAsZip(items, downloadId) {
     try {
-        const zipEntries = [];
         activeDownloads.set(downloadId, { loaded: 0, total: items.length, url: 'zip://' + downloadId, isZip: true });
 
-        for (let i = 0; i < items.length; i++) {
-            const item = items[i];
-            const url = item.url;
-            const filename = item.filename;
+        const zipEntriesGenerator = async function* () {
+            let skipAllErrors = false;
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                const url = item.url;
+                const filename = item.filename;
+                const originalRequest = item.request;
 
-            // Update progress
-            browser.runtime.sendMessage({
-                action: 'zipProgress',
-                id: downloadId,
-                loaded: i,
-                total: items.length,
-                status: 'downloading',
-                currentFile: filename
-            }).catch(() => {});
+                browser.runtime.sendMessage({
+                    action: 'zipProgress',
+                    id: downloadId,
+                    loaded: i,
+                    total: items.length,
+                    status: 'downloading',
+                    currentFile: filename
+                }).catch(() => {});
 
-            // Fetch the item with spoofed headers
-            const storedHeaders = urlToHeaderMap.get(url);
-            const fetchOptions = {
-                credentials: 'include',
-                headers: {}
-            };
-            if (storedHeaders) {
-                if (storedHeaders.cookie) fetchOptions.headers['Cookie'] = storedHeaders.cookie;
-                if (storedHeaders.referer) {
-                    fetchOptions.headers['Referer'] = storedHeaders.referer;
-                    fetchOptions.referrer = storedHeaders.referer;
+                try {
+                    const fetchOptions = {
+                        method: originalRequest ? originalRequest.method : 'GET',
+                        headers: {},
+                        credentials: 'include'
+                    };
+
+                    if (originalRequest && originalRequest.requestHeaders) {
+                        originalRequest.requestHeaders.forEach(h => {
+                            const name = h.name.toLowerCase();
+                            if (!['cookie', 'referer', 'range', 'content-length'].includes(name)) {
+                                fetchOptions.headers[h.name] = h.value;
+                            }
+                        });
+                    }
+
+                    const storedHeaders = urlToHeaderMap.get(url);
+                    if (storedHeaders) {
+                        if (storedHeaders.cookie) fetchOptions.headers['Cookie'] = storedHeaders.cookie;
+                        if (storedHeaders.referer) {
+                            fetchOptions.headers['Referer'] = storedHeaders.referer;
+                            fetchOptions.referrer = storedHeaders.referer;
+                        }
+                        if (storedHeaders.origin) fetchOptions.headers['Origin'] = storedHeaders.origin;
+                    }
+
+                    if (originalRequest && originalRequest.method !== 'GET' && originalRequest.requestBody) {
+                        if (originalRequest.requestBody.type === 'formData') {
+                            const formData = new FormData();
+                            for (const key in originalRequest.requestBody.data) {
+                                originalRequest.requestBody.data[key].forEach(val => formData.append(key, val));
+                            }
+                            fetchOptions.body = formData;
+                        } else if (originalRequest.requestBody.type === 'base64') {
+                            const bin = atob(originalRequest.requestBody.data);
+                            const u = new Uint8Array(bin.length);
+                            for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+                            fetchOptions.body = u;
+                        }
+                    }
+
+                    const response = await fetch(url, fetchOptions);
+                    if (!response.ok) {
+                        console.warn(`Failed to download ${url} for ZIP. Status: ${response.status}`);
+                        if (skipAllErrors) continue;
+
+                        const result = await askUserToContinue(filename, `Server returned ${response.status}`);
+                        if (result === 'continue-all') {
+                            skipAllErrors = true;
+                            continue;
+                        }
+                        if (result === 'continue') continue;
+                        else throw new Error("Cancelled by user after error");
+                    }
+
+                    yield { name: filename, input: response };
+
+                    activeDownloads.get(downloadId).loaded = i + 1;
+                } catch (err) {
+                    if (err.message === "Cancelled by user after error") throw err;
+                    console.warn(`Error fetching ${url} for ZIP:`, err);
+                    if (skipAllErrors) continue;
+
+                    const result = await askUserToContinue(filename, err.message);
+                    if (result === 'continue-all') {
+                        skipAllErrors = true;
+                        continue;
+                    }
+                    if (result === 'continue') continue;
+                    else throw new Error("Cancelled by user after error");
                 }
-                if (storedHeaders.origin) fetchOptions.headers['Origin'] = storedHeaders.origin;
             }
+        };
 
-            const response = await fetch(url, fetchOptions);
-            if (!response.ok) throw new Error(`Failed to download ${url}`);
-            
-            const blob = await response.blob();
-            zipEntries.push({ name: filename, input: blob });
-
-            activeDownloads.get(downloadId).loaded = i + 1;
-        }
-
-        // Generate Zip
         browser.runtime.sendMessage({
             action: 'zipProgress',
             id: downloadId,
@@ -1284,12 +1325,17 @@ async function handleDownloadAllAsZip(items, downloadId) {
             status: 'generating'
         }).catch(() => {});
 
-        const zipBlob = await downloadZip(zipEntries).blob();
+        const zipResponse = downloadZip(zipEntriesGenerator());
+        const zipBlob = await zipResponse.blob();
+
+        if (zipBlob.size < 100) {
+             throw new Error("Failed to download any of the selected files or ZIP is empty.");
+        }
+
         const zipName = `downloads_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`;
 
-        // Store Zip in IndexedDB
         await storeInCache(downloadId, zipBlob, "application/zip");
-        
+
         pendingSaveQueue.push({ id: downloadId, url: 'zip://' + downloadId, filename: zipName });
         processSaveQueue();
 
@@ -1331,19 +1377,14 @@ async function triggerHiddenDownload(id, filename) {
     const isAndroid = /Android/i.test(navigator.userAgent);
     const isFirefox = typeof browser.runtime.getBrowserInfo === 'function' || !browser.offscreen;
 
-    // ON ANDROID: Direct hidden downloads (Blobs) are extremely unreliable.
-    // They often fail because the system download manager cannot access the Blob URL
-    // from a background context or the context is killed too early.
-    // We will return false here to force the use of a visible tab (download.html).
     if (isAndroid) {
         return false;
     }
 
-    // 1. Try direct URL.createObjectURL (Only for Desktop Firefox)
     if (isFirefox && typeof URL !== 'undefined' && URL.createObjectURL) {
         try {
             const db = await getDB();
-            
+
             const item = await new Promise((resolve, reject) => {
                 const tx = db.transaction([STORE_NAME], "readonly");
                 const store = tx.objectStore(STORE_NAME);
@@ -1351,7 +1392,7 @@ async function triggerHiddenDownload(id, filename) {
                 req.onsuccess = () => resolve(req.result);
                 req.onerror = () => reject(req.error);
             });
-            
+
             const chunks = [];
             await new Promise((resolve, reject) => {
                 const tx = db.transaction([CHUNK_STORE_NAME], "readonly");
@@ -1368,23 +1409,23 @@ async function triggerHiddenDownload(id, filename) {
 
             if (chunks.length === 0 && (!item || !item.data)) return false;
 
-            const finalBlob = chunks.length > 0 
+            const finalBlob = chunks.length > 0
                 ? new Blob(chunks, { type: (item && item.mime) || "application/octet-stream" })
                 : item.data;
 
             const blobUrl = URL.createObjectURL(finalBlob);
-            
+
             try {
                 await browser.downloads.download({
                     url: blobUrl,
                     filename: filename,
                     saveAs: false
                 });
-                
+
                 setTimeout(() => {
                     URL.revokeObjectURL(blobUrl);
                     cleanupDownload(id);
-                }, 30000); 
+                }, 30000);
                 return true;
             } catch (e) {
                 URL.revokeObjectURL(blobUrl);
@@ -1395,7 +1436,6 @@ async function triggerHiddenDownload(id, filename) {
         }
     }
 
-    // 2. Try Offscreen API (Desktop Chromium)
     if (typeof browser.offscreen !== 'undefined') {
         try {
             const hasOffscreen = await browser.offscreen.hasDocument().catch(() => false);
@@ -1406,7 +1446,7 @@ async function triggerHiddenDownload(id, filename) {
                     justification: 'Triggering download for fetched media blob'
                 });
             }
-            
+
             const response = await browser.runtime.sendMessage({
                 action: 'triggerOffscreenDownload',
                 data: { id, filename }
@@ -1432,29 +1472,24 @@ async function processSaveQueue() {
     const nextDownload = pendingSaveQueue.shift();
     const { id, url, filename } = nextDownload;
 
-    // Try hidden download (only works on Desktop)
     const hiddenSuccess = await triggerHiddenDownload(id, filename);
     if (hiddenSuccess) {
         setTimeout(processSaveQueue, 1000);
         return;
     }
 
-    // ON ANDROID / FALLBACK: Use a visible tab.
-    // We MUST use active: true on Android because many browsers block downloads
-    // from background tabs or require a user gesture that only works in the active tab.
     const isAndroid = /Android/i.test(navigator.userAgent);
     const tab = await browser.tabs.create({
         url: browser.runtime.getURL(`download.html?id=${id}&url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`),
-        active: isAndroid // Force active on Android for reliability
+        active: isAndroid
     });
     activeBridgeTabId = tab.id;
 }
 
-// Listen for the bridge tab closing to open the next one in queue
 browser.tabs.onRemoved.addListener((tabId) => {
     if (tabId === activeBridgeTabId) {
         activeBridgeTabId = null;
-        // Small delay before opening the next one for better UX on Android
+
         setTimeout(processSaveQueue, 1000);
     }
 });
@@ -1468,7 +1503,7 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
         await saveDownloadState(downloadId, { url, filename, total, loaded: 0, originalRequest: null, isParallel: true });
 
         const partSize = Math.ceil(total / connections);
-        const BUFFER_THRESHOLD = 1024 * 1024; // 1MB buffer
+        const BUFFER_THRESHOLD = 1024 * 1024;
         let totalLoaded = 0;
         let lastReportTime = 0;
 
@@ -1506,16 +1541,13 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                         combined.set(b, offset);
                         offset += b.length;
                     }
-                    
-                    // Use a unique chunk index for this part to keep ordering
-                    // partIndex * 1,000,000 allows 1TB per part with 1MB chunks
+
                     const globalChunkIndex = (partIndex * 1000000) + localChunkIndex++;
                     await storeChunkInCache(downloadId, globalChunkIndex, combined);
-                    
+
                     currentBuffer = [];
                     currentBufferSize = 0;
-                    
-                    // Periodically update state in storage
+
                     saveDownloadState(downloadId, { url, filename, total, loaded: totalLoaded, originalRequest: null, isParallel: true });
                 }
 
@@ -1527,9 +1559,8 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                     currentBufferSize += value.length;
                     totalLoaded += value.length;
 
-                    // Update global progress
                     activeDownloads.set(downloadId, { loaded: totalLoaded, total: total, abortController, url: url });
-                    
+
                     const now = Date.now();
                     if (now - lastReportTime > 200) {
                         lastReportTime = now;
@@ -1552,7 +1583,6 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
 
         await Promise.all(partPromises);
 
-        // Final progress report
         browser.runtime.sendMessage({
             action: 'downloadProgress',
             id: downloadId,
@@ -1564,7 +1594,7 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
         const finalFilename = filename || getFileName(url);
         const contentType = providedContentType || baseOptions.headers['Content-Type'] || 'application/octet-stream';
         await storeInCache(downloadId, null, contentType);
-        
+
         pendingSaveQueue.push({ id: downloadId, url, filename: finalFilename });
         processSaveQueue();
 
@@ -1575,9 +1605,8 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
 
     } catch (error) {
         activeDownloads.delete(downloadId);
-        removeDownloadState(downloadId); // Clear state on error
+        removeDownloadState(downloadId);
         if (error.name === 'AbortError') {
-            console.log("Parallel download aborted.");
             browser.runtime.sendMessage({ action: 'downloadError', url: url, error: 'USER_CANCELED' }).catch(() => {});
         } else {
             console.error("Parallel download failed:", error);
@@ -1593,7 +1622,7 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
 
     const abortController = new AbortController();
     const downloadId = providedId || ('dl_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
-    
+
     let resumeOffset = 0;
     let chunkIndex = 0;
 
@@ -1603,8 +1632,8 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
             const tx = db.transaction([CHUNK_STORE_NAME], "readonly");
             const store = tx.objectStore(CHUNK_STORE_NAME);
             const range = IDBKeyRange.bound([downloadId, 0], [downloadId, Infinity]);
-            const cursorRequest = store.openCursor(range, "prev"); // Get last chunk
-            
+            const cursorRequest = store.openCursor(range, "prev");
+
             const lastChunk = await new Promise((resolve) => {
                 cursorRequest.onsuccess = (e) => resolve(e.target.result ? e.target.result.value : null);
                 cursorRequest.onerror = () => resolve(null);
@@ -1612,7 +1641,7 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
 
             if (lastChunk) {
                 chunkIndex = lastChunk.chunkIndex + 1;
-                // We need the total loaded bytes to resume correctly
+
                 const allChunksTx = db.transaction([CHUNK_STORE_NAME], "readonly");
                 const allChunksStore = allChunksTx.objectStore(CHUNK_STORE_NAME);
                 const allChunksReq = allChunksStore.getAll(range);
@@ -1631,7 +1660,7 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
         const fetchOptions = {
             method: originalRequest ? originalRequest.method : 'GET',
             headers: {},
-            credentials: 'include', // Important for cookies
+            credentials: 'include',
             signal: abortController.signal
         };
 
@@ -1648,7 +1677,6 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
             });
         }
 
-        // Add cookies, referer and origin if available
         const storedHeaders = urlToHeaderMap.get(url);
         if (storedHeaders) {
             if (storedHeaders.cookie) {
@@ -1662,8 +1690,7 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
                 fetchOptions.headers['Origin'] = storedHeaders.origin;
             }
         }
-        
-        // Manual override from requestHeaders if present
+
         const manualReferer = originalRequest?.requestHeaders?.find(h => h.name.toLowerCase() === 'referer')?.value;
         if (manualReferer) fetchOptions.referrer = manualReferer;
 
@@ -1692,34 +1719,32 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
         const contentType = response.headers.get('content-type');
 
         if (!isResuming && speedBoostEnabled && supportsRanges && total > 2 * 1024 * 1024 && connections > 1) {
-            // Cancel current single stream and switch to parallel
-            // We use reader.cancel() if supported or just abort the controller
+
             if (response.body && response.body.cancel) {
                 response.body.cancel();
             } else {
                 abortController.abort();
             }
-            
-            // Re-prepare options for parallel (new signal)
+
             const parallelOptions = { ...fetchOptions };
-            delete parallelOptions.signal; 
-            
+            delete parallelOptions.signal;
+
             return handleParallelFetchDownload(url, filename, total, connections, parallelOptions, downloadId, contentType);
         }
-        
+
         activeDownloads.set(downloadId, { loaded: resumeOffset, total: total, abortController: abortController, url: url });
         await saveDownloadState(downloadId, { url, filename, total, loaded: resumeOffset, originalRequest });
 
         const reader = response.body.getReader();
         let loaded = resumeOffset;
         let lastReportTime = 0;
-        
+
         const writeQueue = [];
-        const MAX_WRITE_QUEUE = 3; 
+        const MAX_WRITE_QUEUE = 3;
 
         let currentBuffer = [];
         let currentBufferSize = 0;
-        const BUFFER_THRESHOLD = 1024 * 1024; // 1MB buffer
+        const BUFFER_THRESHOLD = 1024 * 1024;
 
         async function flushBuffer() {
             if (currentBuffer.length === 0) return;
@@ -1734,26 +1759,25 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
                 combined.set(b, offset);
                 offset += b.length;
             }
-            
+
             const writePromise = storeChunkInCache(downloadId, chunkIndex++, combined);
             writeQueue.push(writePromise);
             if (writeQueue.length >= MAX_WRITE_QUEUE) {
                 await writeQueue.shift();
             }
-            // Periodically update state in storage
+
             saveDownloadState(downloadId, { url, filename, total, loaded, originalRequest });
         }
 
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            
+
             currentBuffer.push(value);
             currentBufferSize += value.length;
             loaded += value.length;
             activeDownloads.set(downloadId, { loaded, total, abortController, url: url });
 
-            // Update UI frequently
             const now = Date.now();
             if (now - lastReportTime > 100) {
                 lastReportTime = now;
@@ -1770,12 +1794,11 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
                 await flushBuffer();
             }
         }
-        
+
         await flushBuffer();
-        
-        // Ensure all pending writes finish
+
         await Promise.all(writeQueue);
-        
+
         browser.runtime.sendMessage({
             action: 'downloadProgress',
             id: downloadId,
@@ -1786,10 +1809,8 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
 
         const finalFilename = filename || getFileName(url);
 
-        // Store metadata in cache to signal chunked download
         await storeInCache(downloadId, null, contentType);
-        
-        // Add to queue instead of opening immediately
+
         pendingSaveQueue.push({ id: downloadId, url, filename: finalFilename });
         processSaveQueue();
 
@@ -1799,46 +1820,40 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
         browser.runtime.sendMessage({ action: 'downloadComplete', id: downloadId, url: url }).catch(() => {});
 
     } catch (error) {
-        // Find the downloadId if possible to cleanup
+
         let targetId = downloadId;
         if (targetId) activeDownloads.delete(targetId);
-        
+
         if (error.name === 'AbortError') {
-            console.log("Download aborted by user or system.");
             browser.runtime.sendMessage({ action: 'downloadError', url: url, error: 'USER_CANCELED' }).catch(() => {});
-            removeDownloadState(targetId); // Also cleanup on manual abort to be sure
+            removeDownloadState(targetId);
         } else {
             console.error("Background fetch download failed:", error);
             browser.runtime.sendMessage({ action: 'downloadError', url: url, error: error.message }).catch(() => {});
-            // [NEW] Clear state on error to avoid infinite retry loops on startup if the error is persistent
+
             removeDownloadState(targetId);
         }
     }
 }
 
-
-// Set default settings on install
 browser.runtime.onInstalled.addListener(async (details) => {
     if (details.reason === 'install') {
         const defaults = {
-            'download-method': 'browser', // Default to Native for direct experience
+            'download-method': 'browser',
             'mime-detection': '1',
             'url-detection': '1',
             'media-cache': '1'
         };
         await browser.storage.local.set(defaults);
-        
+
         browser.tabs.create({
             url: browser.runtime.getURL('installed.md'),
         });
     }
 });
 
-
-// Initialize the listener
 initListener();
 
-// Initialize popup state
 browser.storage.local.get('open-preference', function (result) {
     if (result['open-preference'] === 'popup') {
         browser.action.setPopup({ popup: 'popup.html' });
@@ -1847,10 +1862,9 @@ browser.storage.local.get('open-preference', function (result) {
     }
 });
 
-// Clear local storage when message is received
 browser.runtime.onMessage.addListener((message) => {
     if (message.action === 'clearStorage') {
-        // Get all active download URLs
+
         const activeUrls = new Set();
         for (const [key, value] of activeDownloads) {
             if (value.url) activeUrls.add(value.url);
@@ -1868,9 +1882,6 @@ browser.runtime.onMessage.addListener((message) => {
             }
         });
 
-        // Also clear IndexedDB cache, but maybe we should also keep active ones? 
-        // For now, let's just clear it as before, or skip if we want to be safe.
-        // Usually, IndexedDB is only for completed fetch downloads or stream segments.
         openCacheDB().then(db => {
             const tx = db.transaction([STORE_NAME], "readwrite");
             const store = tx.objectStore(STORE_NAME);
@@ -1885,17 +1896,15 @@ browser.runtime.onMessage.addListener((message) => {
     }
 });
 
-// This is used to open the popup.html file when the add-on icon is clicked, and to open the installed.md and when the add-on is installed.
 browser.action.onClicked.addListener((tab) => {
     browser.storage.local.get('open-preference', function (result) {
-        console.log('Open preference:', result['open-preference']);
         if (result['open-preference'] !== 'window') {
-            // Open the popup in a new tab
+
             browser.tabs.create({
                 url: browser.runtime.getURL(`popup.html`),
             });
         } else {
-            // Open the popup in a new window
+
             browser.windows.create({
                 url: browser.runtime.getURL(`popup.html`),
                 type: 'popup',
@@ -1910,46 +1919,35 @@ browser.runtime.onStartup.addListener(initListener);
 
 browser.runtime.setUninstallURL(`https://github.com/anpa26/website-media-downloader`);
 
-// ----------------- Capture & cache media response bodies -----------------
-// We use onHeadersReceived to detect Content-Type, and if it's a media type we attach
-// a filterResponseData stream to capture the response body and store it into IndexedDB.
-// ------------------------------------------------------------------------------
-
 let cacheListener = null;
 let mediaCacheEnabled = false;
 
-// helper to safely remove current listener
 function detachCacheListener() {
     if (!cacheListener) return;
     try {
         browser.webRequest.onBeforeRequest.removeListener(cacheListener);
-    } catch (e) { /* ignore if already removed */ }
+    } catch (e) {  }
     cacheListener = null;
     console.debug("Cache listener detached.");
 }
 
-// attach listener (only when we already know mediaCacheEnabled === true)
 function attachCacheListener() {
-    if (cacheListener) return; // already attached
+    if (cacheListener) return;
 
-    // guard: if runtime doesn't support filterResponseData, don't attach
     if (!browser.webRequest || !browser.webRequest.filterResponseData) {
         console.warn("filterResponseData not available; not attaching cache listener.");
         return;
     }
 
-    const requestBuffers = new Map(); // requestId -> { chunks: [], size: 0, index: 0 }
+    const requestBuffers = new Map();
 
     cacheListener = (details) => {
         try {
-            // quick checks; avoid any async storage calls here
+
             if (details.incognito) return;
-            
-            // CRITICAL: Only intercept if it looks like media. 
-            // Intercepting everything (CSS, JS) breaks the browser.
+
             if (!detectionRegex.test(details.url)) return;
 
-            // attach filter to stream & capture the response body
             let filter;
             try {
                 filter = browser.webRequest.filterResponseData(details.requestId);
@@ -1958,7 +1956,7 @@ function attachCacheListener() {
                 return;
             }
 
-            const downloadId = details.url; // For auto-cache, we use URL as ID
+            const downloadId = details.url;
             requestBuffers.set(details.requestId, { chunks: [], size: 0, index: 0 });
 
             const flushBuffer = async (reqId) => {
@@ -1980,15 +1978,15 @@ function attachCacheListener() {
 
             filter.ondata = (event) => {
                 try {
-                    // Write back to browser IMMEDIATELY to avoid blocking rendering
+
                     filter.write(event.data);
-                    
+
                     const state = requestBuffers.get(details.requestId);
                     if (state) {
                         state.chunks.push(event.data);
                         state.size += event.data.byteLength;
 
-                        if (state.size >= 1024 * 1024) { // 1MB buffer
+                        if (state.size >= 1024 * 1024) {
                             flushBuffer(details.requestId).catch(err => console.error("Failed to flush buffer:", err));
                         }
                     }
@@ -2001,9 +1999,8 @@ function attachCacheListener() {
                     await flushBuffer(details.requestId);
                     requestBuffers.delete(details.requestId);
                     filter.disconnect();
-                    // Store metadata in cache to signal chunked download
+
                     await storeInCache(downloadId, null, 'application/octet-stream');
-                    console.log("Cached response chunks for:", details.url);
                 } catch (e) {
                     console.error("Failed to cache response body for", details.url, e);
                 }
@@ -2019,14 +2016,13 @@ function attachCacheListener() {
 
     browser.webRequest.onBeforeRequest.addListener(
         cacheListener,
-        { urls: ["<all_urls>"], /*types: ["media", "object"]*/ }, // Types can't work with MPD files as the MPD request is categorized as "xmlhttprequest"
+        { urls: ["<all_urls>"],  },
         ["blocking"]
     );
 
     console.debug("Cache listener attached.");
 }
 
-// read initial setting from storage and attach/detach accordingly
 async function initCacheState() {
     try {
         const res = await browser.storage.local.get('media-cache');
@@ -2039,19 +2035,18 @@ async function initCacheState() {
         }
     } catch (e) {
         console.error("Failed to read media-cache setting:", e);
-        // default to detached to avoid blocking requests
+
         mediaCacheEnabled = false;
         detachCacheListener();
     }
 }
 
-// watch for runtime changes to storage and update attachment immediately
 browser.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local') return;
     if (!Object.prototype.hasOwnProperty.call(changes, 'media-cache')) return;
 
     const newEnabled = !!isFlagEnabled(changes['media-cache'].newValue);
-    if (newEnabled === mediaCacheEnabled) return; // no change
+    if (newEnabled === mediaCacheEnabled) return;
 
     mediaCacheEnabled = newEnabled;
     if (mediaCacheEnabled) {
@@ -2061,12 +2056,10 @@ browser.storage.onChanged.addListener((changes, area) => {
     }
 });
 
-// optional: message API to force re-init from elsewhere
 browser.runtime.onMessage.addListener((message) => {
     if (message && message.action === 'initCacheListener') {
         initCacheState();
     }
 });
 
-// do initial setup
 initCacheState();
