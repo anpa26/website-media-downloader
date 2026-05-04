@@ -265,6 +265,14 @@
               <mdui-divider></mdui-divider>
               <div class="setting-item">
                 <div class="setting-text">
+                  <h3 data-translate="backgroundDownloadTitle">Background download</h3>
+                  <p data-translate="backgroundDownloadExplain">Allows downloads to continue in the background.</p>
+                </div>
+                <mdui-switch id="background-download"></mdui-switch>
+              </div>
+              <mdui-divider></mdui-divider>
+              <div class="setting-item">
+                <div class="setting-text">
                   <h3 data-translate="mpdFixCheckbox">Fix MPD files</h3>
                 </div>
                 <mdui-switch id="mpd-fix"></mdui-switch>
@@ -330,6 +338,7 @@
   </div>
 
   <script src="translations.js"></script>
+  <script src="libraries/client-zip.js"></script>
   <script src="popup.js"></script>
 </body>
 

@@ -776,5 +776,13 @@
     "zipStartedInBackground": {
         "message": "ZIP download started in background",
         "description": "Notification message when the ZIP download process is moved to the background script."
+    },
+    "backgroundDownloadTitle": {
+        "message": "Background download",
+        "description": "The title of the background download setting."
+    },
+    "backgroundDownloadExplain": {
+        "message": "Allows downloads to continue in the background. If disabled, downloads will run in the popup and stop if it's closed (no new tabs on mobile).",
+        "description": "The explanation of the background download setting."
     }
 }

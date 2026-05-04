@@ -742,5 +742,13 @@
     "zipStartedInBackground": {
         "message": "Pengunduhan ZIP dimulai di latar belakang",
         "description": "Pesan notifikasi saat proses unduhan ZIP dipindahkan ke skrip latar belakang."
+    },
+    "backgroundDownloadTitle": {
+        "message": "Unduhan latar belakang",
+        "description": "Judul pengaturan unduhan latar belakang."
+    },
+    "backgroundDownloadExplain": {
+        "message": "Memungkinkan unduhan berlanjut di latar belakang. Jika dimatikan, unduhan akan berjalan di popup dan berhenti otomatis jika popup ditutup (tanpa buka tab baru di seluler).",
+        "description": "Penjelasan pengaturan unduhan latar belakang."
     }
 }

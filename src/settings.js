@@ -34,7 +34,7 @@ async function initializeSettings() {
         'url-detection', 'mime-detection', 'hide-segments', 
         'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle',
         'media-notification', 'download-method', 'media-cache', 'speed-boost', 'connections', 'stream-download',
-        'stream-quality', 'mpd-fix', 'open-preference',
+        'stream-quality', 'mpd-fix', 'background-download', 'open-preference',
         'filename-template', 'disable-rename-dialog', 'history-page'
     ];
 
@@ -46,7 +46,8 @@ async function initializeSettings() {
         if (value === undefined) {
             const defaultsEnabled = [
                 'url-detection', 'mime-detection', 'history-page', 
-                'media-notification', 'only-video', 'only-audio', 'only-stream'
+                'media-notification', 'only-video', 'only-audio', 'only-stream',
+                'background-download'
             ];
             if (defaultsEnabled.includes(setting)) {
                 value = '1';
@@ -72,6 +73,11 @@ async function initializeSettings() {
             element.checked = value === '1' || value === true;
             element.addEventListener('change', () => {
                 browser.storage.local.set({ [setting]: element.checked ? '1' : '0' });
+                
+                // Special dependency logic
+                if (setting === 'background-download') {
+                    syncNotificationSetting(element.checked);
+                }
             });
             continue;
         }
@@ -189,6 +195,27 @@ async function initializeSettings() {
             browser.storage.local.set({ 'theme-color': newColor });
             mdui.setColorScheme(newColor);
         });
+    }
+
+    // Initial sync for media-notification dependency
+    const bgDlSwitch = document.getElementById('background-download');
+    if (bgDlSwitch) {
+        syncNotificationSetting(bgDlSwitch.checked);
+    }
+}
+
+function syncNotificationSetting(isBgEnabled) {
+    const notificationSwitch = document.getElementById('media-notification');
+    if (!notificationSwitch) return;
+
+    if (!isBgEnabled) {
+        // If BG download is off, force notification off and disable it
+        notificationSwitch.checked = false;
+        notificationSwitch.disabled = true;
+        browser.storage.local.set({ 'media-notification': '0' });
+    } else {
+        // Re-enable the switch if BG download is on
+        notificationSwitch.disabled = false;
     }
 }
 

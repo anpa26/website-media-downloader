@@ -811,6 +811,7 @@ function createMediaItem(item) {
   const dlBtn = document.createElement('mdui-segmented-button');
   dlBtn.id = 'download-button';
   dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>Download`;
+  if (isSubtitle) dlBtn.style.borderRadius = '100px';
   dlBtn.addEventListener('click', () => {
     if (dlBtn.classList.contains('cancel-active')) {
       browser.runtime.sendMessage({ action: 'cancelDownload', url: bestRequest.originalUrl });
@@ -1385,18 +1386,77 @@ async function downloadAllAsZip(items) {
       downloadItems.push({ url, filename });
     }
 
-    // Send message to background to handle the ZIP process
-    browser.runtime.sendMessage({
-      action: 'startDownloadAll',
-      items: downloadItems
-    });
+    const bgDownloadEnabled = (await browser.storage.local.get('background-download'))['background-download'] !== '0';
 
-    // Notify user that it's starting in background
-    if (typeof mdui !== 'undefined' && mdui.snackbar) {
-      mdui.snackbar({
-        message: browser.i18n.getMessage("zipStartedInBackground") || "ZIP download started in background",
-        placement: "top"
+    if (!bgDownloadEnabled) {
+      // LOCAL ZIP CREATION (POPUP) - Will stop if popup is closed
+      try {
+        const zipEntries = [];
+        progressBar.max = downloadItems.length;
+
+        for (let i = 0; i < downloadItems.length; i++) {
+          const item = downloadItems[i];
+          
+          // Check for cancellation
+          if (window.activeCancellations && window.activeCancellations.has('global_zip')) {
+            throw new Error("Cancelled");
+          }
+
+          progressText.textContent = browser.i18n.getMessage("zipDownloading", [i + 1, downloadItems.length, item.filename]);
+          progressBar.value = i;
+
+          const response = await spoofedFetch(item.url);
+          if (!response.ok) throw new Error(`Failed to download ${item.url}`);
+          
+          const blob = await response.blob();
+          zipEntries.push({ name: item.filename, input: blob });
+        }
+
+        // Generate Zip
+        progressText.textContent = browser.i18n.getMessage("zipGenerating") || "Generating ZIP archive...";
+        progressBar.indeterminate = true;
+
+        const zipBlob = await downloadZip(zipEntries).blob();
+        const zipName = `downloads_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`;
+
+        const blobUrl = URL.createObjectURL(zipBlob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = zipName;
+        document.body.appendChild(a);
+        a.click();
+
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+          progressContainer.style.display = 'none';
+        }, 2000);
+
+        if (typeof mdui !== 'undefined' && mdui.snackbar) {
+          mdui.snackbar({ message: browser.i18n.getMessage("zipComplete") || "ZIP download complete!", placement: "top" });
+        }
+
+      } catch (e) {
+        if (e.message !== "Cancelled") {
+          console.error("Local ZIP error:", e);
+          showDialog("ZIP error: " + e.message);
+        }
+        progressContainer.style.display = 'none';
+      }
+    } else {
+      // Send message to background to handle the ZIP process
+      browser.runtime.sendMessage({
+        action: 'startDownloadAll',
+        items: downloadItems
       });
+
+      // Notify user that it's starting in background
+      if (typeof mdui !== 'undefined' && mdui.snackbar) {
+        mdui.snackbar({
+          message: browser.i18n.getMessage("zipStartedInBackground") || "ZIP download started in background",
+          placement: "top"
+        });
+      }
     }
 
   } catch (error) {
@@ -1612,8 +1672,14 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
     // Manually populate UI cache to ensure finishDownloadUI works
     uiCache.set(url, { element: mediaDiv, loadingBar, statusInfo, progressContainer });
 
-    const downloadMethod = await browser.storage.local.get('download-method').then(res => res['download-method']);
-    const streamPref = await browser.storage.local.get('stream-download').then(res => res['stream-download'] || 'offline');
+    const dlSettings = await browser.storage.local.get(['download-method', 'stream-download', 'background-download']);
+    let downloadMethod = dlSettings['download-method'] || 'browser';
+    let streamPref = dlSettings['stream-download'] || 'offline';
+    const bgDownloadEnabled = dlSettings['background-download'] !== '0'; // Default ON
+
+    if (!bgDownloadEnabled) {
+        if (streamPref === 'offline') streamPref = 'stream';
+    }
 
    if (isStream) {
       if (url.toLowerCase().includes('.m3u8')) {
@@ -1758,8 +1824,15 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false) {
         item: { url, filename: newName, timestamp: Date.now(), pageUrl, pageTitle } 
     });
 
-    const downloadMethod = await browser.storage.local.get('download-method').then(res => res['download-method']);
-    const streamPref = await browser.storage.local.get('stream-download').then(res => res['stream-download']);
+    const dlSettings = await browser.storage.local.get(['download-method', 'stream-download', 'background-download']);
+    let downloadMethod = dlSettings['download-method'] || 'browser';
+    let streamPref = dlSettings['stream-download'] || 'offline';
+    const bgDownloadEnabled = dlSettings['background-download'] !== '0'; // Default ON
+
+    if (!bgDownloadEnabled) {
+        if (streamPref === 'offline') streamPref = 'stream';
+    }
+
     const isStream = url.toLowerCase().includes('.m3u8') || url.toLowerCase().includes('.mpd');
 
     if (isStream && streamPref === 'offline') {
@@ -1769,13 +1842,11 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false) {
         active: true
       });
       finishDownloadUI(mediaDiv.dataset.downloadId || url);
-    } else if (downloadMethod === 'browser') {
-      // For Native downloads, we want to ensure it doesn't just download a chunk.
-      // We can try to strip range-related parameters if they exist in the URL
+    } else if (downloadMethod === 'browser' || (!bgDownloadEnabled && isStream)) {
+      // Use native download if requested OR if it's a stream and BG is off (download manifest only)
       let downloadUrl = url;
       try {
         const urlObj = new URL(url);
-        // Common parameters used for range/offset that might limit size
         const rangeParams = ['range', 'offset', 'start', 'end'];
         let changed = false;
         rangeParams.forEach(param => {
@@ -1787,23 +1858,95 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false) {
         if (changed) downloadUrl = urlObj.toString();
       } catch (e) {}
 
-      const id = await browser.downloads.download({
-        url: downloadUrl,
-        filename: newName,
-        saveAs: false // Already showed our own dialog
-      });
-      mediaDiv.dataset.downloadId = id;
-      // UI cleanup will be handled by background progress listener
+      if (downloadMethod === 'browser') {
+        const id = await browser.downloads.download({
+          url: downloadUrl,
+          filename: newName,
+          saveAs: false
+        });
+        mediaDiv.dataset.downloadId = id;
+      } else {
+        // Normal manifest download without native download manager if possible
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = newName;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          finishDownloadUI(url, true);
+        }, 1000);
+      }
     } else {
-      // Send message to background to start download
-      browser.runtime.sendMessage({
-        action: 'startFetchDownload',
-        url: url,
-        downloadId: mediaDiv.dataset.downloadId,
-        filename: newName,
-        request: targetRequest
-      });
-      // UI updates will be handled by the message listener
+      // Fetch-based download
+      if (!bgDownloadEnabled) {
+        // DOWNLOAD IN EXTENSION (POPUP) - Will stop if popup is closed
+        try {
+          console.log("Starting local fetch for:", url);
+          const response = await spoofedFetch(url);
+          console.log("Fetch response received, status:", response.status);
+          
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+          const contentLength = +(response.headers.get('Content-Length') || 0);
+          console.log("Content length:", contentLength);
+          
+          const reader = response.body.getReader();
+          let receivedLength = 0;
+          let chunks = [];
+
+          loadingBar.removeAttribute('indeterminate');
+          if (contentLength > 0) loadingBar.max = contentLength;
+
+          while(true) {
+            if (window.activeCancellations.has(url)) {
+              reader.cancel();
+              throw new Error("Cancelled");
+            }
+            const {done, value} = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            receivedLength += value.length;
+
+            if (contentLength > 0) {
+              loadingBar.value = receivedLength;
+              const percent = Math.round((receivedLength / contentLength) * 100);
+              statusInfo.textContent = `Downloading (Popup): ${percent}% (${(receivedLength/1048576).toFixed(1)}MB / ${(contentLength/1048576).toFixed(1)}MB)`;
+            } else {
+              statusInfo.textContent = `Downloading (Popup): ${(receivedLength/1048576).toFixed(1)}MB`;
+            }
+          }
+
+          console.log("Download finished, creating blob...");
+          const blob = new Blob(chunks);
+          const blobUrl = URL.createObjectURL(blob);
+
+          const a = document.createElement("a");
+          a.href = blobUrl;
+          a.download = newName;
+          document.body.appendChild(a);
+          a.click();
+
+          setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(blobUrl);
+            finishDownloadUI(url, true);
+          }, 1000);
+        } catch (e) {
+          console.error("Popup fetch error:", e);
+          if (e.message !== "Cancelled") showDialog("Download error: " + e.message);
+          finishDownloadUI(url);
+        }
+      } else {
+        // Send message to background to start download (Background Persistence)
+        browser.runtime.sendMessage({
+          action: 'startFetchDownload',
+          url: url,
+          downloadId: mediaDiv.dataset.downloadId,
+          filename: newName,
+          request: targetRequest
+        });
+      }
     }  } catch (error) {
     showDialog("Download error: " + error.message);
     finishDownloadUI(url);
