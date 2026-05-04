@@ -177,7 +177,13 @@ async function triggerDownload() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Apply theme color personalization
+    const colorResult = await browser.storage.local.get('theme-color');
+    if (colorResult['theme-color'] && typeof mdui !== 'undefined') {
+        mdui.setColorScheme(colorResult['theme-color']);
+    }
+
     if (targetUrl) {
         triggerDownload();
     } else {

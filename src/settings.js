@@ -35,7 +35,7 @@ async function initializeSettings() {
         'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle',
         'media-notification', 'download-method', 'media-cache', 'speed-boost', 'connections', 'stream-download',
         'stream-quality', 'mpd-fix', 'open-preference',
-        'filename-template', 'history-page'
+        'filename-template', 'disable-rename-dialog', 'history-page'
     ];
 
     for (const setting of settings) {
@@ -57,7 +57,7 @@ async function initializeSettings() {
                 value = '0';
                 browser.storage.local.set({ [setting]: value });
             }
-            if (setting === 'speed-boost') {
+            if (setting === 'speed-boost' || setting === 'disable-rename-dialog') {
                 value = '0'; // Default off
                 browser.storage.local.set({ [setting]: value });
             }
@@ -146,11 +146,27 @@ async function initializeSettings() {
     // Filename template auto-generator
     const autoGenBtn = document.getElementById('auto-generate-template');
     const filenameInput = document.getElementById('filename-template');
+    const disableRenameSwitch = document.getElementById('disable-rename-dialog');
+
+    const updateDisableRenameState = () => {
+        // Option is now always enabled as requested
+        if (disableRenameSwitch) {
+            disableRenameSwitch.disabled = false;
+        }
+    };
+
+    if (filenameInput) {
+        filenameInput.addEventListener('input', updateDisableRenameState);
+        // Sync state on load
+        setTimeout(updateDisableRenameState, 100);
+    }
+
     if (autoGenBtn && filenameInput) {
         autoGenBtn.addEventListener('click', () => {
             const defaultTemplate = "{title} - {name}";
             filenameInput.value = defaultTemplate;
             browser.storage.local.set({ 'filename-template': defaultTemplate });
+            updateDisableRenameState();
             
             // Show a brief snackbar feedback if mdui is available
             if (typeof mdui !== 'undefined' && mdui.snackbar) {

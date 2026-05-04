@@ -1432,7 +1432,9 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
    if(!targetRequest) throw new Error("Data lost");
 
    const defaultName = getFileName(url, 100);
-   const template = await browser.storage.local.get('filename-template').then(res => res['filename-template']);
+   const settings = await browser.storage.local.get(['filename-template', 'disable-rename-dialog']);
+   const template = settings['filename-template'];
+   const disableRename = settings['disable-rename-dialog'] === '1';
    let finalName = defaultName;
 
    if (template) {
@@ -1449,8 +1451,12 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
        finalName += audioExt;
    }
 
-   const newName = await showRenameDialog(finalName);
-   if (newName === null) return; 
+   // Show Rename Dialog (skip if disableRename is true)
+   let newName = finalName;
+   if (!disableRename) {
+       newName = await showRenameDialog(finalName);
+       if (newName === null) return; 
+   }
 
     // Update button to Cancel
     const dlBtn = mediaDiv.querySelector('#audio-only-button');
@@ -1606,21 +1612,25 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false) {
    // Get default filename
    const defaultName = getFileName(url, 100);
    mediaDiv.dataset.downloadId = 'dl_' + Date.now(); // Temporary ID for UI tracking
-    const template = await browser.storage.local.get('filename-template').then(res => res['filename-template']);
+    const settings = await browser.storage.local.get(['filename-template', 'disable-rename-dialog']);
+    const template = settings['filename-template'];
+    const disableRename = settings['disable-rename-dialog'] === '1';
     let finalName = defaultName;
 
     if (template) {
         finalName = await generateTemplateName(template, url, defaultName);
     }
 
-    // Show Rename Dialog (skip if silent)
+    // Show Rename Dialog (skip if silent or if disableRename is true)
     let newName = finalName;
     if (!silent) {
-      newName = await showRenameDialog(finalName);
-      if (newName === null) {
-          finishDownloadUI(mediaDiv.dataset.downloadId);
-          return;
-      } // User cancelled
+      if (!disableRename) {
+        newName = await showRenameDialog(finalName);
+        if (newName === null) {
+            finishDownloadUI(mediaDiv.dataset.downloadId);
+            return;
+        } // User cancelled
+      }
     }
 
     updateDownloadingCount(1);
@@ -1737,7 +1747,10 @@ async function generateTemplateName(template, url, originalName) {
 }
 
 function showRenameDialog(initialValue) {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
+        const settings = await browser.storage.local.get('disable-rename-dialog');
+        const isAlreadyDisabled = settings['disable-rename-dialog'] === '1';
+
         const dialog = document.createElement('mdui-dialog');
         dialog.headline = browser.i18n.getMessage("renameDialogHeadline") || "Download as...";
         
@@ -1746,6 +1759,19 @@ function showRenameDialog(initialValue) {
         textField.style.marginTop = '16px';
         textField.setAttribute('label', browser.i18n.getMessage("renameDialogLabel") || "Filename");
         dialog.appendChild(textField);
+
+        let checkbox = null;
+        if (!isAlreadyDisabled) {
+            const checkboxContainer = document.createElement('div');
+            checkboxContainer.style.marginTop = '12px';
+            checkboxContainer.style.display = 'flex';
+            checkboxContainer.style.alignItems = 'center';
+
+            checkbox = document.createElement('mdui-checkbox');
+            checkbox.textContent = browser.i18n.getMessage("dontShowRenameDialogCheckbox") || "Don't show this again";
+            checkboxContainer.appendChild(checkbox);
+            dialog.appendChild(checkboxContainer);
+        }
 
         const cancelBtn = document.createElement('mdui-button');
         cancelBtn.slot = "action";
@@ -1761,6 +1787,14 @@ function showRenameDialog(initialValue) {
         okBtn.variant = "tonal";
         okBtn.textContent = browser.i18n.getMessage("renameDialogDownloadButton") || "Download";
         okBtn.addEventListener('click', () => {
+            if (checkbox && checkbox.checked) {
+                browser.storage.local.set({ 'disable-rename-dialog': '1' });
+                // Sync settings UI if it's open in another tab/part of popup
+                const settingsSwitch = document.getElementById('disable-rename-dialog');
+                if (settingsSwitch) {
+                    settingsSwitch.checked = true;
+                }
+            }
             dialog.open = false;
             resolve(textField.value);
         });

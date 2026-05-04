@@ -581,6 +581,10 @@
         "message": "{title}, {host}, {date}, {time}, {name}",
         "description": "Teks pembantu untuk bagian template nama file, menunjukkan placeholder yang tersedia."
     },
+    "disableRenameDialogTitle": {
+        "message": "Matikan dialog ubah nama file",
+        "description": "Judul sakelar matikan dialog ubah nama file di tab pengaturan."
+    },
     "renameDialogHeadline": {
         "message": "Simpan sebagai...",
         "description": "Judul dialog untuk mengubah nama file sebelum mengunduh."
@@ -592,6 +596,10 @@
     "renameDialogDownloadButton": {
         "message": "Download",
         "description": "Teks tombol download di dialog ubah nama."
+    },
+    "dontShowRenameDialogCheckbox": {
+        "message": "Jangan tampilkan lagi",
+        "description": "Teks kotak centang untuk mematikan dialog ubah nama di masa mendatang."
     },
     "renameDialogCancelButton": {
         "message": "Batal",

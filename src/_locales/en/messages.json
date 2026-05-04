@@ -615,6 +615,10 @@
         "message": "{title}, {host}, {date}, {time}, {name}",
         "description": "The helper text for the filename template section, showing available placeholders."
     },
+    "disableRenameDialogTitle": {
+        "message": "Disable rename file dialog",
+        "description": "The title of the disable rename file dialog switch in the settings tab."
+    },
     "renameDialogHeadline": {
         "message": "Download as...",
         "description": "The headline of the dialog to rename the file before downloading."
@@ -626,6 +630,10 @@
     "renameDialogDownloadButton": {
         "message": "Download",
         "description": "The text of the download button in the rename dialog."
+    },
+    "dontShowRenameDialogCheckbox": {
+        "message": "Don't show this again",
+        "description": "The text of the checkbox to disable the rename dialog in the future."
     },
     "renameDialogCancelButton": {
         "message": "Cancel",

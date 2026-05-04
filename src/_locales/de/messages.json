@@ -586,6 +586,10 @@
         "message": "{title}, {host}, {date}, {time}, {name}",
         "description": "The helper text for the filename template section, showing available placeholders."
     },
+    "disableRenameDialogTitle": {
+        "message": "Disable rename file dialog",
+        "description": "The title of the disable rename file dialog switch in the settings tab."
+    },
     "renameDialogHeadline": {
         "message": "Speichern unter...",
         "description": "The headline of the dialog to rename the file before downloading."
