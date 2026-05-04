@@ -39,13 +39,13 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["src/content_detector.js"],
+      "js": ["content_detector.js"],
       "run_at": "document_end"
     }
   ],
   "icons": {
-    "96": "src/icons/icon.svg",
-    "128": "src/icons/icon.svg"
+    "96": "icons/icon.svg",
+    "128": "icons/icon.svg"
   },
   "action": {
     "default_title": "__MSG_actionTitle__"
