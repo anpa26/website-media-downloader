@@ -1,6 +1,6 @@
 # Website Media Downloader
 
-[![Version](https://img.shields.io/badge/version-1.6.5-blue.svg)](src/manifest.json)
+[![Version](https://img.shields.io/badge/version-1.7.1-blue.svg)](src/manifest.json)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE.md)
 [![Platform](https://img.shields.io/badge/platform-Firefox%20%7C%20Android-orange.svg)](#installation)
 
@@ -11,12 +11,22 @@ Designed with a focus on privacy and technical transparency, all operations—in
 ---
 
 ## Key Features
-- **QR Code Sharing**: Generate QR codes for any detected media to easily transfer links to mobile devices.
-- **Batch Operations**: Multi-select support for downloading or removing multiple items at once.
-- **Advanced Filtering**: Filter results by category: Video, Audio, Streams, Images, or Subtitles.
-- **Real-time Search**: Instantly find specific files using the integrated search bar.
-- **Intelligent Deduplication**: Automatically hides duplicate media entries based on filename and metadata.
-- **Offline Stream Conversion**: Merges stream segments (HLS/DASH) locally in the browser.
+- **Download Video**: Seamlessly acquire high-quality video content from various sources.
+- **Download Audio Only**: Effortlessly extract and download audio-only tracks from any media.
+- **Download Image**: Quickly capture and save images, including those from complex DOM structures.
+- **Material Design 3**: A modern, responsive, and intuitive interface powered by MDUI components.
+- **Universal Detection**: Captures real-time network requests and performs deep DOM scanning to identify hidden media assets.
+- **Header Spoofing**: Automatically replicates Referer, Origin, and Cookies to bypass hotlinking and server-side access restrictions.
+- **Offline Stream Conversion**: Merges HLS (M3U8) and DASH (MPD) segments locally in the browser without external servers.
+- **QR Code Sharing**: Instantly generate QR codes for any detected media for easy transfer to mobile devices.
+- **Batch Operations**: Multi-select support for downloading or removing multiple assets simultaneously.
+- **Advanced Filtering**: Granular toggles to filter results by category: Video, Audio, Streams, Images, or Subtitles.
+- **Real-time Search**: Quickly locate specific files with the integrated instant search bar.
+- **Download History**: Keep track of your previously detected and downloaded media for easy access later.
+- **Background Downloading**: Supports background processes, allowing downloads to continue even after closing the extension popup.
+- **Speed Boost**: Utilizes multi-threaded fetching and parallel acquisition to maximize download speeds and efficiency.
+- **Intelligent Deduplication**: Automatically hides redundant entries based on filename and metadata.
+- **Multi-language Support**: Fully localized for English, Indonesian, German, French, and Portuguese.
 
 ## How to Use
 1. **Detection**: Navigate to any website with media content. The extension automatically detects assets in the background.
@@ -29,12 +39,14 @@ Designed with a focus on privacy and technical transparency, all operations—in
 
 ## Disclaimer
 
-- **User Responsibility**: The use of this tool is entirely at the user's own risk. Users are responsible for ensuring their actions comply with the terms of service of the websites they visit and all applicable laws and regulations. The developers assume no liability for any misuse of this tool.
+- **Educational and Personal Use**: This tool is provided for educational and personal use only.
+- **User Responsibility**: The use of this tool is entirely at the user's own risk. Users are solely responsible for their actions and any consequences resulting from the use of this tool. It is the user's responsibility to ensure compliance with the terms of service of any website visited and all applicable laws and regulations.
+- **Developer Liability**: The developers are not responsible for any misuse, legal issues, or copyright violations. The developers assume no liability for any consequences resulting from the use of this tool.
 - **Non-Supported Platforms**: This extension **does not support YouTube** or any other platforms that are explicitly restricted by technical or legal limitations. It is intended for use only on websites where media acquisition is permitted.
 
 ---
 
-## Technical Features (v1.6.5)
+## Technical Features (v1.7.1)
 
 ### UI Architecture
 The interface has been completely overhauled using Material Design 3 (MDUI) components, providing a responsive and standardized user experience.
@@ -68,18 +80,24 @@ The extension utilizes header management (Referer, Origin, and Cookies) to repli
 
 ## Installation
 
-Website Media Downloader is optimized for the Firefox ecosystem.
+Website Media Downloader is officially available for the Firefox ecosystem.
 
-### Firefox Desktop
-1. Navigate to `about:config` and set `xpinstall.signatures.required` to `false`.
-2. Open `about:addons` and select "Install Add-on From File...".
-3. Select the extension package from your local directory.
+### Firefox Desktop & Android
+You can install the extension directly from the official Firefox Add-ons store:
 
-### Firefox Android
-1. **Signature Configuration**: Navigate to `about:config` in the address bar. Search for `xpinstall.signatures.required` and set it to `false`.
-2. **Activate Debug Menu**: Navigate to Settings > About Firefox. Tap the Firefox logo five times sequentially to unlock the Debug menu.
-3. **Configure Collection**: Access Settings > Custom Add-on Collection. Input the required Collection ID and Collection Name from your AMO profile.
-4. **Deployment**: The extension will be available for installation within the standard Add-ons menu.
+[**Download on Firefox Add-ons (AMO)**](https://addons.mozilla.org/en-US/firefox/addon/website-media-downloader/)
+
+> [!TIP]
+> **Recommended Platform**: While this extension supports Android, it is **highly recommended to use it on Desktop/PC** for the best experience. Desktop browsers offer better stability for background processing, stream reconstruction, and large batch ZIP downloads.
+
+---
+
+## Troubleshooting
+
+- **Media not detected?** Try refreshing the page and playing the video again. If it still doesn't show up, go to Settings and enable "Detection via server's MIME response".
+- **Download fails?** Some sites use DRM (Digital Rights Management) or encryption. This extension cannot download encrypted content (like Netflix or Amazon Prime).
+- **403 Forbidden on images?** This is often caused by session-based security tokens. It is highly recommended to stay on the current page until downloads are finished. Navigating to the next page or switching lists too quickly can invalidate the request context.
+- **Broken files?** If a converted stream doesn't play, try downloading the "Direct Manifest" and playing it with VLC Media Player.
 
 ---
 

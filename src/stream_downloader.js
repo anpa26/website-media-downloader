@@ -16,7 +16,6 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-// Check for the existence of the browser object and use chrome if not found
 if (typeof browser === 'undefined') {
     var browser = chrome;
 }
@@ -29,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const streamUrl = urlParams.get('url');
     const size = urlParams.get('size');
     const audioOnly = urlParams.get('audioOnly') === 'true';
-    
+
     if (!streamUrl) {
         document.getElementById('status-header').textContent = "Error";
         document.getElementById('status-text').textContent = "No URL provided.";
@@ -46,17 +45,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     closeButton.addEventListener('click', () => window.close());
 
     try {
-        // 1. Get request context from background
+
         const mediaRequests = await browser.runtime.sendMessage({ action: 'getMediaRequests' });
         const requests = mediaRequests[streamUrl];
-        
+
         if (!requests || requests.length === 0) {
             throw new Error("Request details not found in session storage.");
         }
 
-        // Find the specific request if size was provided
         const request = requests.find(r => r.size === size) || requests[0];
-        
+
         const urlParams = new URLSearchParams(window.location.search);
         const customFilename = urlParams.get('filename');
         mediaTitle.textContent = customFilename || getFileName(streamUrl);
@@ -65,7 +63,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const headers = request.requestHeaders || [];
         const downloadMethod = await browser.storage.local.get('download-method').then(res => res['download-method'] || 'fetch');
 
-        // 2. Start the appropriate offline download
         if (streamUrl.toLowerCase().includes('.m3u8')) {
             await downloadM3U8Offline(streamUrl, headers, downloadMethod, loadingBar, request, customFilename, audioOnly);
         } else if (streamUrl.toLowerCase().includes('.mpd')) {
@@ -74,7 +71,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             throw new Error("Unsupported stream format.");
         }
 
-        // 3. Complete
         statusHeader.textContent = "Download Complete!";
         statusText.textContent = "Your file has been saved.";
         loadingBar.setAttribute('value', 1);
@@ -90,7 +86,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// Helper for filename (copied from background.js/popup.js)
 function getFileName(url, maxLength = 30) {
     try {
         let parsedUrl = new URL(url);

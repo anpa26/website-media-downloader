@@ -1,57 +1,65 @@
 {
-  "name": "Website Media Downloader",
-  "manifest_version": 3,
-  "version": "1.6.5",
-  "description": "A powerful tool to download videos, music, and live streams from any website. Usage: 1. Play media on a website, 2. Click the extension icon to detect links, 3. Choose quality and click Download. Supports HLS/M3U8, MPD, and offline conversion.",
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "{924f7c81-8b1e-4b6e-9e7c-8e4a9e1d2c3f}",
-      "data_collection_permissions": {
-        "required": [
-          "none"
+    "name": "Website Media Downloader",
+    "manifest_version": 3,
+    "version": "1.7.1",
+    "description": "__MSG_extensionDescription__",
+    "author": "anpa26",
+    "developer": {
+        "name": "anpa26",
+        "url": "https://anpa.dev/"
+    },
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "{924f7c81-8b1e-4b6e-9e7c-8e4a9e1d2c3f}",
+            "data_collection_permissions": {
+                "required": [
+                    "none"
+                ]
+            }
+        }
+    },
+    "permissions": [
+        "storage",
+        "unlimitedStorage",
+        "downloads",
+        "notifications",
+        "activeTab",
+        "webRequest",
+        "webRequestBlocking",
+        "webRequestFilterResponse",
+        "scripting",
+        "offscreen"
+    ],
+    "optional_permissions": [],
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    "homepage_url": "https://github.com/anpa26/website-media-downloader",
+    "background": {
+        "service_worker": "network_detector.js",
+        "scripts": [
+            "libraries/client-zip.js",
+            "network_detector.js"
         ]
-      }
-    }
-  },
-  "permissions": [
-    "storage",
-    "unlimitedStorage",
-    "downloads",
-    "notifications",
-    "activeTab",
-    "webRequest",
-    "webRequestBlocking",
-    "webRequestFilterResponse",
-    "scripting",
-    "offscreen"
-  ],
-  "optional_permissions": [
-  ],
-  "host_permissions": [
-    "<all_urls>"
-  ],
-  "homepage_url": "https://github.com/anpa26/website-media-downloader",
-  "background": {
-    "service_worker": "network_detector.js",
-    "scripts": [
-      "libraries/client-zip.js",
-      "network_detector.js"
-    ]
-  },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content_detector.js"],
-      "run_at": "document_end"
-    }
-  ],
-  "icons": {
-    "96": "icons/icon.svg",
-    "128": "icons/icon.svg"
-  },
-  "action": {
-    "default_title": "__MSG_actionTitle__"
-  },
-  "default_locale": "en",
-  "options_page": "popup.html?options=true"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "content_detector.js"
+            ],
+            "run_at": "document_end"
+        }
+    ],
+    "icons": {
+        "96": "icons/icon.svg",
+        "128": "icons/icon.svg"
+    },
+    "action": {
+        "default_title": "__MSG_actionTitle__"
+    },
+    "default_locale": "en",
+    "options_page": "popup.html?options=true"
 }

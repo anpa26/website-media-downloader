@@ -96,7 +96,7 @@
 
       <mdui-tab-panel slot="panel" value="history">
         <div id="history-list">
-          <!-- History items will be injected here by popup.js -->
+
         </div>
         <mdui-bottom-app-bar>
           <div style="flex-grow: 1; display: flex; justify-content: center;">
@@ -110,15 +110,14 @@
           <div id="loading-about" style="padding: 40px; text-align: center;">
             <mdui-circular-progress></mdui-circular-progress>
           </div>
-          <!-- Dynamic content will be injected here -->
+
         </div>
       </mdui-tab-panel>
 
       <mdui-tab-panel slot="panel" value="settings">
         <script src="settings.js"></script>
         <div id="settings-container">
-          
-          <!-- Detection settings -->
+
           <div class="settings-group">
             <h2 class="settings-section-title">
               <mdui-icon>
@@ -152,6 +151,25 @@
                 <mdui-switch id="hide-segments"></mdui-switch>
               </div>
               <mdui-divider></mdui-divider>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="mediaNotificationCheckbox">Enable detection notification</h3>
+                  <p data-translate="mediaNotificationExplain">Show a notification when media is detected.</p>
+                </div>
+                <mdui-switch id="media-notification"></mdui-switch>
+              </div>
+            </mdui-card>
+          </div>
+
+          <div class="settings-group">
+            <h2 class="settings-section-title">
+              <mdui-icon>
+                <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+              </mdui-icon>
+              <span data-translate="settingsDisplaySectionTitle">Display List</span>
+            </h2>
+
+            <mdui-card variant="filled">
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="onlyVideoTitle">Show video</h3>
@@ -191,18 +209,9 @@
                 </div>
                 <mdui-switch id="only-subtitle"></mdui-switch>
               </div>
-              <mdui-divider></mdui-divider>
-              <div class="setting-item">
-                <div class="setting-text">
-                  <h3 data-translate="mediaNotificationCheckbox">Enable detection notification</h3>
-                  <p data-translate="mediaNotificationExplain">Show a notification when media is detected.</p>
-                </div>
-                <mdui-switch id="media-notification"></mdui-switch>
-              </div>
             </mdui-card>
           </div>
 
-          <!-- Download settings -->
           <div class="settings-group">
             <h2 class="settings-section-title">
               <mdui-icon>
@@ -299,7 +308,6 @@
             </mdui-card>
           </div>
 
-          <!-- Interface settings -->
           <div class="settings-group">
             <h2 class="settings-section-title">
               <mdui-icon>

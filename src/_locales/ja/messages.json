@@ -1,42 +1,42 @@
 {
     "actionTitle": {
-        "message": "Download media",
+        "message": "メディアをダウンロード",
         "description": "The contents of the context menu when hovering over the extension icon."
     },
     "extensionDescription": {
-        "message": "Download videos, music and live streams to your device!",
+        "message": "ビデオ、音楽、ライブストリームをデバイスにダウンロードします！",
         "description": "The description of the extension shown in the browser's settings page."
     },
     "errorTitle1": {
-        "message": "Something went wrong!",
+        "message": "問題が発生しました！",
         "description": "The 1st title of the error popup, randomly selects one of the titles when there is an error."
     },
     "errorTitle2": {
-        "message": "Oops!",
+        "message": "おっと！",
         "description": "The 2nd title of the error popup."
     },
     "errorTitle3": {
-        "message": "Uh oh!",
+        "message": "あらら！",
         "description": "The 3rd title of the error popup."
     },
     "errorTitle4": {
-        "message": "Error!",
+        "message": "エラー！",
         "description": "The 4th title of the error popup."
     },
     "errorTitle5": {
-        "message": "Annnd it broke!",
+        "message": "壊れてしまいました！",
         "description": "The 5th title of the error popup."
     },
     "errorTitle6": {
-        "message": "Oh no!",
+        "message": "なんてことだ！",
         "description": "The 6th title of the error popup."
     },
     "offlineError": {
-        "message": "The download likely failed because you are offline. Please check your internet connection and try again.",
+        "message": "オフラインのためダウンロードに失敗した可能性があります。インターネット接続を確認して再試行してください。",
         "description": "The error message shown when the user tries to download media while offline."
     },
     "reportIssue": {
-        "message": "Report issue",
+        "message": "問題を報告",
         "description": "The text of the link to report an issue in the error popup."
     },
     "okButton": {
@@ -44,7 +44,7 @@
         "description": "The text of the OK button in the error popup."
     },
     "requestText": {
-        "message": "$METHOD$ request from $SOURCE$ at $TIME$",
+        "message": "$TIME$ に $SOURCE$ から $METHOD$ リクエスト",
         "description": "The text showing which type of request is being made to load the media.",
         "placeholders": {
             "METHOD": {
@@ -62,51 +62,51 @@
         }
     },
     "requestMethodUnknown": {
-        "message": "Unknown",
+        "message": "不明",
         "description": "The text shown when the request method is not recognized."
     },
     "requestSourceUnknown": {
-        "message": "an unknown source",
+        "message": "不明なソース",
         "description": "The text shown when the request source is not recognized."
     },
     "sizeText": {
-        "message": "Size",
+        "message": "サイズ",
         "description": "The text above the size selector in the media list."
     },
     "copyURL": {
-        "message": "Copy URL",
+        "message": "URLをコピー",
         "description": "The text of the button to copy the media URL to clipboard."
     },
     "copyURLSuccess": {
-        "message": "URL copied to clipboard",
+        "message": "URLをクリップボードにコピーしました",
         "description": "The message shown when the URL is successfully copied to clipboard."
     },
     "URLCopyError": {
-        "message": "Failed to copy URL to clipboard",
+        "message": "URLをクリップボードにコピーできませんでした",
         "description": "The error message shown when the URL copy operation fails."
     },
     "previewMedia": {
-        "message": "Preview",
+        "message": "プレビュー",
         "description": "The text of the preview button in the media list."
     },
     "audioOnly": {
-        "message": "Audio-Only",
+        "message": "音声のみ",
         "description": "The text of the audio-only extraction button in the media list."
     },
     "downloadMedia": {
-        "message": "Download",
+        "message": "ダウンロード",
         "description": "The text of the download button in the media list."
     },
     "endOfMediaList": {
-        "message": "That's all we could find! If you don't see the media you're looking for, try starting the media then refreshing the list. If you still don't see it, change media detection method in the settings. For more help, click the '?' button at the bottom left.",
+        "message": "見つかったメディアは以上です！探しているメディアが表示されない場合は、メディアを再生してからリストを更新してみてください。それでも表示されない場合は、設定でメディア検出方法を変更してください。ヘルプが必要な場合は、左下の「？」ボタンをクリックしてください。",
         "description": "The text shown at the end of the media list in the popup."
     },
     "endOfMediaListLink": {
-        "message": "Can't find your media? Submit it here!",
+        "message": "メディアが見つかりませんか？こちらから報告してください！",
         "description": "The text of the link shown at the end of the media list in the popup, which leads to a form to submit undetected media."
     },
     "listLoadError": {
-        "message": "Error retrieving media requests. Here's what went wrong: $ERROR$",
+        "message": "メディアリクエストの取得中にエラーが発生しました。エラー内容: $ERROR$",
         "description": "The error message shown when the media list fails to load.",
         "placeholders": {
             "ERROR": {
@@ -116,11 +116,11 @@
         }
     },
     "noMediaDetected": {
-        "message": "No media detected on this page. To detect media, please start playing the video or audio first, then refresh this list. If it still doesn't appear, try changing the detection method in the settings.",
+        "message": "このページでメディアは検出されませんでした。メディアを検出するには、まずビデオまたはオーディオの再生を開始してから、このリストを更新してください。それでも表示されない場合は、設定で検出方法を変更してみてください。",
         "description": "The message shown when no media is detected on the current page."
     },
     "listClearError": {
-        "message": "Error clearing media list. Here's what went wrong: $ERROR$",
+        "message": "メディアリストの消去中にエラーが発生しました。エラー内容: $ERROR$",
         "description": "The error message shown when the media list fails to clear.",
         "placeholders": {
             "ERROR": {
@@ -130,11 +130,11 @@
         }
     },
     "unknownSize": {
-        "message": "Unknown size",
+        "message": "サイズ不明",
         "description": "The text shown when the size of the media can't be parsed."
     },
     "downloadError": {
-        "message": "Error downloading media. Here's what went wrong: $ERROR$",
+        "message": "メディアのダウンロード中にエラーが発生しました。エラー内容: $ERROR$",
         "description": "The error message shown when the media download fails.",
         "placeholders": {
             "ERROR": {
@@ -144,79 +144,79 @@
         }
     },
     "homeTab": {
-        "message": "Home",
+        "message": "ホーム",
         "description": "The name of the home tab in the popup."
     },
     "settingsTab": {
-        "message": "Settings",
+        "message": "設定",
         "description": "The name of the settings tab in the popup."
     },
     "clearListButton": {
-        "message": "Clear list",
+        "message": "リストを消去",
         "description": "The label of the button to clear the media list."
     },
     "refreshListButton": {
-        "message": "Refresh list",
+        "message": "リストを更新",
         "description": "The label of the button to refresh the media list."
     },
     "settingsDetectionSectionTitle": {
-        "message": "Detection settings",
+        "message": "検出設定",
         "description": "The title of the detection settings section in the settings tab."
     },
     "settingsDownloadSectionTitle": {
-        "message": "Download settings",
+        "message": "ダウンロード設定",
         "description": "The title of the download settings section in the settings tab."
     },
     "settingsInterfaceSectionTitle": {
-        "message": "Interface settings",
+        "message": "インターフェース設定",
         "description": "The title of the interface settings section in the settings tab."
     },
     "settingsDisplaySectionTitle": {
-        "message": "Display List",
+        "message": "表示リスト",
         "description": "The title of the display settings section in the settings tab."
     },
     "detectionMethodTitle": {
-        "message": "Detection method",
+        "message": "検出方法",
         "description": "The title of the detection method section in the settings tab."
     },
     "needToRefreshListWarning": {
-        "message": "After changing this, click on \"Refresh list\" to see the changes!",
+        "message": "これを変更した後は、「リストを更新」をクリックして変更を反映させてください！",
         "description": "The warning shown below the detection method title in the settings tab."
     },
     "detectionDisabledExplain": {
-        "message": "Unchecking both options will not filter anything, showing all requests (even non-media requests!) of the browser.",
+        "message": "両方のオプションのチェックを外すと、フィルタリングが行われず、ブラウザのすべてのリクエスト（メディア以外のリクエストも！）が表示されます。",
         "description": "The explanation on how disabling detection works, shown in the settings tab"
     },
     "urlDetectionExplain": {
-        "message": "Detection by checking if the URL contains a known media type (for example .mp4, .m3u8). It's fast, but some sites don't serve medias through these kind of URLs, so it might not detect everything.",
+        "message": "URLに既知のメディアタイプ（例：.mp4、.m3u8）が含まれているかどうかを確認して検出します。高速ですが、一部のサイトではこのようなURLでメディアを提供していないため、すべてを検出できない場合があります。",
         "description": "The explanation of URL-based detection method shown in a tooltip."
     },
     "urlDetectionCheckbox": {
-        "message": "Detection via URL",
+        "message": "URLによる検出",
         "description": "The label of the checkbox to enable URL-based detection method."
     },
     "mimeDetectionExplain": {
-        "message": "Detection by checking the server's MIME response (for example video/mp4, application/vnd.apple.mpegurl). It's slower than URL detection as the add-on needs to monitor every request and response, but more reliable.",
+        "message": "サーバーのMIMEレスポンス（例：video/mp4、application/vnd.apple.mpegurl）を確認して検出します。拡張機能がすべてのリクエストとレスポンスを監視する必要があるため、URL検出よりも低速ですが、より信頼性が高いです。",
         "description": "The explanation of MIME-based detection method shown in a tooltip."
     },
     "mimeDetectionCheckbox": {
-        "message": "Detection via server's MIME response",
+        "message": "サーバーのMIMEレスポンスによる検出",
         "description": "The label of the checkbox to enable MIME-based detection method."
     },
     "downloadMethodTitle": {
-        "message": "Download method",
+        "message": "ダウンロード方法",
         "description": "The title of the download method section in the settings tab."
     },
     "browserDownloadExplain": {
-        "message": "Download the media using the browser's native download manager. Fast and handles disconnects, but only works on some sites and on some browsers (Firefox for PC).",
+        "message": "ブラウザのネイティブダウンロードマネージャーを使用してメディアをダウンロードします。高速で切断にも対応していますが、一部のサイトとブラウザ（PC用Firefoxなど）でのみ動作します。",
         "description": "The explanation of native browser download method shown in a tooltip."
     },
     "browserDownloadCheckbox": {
-        "message": "Native browser download",
+        "message": "ネイティブブラウザダウンロード",
         "description": "The label of the checkbox to enable native browser download method."
     },
     "fetchDownloadExplain": {
-        "message": "Download the media using the Fetch API. Works on most sites and browsers, but can be slower and doesn't handle disconnects well.",
+        "message": "Fetch APIを使用してメディアをダウンロードします。ほとんどのサイトとブラウザで動作しますが、低速になる場合があり、切断にはあまり強くありません。",
         "description": "The explanation of Fetch API download method shown in a tooltip."
     },
     "fetchDownloadCheckbox": {
@@ -224,243 +224,243 @@
         "description": "The label of the checkbox to enable Fetch API download method."
     },
     "mediaCacheTitle": {
-        "message": "Media cache",
+        "message": "メディアキャッシュ",
         "description": "The title of the media cache section in the settings tab."
     },
     "mediaCacheExplain": {
-        "message": "Attempt to store the media response, so the download can occur without making a request to the server. Downloads will be faster but can slow down your browser. Disable this if you have issues with the add-on or pages freezing.",
+        "message": "メディアのレスポンスを保存して、サーバーにリクエストせずにダウンロードできるようにします。ダウンロードは速くなりますが、ブラウザが重くなる可能性があります。拡張機能に問題がある場合やページがフリーズする場合は、これを無効にしてください。",
         "description": "The explanation of the media cache option shown in a tooltip."
     },
     "mediaCacheExplainPrivate": {
-        "message": "This feature is currently not in use because you are in private browsing mode. To use or change this setting, please open the add-on and your media from a non-private window.",
+        "message": "プライベートブラウジングモードのため、現在この機能は使用できません。この設定を使用または変更するには、非プライベートウィンドウから拡張機能とメディアを開いてください。",
         "description": "The explanation of why media cache option is disabled in private mode, shown in a tooltip."
     },
     "mediaCacheCheckbox": {
-        "message": "Enable media cache",
+        "message": "メディアキャッシュを有効にする",
         "description": "The label of the checkbox to enable media cache."
     },
     "hideSegmentsTitle": {
-        "message": "Hide stream segments",
+        "message": "ストリームセグメントを非表示にする",
         "description": "The title of the hide stream segments section in the settings tab."
     },
     "hideSegmentsExplain": {
-        "message": "Live streams use multiple segments to deliver content in small parts. Usually you only need the stream manifest, so the segments can be hidden to reduce clutter.",
+        "message": "ライブストリームは、コンテンツを細かく配信するために複数のセグメントを使用します。通常はストリームマニフェストのみが必要なため、セグメントを非表示にしてリストを整理できます。",
         "description": "The explanation of the hide stream segments option shown in a tooltip."
     },
     "hideSegmentsCheckbox": {
-        "message": "Hide stream segments in the media list",
+        "message": "メディアリスト内のストリームセグメントを非表示にする",
         "description": "The label of the checkbox to enable hiding stream segments in the media list."
     },
     "onlyVideoTitle": {
-        "message": "Show video",
+        "message": "ビデオを表示",
         "description": "Toggle visibility of video files"
     },
     "onlyVideoExplain": {
-        "message": "Show detected video files in the list.",
+        "message": "検出されたビデオファイルをリストに表示します。",
         "description": "Explains what the video filter does"
     },
     "onlyAudioTitle": {
-        "message": "Show audio",
+        "message": "オーディオを表示",
         "description": "Toggle visibility of audio files"
     },
     "onlyAudioExplain": {
-        "message": "Show detected audio files in the list.",
+        "message": "検出されたオーディオファイルをリストに表示します。",
         "description": "Explains what the audio filter does"
     },
     "onlyStreamTitle": {
-        "message": "Show streams",
+        "message": "ストリームを表示",
         "description": "Toggle visibility of stream files"
     },
     "onlyStreamExplain": {
-        "message": "Show detected media streams (HLS, DASH).",
+        "message": "検出されたメディアストリーム（HLS、DASH）を表示します。",
         "description": "Explains what the stream filter does"
     },
     "onlyImageTitle": {
-        "message": "Show images",
+        "message": "画像を表示",
         "description": "Toggle visibility of image files"
     },
     "onlyImageExplain": {
-        "message": "Show detected image files (WebP, PNG, JPG, GIF).",
+        "message": "検出された画像ファイル（WebP、PNG、JPG、GIF）を表示します。",
         "description": "Explains what the image filter does"
     },
     "onlySubtitleTitle": {
-        "message": "Show subtitles",
+        "message": "字幕を表示",
         "description": "Toggle visibility of subtitle files"
     },
     "onlySubtitleExplain": {
-        "message": "Show detected subtitle and caption files.",
+        "message": "検出された字幕およびキャプションファイルを表示します。",
         "description": "Explains what the subtitle filter does"
     },
     "mediaNotificationTitle": {
-        "message": "Media detected!",
+        "message": "メディアが検出されました！",
         "description": "The title of the notification when media is detected."
     },
     "mediaNotificationCheckbox": {
-        "message": "Enable detection notification",
+        "message": "検出通知を有効にする",
         "description": "The label of the checkbox to enable media detection notification."
     },
     "mediaNotificationExplain": {
-        "message": "Show a notification when media is detected on a website.",
+        "message": "ウェブサイトでメディアが検出されたときに通知を表示します。",
         "description": "The explanation of the media detection notification setting."
     },
     "mediaNotificationDownloadAction": {
-        "message": "Download",
+        "message": "ダウンロード",
         "description": "The action label to download media from the notification."
     },
     "streamDownloadTitle": {
-        "message": "Stream download preference",
+        "message": "ストリームダウンロード設定",
         "description": "The title of the stream download preference section in the settings tab."
     },
     "streamFileDownloadExplain": {
-        "message": "Download the stream manifest file (.m3u8, .mpd) directly. You will need a media player that supports these formats (like VLC) to view them. Lighter downloads, but you will need to be online with a working server to play the file. Some servers also block playback this way.",
+        "message": "ストリームマニフェストファイル（.m3u8、.mpd）を直接ダウンロードします。視聴するには、これらのフォーマットをサポートするメディアプレーヤー（VLCなど）が必要です。軽量なダウンロードですが、再生するにはオンラインでサーバーが稼働している必要があります。一部のサーバーでは、この方法での再生をブロックしています。",
         "description": "The explanation of stream manifest download method shown in a tooltip."
     },
     "streamFileDownloadCheckbox": {
-        "message": "Download stream manifest",
+        "message": "ストリームマニフェストをダウンロード",
         "description": "The label of the checkbox to enable stream manifest download method."
     },
     "offlineDownloadExplain": {
-        "message": "Convert the stream into a single offline video file (.ts or .zip) after downloading. This takes more time and storage, but the resulting file can be watched offline.",
+        "message": "ダウンロード後にストリームを単一のオフラインビデオファイル（.tsまたは.zip）に変換します。時間とストレージ容量が必要になりますが、作成されたファイルはオフラインで視聴できます。",
         "description": "The explanation of offline video file download method shown in a tooltip."
     },
     "offlineDownloadChecbox": {
-        "message": "Convert to offline video file",
+        "message": "オフラインビデオファイルに変換",
         "description": "The label of the checkbox to enable offline video file download method."
     },
     "streamQualityTitle": {
-        "message": "Stream quality preference",
+        "message": "ストリーム品質設定",
         "description": "The title of the stream quality preference section in the settings tab."
     },
     "askStreamQualityExplain": {
-        "message": "Always ask which quality to download when downloading a stream.",
+        "message": "ストリームをダウンロードする際、常にどの品質でダウンロードするかを確認します。",
         "description": "The explanation of 'Always ask' stream quality preference shown in a tooltip."
     },
     "askStreamQualityCheckbox": {
-        "message": "Always ask me",
+        "message": "常に確認する",
         "description": "The label of the radio button to enable 'Always ask' stream quality preference."
     },
     "highestStreamQualityExplain": {
-        "message": "Always download the highest available quality for a stream. Better quality but larger files and slower downloads.",
+        "message": "ストリームの最高画質を常にダウンロードします。画質は良くなりますが、ファイルサイズが大きくなり、ダウンロードに時間がかかります。",
         "description": "The explanation of 'Always highest' stream quality preference shown in a tooltip."
     },
     "highestStreamQualityCheckbox": {
-        "message": "Highest quality",
+        "message": "最高画質",
         "description": "The label of the radio button to enable 'Always highest' stream quality preference."
     },
     "lowestStreamQualityExplain": {
-        "message": "Always download the lowest available quality for a stream. Lower quality but smaller files and faster downloads.",
+        "message": "ストリームの最低画質を常にダウンロードします。画質は低くなりますが、ファイルサイズが小さくなり、ダウンロードが速くなります。",
         "description": "The explanation of 'Always lowest' stream quality preference shown in a tooltip."
     },
     "lowestStreamQualityCheckbox": {
-        "message": "Lowest quality",
+        "message": "最低画質",
         "description": "The label of the radio button to enable 'Always lowest' stream quality preference."
     },
     "mpdFixExplain": {
-        "message": "This will modify the .mpd file you download to only include the quality you download. Otherwise, players like VLC will not play the file because it will try to request a quality you don't have downloaded.",
+        "message": "ダウンロードする.mpdファイルを、ダウンロードした品質のみが含まれるように修正します。そうしないと、VLCなどのプレーヤーで、ダウンロードしていない品質をリクエストしようとして再生できない場合があります。",
         "description": "The explanation of the MPD fix option shown in a tooltip."
     },
     "mpdFixCheckbox": {
-        "message": "Fix MPD files (recommended)",
+        "message": "MPDファイルを修正する（推奨）",
         "description": "The label of the checkbox to enable the MPD fix option."
     },
     "openPreference": {
-        "message": "Add-on opening preference",
+        "message": "拡張機能の開き方の設定",
         "description": "The title of the add-on opening preference section in the settings tab."
     },
     "openPreferenceExplain": {
-        "message": "Choose how the add-on opens when you click on the icon.",
+        "message": "アイコンをクリックしたときの拡張機能の開き方を選択します。",
         "description": "The explanation of the add-on opening preference."
     },
     "newTabCheckbox": {
-        "message": "Open in new tab",
+        "message": "新しいタブで開く",
         "description": "The label of the radio button to open the add-on in a new tab."
     },
     "newWindowCheckbox": {
-        "message": "Open in new window",
+        "message": "新しいウィンドウで開く",
         "description": "The label of the radio button to open the add-on in a new window."
     },
     "popupCheckbox": {
-        "message": "Open as popup",
+        "message": "ポップアップとして開く",
         "description": "The label of the radio button to open the add-on as a popup."
     },
     "colorPickerTitle": {
-        "message": "Interface color",
+        "message": "インターフェースの色",
         "description": "The title of the interface color section in the settings tab."
     },
     "creditsTitle": {
-        "message": "Credits",
+        "message": "クレジット",
         "description": "The title of the credits section in the settings tab."
     },
     "creditsDescription1": {
-        "message": "Website Media Downloader is a ",
+        "message": "Website Media Downloaderは、",
         "description": "The first part of the credits description."
     },
     "creditsDescription2": {
-        "message": "open source project",
+        "message": "オープンソースプロジェクト",
         "description": "The second part of the credits description."
     },
     "creditsDescription3": {
-        "message": " made by ",
+        "message": "であり、",
         "description": "The third part of the credits description."
     },
     "creditsDescription4": {
-        "message": "maintained and developed by anpa26",
+        "message": "anpa26によって維持・開発されています",
         "description": "The fourth part of the credits description."
     },
     "creditsDescription5": {
-        "message": ".",
+        "message": "。",
         "description": "The fifth part of the credits description."
     },
     "rateButton": {
-        "message": "Rate",
+        "message": "評価",
         "description": "The label of the button to rate the extension."
     },
     "shareButton": {
-        "message": "Share",
+        "message": "共有",
         "description": "The label of the button to share the extension."
     },
     "donateButton": {
-        "message": "Donate",
+        "message": "寄付",
         "description": "The label of the button to donate to the developer."
     },
     "mobileIncompatibleWarning": {
-        "message": "This option is not compatible for some browsers, like Firefox for Android. If you are using this browser, then change the option back.",
+        "message": "このオプションは、Firefox for Androidなどの一部のブラウザと互換性がありません。これらのブラウザを使用している場合は、設定を元に戻してください。",
         "description": "The warning shown when the user enables an option that is not compatible with mobile browsers."
     },
     "permissionRequestTitle": {
-        "message": "Permission Required",
+        "message": "権限が必要です",
         "description": "The headline of the permission request popup."
     },
     "permissionRequestDescription": {
-        "message": "The extension needs permission to access all URLs to function properly. This is in order to detect media from all websites. Your browsing data is only stored on your device, and not shared with anyone. Please grant the permission, or if you know what you are doing and want scoped storage, you can dismiss this warning.",
+        "message": "拡張機能が適切に動作するには、すべてのURLへのアクセス権限が必要です。これは、すべてのウェブサイトからメディアを検出するためです。あなたのブラウジングデータはデバイスにのみ保存され、誰とも共有されません。権限を許可してください。もし詳細を理解しており、特定のスコープでのみ使用したい場合は、この警告を無視できます。",
         "description": "The description of the permission request popup."
     },
     "grantPermissionButton": {
-        "message": "Grant Permission",
+        "message": "権限を許可",
         "description": "The label of the button to grant the requested permission."
     },
     "denyPermissionButton": {
-        "message": "Don't remind me",
+        "message": "今後表示しない",
         "description": "The label of the button to deny the requested permission."
     },
     "permissionGrantedMessage": {
-        "message": "Permission granted successfully.",
+        "message": "権限が正常に許可されました。",
         "description": "The message shown when the permission is granted successfully."
     },
     "permissionDeniedMessage": {
-        "message": "Permission denied. The extension may not work as expected.",
+        "message": "権限が拒否されました。拡張機能が期待通りに動作しない可能性があります。",
         "description": "The message shown when the permission is denied."
     },
     "permissionGrantFailedMessage": {
-        "message": "Failed to grant permission. The extension may not work as expected.",
+        "message": "権限の許可に失敗しました。拡張機能が期待通りに動作しない可能性があります。",
         "description": "The message shown when the permission grant operation fails."
     },
     "mpdDownloadCompleteTitle": {
-        "message": "MPD Download Complete",
+        "message": "MPDダウンロード完了",
         "description": "The title of the notification shown when an MPD download is complete."
     },
     "mpdDownloadCompleteMessage": {
-        "message": "The MPD stream has been downloaded as a ZIP file. You can extract it and play the $BASENAME$.mpd video with VLC or any other compatible player.",
+        "message": "MPDストリームがZIPファイルとしてダウンロードされました。ファイルを解凍し、VLCなどの対応プレーヤーで$BASENAME$.mpdを再生できます。",
         "description": "The message of the notification shown when an MPD download is complete.",
         "placeholders": {
             "BASENAME": {
@@ -470,19 +470,19 @@
         }
     },
     "splitDownloadWarningSnackbar": {
-        "message": "The audio and video streams are separated. Two files will be downloaded.",
+        "message": "オーディオとビデオのストリームが分かれています。2つのファイルがダウンロードされます。",
         "description": "The snackbar text that appears when an m3u8 stream with split audio and video starts to download"
     },
     "downloadingAudioSnackbar": {
-        "message": "Downloading audio stream...",
+        "message": "オーディオストリームをダウンロード中...",
         "description": "The snackbar text that appears when an m3u8 stream with split audio and video has the video portion downloaded and switches to downloading audio"
     },
     "splitAudioVideoDownloadCompleteTitle": {
-        "message": "Downloaded separated audio and video streams",
+        "message": "分離されたオーディオとビデオストリームをダウンロードしました",
         "description": "The title of the dialog shown when an m3u8 stream with split audio and video is downloaded."
     },
     "splitAudioVideoDownloadCompleteDescription": {
-        "message": "Both video and audio streams have been downloaded. You can merge them both with <a href='https://ffmpeg.org/'>ffmpeg</a> using the following command :<br/><code>ffmpeg -i \"$BASENAME$_video$VIDEOEXT$\" -i \"$BASENAME$_audio$VIDEOEXT$\" -c copy \"$BASENAME$.mp4\"</code>",
+        "message": "ビデオとオーディオの両方のストリームがダウンロードされました。以下のコマンドを使用して、<a href='https://ffmpeg.org/'>ffmpeg</a>で両方を結合できます：<br/><code>ffmpeg -i \"$BASENAME$_video$VIDEOEXT$\" -i \"$BASENAME$_audio$VIDEOEXT$\" -c copy \"$BASENAME$.mp4\"</code>",
         "description": "The message of the dialog shown when an m3u8 stream with split audio and video is downloaded.",
         "placeholders": {
             "BASENAME": {
@@ -496,123 +496,123 @@
         }
     },
     "videoQualityDialogTitle": {
-        "message": "Select video quality",
+        "message": "ビデオ品質の選択",
         "description": "The title of the dialog to select video quality when downloading a stream for MPD streams."
     },
     "videoQualitySelectLabel": {
-        "message": "Video quality",
+        "message": "ビデオ品質",
         "description": "The label of the quality selection dropdown in the video quality dialog for MPD streams."
     },
     "audioQualityDialogTitle": {
-        "message": "Select audio quality",
+        "message": "オーディオ品質の選択",
         "description": "The title of the dialog to select audio quality when downloading an stream for MPD streams."
     },
     "audioQualitySelectLabel": {
-        "message": "Audio quality",
+        "message": "オーディオ品質",
         "description": "The label of the quality selection dropdown in the audio quality dialog for MPD streams."
     },
     "streamQualityDialogTitle": {
-        "message": "Select stream quality",
+        "message": "ストリーム品質の選択",
         "description": "The title of the dialog to select the stream quality when downloading an m3u8 stream."
     },
     "streamQualitySelectLabel": {
-        "message": "Stream quality",
+        "message": "ストリーム品質",
         "description": "The label of the quality selection dropdown in the stream quality dialog for m3u8 streams."
     },
     "mediaPreviewSnackbar": {
-        "message": "Media preview does not work with all sites and media types. If nothing loads, try to download instead.",
+        "message": "メディアプレビューは、すべてのサイトやメディアタイプで動作するわけではありません。読み込まれない場合は、代わりにダウンロードを試してください。",
         "description": "The snackbar shown when someone uses the preview mode for the first time."
     },
     "mediaPreviewDontRemindMe": {
-        "message": "Don't remind me",
+        "message": "今後表示しない",
         "description": "The action in the snackbar from above which will make it no longer show up."
     },
     "helpTooltip": {
-        "message": "Open help",
+        "message": "ヘルプを開く",
         "description": "The text of the tooltip shown when hovering over the button at the bottom left, to open the wiki page"
     },
     "diagnosticDataPermissionDenied": {
-        "message": "Permission to share diagnostic data was denied.",
+        "message": "診断データの共有権限が拒否されました。",
         "description": "The message shown when the user denies permission to share diagnostic data."
     },
     "diagnosticDataSent": {
-        "message": "Diagnostic data has been sent successfully. Thank you for helping improve the extension!",
+        "message": "診断データが正常に送信されました。拡張機能の改善にご協力いただきありがとうございます！",
         "description": "The message shown when diagnostic data has been sent successfully."
     },
     "diagnosticDataSendError": {
-        "message": "An error occurred while sending diagnostic data. Please try again later.",
+        "message": "診断データの送信中にエラーが発生しました。後でもう一度お試しください。",
         "description": "The message shown when there is an error sending diagnostic data."
     },
     "noRequestFoundError": {
-        "message": "Cannot find the corresponding request's info in the request history. This can happen when the request was already made and cached in your browser before installing the add-on. Clear your browsing data from the website you try to download from, then restart the browser and try again.",
+        "message": "リクエスト履歴に対応するリクエスト情報が見つかりません。これは、拡張機能をインストールする前にリクエストが行われ、ブラウザにキャッシュされている場合に発生することがあります。ダウンロードしようとしているウェブサイトの閲覧データを消去してから、ブラウザを再起動してもう一度お試しください。",
         "description": "The error message shown when there is no request found for the selected size."
     },
     "drmWarningTitle": {
-        "message": "DRM Detected",
+        "message": "DRMを検出",
         "description": "The title of the warning shown when a DRM-protected MPD is detected."
     },
     "drmWarningDescription": {
-        "message": "This file uses DRM (ContentProtection). It can be downloaded, but not played without decrypting the stream. Maybe you can get around this by setting your browser to deny DRM content (e.g. In Firefox: about:preferences#general → Digital Rights Management Content). But on some sites they won't load the media at all if DRM is disabled, so this has a low chance to work.",
+        "message": "このファイルはDRM（コンテンツ保護）を使用しています。ダウンロードは可能ですが、ストリームを復号しないと再生できません。ブラウザでDRMコンテンツを拒否するように設定（例：Firefoxの場合：about:preferences#general → デジタル著作権管理 (DRM) コンテンツ）することで回避できる場合があります。ただし、一部のサイトではDRMが無効になっているとメディアが読み込まれないため、成功する確率は低いです。",
         "description": "The description of the warning shown when a DRM-protected MPD is detected."
     },
     "drmWarningConntinueButton": {
-        "message": "Continue",
+        "message": "続行",
         "description": "The text of the OK button in the DRM warning dialog."
     },
     "drmWarningCancelButton": {
-        "message": "Cancel",
+        "message": "キャンセル",
         "description": "The text of the Cancel button in the DRM warning dialog and other dialogs."
     },
     "ratingBannerText": {
-        "message": "If you enjoy using this add-on, please take a moment to rate it. Thank you very much!",
+        "message": "この拡張機能をお楽しみいただけている場合は、ぜひ評価をお願いします。ありがとうございます！",
         "description": "The text shown in the rating banner."
     },
     "ratingBannerRateButton": {
-        "message": "Rate now",
+        "message": "今すぐ評価",
         "description": "The label of the button to rate the extension in the rating banner."
     },
     "ratingBannerDismissButton": {
-        "message": "Dismiss",
+        "message": "閉じる",
         "description": "The label of the button to dismiss the rating banner."
     },
     "ratingBannerDontShowAgainButton": {
-        "message": "Don't ask again",
+        "message": "二度と表示しない",
         "description": "The label of the button to not show the rating banner again."
     },
     "ratingBannerRemindMeLaterButton": {
-        "message": "Ask again in a week",
+        "message": "1週間後に通知",
         "description": "The label of the button to be reminded later in the rating banner."
     },
     "youtubeDialogAskTitle": {
-        "message": "Are you trying to download from YouTube?",
+        "message": "YouTubeからダウンロードしようとしていますか？",
         "description": "The title of the dialog shown when a YouTube media request is detected."
     },
     "youtubeDialogAskMessage": {
-        "message": "Downloading from YouTube is not supported directly in this extension due to YouTube's proprietary streaming methods. However, I can guide you to tools that specialize in downloading YouTube videos. Would you like me to show you these options?<br/><mdui-checkbox id=\"youtube-dialog-dont-show-again\">Don't show this message again</mdui-checkbox>",
+        "message": "YouTubeの独自のストリーミング方式のため、この拡張機能ではYouTubeからの直接のダウンロードはサポートされていません。ただし、YouTubeビデオのダウンロードに特化したツールをご案内できます。これらのオプションを表示しますか？<mdui-checkbox id=\"youtube-dialog-dont-show-again\">このメッセージを二度と表示しない</mdui-checkbox>",
         "description": "The message of the dialog shown when a YouTube media request is detected."
     },
     "youtubeDialogAskOkButton": {
-        "message": "Yes",
+        "message": "はい",
         "description": "The text of the OK button in the YouTube media request dialog."
     },
     "youtubeDialogDownloaderPCTitle": {
-        "message": "Try with yt-dlp",
+        "message": "yt-dlpを試す",
         "description": "The title of the dialog shown when guiding the user to download YouTube videos on PC."
     },
     "youtubeDialogDownloaderPCMessage": {
-        "message": "You can use yt-dlp, a powerful command-line tool to download videos from YouTube and many other platforms. You can find installation instructions on their GitHub page.",
+        "message": "YouTubeや他の多くのプラットフォームからビデオをダウンロードできる強力なコマンドラインツール「yt-dlp」を使用できます。インストール方法は、彼らのGitHubページで確認できます。",
         "description": "The message of the dialog shown when guiding the user to download YouTube videos on PC."
     },
     "youtubeDialogDownloaderAndroidTitle": {
-        "message": "Try with Seal",
+        "message": "Sealを試す",
         "description": "The title of the dialog shown when guiding the user to download YouTube videos on Android."
     },
     "youtubeDialogDownloaderAndroidMessage": {
-        "message": "You can use Seal, an Android app that allows you to download videos from YouTube and other platforms. You can find the download link on their GitHub page.",
+        "message": "YouTubeや他のプラットフォームからビデオをダウンロードできるAndroidアプリ「Seal」を使用できます。ダウンロードリンクは、彼らのGitHubページで確認できます。",
         "description": "The message of the dialog shown when guiding the user to download YouTube videos on Android."
     },
     "filenameTemplateTitle": {
-        "message": "Filename template",
+        "message": "ファイル名テンプレート",
         "description": "The title of the filename template section in the settings tab."
     },
     "filenameTemplateHelper": {
@@ -620,119 +620,119 @@
         "description": "The helper text for the filename template section, showing available placeholders."
     },
     "disableRenameDialogTitle": {
-        "message": "Disable rename file dialog",
+        "message": "ファイル名変更ダイアログを無効にする",
         "description": "The title of the disable rename file dialog switch in the settings tab."
     },
     "renameDialogHeadline": {
-        "message": "Download as...",
+        "message": "名前を付けてダウンロード...",
         "description": "The headline of the dialog to rename the file before downloading."
     },
     "renameDialogLabel": {
-        "message": "Filename",
+        "message": "ファイル名",
         "description": "The label of the filename input field in the rename dialog."
     },
     "renameDialogDownloadButton": {
-        "message": "Download",
+        "message": "ダウンロード",
         "description": "The text of the download button in the rename dialog."
     },
     "dontShowRenameDialogCheckbox": {
-        "message": "Don't show this again",
+        "message": "今後表示しない",
         "description": "The text of the checkbox to disable the rename dialog in the future."
     },
     "renameDialogCancelButton": {
-        "message": "Cancel",
+        "message": "キャンセル",
         "description": "The text of the cancel button in the rename dialog."
     },
     "historyTab": {
-        "message": "History",
+        "message": "履歴",
         "description": "The name of the history tab in the popup."
     },
     "aboutTab": {
-        "message": "About",
+        "message": "アバウト",
         "description": "The name of the about tab in the popup."
     },
     "historyPageTitle": {
-        "message": "Enable history page",
+        "message": "履歴ページを有効にする",
         "description": "The label of the switch to enable the history page."
     },
     "historyPageExplain": {
-        "message": "Keep a local record of your downloads.",
+        "message": "ダウンロードのローカル記録を保存します。",
         "description": "The explanation of the history page option."
     },
     "clearHistoryButton": {
-        "message": "Clear history",
+        "message": "履歴を消去",
         "description": "The label of the button to clear the download history."
     },
     "noHistory": {
-        "message": "No download history found.",
+        "message": "ダウンロード履歴が見つかりません。",
         "description": "The message shown when the download history is empty."
     },
     "historyVisitPage": {
-        "message": "Visit Page",
+        "message": "ページを表示",
         "description": "The tooltip for the button to visit the original page of a download in the history."
     },
     "historyRefreshInstruction": {
-        "message": "Please play the video on the page to automatically update the link in your history.",
+        "message": "ページでビデオを再生して、履歴のリンクを自動的に更新してください。",
         "description": "Instruction shown when user visits a page to refresh a history link."
     },
     "historyLinkUpdated": {
-        "message": "Link updated successfully.",
+        "message": "リンクが正常に更新されました。",
         "description": "Message shown when a history link is automatically updated."
     },
     "cancelButton": {
-        "message": "Cancel",
+        "message": "キャンセル",
         "description": "The text of the cancel button during an active download."
     },
     "downloadCancelled": {
-        "message": "Download cancelled",
+        "message": "ダウンロードがキャンセルされました",
         "description": "The message shown when a download is manually cancelled."
     },
     "speedBoostTitle": {
-        "message": "Speed boost (Parallel downloads)",
+        "message": "スピードブースト（並列ダウンロード）",
         "description": "The title of the speed boost setting."
     },
     "speedBoostExplain": {
-        "message": "Download multiple parts of the file at the same time. Only works if the server supports range requests.",
+        "message": "ファイルの複数の部分を同時にダウンロードします。サーバーがレンジリクエストをサポートしている場合のみ動作します。",
         "description": "The explanation of the speed boost setting."
     },
     "connectionsTitle": {
-        "message": "Parallel connections",
+        "message": "並列接続数",
         "description": "The title of the connections setting."
     },
     "qrCodeButton": {
-        "message": "QR Code",
+        "message": "QRコード",
         "description": "The text of the QR code button in the media list."
     },
     "qrCodeDialogTitle": {
-        "message": "Scan QR Code",
+        "message": "QRコードをスキャン",
         "description": "The headline of the QR code dialog."
     },
     "qrCodeDialogDescription": {
-        "message": "Scan this QR code with your mobile phone to open the media URL.",
+        "message": "このQRコードを携帯電話でスキャンして、メディアURLを開きます。",
         "description": "The description in the QR code dialog."
     },
     "downloadSelectedButton": {
-        "message": "Download Selected",
+        "message": "選択項目をダウンロード",
         "description": "The label of the button to download all selected media items."
     },
     "deleteSelectedButton": {
-        "message": "Delete",
+        "message": "削除",
         "description": "The label of the button to delete selected media items from the list."
     },
     "downloadAllButton": {
-        "message": "Download All",
+        "message": "すべてダウンロード",
         "description": "The label of the button to download all media items in the list."
     },
     "cancelSelectedButton": {
-        "message": "Cancel Selected",
+        "message": "選択項目をキャンセル",
         "description": "The label of the button to cancel selected active downloads."
     },
     "cancelAllButton": {
-        "message": "Cancel All",
+        "message": "すべてキャンセル",
         "description": "The label of the button to cancel all active downloads."
     },
     "zipPreparing": {
-        "message": "Preparing $COUNT$ files...",
+        "message": "$COUNT$ 個のファイルを準備中...",
         "description": "Message shown when starting to prepare files for ZIP archive.",
         "placeholders": {
             "COUNT": {
@@ -742,7 +742,7 @@
         }
     },
     "zipDownloading": {
-        "message": "Downloading $INDEX$/$TOTAL$: $FILENAME$",
+        "message": "$INDEX$/$TOTAL$ をダウンロード中: $FILENAME$",
         "description": "Progress message during ZIP download.",
         "placeholders": {
             "INDEX": {
@@ -760,15 +760,15 @@
         }
     },
     "zipGenerating": {
-        "message": "Generating ZIP archive...",
+        "message": "ZIPアーカイブを生成中...",
         "description": "Message shown when generating the ZIP file from downloaded blobs."
     },
     "zipComplete": {
-        "message": "Download complete!",
+        "message": "ダウンロード完了！",
         "description": "Message shown when the ZIP download is finished."
     },
     "zipError": {
-        "message": "Error creating ZIP: $ERROR$",
+        "message": "ZIP作成エラー: $ERROR$",
         "description": "Error message shown when ZIP creation fails.",
         "placeholders": {
             "ERROR": {
@@ -778,15 +778,15 @@
         }
     },
     "zipStartedInBackground": {
-        "message": "ZIP download started in background",
+        "message": "ZIPダウンロードがバックグラウンドで開始されました",
         "description": "Notification message when the ZIP download process is moved to the background script."
     },
     "backgroundDownloadTitle": {
-        "message": "Background download",
+        "message": "バックグラウンドダウンロード",
         "description": "The title of the background download setting."
     },
     "backgroundDownloadExplain": {
-        "message": "Allows downloads to continue in the background. If disabled, downloads will run in the popup and stop if it's closed (no new tabs on mobile).",
+        "message": "バックグラウンドでのダウンロードを許可します。無効にすると、ダウンロードはポップアップ内で実行され、ポップアップを閉じると停止します（モバイルでは新しいタブは開きません）。",
         "description": "The explanation of the background download setting."
     }
 }

@@ -32,11 +32,10 @@
     function isMediaUrl(url) {
         if (!url || typeof url !== 'string') return false;
         const urlLower = url.toLowerCase();
-        
-        // Ignore extension internal assets
-        if (urlLower.startsWith('chrome-extension://') || 
-            urlLower.startsWith('moz-extension://') || 
-            urlLower.startsWith('blob:chrome-extension://') || 
+
+        if (urlLower.startsWith('chrome-extension://') ||
+            urlLower.startsWith('moz-extension://') ||
+            urlLower.startsWith('blob:chrome-extension://') ||
             urlLower.startsWith('blob:moz-extension://')) {
             return false;
         }
@@ -71,7 +70,6 @@
     window.mdu_scan = function() {
         const initialSize = detected.size;
 
-        // 1. Scan Tags
         document.querySelectorAll('video, audio, source, img, track, a').forEach(el => {
             let url = el.src || el.href || el.getAttribute('data-src') || el.getAttribute('data-original');
             if (el.tagName === 'SOURCE' || el.tagName === 'TRACK') {
@@ -85,7 +83,6 @@
             }
         });
 
-        // 2. Scan background images
         document.querySelectorAll('*').forEach(el => {
             const bg = window.getComputedStyle(el).backgroundImage;
             if (bg && bg !== 'none') {
@@ -99,7 +96,6 @@
             }
         });
 
-        // 3. Scan for potential media in data attributes
         document.querySelectorAll('*').forEach(el => {
             for (let i = 0; i < el.attributes.length; i++) {
                 const attr = el.attributes[i];
@@ -116,10 +112,8 @@
         }
     };
 
-    // Initial scan
     window.mdu_scan();
 
-    // Observe changes for dynamic content (infinite scroll)
     const observer = new MutationObserver((mutations) => {
         let shouldScan = false;
         for (const mutation of mutations) {

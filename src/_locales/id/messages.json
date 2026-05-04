@@ -153,6 +153,10 @@
         "message": "Pengaturan antarmuka",
         "description": "Judul bagian pengaturan antarmuka di tab pengaturan."
     },
+    "settingsDisplaySectionTitle": {
+        "message": "Daftar Tampilan",
+        "description": "Judul bagian pengaturan tampilan di tab pengaturan."
+    },
     "detectionMethodTitle": {
         "message": "Metode deteksi",
         "description": "Judul bagian metode deteksi di tab pengaturan."
@@ -728,7 +732,7 @@
     "zipComplete": {
         "message": "Unduhan selesai!",
         "description": "Pesan saat pengunduhan ZIP selesai."
-  },
+    },
     "zipError": {
         "message": "Gagal membuat ZIP: $ERROR$",
         "description": "Pesan kesalahan saat pembuatan ZIP gagal.",

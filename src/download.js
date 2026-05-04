@@ -16,7 +16,6 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-// Check for the existence of the browser object and use chrome if not found
 if (typeof browser === 'undefined') {
     var browser = chrome;
 }
@@ -61,7 +60,7 @@ async function triggerDownload() {
     try {
         statusText.textContent = "Connecting to database...";
         const db = await openCacheDB();
-        
+
         statusText.textContent = "Fetching file metadata...";
         const tx = db.transaction([STORE_NAME], "readonly");
         const store = tx.objectStore(STORE_NAME);
@@ -73,17 +72,17 @@ async function triggerDownload() {
                 if (item) {
                     let blob;
                     if (item.data) {
-                        // Legacy: full blob stored in memory/item.data
+
                         blob = item.data;
                     } else {
-                        // Chunked storage: retrieve chunks from CHUNK_STORE_NAME
+
                         statusTitle.textContent = "Processing...";
                         statusText.textContent = "Reconstructing file from cache segments...";
-                        
+
                         const chunks = [];
                         const chunkTx = db.transaction([CHUNK_STORE_NAME], "readonly");
                         const chunkStore = chunkTx.objectStore(CHUNK_STORE_NAME);
-                        
+
                         const range = IDBKeyRange.bound([cacheKey, 0], [cacheKey, Infinity]);
                         const cursorRequest = chunkStore.openCursor(range);
 
@@ -93,13 +92,13 @@ async function triggerDownload() {
                                 const cursor = e.target.result;
                                 if (cursor) {
                                     chunks.push(cursor.value.data);
-                                    
+
                                     const now = Date.now();
                                     if (now - lastUpdate > 500) {
                                         statusText.textContent = `Reconstructing file: gathered ${chunks.length} segments...`;
                                         lastUpdate = now;
                                     }
-                                    
+
                                     cursor.continue();
                                 } else {
                                     resolveChunk();
@@ -111,13 +110,13 @@ async function triggerDownload() {
                         if (chunks.length === 0) {
                             throw new Error("No data chunks found in cache. The download may have failed or was cleared.");
                         }
-                        
+
                         statusText.textContent = `Assembling ${chunks.length} segments...`;
                         blob = new Blob(chunks, { type: item.mime || "application/octet-stream" });
                     }
 
                     const objectUrl = URL.createObjectURL(blob);
-                    
+
                     statusTitle.textContent = "Download Ready!";
                     saveButton.style.display = "inline-block";
                     saveButton.textContent = `Save ${filename}`;
@@ -133,7 +132,7 @@ async function triggerDownload() {
                         document.body.appendChild(a);
                         a.click();
                         document.body.removeChild(a);
-                        
+
                         statusTitle.textContent = "Download Started!";
                         statusText.textContent = "Your file is being saved to your device. You can close this tab now.";
                         saveButton.disabled = true;
@@ -178,7 +177,7 @@ async function triggerDownload() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Apply theme color personalization
+
     const colorResult = await browser.storage.local.get('theme-color');
     if (colorResult['theme-color'] && typeof mdui !== 'undefined') {
         mdui.setColorScheme(colorResult['theme-color']);

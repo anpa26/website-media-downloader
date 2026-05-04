@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function initializeSettings() {
     const settings = [
-        'url-detection', 'mime-detection', 'hide-segments', 
+        'url-detection', 'mime-detection', 'hide-segments',
         'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle',
         'media-notification', 'download-method', 'media-cache', 'speed-boost', 'connections', 'stream-download',
         'stream-quality', 'mpd-fix', 'background-download', 'open-preference',
@@ -42,10 +42,9 @@ async function initializeSettings() {
         const result = await browser.storage.local.get(setting);
         let value = result[setting];
 
-        // Default values for new settings
         if (value === undefined) {
             const defaultsEnabled = [
-                'url-detection', 'mime-detection', 'history-page', 
+                'url-detection', 'mime-detection', 'history-page',
                 'media-notification', 'only-video', 'only-audio', 'only-stream',
                 'background-download'
             ];
@@ -53,17 +52,17 @@ async function initializeSettings() {
                 value = '1';
                 browser.storage.local.set({ [setting]: value });
             }
-            // Images and subtitles off by default to avoid clutter unless requested
+
             if (['only-image', 'only-subtitle'].includes(setting)) {
                 value = '0';
                 browser.storage.local.set({ [setting]: value });
             }
             if (setting === 'speed-boost' || setting === 'disable-rename-dialog') {
-                value = '0'; // Default off
+                value = '0';
                 browser.storage.local.set({ [setting]: value });
             }
             if (setting === 'connections') {
-                value = '4'; // Default 4 connections
+                value = '4';
                 browser.storage.local.set({ [setting]: value });
             }
         }
@@ -73,8 +72,7 @@ async function initializeSettings() {
             element.checked = value === '1' || value === true;
             element.addEventListener('change', () => {
                 browser.storage.local.set({ [setting]: element.checked ? '1' : '0' });
-                
-                // Special dependency logic
+
                 if (setting === 'background-download') {
                     syncNotificationSetting(element.checked);
                 }
@@ -92,17 +90,15 @@ async function initializeSettings() {
 
         const group = document.getElementById(setting + '-group');
         if (group) {
-            const defaultValue = setting === 'open-preference' ? 'tab' : 
-                                (setting === 'download-method' ? 'browser' : 
-                                (setting === 'stream-quality' ? 'highest' : 
-                                (setting === 'connections' ? '4' : 
+            const defaultValue = setting === 'open-preference' ? 'tab' :
+                                (setting === 'download-method' ? 'browser' :
+                                (setting === 'stream-quality' ? 'highest' :
+                                (setting === 'connections' ? '4' :
                                 (setting === 'stream-download' ? 'offline' : 'stream'))));
             const activeValue = value || defaultValue;
-            
-            // Atur nilai grup
+
             group.value = activeValue;
-            
-            // Fungsi untuk update tampilan selected secara manual
+
             const updateSelection = (val) => {
                 const buttons = group.querySelectorAll('mdui-segmented-button');
                 buttons.forEach(btn => {
@@ -116,10 +112,8 @@ async function initializeSettings() {
                 });
             };
 
-            // Jalankan sinkronisasi awal
             setTimeout(() => updateSelection(activeValue), 50);
 
-            // Gunakan 'change' event untuk menangkap perubahan klik tunggal
             group.addEventListener('change', () => {
                 const newVal = group.value;
                 if (newVal) {
@@ -127,13 +121,12 @@ async function initializeSettings() {
                     updateSelection(newVal);
                     if (setting === 'open-preference') updatePopupState(newVal);
                 } else {
-                    // Jika klik yang sama (unselect), paksa balik ke nilai lama
-                    group.value = activeValue; 
+
+                    group.value = activeValue;
                     updateSelection(activeValue);
                 }
             });
-            
-            // Backup listener untuk memastikan klik pertama selalu bereaksi
+
             group.addEventListener('click', (e) => {
                 const btn = e.target.closest('mdui-segmented-button');
                 if (btn) {
@@ -149,13 +142,12 @@ async function initializeSettings() {
 
     const colorResult = await browser.storage.local.get('theme-color');
 
-    // Filename template auto-generator
     const autoGenBtn = document.getElementById('auto-generate-template');
     const filenameInput = document.getElementById('filename-template');
     const disableRenameSwitch = document.getElementById('disable-rename-dialog');
 
     const updateDisableRenameState = () => {
-        // Option is now always enabled as requested
+
         if (disableRenameSwitch) {
             disableRenameSwitch.disabled = false;
         }
@@ -163,7 +155,7 @@ async function initializeSettings() {
 
     if (filenameInput) {
         filenameInput.addEventListener('input', updateDisableRenameState);
-        // Sync state on load
+
         setTimeout(updateDisableRenameState, 100);
     }
 
@@ -173,8 +165,7 @@ async function initializeSettings() {
             filenameInput.value = defaultTemplate;
             browser.storage.local.set({ 'filename-template': defaultTemplate });
             updateDisableRenameState();
-            
-            // Show a brief snackbar feedback if mdui is available
+
             if (typeof mdui !== 'undefined' && mdui.snackbar) {
                 mdui.snackbar({
                     message: "Template auto-generated: " + defaultTemplate,
@@ -189,7 +180,7 @@ async function initializeSettings() {
         const activeColor = colorResult['theme-color'] || '#bbdefb';
         colorInput.value = activeColor;
         mdui.setColorScheme(activeColor);
-        
+
         colorInput.addEventListener('input', (e) => {
             const newColor = e.target.value;
             browser.storage.local.set({ 'theme-color': newColor });
@@ -197,7 +188,6 @@ async function initializeSettings() {
         });
     }
 
-    // Initial sync for media-notification dependency
     const bgDlSwitch = document.getElementById('background-download');
     if (bgDlSwitch) {
         syncNotificationSetting(bgDlSwitch.checked);
@@ -209,12 +199,12 @@ function syncNotificationSetting(isBgEnabled) {
     if (!notificationSwitch) return;
 
     if (!isBgEnabled) {
-        // If BG download is off, force notification off and disable it
+
         notificationSwitch.checked = false;
         notificationSwitch.disabled = true;
         browser.storage.local.set({ 'media-notification': '0' });
     } else {
-        // Re-enable the switch if BG download is on
+
         notificationSwitch.disabled = false;
     }
 }

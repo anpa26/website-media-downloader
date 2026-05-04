@@ -27,22 +27,22 @@
     :root {
       --app-border-radius: 24px;
     }
-    body { 
-      font-family: 'Inter', system-ui, -apple-system, sans-serif; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      min-height: 100vh; 
-      margin: 0; 
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
       background-color: rgb(var(--mdui-color-surface));
       color: rgb(var(--mdui-color-on-surface));
     }
-    .card { 
-      background: rgb(var(--mdui-color-surface-container-low)); 
-      padding: 32px; 
-      border-radius: var(--app-border-radius); 
+    .card {
+      background: rgb(var(--mdui-color-surface-container-low));
+      padding: 32px;
+      border-radius: var(--app-border-radius);
       border: 1px solid rgb(var(--mdui-color-outline-variant));
-      text-align: center; 
+      text-align: center;
       max-width: 400px;
       width: 90%;
       box-shadow: 0 4px 24px rgba(0,0,0,0.08);
@@ -52,11 +52,13 @@
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
     #status-title { margin: 0 0 12px; font-size: 1.5rem; font-weight: 700; color: rgb(var(--mdui-color-primary)); }
     #status-text { margin: 0 0 24px; font-size: 0.95rem; line-height: 1.6; opacity: 0.8; }
     .action-area { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
     #save-button { width: 100%; }
     #close-button { width: 100%; }
+
     .icon-container {
       width: 64px;
       height: 64px;
@@ -80,12 +82,12 @@
     </div>
     <h3 id="status-title">Preparing...</h3>
     <p id="status-text">Reconstructing your media file from segments. This may take a moment depending on the file size.</p>
-    
+
     <div class="action-area">
         <mdui-button id="save-button" variant="filled" style="display: none;">Save to Device</mdui-button>
         <mdui-button id="close-button" variant="tonal">Close Tab</mdui-button>
     </div>
-    
+
     <p class="footer-text">This tab will close automatically after the download starts.</p>
   </div>
   <script src="download.js"></script>

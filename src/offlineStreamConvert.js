@@ -25,7 +25,6 @@ function getHumanReadableSize(size) {
   return `${sizeInBytes.toFixed(2)} ${units[i]}`;
 }
 
-// --- IndexedDB Cache Helpers ---
 const DB_NAME = "MediaCacheDB";
 const STORE_NAME = "network-cache";
 const CHUNK_STORE_NAME = "download-chunks";
@@ -35,7 +34,7 @@ function openCacheDB() {
     const request = indexedDB.open(DB_NAME, 3);
     request.onerror = (event) => reject(event.target.error);
     request.onupgradeneeded = (event) => {
-      // In case this script runs before background (unlikely), create store
+
       const db = event.target.result;
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME, { keyPath: "url" });
@@ -48,7 +47,6 @@ function openCacheDB() {
   });
 }
 
-// --- Network & Spoofing Helpers ---
 async function spoofedFetch(url, options = {}) {
   try {
     const headers = await chrome.runtime.sendMessage({ action: 'getSpoofedHeaders', url: url });
@@ -68,14 +66,10 @@ async function spoofedFetch(url, options = {}) {
   return fetch(url, options);
 }
 
-/**
- * Tries to fetch from IndexedDB cache first.
- * If missing, falls back to network fetch.
- */
 async function fetchWithCache(url, options = {}) {
   const isIncognito = (typeof browser !== 'undefined' && browser.extension && browser.extension.inIncognitoContext) || false;
   if (isIncognito || (await browser.storage.local.get("media-cache").then((result) => result["media-cache"])) !== "1") {
-    // Bypass cache in incognito/private mode or if media-cache is disabled
+
     return spoofedFetch(url, options);
   }
 
@@ -94,7 +88,7 @@ async function fetchWithCache(url, options = {}) {
       if (cachedItem.data) {
           responseData = cachedItem.data;
       } else {
-          // Chunked storage
+
           const chunks = [];
           const chunkTx = db.transaction([CHUNK_STORE_NAME], "readonly");
           const chunkStore = chunkTx.objectStore(CHUNK_STORE_NAME);
@@ -106,13 +100,11 @@ async function fetchWithCache(url, options = {}) {
                   const cursor = e.target.result;
                   if (cursor) {
                       chunks.push(cursor.value.data);
-                      
-                      // For very large files in cache, we could log progress but 
-                      // fetchWithCache is usually for segments. Still good to have.
+
                       if (chunks.length % 50 === 0) {
                           console.debug(`Reconstructing cached segments: ${chunks.length}...`);
                       }
-                      
+
                       cursor.continue();
                   } else {
                       resolveChunk();
@@ -120,14 +112,13 @@ async function fetchWithCache(url, options = {}) {
               };
               cursorRequest.onerror = (e) => rejectChunk(e.target.error);
           });
-          
+
           if (chunks.length > 0) {
               responseData = new Blob(chunks);
           }
       }
 
       if (responseData) {
-        console.log("⚡ IndexedDB Cache hit for:", url);
         return new Response(responseData, {
           status: 200,
           statusText: "OK (Cached)",
@@ -137,20 +128,14 @@ async function fetchWithCache(url, options = {}) {
         });
       }
     }
-    
-    console.log("⚡ IndexedDB Cache miss for:", url);
+
   } catch (e) {
     console.warn("Cache lookup failed/miss, fetching from network:", e);
   }
 
-  // Fallback to standard network request
   return spoofedFetch(url, options);
 }
-// ----------------------------------------
 
-/**
- * Helper class for parallel execution with concurrency limit.
- */
 class ParallelQueue {
   constructor(concurrency) {
     this.concurrency = concurrency;
@@ -184,9 +169,6 @@ class ParallelQueue {
   }
 }
 
-/**
- * Update the status text below the loading bar.
- */
 function updateProgressStatus(loadingBar, loaded, total) {
   if (!loadingBar || !loadingBar.parentNode) return;
   let statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
@@ -219,11 +201,6 @@ function updateSegmentProgressStatus(loadingBar, processed, total) {
   statusInfo.textContent = `Segments: ${processed} / ${total} (${percent}%)`;
 }
 
-/**
- * Downloads and converts an M3U8 stream to an MP4 file for offline use.
- * Uses either browser.downloads API or fetch depending on the download method.
- * Most of the code here is chatGPT so good luck finding out what it does lol (ㆆ_ㆆ)
- */
 async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar, request, customFilename = null, audioOnly = false) {
   const getText = async (url) => {
     const fetchOptions = {
@@ -369,9 +346,9 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
       // prefer setBigUint64 if available for clarity/precision
       if (typeof dv.setBigUint64 === 'function') {
         try {
-          dv.setBigUint64(8, BigInt(seq), false); // big-endian, offset 8
+          dv.setBigUint64(8, BigInt(seq), false);
         } catch (e) {
-          // fallback below
+
           const high = Math.floor(seq / 0x100000000);
           const low = seq >>> 0;
           dv.setUint32(8, high, false);
@@ -380,31 +357,26 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
       } else {
         const high = Math.floor(seq / 0x100000000);
         const low = seq >>> 0;
-        dv.setUint32(8, high, false);  // bytes 8..11
-        dv.setUint32(12, low, false);  // bytes 12..15
+        dv.setUint32(8, high, false);
+        dv.setUint32(12, low, false);
       }
       return iv;
     }
 
-    // small util: decode key response robustly (raw 16 bytes / base64 / hex)
     async function fetchAndDecodeKey(keyHref, fetchOpts) {
       const res = await fetchWithCache(keyHref, fetchOpts);
       const ab = await res.arrayBuffer();
 
-      // 1. If it's exactly 16 bytes, it's the raw key
       if (ab.byteLength === 16) return ab;
 
-      // 2. Otherwise, treat as text to check for Hex or Base64
       const text = new TextDecoder().decode(ab).trim().replace(/^"(.*)"$/, '$1').trim();
 
-      // Try Hex (32 hex chars)
       if (/^[0-9a-fA-F]{32}$/.test(text)) {
         const u = new Uint8Array(16);
         for (let i = 0; i < 16; i++) u[i] = parseInt(text.substr(i * 2, 2), 16);
         return u.buffer;
       }
 
-      // Try Base64 (A 16-byte key is 24 chars in Base64 including padding)
       if (text.length >= 22 && text.length <= 24) {
         try {
           const bin = atob(text);
@@ -416,7 +388,6 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
       throw new Error(`Invalid key length: ${ab.byteLength} bytes. Expected 16.`);
     }
 
-    // Decrypt helper (defensive: accept Uint8Array or ArrayBuffer)
     async function decryptSegment(encryptedBuffer, keyBuffer, iv) {
       const cryptoKey = await crypto.subtle.importKey(
         "raw",
@@ -434,25 +405,21 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
         );
         return new Uint8Array(decrypted);
       } catch (e) {
-        // If decryption fails here, the Key or IV is almost certainly wrong
+
         throw new Error(`WebCrypto Decrypt Failed. Check if the key/IV is correct for this segment.`);
       }
     }
 
-    // --- Parallel Download Setup ---
     const settings = await browser.storage.local.get(['speed-boost', 'connections']);
     const isParallel = settings['speed-boost'] === '1';
     const concurrency = isParallel ? parseInt(settings['connections'] || '4', 10) : 1;
     const queue = new ParallelQueue(concurrency);
 
-    // encryption state
     let currentKeyBuffer = null;
     let currentKeyUri = null;
     let currentKeyIV = null;
     let currentMap = null;
 
-    // First pass: Pre-resolve keys and maps sequentially (they are small)
-    // and associate each segment with its required context
     const segmentsToDownload = [];
     let segmentSeqCounter = 0;
 
@@ -494,7 +461,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
           const mapHref = new URL(mapUriMatch[1], playlistUrl).href;
           const mapRes = await fetchWithCache(mapHref, fetchOpts);
           let mapData = new Uint8Array(await mapRes.arrayBuffer());
-          
+
           if (currentKeyBuffer) {
             const iv = currentKeyIV ? currentKeyIV : makeSequenceIV(0);
             mapData = await decryptSegment(mapData, currentKeyBuffer, iv);
@@ -512,16 +479,13 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
           map: currentMap
         });
         segmentSeqCounter++;
-        // Maps in HLS usually apply only once or until next map. 
-        // We'll clear currentMap after assigning it to ensure it's only prepended once per segment group if needed,
-        // but HLS initialization segments are usually handled specifically.
-        // For fMP4, the map (init segment) should be the very first part.
-        currentMap = null; 
+
+        currentMap = null;
       }
     }
 
     const parts = new Array(segmentsToDownload.length);
-    const firstPartMap = segmentsToDownload[0]?.map; // Save for fMP4 detection
+    const firstPartMap = segmentsToDownload[0]?.map;
 
     const downloadTask = async (seg) => {
       if (window.activeCancellations && window.activeCancellations.has(m3u8Url)) {
@@ -563,7 +527,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
 
     // Filter out any undefined parts just in case
     const filteredParts = parts.filter(p => p !== undefined);
-    
+
     // Container detection
     if (filteredParts.length > 0) {
        const firstArr = filteredParts[0];
@@ -572,7 +536,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
           // Check for ftyp/styp in first few bytes (could be shifted by map)
           const searchArea = firstArr.slice(0, 32);
           const hex = Array.from(searchArea).map(b => b.toString(16).padStart(2, '0')).join('');
-          if (hex.includes('66747970') || hex.includes('73747970')) container = 'fmp4'; // 'ftyp' or 'styp'
+          if (hex.includes('66747970') || hex.includes('73747970')) container = 'fmp4';
        }
     }
 
@@ -593,27 +557,26 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
 
   if (audioOnly) {
     if (!audioUrl) {
-       // If no separate audio track, we download the video segments and return the blob for extraction
+
        globalTotalSegments = await countSegments(videoUrl);
        const { blob } = await downloadSegments(videoUrl);
-       return { blob }; 
+       return { blob };
     }
     globalTotalSegments = await countSegments(audioUrl);
   } else {
-    // Count segments for both if needed
+
     globalTotalSegments += await countSegments(videoUrl);
     if (audioUrl) {
       globalTotalSegments += await countSegments(audioUrl);
     }
   }
 
-  // Then download video (only if not audioOnly)
   let videoBlob, ext;
   if (!audioOnly) {
     const videoResult = await downloadSegments(videoUrl);
     videoBlob = videoResult.blob;
     ext = videoResult.ext;
-    
+
     const baseFileName = customFilename ? (customFilename.substring(0, customFilename.lastIndexOf('.')) || customFilename) : getFileName(m3u8Url);
     const videoBlobUrl = URL.createObjectURL(videoBlob);
 
@@ -631,7 +594,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
       document.body.removeChild(videoAnchor);
     }
 
-    URL.revokeObjectURL(videoBlobUrl); // Clean up the blob URL after download
+    URL.revokeObjectURL(videoBlobUrl);
   }
 
   if (audioUrl) {
@@ -647,7 +610,6 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
     });
     const { blob: audioBlob } = await downloadSegments(audioUrl, true);
 
-    // Save both blobs separately
     const audioBlobUrl = URL.createObjectURL(audioBlob);
     const audioExt = audioOnly ? ".mp3" : "_audio.mp4";
     const audioFullFileName = audioOnly ? (customFilename || `${baseFileName}${audioExt}`) : `${baseFileName}${audioExt}`;
@@ -665,26 +627,17 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
       audioAnchor.click();
       document.body.removeChild(audioAnchor);
     }
-    
+
     if (audioOnly) {
         showDialog(`✅ Audio extracted successfully: ${audioFullFileName}`, "Success");
     } else {
         showDialog(browser.i18n.getMessage("splitAudioVideoDownloadCompleteDescription", [new Option(baseFileName).innerHTML, ext]), browser.i18n.getMessage("splitAudioVideoDownloadCompleteTitle"), { error: `✅ Downloaded separate audio and video files for "${baseFileName}".`, urls: { video: URL.createObjectURL(videoBlob), audio: audioBlobUrl, m3u8: m3u8Url }, request: request, downloadMethod: downloadMethod });
     }
-    URL.revokeObjectURL(audioBlobUrl); // Clean up the blob URLs
+    URL.revokeObjectURL(audioBlobUrl);
     return;
   }
 }
 
-
-/*
-  * Selects a stream variant from an m3u8 manifest.
-  * If only one variant is available, it returns that variant.
-  * If multiple variants are available, it prompts the user to select one based on their preference (highest, lowest, or manual selection).
-  * @param {Array<String>} playlistLines - The lines of the m3u8 playlist.
-  * @param {String} baseUrl - The base URL for relative URIs in the playlist.
-  * @return {Promise<Object>} - A promise that resolves to the selected stream variant object containing bandwidth, resolution, and URI.
-*/
 async function selectStreamVariant(playlistLines, baseUrl, options = {}) {
   const variants = [];
 
@@ -703,7 +656,6 @@ async function selectStreamVariant(playlistLines, baseUrl, options = {}) {
     }
   }
 
-  // Fetch duration for each variant to estimate size
   await Promise.all(variants.map(async (variant) => {
     try {
       const res = await fetchWithCache(variant.uri, options);
@@ -711,9 +663,9 @@ async function selectStreamVariant(playlistLines, baseUrl, options = {}) {
       const duration = text.split('\n')
         .filter(line => line.startsWith("#EXTINF:"))
         .map(line => parseFloat(line.replace("#EXTINF:", "")))
-        .reduce((sum, dur) => sum + dur, 0); // total seconds
+        .reduce((sum, dur) => sum + dur, 0);
 
-      const estimatedSize = (variant.bandwidth * duration) / 8; // bytes
+      const estimatedSize = (variant.bandwidth * duration) / 8;
       variant.estimatedSize = estimatedSize;
       variant.duration = duration;
     } catch (e) {
@@ -722,7 +674,6 @@ async function selectStreamVariant(playlistLines, baseUrl, options = {}) {
     }
   }));
 
-  // If only one variant, return it
   if (variants.length === 1) return variants[0];
 
   const preference = (await browser.storage.local.get("stream-quality").then((result) => result["stream-quality"]));
@@ -773,22 +724,8 @@ async function selectStreamVariant(playlistLines, baseUrl, options = {}) {
   });
 }
 
-
-/**
- * Download a DASH (.mpd) stream offline + all segments (audio + one chosen video),
- * packaged into a ZIP so VLC can play it locally from the unzipped folder.
- *
- * Dependencies:
- *   - Client-zip (https://github.com/Touffy/client-zip) must be loaded in advance.
- *
- * @param {String} mpdUrl
- * @param {Array<{name:string,value:string}>} headers
- * @param {String} downloadMethod   – (ignored here; always uses fetch)
- * @param {HTMLElement} loadingBar  – the <mdui-linear-progress> element
- * @param {Object} request          – the single request object (requests[url][selectedSizeIndex])
- */
 async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, request, customFilename = null) {
-  // --- Helpers
+
   function sanitizeZipPath(originalPath) {
     if (!originalPath || typeof originalPath !== "string") return originalPath || "";
     if (/^https?:\/\//i.test(originalPath) || /^\/\//.test(originalPath)) {
@@ -817,7 +754,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     return out.join("/");
   }
 
-  // Fetch MPD manifest
   const resp = await fetchWithCache(mpdUrl, {
     method: request.method,
     headers: Object.fromEntries(headers.map(h => [h.name, h.value])),
@@ -826,7 +762,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
   if (!resp.ok) throw new Error(`Failed to fetch MPD manifest: ${resp.status}.`);
   let mpdXmlText = await resp.text();
 
-  // Parse MPD
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(mpdXmlText, "application/xml");
   const NS = xmlDoc.documentElement.namespaceURI || "urn:mpeg:dash:schema:mpd:2011";
@@ -847,12 +782,10 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     throw new Error("Download aborted by user due to DRM protection.");
   }
 
-  // Locate Period
   const periodList = xmlDoc.getElementsByTagNameNS(NS, "Period");
   if (!periodList || periodList.length === 0) throw new Error("MPD has no Period entry.");
   const period = periodList[0];
 
-  // Derive baseURL for ZIP entries
   let baseURLNode = period.getElementsByTagNameNS(NS, "BaseURL")[0];
   let baseURLForZip = baseURLNode ? baseURLNode.textContent.trim() : "";
   if (baseURLForZip.match(/^https?:\/\//i)) {
@@ -863,7 +796,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
   }
   if (baseURLForZip && !baseURLForZip.endsWith("/")) baseURLForZip += "/";
 
-  // Collect AdaptationSets
   const allSets = Array.from(period.getElementsByTagNameNS(NS, "AdaptationSet"));
   const adaptationSets = allSets.filter(asNode => {
     const mimeType = asNode.getAttribute("mimeType")?.toLowerCase() || "";
@@ -879,7 +811,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
   });
   if (adaptationSets.length === 0) throw new Error("MPD’s Period has no AdaptationSet for audio/video.");
 
-  // Normalize adaptation sets
   const parsedAdaptations = adaptationSets.map(asNode => {
     const declaredType = asNode.getAttribute("contentType");
     let contentType;
@@ -975,7 +906,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     return { contentType, representations, node: asNode };
   });
 
-  // find video/audio and prompt selection
   const videoAdaptation = parsedAdaptations.find(a => a.contentType === "video");
   const audioAdaptation = parsedAdaptations.find(a => a.contentType === "audio");
 
@@ -1000,9 +930,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
   (!chosenVideoRep || chosenVideoRep.type === "segmentBase") &&
   (!chosenAudioRep || chosenAudioRep.type === "segmentBase");
 
-  // Unified streaming fetch with progress (single GET, no HEAD)
-  // onStart(contentLength) — called once after headers are available (contentLength may be 0 if unknown)
-  // onChunk(receivedBytes, contentLength) — called repeatedly while streaming
   async function fetchWithProgress(url, { onStart, onChunk } = {}) {
     const fetchOptions = {
       method: request.method,
@@ -1052,7 +979,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
       throw new Error(`Error reading response stream: ${err?.message || err}`);
     }
 
-    // join chunks
     const buffer = new Uint8Array(received);
     let offset = 0;
     for (const c of chunks) {
@@ -1062,7 +988,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     return buffer.buffer;
   }
 
-  // If SegmentBase-only -> download files directly (no ZIP)
   if (isSegmentBaseOnly) {
     const snackbar = document.createElement('mdui-snackbar');
     snackbar.setAttribute('open', true);
@@ -1076,20 +1001,17 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     if (chosenVideoRep) downloads.push({ rep: chosenVideoRep, label: "video" });
     if (chosenAudioRep) downloads.push({ rep: chosenAudioRep, label: "audio" });
 
-    // Set up loadingBar as byte-tracking (max will grow as we discover Content-Lengths)
     loadingBar.removeAttribute("indeterminate");
     loadingBar.setAttribute("value", 0);
     loadingBar.setAttribute("max", 0);
     let downloadedBytes = 0;
     let sawUnknownLength = false;
 
-    // Helper to safely add to max
     function addToMax(n) {
       const prev = Number(loadingBar.getAttribute("max")) || 0;
       loadingBar.setAttribute("max", prev + n);
     }
 
-    // --- Parallel Download Setup ---
     const settings = await browser.storage.local.get(['speed-boost', 'connections']);
     const isParallel = settings['speed-boost'] === '1';
     const concurrency = isParallel ? parseInt(settings['connections'] || '4', 10) : 1;
@@ -1097,7 +1019,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
 
     const downloadDirectTask = async (d) => {
       const url = new URL(d.rep.baseURL, mpdBase).href;
-      // Determine filename: prefer extension from baseURL, otherwise fallback
+
       let candidate = baseName;
       if (!candidate || candidate === "") {
         candidate = d.label === "video" ? `${baseName}_video.mp4` : `${baseName}_audio.mp4`;
@@ -1106,7 +1028,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
       }
       const filename = candidate;
 
-      console.log(`>>> Direct download ${filename} at ${d.label}:`, url);
 
       let lastReceivedForFile = 0;
       const buffer = await fetchWithProgress(url, {
@@ -1114,7 +1035,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
           if (contentLength && contentLength > 0) {
             addToMax(contentLength);
           } else {
-            // unknown content-length — show indeterminate
+
             sawUnknownLength = true;
             loadingBar.setAttribute("indeterminate", "");
           }
@@ -1123,7 +1044,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
           const delta = received - lastReceivedForFile;
           lastReceivedForFile = received;
           downloadedBytes += delta;
-          // if we know any max, update value
+
           const max = Number(loadingBar.getAttribute("max")) || 0;
           if (max > 0) {
             loadingBar.setAttribute("value", downloadedBytes);
@@ -1134,7 +1055,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
         }
       });
 
-      // Trigger download for this file
       const blob = new Blob([buffer]);
       const objectUrl = URL.createObjectURL(blob);
       if (downloadMethod === "browser") {
@@ -1150,23 +1070,18 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
       URL.revokeObjectURL(objectUrl);
     };
 
-    // Run direct downloads in parallel
     const directTasks = downloads.map(d => queue.add(() => downloadDirectTask(d)));
     await Promise.all(directTasks);
 
-    // Finalize progress bar
     const finalMax = Number(loadingBar.getAttribute("max")) || downloadedBytes || 1;
     loadingBar.setAttribute("max", finalMax);
     loadingBar.setAttribute("value", downloadedBytes);
     loadingBar.removeAttribute("indeterminate");
     updateProgressStatus(loadingBar, downloadedBytes, finalMax);
 
-    console.log("✅ Direct downloads complete.");
     showDialog(browser.i18n.getMessage("splitAudioVideoDownloadCompleteDescription", [baseName, ".mp4"]), browser.i18n.getMessage("splitAudioVideoDownloadCompleteTitle"), { error: `✅ Downloaded separate audio and video files for "${baseName}".`, url: mpdUrl, request: request, downloadMethod: downloadMethod });
     return;
   }
-
-  // --- Otherwise: existing ZIP flow (templates + bases zipped). Keep streaming progress for all resources.
 
   const snackbar = document.createElement('mdui-snackbar');
   snackbar.setAttribute('open', true);
@@ -1175,7 +1090,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
   document.body.appendChild(snackbar);
   snackbar.addEventListener('close', () => snackbar.remove());
 
-  // Build segment template helper (substituteVars reused)
   function substituteVars(path, rep, extra = {}) {
     return path
       .replace(/\$RepresentationID\$/g, rep.id)
@@ -1191,7 +1105,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     const initUrl = new URL(initPath, baseUrl).href;
     const initZipPath = sanitizeZipPath(initPath);
 
-    // find template node to examine SegmentTimeline if present
     let repNode = Array.from(xmlDoc.getElementsByTagNameNS(NS, "Representation")).find(r => r.getAttribute("id") === rep.id);
     let tmplNode = null;
     if (repNode) {
@@ -1249,7 +1162,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
           const totalSec = parseISODuration(totalDurationISO);
           const segLenSec = segLen / (tmpl.timescale || 1);
           const estimatedCount = Math.ceil(totalSec / segLenSec);
-          // Build times as multiples of segLen (in timescale units)
+
           segmentStartTimes = [];
           for (let i = 0; i < estimatedCount; i++) segmentStartTimes.push(i * segLen);
         } else {
@@ -1257,7 +1170,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
         }
       }
 
-      // Build media paths by replacing $Time$ with each start time
       for (let i = 0; i < segmentStartTimes.length; i++) {
         const t = segmentStartTimes[i];
         const mediaPath = substituteVars(tmpl.media, rep, { time: t, number: firstIndex + i });
@@ -1266,9 +1178,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
         segmentUrls.push(new URL(mediaPath, baseUrl).href);
       }
     } else {
-      // 1. Check if we parsed a SegmentTimeline earlier.
-      // If the MPD has a timeline, we trust it for the segment count, 
-      // even if we are using $Number$ instead of $Time$.
+
       if (segmentStartTimes && segmentStartTimes.length > 0) {
         for (let i = 0; i < segmentStartTimes.length; i++) {
           const number = (tmpl.startNumber ?? 1) + i;
@@ -1278,7 +1188,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
           segmentUrls.push(new URL(mediaPath, baseUrl).href);
         }
       } else {
-        // 2. Fallback: If no timeline, compute using fixed duration
+
         const mpdRoot = xmlDoc.getElementsByTagNameNS(NS, "MPD")[0];
         const totalDurationISO = mpdRoot.getAttribute("mediaPresentationDuration");
         const parseISODuration = d => {
@@ -1294,7 +1204,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
         };
         const totalSec = parseISODuration(totalDurationISO);
 
-        // segLenSec: if tmpl.duration is 0/absent this will be 0 => guard
         const segLenSec = (tmpl.duration || 0) / (tmpl.timescale || 1);
         if (!segLenSec || segLenSec <= 0) throw new Error("Cannot compute number-based segments: no SegmentTimeline and duration/timescale missing or zero.");
         const segmentCount = Math.ceil(totalSec / segLenSec);
@@ -1319,7 +1228,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     };
   }
 
-  // Prepare zip entries and tasks
   const zipEntries = [];
   zipEntries.push({ name: mpdFilename, input: new TextEncoder().encode(mpdXmlText) });
 
@@ -1355,7 +1263,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     });
   }
 
-  // Queue chosen reps
   if (chosenVideoRep) {
     if (chosenVideoRep.type === "segmentTemplate") queueTemplateDownloads(chosenVideoRep);
     else if (chosenVideoRep.type === "segmentBase") queueBaseDownload(chosenVideoRep);
@@ -1370,7 +1277,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     else throw new Error("Unsupported audio representation type");
   }
 
-  // Setup dynamic progress for ZIP flow
   let globalTotalSegments = 0;
   let globalProcessedSegments = 0;
   let downloadedBytes = 0;
@@ -1401,31 +1307,25 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
   const mpdFixEnabled = (await browser.storage.local.get("mpd-fix").then((result) => result["mpd-fix"])) === "1";
   const repIdToLocalName = {};
 
-  // --- Parallel Download Setup ---
   const parallelSettings = await browser.storage.local.get(['speed-boost', 'connections']);
   const isParallel = parallelSettings['speed-boost'] === '1';
   const concurrency = isParallel ? parseInt(parallelSettings['connections'] || '4', 10) : 1;
   const queue = new ParallelQueue(concurrency);
 
-  const zipEntries = new Array(); // We'll need to keep order or just append
-  // Since order in ZIP doesn't strictly matter for playback, we can just push as they finish,
-  // but let's try to keep some order for the file system.
+  const zipEntries = new Array();
 
   const processTask = async (t) => {
     if (t.type === "template") {
-      // init
-      console.log(">>> Fetching template init:", t.info.initUrl);
+
       const initBuf = await fetchWithProgress(t.info.initUrl);
       zipEntries.push({ name: prefixedName(t.info.initZipPath), input: initBuf });
 
-      // segments (Parallelize segments within task if needed, but let's just queue them)
       const segTasks = t.info.segmentUrls.map((segUrl, i) => {
         return queue.add(async () => {
           const segZipPath = t.info.mediaZipPaths[i];
-          console.log(`>>> Fetching template segment #${i + 1}:`, segUrl);
           const buf = await fetchWithProgress(segUrl);
           zipEntries.push({ name: prefixedName(segZipPath), input: buf });
-          
+
           globalProcessedSegments++;
           loadingBar.setAttribute("value", globalProcessedSegments);
           updateSegmentProgressStatus(loadingBar, globalProcessedSegments, globalTotalSegments);
@@ -1435,7 +1335,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
 
     } else if (t.type === "base") {
       await queue.add(async () => {
-          console.log(">>> Fetching SegmentBase file (single-file MP4):", t.url);
           let lastReceivedForFile = 0;
           const arrayBuffer = await fetchWithProgress(t.url, {
             onStart: (contentLength) => {
@@ -1461,14 +1360,12 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
           if (mpdFixEnabled) repIdToLocalName[t.rep.id] = t.zipName;
       });
     } else if (t.type === "list") {
-      console.log(">>> Fetching SegmentList init:", t.info.initUrl);
       const initBuf = await fetchWithProgress(t.info.initUrl);
       zipEntries.push({ name: prefixedName(t.info.initZipPath), input: initBuf });
 
       const segTasks = t.info.segmentUrls.map((segUrl, i) => {
         return queue.add(async () => {
             const segZipPath = t.info.segmentZipPaths[i];
-            console.log(`>>> Fetching SegmentList segment #${i + 1}:`, segUrl);
             const buf = await fetchWithProgress(segUrl);
             zipEntries.push({ name: prefixedName(segZipPath), input: buf });
 
@@ -1478,17 +1375,15 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
         });
       });
       await Promise.all(segTasks);
-      
+
       if (mpdFixEnabled) repIdToLocalName[t.rep.id] = { type: "list", init: t.info.initZipPath, segments: t.info.segmentZipPaths };
     }
   };
 
-  // Run top-level tasks. Note: for templates/lists, internal segments are also queued.
   for (const t of tasks) {
     await processTask(t);
   }
 
-  // mpd-fix rewrite if needed
   function pruneToSelectedRepresentations(xmlDoc, NS, selectedRepIds) {
     const adaptationSets = Array.from(xmlDoc.getElementsByTagNameNS(NS, "AdaptationSet"));
 
@@ -1502,19 +1397,17 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
         }
       }
 
-      // Remove empty AdaptationSets
       if (!asNode.getElementsByTagNameNS(NS, "Representation").length) {
         asNode.parentElement?.removeChild(asNode);
       }
     }
   }
   if (mpdFixEnabled) {
-    // Build selected representations set
+
     const selectedRepIds = new Set();
     if (chosenVideoRep) selectedRepIds.add(chosenVideoRep.id);
     if (chosenAudioRep) selectedRepIds.add(chosenAudioRep.id);
 
-    // Remove unused representations
     pruneToSelectedRepresentations(xmlDoc, NS, selectedRepIds);
     for (const repId in repIdToLocalName) {
       const repNode = Array.from(xmlDoc.getElementsByTagNameNS(NS, "Representation"))
@@ -1524,7 +1417,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
       const meta = repIdToLocalName[repId];
 
       if (typeof meta === "string") {
-        // existing SegmentBase logic
+
         const segBases = Array.from(repNode.getElementsByTagNameNS(NS, "SegmentBase"));
         segBases.forEach(n => n.parentElement && n.parentElement.removeChild(n));
         let baseNode = repNode.getElementsByTagNameNS(NS, "BaseURL")[0];
@@ -1554,7 +1447,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     zipEntries[0] = { name: mpdFilename, input: new TextEncoder().encode(mpdXmlText) };
   }
 
-  // finalize progress bar
   try {
     const finalMax = Number(loadingBar.getAttribute("max")) || downloadedBytes || 1;
     loadingBar.setAttribute("max", finalMax);
@@ -1563,15 +1455,13 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     updateProgressStatus(loadingBar, downloadedBytes, finalMax);
   } catch (e) { }
 
-  // Generate ZIP and trigger download
-  console.log("▶️ All segments fetched; generating ZIP…");
   const zipBlob = await downloadZip(zipEntries).blob();
   const zipName = `${baseName}.zip`;
 
   if (downloadMethod === "browser") {
     await browser.downloads.download({ url: URL.createObjectURL(zipBlob), filename: zipName });
   } else {
-    // Use a temporary <a> element to trigger download
+
     const a = document.createElement("a");
     a.href = URL.createObjectURL(zipBlob);
     a.download = zipName;
@@ -1581,7 +1471,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     URL.revokeObjectURL(a.href);
   }
 
-  console.log(`✅ Downloaded ZIP (“${zipName}”).`);
   showDialog(browser.i18n.getMessage("mpdDownloadCompleteMessage", [baseName]), browser.i18n.getMessage("mpdDownloadCompleteTitle"), {
     error: `✅ Downloaded ZIP (“${zipName}”).`,
     urls: { zip: URL.createObjectURL(zipBlob), mpd: mpdUrl },
@@ -1589,7 +1478,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     downloadMethod
   });
 
-  // Helper: prefix zip path
   function prefixedName(path) {
     if (!baseURLForZip) return path;
     if (path.startsWith(baseURLForZip)) return path;
@@ -1597,23 +1485,13 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
   }
 }
 
-/**
- * Helper: prompt the user to select one video Representation from an MPD’s AdaptationSet.
- * Very similar to selectStreamVariant(...) for m3u8, but adapted to DASH.
- *
- * @param {Array<{ id: string, bandwidth: number, width: number, height: number }>} reps
- *        Array of all <Representation> objects (with at least id, bandwidth, width, height).
- * @returns {Promise<{ id: string, bandwidth: number, width: number, height: number }>}
- *          Resolves to the chosen representation object.
- */
 async function selectMPDVideoRepresentation(reps) {
-  // If there's only one rep, no need to ask.
+
   if (reps.length === 1) {
     return reps[0];
   }
 
-  // Check saved preference
-  const preference = (await browser.storage.local.get("stream-quality").then((result) => result["stream-quality"])); // "highest" | "lowest" or "ask"
+  const preference = (await browser.storage.local.get("stream-quality").then((result) => result["stream-quality"]));
 
   if (preference === "highest") {
     return reps.reduce((a, b) => (a.bandwidth > b.bandwidth ? a : b));
@@ -1621,13 +1499,11 @@ async function selectMPDVideoRepresentation(reps) {
     return reps.reduce((a, b) => (a.bandwidth < b.bandwidth ? a : b));
   }
 
-  // Build and show an MDUI dialog to let user pick one.
   return new Promise((resolve) => {
-    // Create dialog root
+
     const dialog = document.createElement("mdui-dialog");
     dialog.headline = browser.i18n.getMessage("videoQualityDialogTitle");
 
-    // Content: a <div> that holds a label + <mdui-select>
     const content = document.createElement("div");
     content.className = "mdui-dialog-content";
     dialog.appendChild(content);
@@ -1640,10 +1516,9 @@ async function selectMPDVideoRepresentation(reps) {
     const select = document.createElement("mdui-select");
     select.setAttribute("variant", "outlined");
     select.setAttribute("id", "mpd-video-select");
-    // Default to index 0
+
     select.value = "0";
 
-    // Sort reps by bandwidth ascending (so “smallest” is first), just for presentation.
     const sorted = reps.slice().sort((a, b) => a.bandwidth - b.bandwidth);
 
     sorted.forEach((r, index) => {
@@ -1656,7 +1531,6 @@ async function selectMPDVideoRepresentation(reps) {
 
     content.appendChild(select);
 
-    // Actions: an OK button
     const actions = document.createElement("div");
     actions.className = "mdui-dialog-actions";
     const confirmBtn = document.createElement("mdui-button");
@@ -1665,34 +1539,25 @@ async function selectMPDVideoRepresentation(reps) {
     confirmBtn.addEventListener("click", () => {
       const idx = parseInt(select.value, 10) || 0;
       document.body.removeChild(dialog);
-      // Resolve with the chosen representation (from sorted[])
+
       resolve(sorted[idx]);
     });
     actions.appendChild(confirmBtn);
     dialog.appendChild(actions);
 
     document.body.appendChild(dialog);
-    // Open the dialog on next frame
+
     requestAnimationFrame(() => { dialog.open = true; });
   });
 }
 
-/**
- * Helper: prompt the user to select one audio Representation from an MPD’s AdaptationSet.
- * Very similar to selectStreamVariant(...) for m3u8, but adapted to DASH.
- * @param {Array<{ id: string, bandwidth: number }>} reps
- *       Array of all <Representation> objects (with at least id, bandwidth).
- * @returns {Promise<{ id: string, bandwidth: number }>}
- *          Resolves to the chosen representation object.
- */
 async function selectMPDAudioRepresentation(reps) {
-  // If there's only one rep, no need to ask.
+
   if (reps.length === 1) {
     return reps[0];
   }
 
-  // Check saved preference
-  const preference = (await browser.storage.local.get("stream-quality").then((result) => result["stream-quality"])); // "highest" | "lowest" or "ask"
+  const preference = (await browser.storage.local.get("stream-quality").then((result) => result["stream-quality"]));
 
   if (preference === "highest") {
     return reps.reduce((a, b) => (a.bandwidth > b.bandwidth ? a : b));
@@ -1700,13 +1565,11 @@ async function selectMPDAudioRepresentation(reps) {
     return reps.reduce((a, b) => (a.bandwidth < b.bandwidth ? a : b));
   }
 
-  // Build and show an MDUI dialog to let user pick one.
   return new Promise((resolve) => {
-    // Create dialog root
+
     const dialog = document.createElement("mdui-dialog");
     dialog.headline = browser.i18n.getMessage("audioQualityDialogTitle");
 
-    // Content: a <div> that holds a label + <mdui-select>
     const content = document.createElement("div");
     content.className = "mdui-dialog-content";
     dialog.appendChild(content);
@@ -1719,10 +1582,9 @@ async function selectMPDAudioRepresentation(reps) {
     const select = document.createElement("mdui-select");
     select.setAttribute("variant", "outlined");
     select.setAttribute("id", "mpd-audio-select");
-    // Default to index 0
+
     select.value = "0";
 
-    // Sort reps by bandwidth ascending (so “smallest” is first), just for presentation.
     const sorted = reps.slice().sort((a, b) => a.bandwidth - b.bandwidth);
 
     sorted.forEach((r, index) => {
@@ -1735,7 +1597,6 @@ async function selectMPDAudioRepresentation(reps) {
 
     content.appendChild(select);
 
-    // Actions: an OK button
     const actions = document.createElement("div");
     actions.className = "mdui-dialog-actions";
     const confirmBtn = document.createElement("mdui-button");
@@ -1744,13 +1605,13 @@ async function selectMPDAudioRepresentation(reps) {
     confirmBtn.addEventListener("click", () => {
       const idx = parseInt(select.value, 10) || 0;
       document.body.removeChild(dialog);
-      // Resolve with the chosen representation (from sorted[])
+
       resolve(sorted[idx]);
     });
     actions.appendChild(confirmBtn);
     dialog.appendChild(actions);
     document.body.appendChild(dialog);
-    // Open the dialog on next frame
+
     requestAnimationFrame(() => { dialog.open = true; });
   })
 }
