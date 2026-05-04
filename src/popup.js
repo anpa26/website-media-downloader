@@ -264,28 +264,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  checkAndShowRatingBanner();
-  document.getElementById('dont-show-again-button').addEventListener('click', () => dismissRatingBanner());
-
-  document.getElementById('remind-me-later-button').addEventListener('click', async () => {
-    const ratingBanner = document.getElementById('rating-banner');
-    ratingBanner.style.display = 'none';
-    await browser.storage.local.set({ 'install-date': new Date().toISOString() });
-  });
-
-  document.getElementById('rate-now-button').addEventListener('click', async () => {
-    res = await fetch("https://addons.mozilla.org/api/v5/addons/addon/media-downloader-unleashed/");
-    data = await res.json();
-    ratingCount = data.ratings.count;
-    await browser.storage.local.set({ 'ratings-at-attempt': ratingCount.toString() });
-    onfocus = async () => {
-      res = await fetch("https://addons.mozilla.org/api/v5/addons/addon/media-downloader-unleashed/");
-      data = await res.json();
-      if (data.ratings.count > ratingCount) dismissRatingBanner();
-      await browser.storage.local.remove("ratings-at-attempt");
-      onfocus = null;
-    };
-  });
 
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('options') === 'true') {
@@ -454,29 +432,6 @@ function finishDownloadUI(id, isSuccess = false) {
   });
 }
 
-async function checkAndShowRatingBanner() {
-  const installData = await browser.storage.local.get('install-date');
-  if (!installData['install-date']) {
-    await browser.storage.local.set({ 'install-date': new Date().toISOString() });
-    return;
-  }
-  
-  const installDate = new Date(installData['install-date']);
-  const hasRated = (await browser.storage.local.get('has-rated'))['has-rated'];
-  const now = new Date();
-  
-  const diffTime = Math.abs(now - installDate);
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  if (diffDays >= 7 && !hasRated) {
-    document.getElementById('rating-banner').removeAttribute("style");
-  }
-}
-
-async function dismissRatingBanner() {
-  document.getElementById('rating-banner').style.display = 'none';
-  await browser.storage.local.set({ 'has-rated': 'true' });
-}
 
 function updateDownloadingCount(change) {
   downloadingCount = Math.max(0, downloadingCount + change);
