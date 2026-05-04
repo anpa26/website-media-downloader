@@ -123,6 +123,9 @@ async function triggerDownload() {
                     saveButton.textContent = `Save ${filename}`;
                     statusText.textContent = "Your file is ready to be saved.";
 
+                    const closeButton = document.getElementById('close-button');
+                    closeButton.onclick = () => window.close();
+
                     const performDownload = () => {
                         const a = document.createElement("a");
                         a.href = objectUrl;
@@ -131,10 +134,12 @@ async function triggerDownload() {
                         a.click();
                         document.body.removeChild(a);
                         
-                        statusText.textContent = "Saving to your device... This tab will close in a moment.";
+                        statusTitle.textContent = "Download Started!";
+                        statusText.textContent = "Your file is being saved to your device. You can close this tab now.";
                         saveButton.disabled = true;
                         saveButton.style.opacity = "0.5";
 
+                        const isAndroid = /Android/i.test(navigator.userAgent);
                         setTimeout(() => {
                             URL.revokeObjectURL(objectUrl);
                             try {
@@ -144,7 +149,7 @@ async function triggerDownload() {
                                 delTx.objectStore(CHUNK_STORE_NAME).delete(chunkRange);
                             } catch (e) { console.warn("Cleanup failed:", e); }
                             window.close();
-                        }, 8000);
+                        }, isAndroid ? 5000 : 2000);
                     };
 
                     saveButton.onclick = performDownload;

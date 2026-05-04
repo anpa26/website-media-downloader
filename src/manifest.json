@@ -22,7 +22,8 @@
     "webRequest",
     "webRequestBlocking",
     "webRequestFilterResponse",
-    "scripting"
+    "scripting",
+    "offscreen"
   ],
   "optional_permissions": [
   ],

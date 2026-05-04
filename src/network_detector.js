@@ -1229,15 +1229,135 @@ function getFileName(url, maxLength = 30) {
 const pendingSaveQueue = [];
 let activeBridgeTabId = null;
 
+async function cleanupDownload(id) {
+    try {
+        const db = await getDB();
+        const delTx = db.transaction([STORE_NAME, CHUNK_STORE_NAME], "readwrite");
+        delTx.objectStore(STORE_NAME).delete(id);
+        const chunkRange = IDBKeyRange.bound([id, 0], [id, Infinity]);
+        delTx.objectStore(CHUNK_STORE_NAME).delete(chunkRange);
+    } catch (e) { console.warn("Cleanup failed:", e); }
+}
+
+async function triggerHiddenDownload(id, filename) {
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isFirefox = typeof browser.runtime.getBrowserInfo === 'function' || !browser.offscreen;
+
+    // ON ANDROID: Direct hidden downloads (Blobs) are extremely unreliable.
+    // They often fail because the system download manager cannot access the Blob URL
+    // from a background context or the context is killed too early.
+    // We will return false here to force the use of a visible tab (download.html).
+    if (isAndroid) {
+        return false;
+    }
+
+    // 1. Try direct URL.createObjectURL (Only for Desktop Firefox)
+    if (isFirefox && typeof URL !== 'undefined' && URL.createObjectURL) {
+        try {
+            const db = await getDB();
+            
+            const item = await new Promise((resolve, reject) => {
+                const tx = db.transaction([STORE_NAME], "readonly");
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.get(id);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+            
+            const chunks = [];
+            await new Promise((resolve, reject) => {
+                const tx = db.transaction([CHUNK_STORE_NAME], "readonly");
+                const store = tx.objectStore(CHUNK_STORE_NAME);
+                const range = IDBKeyRange.bound([id, 0], [id, Infinity]);
+                const request = store.openCursor(range);
+                request.onsuccess = (e) => {
+                    const cursor = e.target.result;
+                    if (cursor) { chunks.push(cursor.value.data); cursor.continue(); }
+                    else resolve();
+                };
+                request.onerror = () => reject(request.error);
+            });
+
+            if (chunks.length === 0 && (!item || !item.data)) return false;
+
+            const finalBlob = chunks.length > 0 
+                ? new Blob(chunks, { type: (item && item.mime) || "application/octet-stream" })
+                : item.data;
+
+            const blobUrl = URL.createObjectURL(finalBlob);
+            
+            try {
+                await browser.downloads.download({
+                    url: blobUrl,
+                    filename: filename,
+                    saveAs: false
+                });
+                
+                setTimeout(() => {
+                    URL.revokeObjectURL(blobUrl);
+                    cleanupDownload(id);
+                }, 30000); 
+                return true;
+            } catch (e) {
+                URL.revokeObjectURL(blobUrl);
+                throw e;
+            }
+        } catch (e) {
+            console.error("Direct background download failed:", e);
+        }
+    }
+
+    // 2. Try Offscreen API (Desktop Chromium)
+    if (typeof browser.offscreen !== 'undefined') {
+        try {
+            const hasOffscreen = await browser.offscreen.hasDocument().catch(() => false);
+            if (!hasOffscreen) {
+                await browser.offscreen.createDocument({
+                    url: 'offscreen.html',
+                    reasons: ['DOWNLOAD'],
+                    justification: 'Triggering download for fetched media blob'
+                });
+            }
+            
+            const response = await browser.runtime.sendMessage({
+                action: 'triggerOffscreenDownload',
+                data: { id, filename }
+            }).catch(e => ({ error: e.message }));
+
+            if (response && response.success) {
+                setTimeout(() => {
+                    cleanupDownload(id);
+                }, 10000);
+                return true;
+            }
+        } catch (e) {
+            console.error("Offscreen download failed:", e);
+        }
+    }
+
+    return false;
+}
+
 async function processSaveQueue() {
     if (activeBridgeTabId !== null || pendingSaveQueue.length === 0) return;
 
     const nextDownload = pendingSaveQueue.shift();
     const { id, url, filename } = nextDownload;
 
+    // Try hidden download (only works on Desktop)
+    const hiddenSuccess = await triggerHiddenDownload(id, filename);
+    if (hiddenSuccess) {
+        setTimeout(processSaveQueue, 1000);
+        return;
+    }
+
+    // ON ANDROID / FALLBACK: Use a visible tab.
+    // We MUST use active: true on Android because many browsers block downloads
+    // from background tabs or require a user gesture that only works in the active tab.
+    const isAndroid = /Android/i.test(navigator.userAgent);
     const tab = await browser.tabs.create({
         url: browser.runtime.getURL(`download.html?id=${id}&url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`),
-        active: true
+        active: isAndroid // Force active on Android for reliability
     });
     activeBridgeTabId = tab.id;
 }
