@@ -73,7 +73,7 @@ The extension utilizes header management (Referer, Origin, and Cookies) to repli
 | **Video** | mp4, mkv, webm, avi, mov, flv, ts, m4v, 3gp, mpeg, mpg, vob, vp9 |
 | **Audio** | mp3, aac, flac, wav, ogg, m4a, opus, ac3, m4b, mka, vorbis |
 | **Streams** | m3u8 (HLS), mpd (DASH), f4m (HDS), ism/isml |
-| **Images** | webp, png, jpg, jpeg, gif, svg |
+| **Images** | webp, png, jpg, jpeg, gif |
 | **Subtitles** | vtt, srt, ass, ssa, ttml |
 
 ---
@@ -98,6 +98,14 @@ You can install the extension directly from the official Firefox Add-ons store:
 - **Download fails?** Some sites use DRM (Digital Rights Management) or encryption. This extension cannot download encrypted content (like Netflix or Amazon Prime).
 - **403 Forbidden on images?** This is often caused by session-based security tokens. It is highly recommended to stay on the current page until downloads are finished. Navigating to the next page or switching lists too quickly can invalidate the request context.
 - **Broken files?** If a converted stream doesn't play, try downloading the "Direct Manifest" and playing it with VLC Media Player.
+
+---
+
+## Support & Feedback
+
+**Thanks for using this extension!** You can use it completely for free without paying a single cent. Giving a star on GitHub or a rating is more than enough to show your support. If you encounter any bugs, please feel free to [open an issue](https://github.com/anpa26/website-media-downloader/issues).
+
+If you want to develop this project further, please don't forget to include me in the credits to keep me motivated. Thank you!
 
 ---
 
