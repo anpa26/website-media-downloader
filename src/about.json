@@ -1,6 +1,7 @@
 {
     "extension": {
         "name": "Website Media Downloader",
+        "version": "1.7.2",
         "description": "A versatile tool to detect and download videos, music, and streams from almost any website. It works by capturing media network requests in real-time.",
         "license": "GPL-3.0"
     },

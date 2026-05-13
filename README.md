@@ -1,6 +1,6 @@
 # Website Media Downloader
 
-[![Version](https://img.shields.io/badge/version-1.7.1-blue.svg)](src/manifest.json)
+[![Version](https://img.shields.io/badge/version-1.7.2-blue.svg)](src/manifest.json)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE.md)
 [![Platform](https://img.shields.io/badge/platform-Firefox%20%7C%20Android-orange.svg)](#installation)
 
@@ -46,7 +46,7 @@ Designed with a focus on privacy and technical transparency, all operations—in
 
 ---
 
-## Technical Features (v1.7.1)
+## Technical Features (v1.7.2)
 
 ### UI Architecture
 The interface has been completely overhauled using Material Design 3 (MDUI) components, providing a responsive and standardized user experience.

@@ -1,47 +1,32 @@
 {
     "en": {
-        "headline": "What's New (v1.7.1)",
+        "headline": "What's New (v1.7.2)",
         "changes": [
-            "Added Japanese (ja) localization",
-            "Fixed desktop download errors by persisting headers in session storage (MV3 fix)",
-            "Optimized ZIP generation using async generators for better memory efficiency",
-            "Improved ZIP resilience by skipping failed files instead of aborting",
-            "Added 'Continue All' option in error dialogs to automatically skip future errors",
-            "Enhanced bulk downloads by preserving full request context (headers, cookies)",
-            "Fixed 'Select All' only targeting the first 20 items in large lists",
-            "Added background download toggle and improved background reliability",
-            "Added option to disable rename dialog and applied theme to download page",
-            "UI improvements and removed redundant external links"
+            "Improved theme color selection on desktop with new color presets and a manual apply button",
+            "Added a fixed popup size (550x600) on desktop for a more consistent and compact user interface",
+            "Added 'Open settings in new tab' button to provide a stable full-page configuration experience",
+            "Added snackbar notifications with multi-language support when applying theme colors",
+            "Optimized settings logic to maintain active states for theme presets and improve color persistence"
         ]
     },
     "id": {
-        "headline": "Yang Baru (v1.7.1)",
+        "headline": "Yang Baru (v1.7.2)",
         "changes": [
-            "Menambahkan lokalisasi bahasa Jepang (ja)",
-            "Memperbaiki error unduhan desktop dengan menyimpan header di session storage (MV3 fix)",
-            "Optimasi pembuatan ZIP menggunakan async generator untuk efisiensi memori",
-            "Meningkatkan ketahanan ZIP dengan melewati file yang gagal alih-alih membatalkan",
-            "Menambahkan opsi 'Lanjutkan Semua' pada dialog error untuk otomatis melewati error berikutnya",
-            "Meningkatkan unduhan massal dengan mempertahankan konteks permintaan (header, cookie)",
-            "Memperbaiki bug 'Pilih Semua' yang hanya menargetkan 20 item pertama",
-            "Menambahkan toggle unduhan latar belakang dan meningkatkan keandalannya",
-            "Menambahkan opsi mematikan dialog ganti nama dan menerapkan tema ke halaman unduhan",
-            "Peningkatan UI dan menghapus tautan eksternal yang tidak diperlukan"
+            "Peningkatan pemilihan warna tema di desktop dengan preset warna baru dan tombol terapkan manual",
+            "Menambahkan ukuran popup tetap (550x600) di desktop untuk antarmuka pengguna yang lebih konsisten dan ringkas",
+            "Menambahkan tombol 'Buka pengaturan di tab baru' untuk pengalaman konfigurasi halaman penuh yang stabil",
+            "Menambahkan notifikasi snackbar dengan dukungan multibahasa saat menerapkan warna tema",
+            "Optimasi logika pengaturan untuk mempertahankan status aktif preset tema dan meningkatkan persistensi warna"
         ]
     },
     "ja": {
-        "headline": "新機能 (v1.7.1)",
+        "headline": "新機能 (v1.7.2)",
         "changes": [
-            "日本語 (ja) のローカライズを追加しました",
-            "セッションストレージにヘッダーを保持することでデスクトップのダウンロードエラーを修正しました (MV3 修正)",
-            "メモリ効率向上のため、非同期ジェネレーターを使用して ZIP 生成を最適化しました",
-            "エラー時に中断せず、失敗したファイルをスキップするように ZIP の弾力性を向上させました",
-            "エラーダイアログに、今後のエラーを自動的にスキップする「すべて続行」オプションを追加しました",
-            "リクエストコンテキスト (ヘッダー、クッキー) を完全に保持するように一括ダウンロードを強化しました",
-            "大きなリストで「すべて選択」が最初の 20 項目のみを対象とする問題を修正しました",
-            "バックグラウンドダウンロードの切り替え機能を追加し、信頼性を向上させました",
-            "名前変更ダイアログを無効にするオプションを追加し、ダウンロードページにテーマを適用しました",
-            "UI の改善と不要な外部リンクの削除を行いました"
+            "デスクトップでのテーマカラー選択を改善し、新しいカラープリセットと手動適用ボタンを追加しました",
+            "デスクトップでのポップアップサイズを固定 (550x600) し、より一貫性のあるコンパクトなUIを提供します",
+            "フルページで安定した設定を行うための「新しいタブで設定を開く」ボタンを追加しました",
+            "テーマカラー適用時に多言語対応のスナックバー通知を追加しました",
+            "テーマプリセットのアクティブ状態を維持し、色の永続性を向上させるために設定ロジックを最適化しました"
         ]
     }
 }
