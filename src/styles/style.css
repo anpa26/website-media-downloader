@@ -40,6 +40,11 @@ body {
     overflow-x: hidden;
 }
 
+body.is-popup {
+    width: 550px;
+    height: 600px;
+}
+
 mdui-tabs {
     background-color: rgb(var(--mdui-color-surface));
     border-bottom: 1px solid rgb(var(--mdui-color-outline-variant));
@@ -333,6 +338,30 @@ mdui-bottom-app-bar {
     background: none;
     padding: 0;
     overflow: hidden;
+}
+
+.color-presets {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.color-preset {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.color-preset:hover {
+    transform: scale(1.1);
+}
+
+.color-preset.active {
+    border-color: rgb(var(--mdui-color-primary));
+    transform: scale(1.1);
 }
 
 mdui-segmented-button[selected]::part(button) {

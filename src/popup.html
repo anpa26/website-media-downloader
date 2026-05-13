@@ -334,9 +334,31 @@
                 <mdui-switch id="history-page"></mdui-switch>
               </div>
               <mdui-divider></mdui-divider>
-              <div class="setting-item">
+              <div class="setting-item vertical">
                 <h3 data-translate="colorPickerTitle">Theme color</h3>
-                <input type="color" id="color-picker-input">
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                  <div class="color-presets">
+                    <div class="color-preset" style="background-color: #bbdefb;" data-color="#bbdefb"></div>
+                    <div class="color-preset" style="background-color: #ffc107;" data-color="#ffc107"></div>
+                    <div class="color-preset" style="background-color: #4caf50;" data-color="#4caf50"></div>
+                    <div class="color-preset" style="background-color: #f44336;" data-color="#f44336"></div>
+                    <div class="color-preset" style="background-color: #9c27b0;" data-color="#9c27b0"></div>
+                    <div class="color-preset" style="background-color: #3f51b5;" data-color="#3f51b5"></div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="color" id="color-picker-input">
+                    <mdui-button-icon id="apply-color-button" variant="filled" style="--mdui-color-primary: var(--mdui-color-primary);">
+                      <mdui-icon>
+                        <svg viewBox="0 -960 960 960"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>
+                      </mdui-icon>
+                    </mdui-button-icon>
+                  </div>
+                  <mdui-button-icon id="open-settings-tab" data-helper-translate="openInNewTabHelper">
+                    <mdui-icon>
+                      <svg viewBox="0 -960 960 960"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 312-312H520v-80h240v240h-80v-124L388-332Z"/></svg>
+                    </mdui-icon>
+                  </mdui-button-icon>
+                </div>
               </div>
             </mdui-card>
           </div>

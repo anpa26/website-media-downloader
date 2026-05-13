@@ -785,6 +785,14 @@
         "message": "Background download",
         "description": "The title of the background download setting."
     },
+    "themeColorApplied": {
+        "message": "Theme color applied!",
+        "description": "The message shown in a snackbar when the theme color is applied."
+    },
+    "openInNewTabHelper": {
+        "message": "Open settings in a new tab",
+        "description": "The helper text for the button to open settings in a new tab."
+    },
     "backgroundDownloadExplain": {
         "message": "Allows downloads to continue in the background. If disabled, downloads will run in the popup and stop if it's closed (no new tabs on mobile).",
         "description": "The explanation of the background download setting."

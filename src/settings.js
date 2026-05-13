@@ -176,16 +176,65 @@ async function initializeSettings() {
     }
 
     const colorInput = document.getElementById('color-picker-input');
+    const applyColorBtn = document.getElementById('apply-color-button');
+    const presets = document.querySelectorAll('.color-preset');
+    const openSettingsTabBtn = document.getElementById('open-settings-tab');
+
     if (colorInput) {
         const activeColor = colorResult['theme-color'] || '#bbdefb';
         colorInput.value = activeColor;
         mdui.setColorScheme(activeColor);
 
-        colorInput.addEventListener('input', (e) => {
-            const newColor = e.target.value;
+        const updateActivePreset = (color) => {
+            presets.forEach(p => {
+                if (p.dataset.color.toLowerCase() === color.toLowerCase()) {
+                    p.classList.add('active');
+                } else {
+                    p.classList.remove('active');
+                }
+            });
+        };
+        updateActivePreset(activeColor);
+
+        const saveColor = (newColor) => {
             browser.storage.local.set({ 'theme-color': newColor });
             mdui.setColorScheme(newColor);
+            updateActivePreset(newColor);
+        };
+
+        colorInput.addEventListener('input', (e) => {
+            saveColor(e.target.value);
         });
+
+        colorInput.addEventListener('change', (e) => {
+            saveColor(e.target.value);
+        });
+
+        if (applyColorBtn) {
+            applyColorBtn.addEventListener('click', () => {
+                saveColor(colorInput.value);
+                if (typeof mdui !== 'undefined' && mdui.snackbar) {
+                    mdui.snackbar({
+                        message: browser.i18n.getMessage("themeColorApplied"),
+                        placement: "top"
+                    });
+                }
+            });
+        }
+
+        presets.forEach(preset => {
+            preset.addEventListener('click', () => {
+                const color = preset.dataset.color;
+                colorInput.value = color;
+                saveColor(color);
+            });
+        });
+
+        if (openSettingsTabBtn) {
+            openSettingsTabBtn.addEventListener('click', () => {
+                browser.tabs.create({ url: 'popup.html?options=true' });
+            });
+        }
     }
 
     const bgDlSwitch = document.getElementById('background-download');

@@ -286,9 +286,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('options') === 'true') {
     document.getElementById('navbar').value = 'settings';
-  } else if (urlParams.get('tab') === 'history') {
-    document.getElementById('navbar').value = 'history';
-    loadHistoryList();
+  } else {
+    document.body.classList.add('is-popup');
+    if (urlParams.get('tab') === 'history') {
+      document.getElementById('navbar').value = 'history';
+      loadHistoryList();
+    }
   }
 });
 

@@ -751,6 +751,14 @@
         "message": "Unduhan latar belakang",
         "description": "Judul pengaturan unduhan latar belakang."
     },
+    "themeColorApplied": {
+        "message": "Warna tema diterapkan!",
+        "description": "Pesan yang ditampilkan di snackbar saat warna tema diterapkan."
+    },
+    "openInNewTabHelper": {
+        "message": "Buka pengaturan di tab baru",
+        "description": "Teks bantuan untuk tombol yang membuka pengaturan di tab baru."
+    },
     "backgroundDownloadExplain": {
         "message": "Memungkinkan unduhan berlanjut di latar belakang. Jika dimatikan, unduhan akan berjalan di popup dan berhenti otomatis jika popup ditutup (tanpa buka tab baru di seluler).",
         "description": "Penjelasan pengaturan unduhan latar belakang."
