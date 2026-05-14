@@ -1,32 +1,92 @@
 {
     "en": {
-        "headline": "What's New (v1.7.2)",
+        "headline": "What's New (v1.7.3)",
         "changes": [
-            "Improved theme color selection on desktop with new color presets and a manual apply button",
-            "Added a fixed popup size (550x600) on desktop for a more consistent and compact user interface",
-            "Added 'Open settings in new tab' button to provide a stable full-page configuration experience",
-            "Added snackbar notifications with multi-language support when applying theme colors",
-            "Optimized settings logic to maintain active states for theme presets and improve color persistence"
+            "Enhanced header spoofing and origin synthesis algorithms to bypass strict server-side access controls",
+            "Optimized real-time network request monitoring for more accurate identification of high-bitrate media",
+            "Refined deep DOM scanning logic to improve detection performance in complex web environments",
+            "Standardized internal core modules and data processing for improved system stability and speed",
+            "Resolved minor UI layout inconsistencies and improved the reliability of dynamic interface elements"
         ]
     },
     "id": {
-        "headline": "Yang Baru (v1.7.2)",
+        "headline": "Yang Baru (v1.7.3)",
         "changes": [
-            "Peningkatan pemilihan warna tema di desktop dengan preset warna baru dan tombol terapkan manual",
-            "Menambahkan ukuran popup tetap (550x600) di desktop untuk antarmuka pengguna yang lebih konsisten dan ringkas",
-            "Menambahkan tombol 'Buka pengaturan di tab baru' untuk pengalaman konfigurasi halaman penuh yang stabil",
-            "Menambahkan notifikasi snackbar dengan dukungan multibahasa saat menerapkan warna tema",
-            "Optimasi logika pengaturan untuk mempertahankan status aktif preset tema dan meningkatkan persistensi warna"
+            "Peningkatan algoritma spoofing header dan sintesis origin untuk melewati kontrol akses sisi server yang ketat",
+            "Optimasi pemantauan permintaan jaringan real-time untuk identifikasi media bitrate tinggi yang lebih akurat",
+            "Penyempurnaan logika pemindaian DOM mendalam untuk meningkatkan performa deteksi di lingkungan web yang kompleks",
+            "Standarisasi modul inti internal dan pemrosesan data untuk meningkatkan stabilitas dan kecepatan sistem",
+            "Perbaikan inkonsistensi tata letak UI kecil dan peningkatan keandalan elemen antarmuka dinamis"
         ]
     },
     "ja": {
-        "headline": "新機能 (v1.7.2)",
+        "headline": "新機能 (v1.7.3)",
         "changes": [
-            "デスクトップでのテーマカラー選択を改善し、新しいカラープリセットと手動適用ボタンを追加しました",
-            "デスクトップでのポップアップサイズを固定 (550x600) し、より一貫性のあるコンパクトなUIを提供します",
-            "フルページで安定した設定を行うための「新しいタブで設定を開く」ボタンを追加しました",
-            "テーマカラー適用時に多言語対応のスナックバー通知を追加しました",
-            "テーマプリセットのアクティブ状態を維持し、色の永続性を向上させるために設定ロジックを最適化しました"
+            "サーバー側の厳格なアクセス制御を回避するために、ヘッダースプーフィングとオリジン合成アルゴリズムを強化しました",
+            "高ビットレートメディアをより正確に特定するために、リアルタイムのネットワークリクエスト監視を最適化しました",
+            "複雑なウェブ環境での検出パフォーマンスを向上させるために、ディープDOMスキャンロジックを改良しました",
+            "システムの安定性と速度を向上させるために、内部コアモジュールとデータ処理を標準化しました",
+            "マイナーなUIレイアウトの不整合を解決し、動的インターフェース要素の信頼性を向上させました"
+        ]
+    },
+    "de": {
+        "headline": "Was gibt's Neues (v1.7.3)",
+        "changes": [
+            "Verbesserte Algorithmen für Header-Spoofing und Origin-Synthese zur Umgehung strenger serverseitiger Zugriffskontrollen",
+            "Optimierte Echtzeit-Überwachung von Netzwerkanfragen zur genaueren Identifizierung von Medien mit hoher Bitrate",
+            "Verfeinerte tiefe DOM-Scanning-Logik zur Verbesserung der Erkennungsleistung in komplexen Webumgebungen",
+            "Standardisierte interne Kernmodule und Datenverarbeitung für verbesserte Systemstabilität und Geschwindigkeit",
+            "Kleinere Inkonsistenzen im UI-Layout behoben und die Zuverlässigkeit dynamischer Schnittstellenelemente verbessert"
+        ]
+    },
+    "fr": {
+        "headline": "Nouveautés (v1.7.3)",
+        "changes": [
+            "Amélioration des algorithmes d'usurpation d'en-tête et de synthèse d'origine pour contourner les contrôles d'accès stricts côté serveur",
+            "Optimisation de la surveillance des requêtes réseau en temps réel pour une identification plus précise des médias à haut débit",
+            "Affinement de la logique de balayage approfondi du DOM pour améliorer les performances de détection dans les environnements web complexes",
+            "Standardisation des modules de base internes et du traitement des données pour une stabilité et une rapidité accrues du système",
+            "Résolution d'incohérences mineures dans la mise en page de l'interface utilisateur et amélioration de la fiabilité des éléments d'interface dynamiques"
+        ]
+    },
+    "pt": {
+        "headline": "Novidades (v1.7.3)",
+        "changes": [
+            "Algoritmos aprimorados de falsificação de cabeçalho e síntese de origem para contornar controles de acesso rígidos do lado do servidor",
+            "Monitoramento de solicitações de rede em tempo real otimizado para identificação mais precisa de mídia de alta taxa de bits",
+            "Lógica de varredura profunda de DOM refinada para melhorar o desempenho de detecção em ambientes web complexos",
+            "Módulos principais internos e processamento de dados padronizados para melhor estabilidade e velocidade do sistema",
+            "Inconsistências menores no layout da interface do usuário resolvidas e confiabilidade aprimorada dos elementos de interface dinâmica"
+        ]
+    },
+    "ko": {
+        "headline": "새로운 기능 (v1.7.3)",
+        "changes": [
+            "엄격한 서버 측 액세스 제어를 우회하기 위해 헤더 스푸핑 및 오리진 합성 알고리즘 강화",
+            "고비트레이트 미디어의 보다 정확한 식별을 위해 실시간 네트워크 요청 모니터링 최적화",
+            "복잡한 웹 환경에서의 탐지 성능 향상을 위해 심층 DOM 스캔 로직 정교화",
+            "시스템 안정성 및 속도 향상을 위해 내부 핵심 모듈 및 데이터 처리 표준화",
+            "사소한 UI 레이아웃 불일치 해결 및 동적 인터페이스 요소의 안정성 개선"
+        ]
+    },
+    "ar": {
+        "headline": "ما الجديد (v1.7.3)",
+        "changes": [
+            "تحسين خوارزميات تزييف العناوين وتوليف الأصل لتجاوز ضوابط الوصول الصارمة من جانب الخادم",
+            "تحسين مراقبة طلبات الشبكة في الوقت الفعلي لتحديد أكثر دقة للوسائط ذات معدл البت العالي",
+            "صقل منطق المسح العميق لـ DOM لتحسين أداء الكشف في بيئات الويب المعقدة",
+            "توحيد الوحدات الأساسية الداخلية ومعالجة البيانات لتحسين استقرار وسرعة النظام",
+            "حل التناقضات الطفيفة في تخطيط واجهة المستخدم وتحسين موثوقية عناصر الواجهة الديناميكية"
+        ]
+    },
+    "ru": {
+        "headline": "Что нового (v1.7.3)",
+        "changes": [
+            "Улучшены алгоритмы подмены заголовков и синтеза происхождения для обхода строгих механизмов контроля доступа на стороне сервера",
+            "Оптимизирован мониторинг сетевых запросов в реальном времени для более точной идентификации медиаконтента с высоким битрейтом",
+            "Усовершенствована логика глубокого сканирования DOM для повышения производительности обнаружения в сложных веб-средах",
+            "Стандартизированы внутренние основные модули и обработка данных для повышения стабильности и скорости работы системы",
+            "Устранены незначительные несоответствия в макете пользовательского интерфейса и повышена надежность динамических элементов интерфейса"
         ]
     }
 }

@@ -141,7 +141,7 @@ const CHUNK_STORE_NAME = "download-chunks";
 function openCacheDB() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, 3);
-        request.onerror = (event) => reject(event.target.error || "IDB Open Error");
+        request.onerror = (event) => reject(event.target.error || browser.i18n.getMessage("idbOpenError") || "IDB Open Error");
         request.onblocked = () => {
             console.warn("IndexedDB upgrade blocked by other tabs. Please close them.");
         };
@@ -230,6 +230,12 @@ const temporaryRequestBodyMap = new Map();
 const temporaryCookieMap = new Map();
 const urlToHeaderMap = new Map();
 
+const SPOOF_HEADERS = [
+    'cookie', 'referer', 'origin', 'user-agent', 'accept', 'accept-language', 'accept-encoding',
+    'sec-ch-ua', 'sec-ch-ua-mobile', 'sec-ch-ua-platform', 'x-requested-with',
+    'sec-fetch-site', 'sec-fetch-mode', 'sec-fetch-dest'
+];
+
 async function loadPersistentHeaders() {
     try {
         const res = await browser.storage.session.get('urlToHeaderMap');
@@ -267,13 +273,30 @@ function isFlagEnabled(val) {
 
 browser.webRequest.onBeforeSendHeaders.addListener(
     (details) => {
+        const capturedHeaders = {};
+        let hasHeaders = false;
 
-        const cookie = details.requestHeaders.find(h => h.name.toLowerCase() === 'cookie')?.value;
-        const referer = details.requestHeaders.find(h => h.name.toLowerCase() === 'referer')?.value;
-        const origin = details.requestHeaders.find(h => h.name.toLowerCase() === 'origin')?.value;
+        for (const h of details.requestHeaders) {
+            const name = h.name.toLowerCase();
+            if (SPOOF_HEADERS.includes(name)) {
+                capturedHeaders[name] = h.value;
+                hasHeaders = true;
+            }
+        }
 
-        if (cookie || referer || origin) {
-            urlToHeaderMap.set(details.url, { cookie, referer, origin });
+        if (capturedHeaders.referer && !capturedHeaders.origin) {
+            try {
+                const refUrl = new URL(capturedHeaders.referer);
+                if (refUrl.protocol.startsWith('http')) {
+                    capturedHeaders.origin = refUrl.origin;
+                    hasHeaders = true;
+                }
+            } catch (e) {}
+        }
+
+        if (hasHeaders) {
+            const current = urlToHeaderMap.get(details.url) || {};
+            urlToHeaderMap.set(details.url, { ...current, ...capturedHeaders });
             savePersistentHeaders();
         }
 
@@ -289,46 +312,52 @@ browser.webRequest.onBeforeSendHeaders.addListener(
 
         if (isMediaRequest || isFromExtension) {
             const stored = urlToHeaderMap.get(details.url);
+
+            details.requestHeaders = details.requestHeaders.filter(h => {
+                const val = h.value.toLowerCase();
+                return !val.startsWith('chrome-extension://') && !val.startsWith('moz-extension://');
+            });
+
             if (stored) {
-                if (stored.cookie) {
-                    let hasCookie = false;
+                for (const [name, value] of Object.entries(stored)) {
+                    let found = false;
                     for (let h of details.requestHeaders) {
-                        if (h.name.toLowerCase() === 'cookie') { h.value = stored.cookie; hasCookie = true; break; }
+                        if (h.name.toLowerCase() === name) {
+                            h.value = value;
+                            found = true;
+                            break;
+                        }
                     }
-                    if (!hasCookie) details.requestHeaders.push({ name: 'Cookie', value: stored.cookie });
-                }
-                if (stored.referer) {
-                    let hasReferer = false;
-                    for (let h of details.requestHeaders) {
-                        if (h.name.toLowerCase() === 'referer') { h.value = stored.referer; hasReferer = true; break; }
+                    if (!found) {
+                        details.requestHeaders.push({ name: name, value: value });
                     }
-                    if (!hasReferer) details.requestHeaders.push({ name: 'Referer', value: stored.referer });
 
-                    if (isFromExtension) {
-
-                        details.referrer = stored.referer;
+                    if (name === 'referer' && isFromExtension) {
+                        details.referrer = value;
                     }
                 }
-                if (stored.origin) {
-                    let hasOrigin = false;
-                    for (let h of details.requestHeaders) {
-                        if (h.name.toLowerCase() === 'origin') { h.value = stored.origin; hasOrigin = true; break; }
-                    }
-                    if (!hasOrigin) details.requestHeaders.push({ name: 'Origin', value: stored.origin });
-                }
+            }
 
-                if (isFromExtension || isMediaRequest) {
-                    details.requestHeaders = details.requestHeaders.filter(h =>
-                        !['sec-fetch-site', 'sec-fetch-mode', 'sec-fetch-dest'].includes(h.name.toLowerCase())
-                    );
-                    details.requestHeaders.push({ name: 'Sec-Fetch-Site', value: 'same-origin' });
-                    details.requestHeaders.push({ name: 'Sec-Fetch-Mode', value: 'no-cors' });
-                    details.requestHeaders.push({ name: 'Sec-Fetch-Dest', value: 'video' });
-                }
+            if (isFromExtension) {
+                const storedSFS = stored?.['sec-fetch-site'];
+                const storedSFM = stored?.['sec-fetch-mode'];
+                const storedSFD = stored?.['sec-fetch-dest'];
+
+                details.requestHeaders = details.requestHeaders.filter(h =>
+                    !['sec-fetch-site', 'sec-fetch-mode', 'sec-fetch-dest'].includes(h.name.toLowerCase())
+                );
+
+                details.requestHeaders.push({
+                    name: 'Sec-Fetch-Site',
+                    value: storedSFS || (stored?.referer && details.url.includes(new URL(stored.referer).host) ? 'same-origin' : 'cross-site')
+                });
+                details.requestHeaders.push({ name: 'Sec-Fetch-Mode', value: storedSFM || 'no-cors' });
+                details.requestHeaders.push({ name: 'Sec-Fetch-Dest', value: storedSFD || 'video' });
             }
         }
 
-        if (cookie) temporaryCookieMap.set(details.requestId, cookie);
+        const cookieHeader = details.requestHeaders.find(h => h.name.toLowerCase() === 'cookie');
+        if (cookieHeader) temporaryCookieMap.set(details.requestId, cookieHeader.value);
 
         return { requestHeaders: details.requestHeaders };
     },
@@ -695,7 +724,7 @@ browser.notifications.onButtonClicked.addListener((notificationId, buttonIndex) 
 
 browser.notifications.onClicked.addListener((notificationId) => {
     browser.tabs.create({
-        url: browser.runtime.getURL(`popup.html`),
+        url: browser.runtime.getURL(`popup.html?mode=tab`),
     });
     notificationUrls.delete(notificationId);
 });
@@ -814,31 +843,9 @@ function initListener() {
         }
 
         beforeSendHeadersListener = async function (details) {
-            const protocol = new URL(details.originUrl).protocol
-            if(protocol === 'moz-extension:' || protocol === 'chrome-extension:') {
+            const cookie = details.requestHeaders.find(h => h.name.toLowerCase() === 'cookie')?.value || '';
+            temporaryCookieMap.set(details.requestId, cookie);
 
-                try {
-                    const cookie = temporaryCookieMap.get(details.requestId) || '';
-                    if (cookie) {
-                        details.requestHeaders.push({ name: 'Cookie', value: cookie });
-                        console.debug("Added Cookie header to extension request:", cookie);
-                    }
-                } catch (e) {
-                    console.error("Error adding Cookie header to extension request:", e);
-                }
-            }
-            else {
-
-                console.debug("Details:", details);
-
-                const cookie = details.requestHeaders.find(h => h.name.toLowerCase() === 'cookie')?.value || '';
-                if (cookie) {
-                    console.debug("Request already has Cookie header:", cookie);
-                }
-
-                temporaryCookieMap.set(details.requestId, cookie);
-
-            }
             return { requestHeaders: details.requestHeaders };
         };
 
@@ -1101,16 +1108,29 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const { urls } = message;
         if (!urls || !Array.isArray(urls)) return;
 
+        const senderReferer = sender.tab?.url || "";
+        let senderOrigin = "";
+        try { if (senderReferer) senderOrigin = new URL(senderReferer).origin; } catch(e) {}
+
         browser.storage.session.get(null, (items) => {
             const updates = {};
             let hasNew = false;
 
             urls.forEach(url => {
+                if (senderReferer && !urlToHeaderMap.has(url)) {
+                    urlToHeaderMap.set(url, {
+                        referer: senderReferer,
+                        origin: senderOrigin,
+                        'user-agent': navigator.userAgent
+                    });
+                    savePersistentHeaders();
+                }
+
                 if (!items[url]) {
                     updates[url] = [{
                         url: url,
                         method: 'GET',
-                        requestHeaders: null,
+                        requestHeaders: senderReferer ? [{name: 'Referer', value: senderReferer}, {name: 'Origin', value: senderOrigin}] : null,
                         responseHeaders: null,
                         requestBody: null,
                         cookie: '',
@@ -1329,7 +1349,7 @@ async function handleDownloadAllAsZip(items, downloadId) {
         const zipBlob = await zipResponse.blob();
 
         if (zipBlob.size < 100) {
-             throw new Error("Failed to download any of the selected files or ZIP is empty.");
+             throw new Error(browser.i18n.getMessage("zipEmptyError") || "Failed to download any of the selected files or ZIP is empty.");
         }
 
         const zipName = `downloads_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`;
@@ -1357,7 +1377,7 @@ function getFileName(url, maxLength = 30) {
         if (!fileName) fileName = parsedUrl.hostname;
         if (fileName.length > maxLength) fileName = fileName.substring(0, maxLength) + '…';
         return decodeURIComponent(fileName);
-    } catch (e) { return "Media File"; }
+    } catch (e) { return browser.i18n.getMessage("defaultMediaName") || "Media File"; }
 }
 
 const pendingSaveQueue = [];
@@ -1671,7 +1691,8 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
         if (originalRequest && originalRequest.requestHeaders) {
             originalRequest.requestHeaders.forEach(h => {
                 const name = h.name.toLowerCase();
-                if (name !== 'cookie' && name !== 'referer' && name !== 'range') {
+
+                if (name !== 'cookie' && name !== 'referer' && name !== 'range' && name !== 'host') {
                     fetchOptions.headers[h.name] = h.value;
                 }
             });
@@ -1679,20 +1700,38 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
 
         const storedHeaders = urlToHeaderMap.get(url);
         if (storedHeaders) {
-            if (storedHeaders.cookie) {
-                fetchOptions.headers['Cookie'] = storedHeaders.cookie;
+            for (const [name, value] of Object.entries(storedHeaders)) {
+                if (name === 'cookie') {
+                    fetchOptions.headers['Cookie'] = value;
+                } else if (name === 'referer') {
+                    fetchOptions.referrer = value;
+                    fetchOptions.headers['Referer'] = value;
+                } else if (name !== 'host' && name !== 'content-length') {
+                    fetchOptions.headers[name] = value;
+                }
             }
-            if (storedHeaders.referer) {
-                fetchOptions.referrer = storedHeaders.referer;
-                fetchOptions.headers['Referer'] = storedHeaders.referer;
-            }
-            if (storedHeaders.origin) {
-                fetchOptions.headers['Origin'] = storedHeaders.origin;
+
+            if (storedHeaders.referer && !fetchOptions.headers['Origin']) {
+                try {
+                    const refUrl = new URL(storedHeaders.referer);
+                    if (refUrl.protocol.startsWith('http')) {
+                        fetchOptions.headers['Origin'] = refUrl.origin;
+                    }
+                } catch (e) {}
             }
         }
 
         const manualReferer = originalRequest?.requestHeaders?.find(h => h.name.toLowerCase() === 'referer')?.value;
-        if (manualReferer) fetchOptions.referrer = manualReferer;
+        if (manualReferer) {
+            fetchOptions.referrer = manualReferer;
+            fetchOptions.headers['Referer'] = manualReferer;
+            if (!fetchOptions.headers['Origin']) {
+                try {
+                    const refUrl = new URL(manualReferer);
+                    if (refUrl.protocol.startsWith('http')) fetchOptions.headers['Origin'] = refUrl.origin;
+                } catch(e) {}
+            }
+        }
 
         if (originalRequest && originalRequest.method !== 'GET' && originalRequest.requestBody) {
             if (originalRequest.requestBody.type === 'formData') {
@@ -1710,7 +1749,7 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
         }
 
         const response = await fetch(url, fetchOptions);
-        if (!response.ok && response.status !== 206) throw new Error("Server error: " + response.status);
+        if (!response.ok && response.status !== 206) throw new Error(browser.i18n.getMessage("serverErrorStatus", [response.status.toString()]) || ("Server error: " + response.status));
 
         const contentLength = response.headers.get('content-length');
         const total = (contentLength ? parseInt(contentLength, 10) : 0) + resumeOffset;
@@ -1847,7 +1886,7 @@ browser.runtime.onInstalled.addListener(async (details) => {
         await browser.storage.local.set(defaults);
 
         browser.tabs.create({
-            url: browser.runtime.getURL('installed.md'),
+            url: browser.runtime.getURL('installed.html'),
         });
     }
 });
@@ -1901,12 +1940,12 @@ browser.action.onClicked.addListener((tab) => {
         if (result['open-preference'] !== 'window') {
 
             browser.tabs.create({
-                url: browser.runtime.getURL(`popup.html`),
+                url: browser.runtime.getURL(`popup.html?mode=tab`),
             });
         } else {
 
             browser.windows.create({
-                url: browser.runtime.getURL(`popup.html`),
+                url: browser.runtime.getURL(`popup.html?mode=window`),
                 type: 'popup',
                 width: 800,
                 height: 600,

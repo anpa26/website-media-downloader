@@ -27,7 +27,7 @@ const CHUNK_STORE_NAME = "download-chunks";
 function openCacheDB() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, 3);
-        request.onerror = (event) => reject(event.target.error || "IDB Open Error");
+        request.onerror = (event) => reject(event.target.error || browser.i18n.getMessage("idbOpenError") || "IDB Open Error");
         request.onsuccess = (event) => resolve(event.target.result);
     });
 }
@@ -54,7 +54,7 @@ async function handleOffscreenDownload(id, filename) {
             req.onerror = () => reject(req.error);
         });
 
-        if (!item) throw new Error("Download metadata not found in DB");
+        if (!item) throw new Error(browser.i18n.getMessage("metadataNotFoundError") || "Download metadata not found in database");
 
         const chunks = [];
         await new Promise((resolve, reject) => {

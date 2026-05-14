@@ -20,7 +20,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stream Downloader - Website Media Downloader</title>
+  <title data-translate="streamDownloadingTitle">Stream Downloader - Website Media Downloader</title>
   <link rel="stylesheet" href="styles/mdui.css">
   <script src="libraries/mdui.global.js"></script>
   <script src="libraries/client-zip.js"></script>
@@ -35,16 +35,16 @@
 </head>
 <body>
   <mdui-card class="card">
-    <h2 id="status-header">Initializing Stream Download</h2>
-    <div id="media-title">Fetching details...</div>
+    <h2 id="status-header" data-translate="streamInitializing">Initializing Stream Download</h2>
+    <div id="media-title" data-translate="fetchingDetails">Fetching details...</div>
 
     <div class="status-area">
       <mdui-linear-progress id="stream-progress" indeterminate></mdui-linear-progress>
-      <div class="download-status-info" id="status-text">Preparing manifest...</div>
+      <div class="download-status-info" id="status-text" data-translate="preparingManifest">Preparing manifest...</div>
     </div>
 
     <div id="action-area" style="margin-top: 24px; display: none;">
-      <mdui-button id="close-button">Close Tab</mdui-button>
+      <mdui-button id="close-button" data-translate="closeTab">Close Tab</mdui-button>
     </div>
   </mdui-card>
 

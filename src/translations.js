@@ -36,4 +36,28 @@ document.addEventListener('DOMContentLoaded', () => {
             element.setAttribute('helper', translation);
         }
     });
+
+    document.querySelectorAll('[data-title-translate]').forEach(element => {
+        const key = element.getAttribute('data-title-translate');
+        const translation = browser.i18n.getMessage(key);
+        if (translation) {
+            element.setAttribute('title', translation);
+        }
+    });
+
+    document.querySelectorAll('[data-placeholder-translate]').forEach(element => {
+        const key = element.getAttribute('data-placeholder-translate');
+        const translation = browser.i18n.getMessage(key);
+        if (translation) {
+            element.setAttribute('placeholder', translation);
+        }
+    });
+
+    document.querySelectorAll('[data-label-translate]').forEach(element => {
+        const key = element.getAttribute('data-label-translate');
+        const translation = browser.i18n.getMessage(key);
+        if (translation) {
+            element.setAttribute('label', translation);
+        }
+    });
 });

@@ -21,7 +21,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Website Media Downloader</title>
+  <title data-translate="extensionName">Website Media Downloader</title>
   <link rel="stylesheet" href="styles/mdui.css">
   <script src="libraries/mdui.global.js"></script>
   <script src="libraries/hls.js"></script>
@@ -50,13 +50,13 @@
         </div>
 
         <div id="media-controls" style="display: none;">
-          <mdui-text-field id="search-bar" variant="outlined" label="Search by name or format" clearable>
+          <mdui-text-field id="search-bar" variant="outlined" data-label-translate="searchLabel" clearable>
             <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></mdui-icon>
           </mdui-text-field>
           <div id="selected-info-bar">
             <div style="display: flex; align-items: center; gap: 4px;">
               <mdui-checkbox id="select-all-checkbox"></mdui-checkbox>
-              <span id="selected-count" style="font-size: 12px; opacity: 0.7; font-weight: 500;">0 selected</span>
+              <span id="selected-count" data-translate="selectedCount" style="font-size: 12px; opacity: 0.7; font-weight: 500;">0 selected</span>
             </div>
             <div style="display: flex; gap: 4px;">
               <mdui-button variant="text" id="download-selected" style="display: none;" data-translate="downloadSelectedButton">Download</mdui-button>
@@ -282,7 +282,8 @@
               <mdui-divider></mdui-divider>
               <div class="setting-item">
                 <div class="setting-text">
-                  <h3 data-translate="mpdFixCheckbox">Fix MPD files</h3>
+                  <h3 data-translate="mpdFixCheckbox">Fix MPD files (recommended)</h3>
+                  <p data-translate="mpdFixExplain">Modify .mpd manifests to include only the downloaded quality, ensuring compatibility with players like VLC.</p>
                 </div>
                 <mdui-switch id="mpd-fix"></mdui-switch>
               </div>
@@ -290,7 +291,7 @@
               <div class="setting-item vertical">
                  <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                     <h3 data-translate="filenameTemplateTitle" style="margin: 0;">Filename template</h3>
-                    <mdui-button-icon id="auto-generate-template" style="margin-right: -8px;" title="Auto-generate template">
+                    <mdui-button-icon id="auto-generate-template" style="margin-right: -8px;" data-title-translate="filenameTemplateAutoGenerateTitle">
                        <mdui-icon>
                           <svg viewBox="0 0 24 24"><path d="m19 1-1.26 2.74L15 5l2.74 1.26L19 9l1.26-2.74L23 5l-2.74-1.26L19 1m-10 6L6.5 12.5 1 15l5.5 2.5L9 23l2.5-5.5 5.5-2.5-5.5-2.5L9 7m10 8-1.26 2.74L15 19l2.74 1.26L19 23l1.26-2.74L23 19l-2.74-1.26L19 15z"/></svg>
                        </mdui-icon>
@@ -302,6 +303,7 @@
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="disableRenameDialogTitle">Disable rename file dialog</h3>
+                  <p data-translate="disableRenameDialogExplain">Skip the filename confirmation dialog and start downloads immediately using the default name.</p>
                 </div>
                 <mdui-switch id="disable-rename-dialog"></mdui-switch>
               </div>

@@ -1,6 +1,6 @@
 # Website Media Downloader
 
-[![Version](https://img.shields.io/badge/version-1.7.2-blue.svg)](src/manifest.json)
+[![Version](https://img.shields.io/badge/version-1.7.3-blue.svg)](src/manifest.json)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE.md)
 [![Platform](https://img.shields.io/badge/platform-Firefox%20%7C%20Android-orange.svg)](#installation)
 
@@ -26,7 +26,7 @@ Designed with a focus on privacy and technical transparency, all operations—in
 - **Background Downloading**: Supports background processes, allowing downloads to continue even after closing the extension popup.
 - **Speed Boost**: Utilizes multi-threaded fetching and parallel acquisition to maximize download speeds and efficiency.
 - **Intelligent Deduplication**: Automatically hides redundant entries based on filename and metadata.
-- **Multi-language Support**: Fully localized for English, Indonesian, German, French, and Portuguese.
+- **Multi-language Support**: Fully localized for English, Indonesian, German, French, Portuguese, Japanese, Korean, Arabic, and Russian.
 
 ## How to Use
 1. **Detection**: Navigate to any website with media content. The extension automatically detects assets in the background.
@@ -46,7 +46,12 @@ Designed with a focus on privacy and technical transparency, all operations—in
 
 ---
 
-## Technical Features (v1.7.2)
+## Technical Features (v1.7.3)
+
+### Core Detection Engine
+The detection engine has been optimized to handle complex web environments more efficiently. This version introduces:
+- **Advanced Network Interception**: Enhanced header spoofing and origin synthesis algorithms to effectively navigate strict server-side access controls and hotlinking protections.
+- **Media Detection Optimization**: Refined deep DOM scanning and real-time network request monitoring to improve the identification of high-bitrate media assets.
 
 ### UI Architecture
 The interface has been completely overhauled using Material Design 3 (MDUI) components, providing a responsive and standardized user experience.

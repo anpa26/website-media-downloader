@@ -36,8 +36,8 @@
         "description": "Pesan kesalahan yang ditampilkan saat pengguna mencoba mengunduh media saat luring."
     },
     "reportIssue": {
-        "message": "Laporkan masalah",
-        "description": "Teks tautan untuk melaporkan masalah di popup kesalahan."
+        "message": "Laporkan Masalah",
+        "description": "Label for external link or section title."
     },
     "okButton": {
         "message": "OKE",
@@ -107,7 +107,12 @@
     },
     "listLoadError": {
         "message": "Kesalahan saat mengambil permintaan media. Berikut masalahnya: $ERROR$",
-        "description": "Pesan kesalahan saat daftar media gagal dimuat."
+        "description": "Pesan kesalahan saat daftar media gagal dimuat.",
+        "placeholders": {
+            "ERROR": {
+                "content": "$1"
+            }
+        }
     },
     "noMediaDetected": {
         "message": "Tidak ada media yang terdeteksi di halaman ini. Untuk mendeteksi media, silakan putar video atau audio terlebih dahulu, lalu segarkan daftar ini. Jika masih tidak muncul, coba ubah metode deteksi di pengaturan.",
@@ -115,15 +120,25 @@
     },
     "listClearError": {
         "message": "Kesalahan saat menghapus daftar media. Berikut masalahnya: $ERROR$",
-        "description": "Pesan kesalahan saat daftar media gagal dihapus."
+        "description": "Pesan kesalahan saat daftar media gagal dihapus.",
+        "placeholders": {
+            "ERROR": {
+                "content": "$1"
+            }
+        }
     },
     "unknownSize": {
-        "message": "Ukuran tidak diketahui",
-        "description": "Teks yang ditampilkan saat ukuran media tidak dapat diurai."
+        "message": "Ukuran Tidak Diketahui",
+        "description": "Updated/Added during UI string localization audit."
     },
     "downloadError": {
         "message": "Kesalahan saat mengunduh media. Berikut masalahnya: $ERROR$",
-        "description": "Pesan kesalahan saat pengunduhan media gagal."
+        "description": "Pesan kesalahan saat pengunduhan media gagal.",
+        "placeholders": {
+            "ERROR": {
+                "content": "$1"
+            }
+        }
     },
     "homeTab": {
         "message": "Beranda",
@@ -458,7 +473,7 @@
         "description": "Judul dialog unduhan terpisah selesai."
     },
     "splitAudioVideoDownloadCompleteDescription": {
-        "message": "Kedua aliran video dan audio telah diunduh.",
+        "message": "Aliran video dan audio telah diunduh.",
         "description": "Deskripsi dialog unduhan terpisah selesai."
     },
     "videoQualityDialogTitle": {
@@ -588,6 +603,10 @@
     "disableRenameDialogTitle": {
         "message": "Matikan dialog ubah nama file",
         "description": "Judul sakelar matikan dialog ubah nama file di tab pengaturan."
+    },
+    "disableRenameDialogExplain": {
+        "message": "Lewati dialog konfirmasi nama file dan mulai unduhan segera menggunakan nama bawaan.",
+        "description": "Penjelasan pengaturan matikan dialog ubah nama."
     },
     "renameDialogHeadline": {
         "message": "Simpan sebagai...",
@@ -762,5 +781,636 @@
     "backgroundDownloadExplain": {
         "message": "Memungkinkan unduhan berlanjut di latar belakang. Jika dimatikan, unduhan akan berjalan di popup dan berhenti otomatis jika popup ditutup (tanpa buka tab baru di seluler).",
         "description": "Penjelasan pengaturan unduhan latar belakang."
+    },
+    "aboutChangelogDescription": {
+        "message": "Kunjungi GitHub kami untuk melihat pembaruan terbaru.",
+        "description": "Deskripsi di dialog catatan perubahan."
+    },
+    "aboutChangelogTitle": {
+        "message": "Catatan Perubahan",
+        "description": "Judul dialog catatan perubahan."
+    },
+    "continueAllButton": {
+        "message": "Lanjutkan Semua",
+        "description": "Label tombol untuk melanjutkan semua unduhan yang tertunda."
+    },
+    "decodingAudio": {
+        "message": "Mendekode audio... Harap tunggu (ini mungkin lambat untuk file besar).",
+        "description": "Pesan saat mendekode audio untuk ekstraksi."
+    },
+    "audioExtractionNotSupported": {
+        "message": "Ekstraksi audio saja untuk DASH (.mpd) belum didukung. Hanya HLS (.m3u8) dan file langsung yang didukung.",
+        "description": "Pesan kesalahan saat ekstraksi audio tidak didukung."
+    },
+    "notSupportedTitle": {
+        "message": "Tidak Didukung",
+        "description": "Judul untuk dialog fitur yang tidak didukung."
+    },
+    "downloadCompletePreparingExtraction": {
+        "message": "Unduhan selesai. Menyiapkan ekstraksi...",
+        "description": "Pesan saat unduhan selesai dan ekstraksi dimulai."
+    },
+    "audioExtractionError": {
+        "message": "Kesalahan ekstraksi audio: $ERROR$",
+        "description": "Pesan kesalahan saat ekstraksi audio gagal.",
+        "placeholders": {
+            "ERROR": {
+                "content": "$1",
+                "example": "Pesan kesalahan"
+            }
+        }
+    },
+    "settingsTemplateAutoGenerated": {
+        "message": "Template otomatis dibuat: $TEMPLATE$",
+        "description": "Pesan saat template nama file dibuat otomatis.",
+        "placeholders": {
+            "TEMPLATE": {
+                "content": "$1",
+                "example": "{title} - {name}"
+            }
+        }
+    },
+    "audioExtractionSuccess": {
+        "message": "Audio berhasil diekstrak: $FILENAME$",
+        "description": "Pesan saat ekstraksi audio berhasil.",
+        "placeholders": {
+            "FILENAME": {
+                "content": "$1",
+                "example": "audio.mp3"
+            }
+        }
+    },
+    "successTitle": {
+        "message": "Berhasil",
+        "description": "Judul untuk dialog operasi yang berhasil."
+    },
+    "mpdDownloadExplainSnackbar": {
+        "message": "Media yang dipilih adalah stream MPEG-DASH. Ini akan mengunduh aliran video dan audio secara terpisah dalam file ZIP, sehingga Anda dapat memutar file .mpd dalam ZIP dengan VLC.",
+        "description": "Penjelasan di snackbar saat memulai unduhan MPD."
+    },
+    "splitAudioVideoDownloadCompleteSuccess": {
+        "message": "Berhasil mengunduh file audio dan video terpisah untuk \"$BASENAME$\".",
+        "description": "Pesan berhasil saat file audio dan video terpisah diunduh.",
+        "placeholders": {
+            "BASENAME": {
+                "content": "$1",
+                "example": "video_saya"
+            }
+        }
+    },
+    "filenameTemplateAutoGenerateTitle": {
+        "message": "Buat template otomatis",
+        "description": "Tooltip untuk tombol buat template otomatis."
+    },
+    "downloadPreparing": {
+        "message": "Menyiapkan...",
+        "description": "Added to eliminate inline text."
+    },
+    "downloadWaiting": {
+        "message": "Menunggu tab lain...",
+        "description": "Status text while waiting for other tabs."
+    },
+    "downloadConnectingDB": {
+        "message": "Menghubungkan ke basis data...",
+        "description": "Status text while connecting to database."
+    },
+    "downloadFetchingMetadata": {
+        "message": "Mengambil metadata file...",
+        "description": "Status text while fetching metadata."
+    },
+    "downloadProcessing": {
+        "message": "Memproses...",
+        "description": "Status title during reconstruction."
+    },
+    "downloadReconstructing": {
+        "message": "Menyusun ulang file media Anda dari segmen. Ini mungkin memakan waktu sejenak tergantung pada ukuran file.",
+        "description": "Added to eliminate inline text."
+    },
+    "downloadReadyTitle": {
+        "message": "Unduhan Siap!",
+        "description": "Status title when file is ready."
+    },
+    "downloadReadyText": {
+        "message": "File Anda siap untuk disimpan.",
+        "description": "Status text when file is ready."
+    },
+    "downloadStartedTitle": {
+        "message": "Unduhan Dimulai!",
+        "description": "Status title when download starts."
+    },
+    "downloadStartedText": {
+        "message": "File Anda sedang disimpan ke perangkat. Anda dapat menutup tab ini sekarang.",
+        "description": "Status text when download starts."
+    },
+    "downloadErrorTitle": {
+        "message": "Kesalahan",
+        "description": "Generic error title."
+    },
+    "downloadMetadataNotFound": {
+        "message": "Metadata file tidak ditemukan di cache. Mungkin telah dihapus atau ID salah.",
+        "description": "Error text when metadata is missing."
+    },
+    "downloadProcessingError": {
+        "message": "Kesalahan Pemrosesan",
+        "description": "Title when processing fails."
+    },
+    "downloadDatabaseError": {
+        "message": "Kesalahan Basis Data",
+        "description": "Title when database connection fails."
+    },
+    "downloadDatabaseErrorText": {
+        "message": "Tidak dapat mengambil info file dari basis data.",
+        "description": "Error text for database failure."
+    },
+    "downloadUnexpectedError": {
+        "message": "Kesalahan Tak Terduga",
+        "description": "Title for unexpected errors."
+    },
+    "saveToDevice": {
+        "message": "Simpan ke Perangkat",
+        "description": "Added to eliminate inline text."
+    },
+    "closeTab": {
+        "message": "Tutup Tab",
+        "description": "Added to eliminate inline text."
+    },
+    "downloadAutoCloseText": {
+        "message": "Tab ini akan tertutup secara otomatis setelah unduhan dimulai.",
+        "description": "Added to eliminate inline text."
+    },
+    "streamDownloadingTitle": {
+        "message": "Mengunduh Siaran",
+        "description": "Status header during stream download."
+    },
+    "streamDownloadCompleteTitle": {
+        "message": "Unduhan Selesai!",
+        "description": "Status header when stream download finishes."
+    },
+    "streamDownloadSaved": {
+        "message": "File Anda telah disimpan.",
+        "description": "Status text when stream is saved."
+    },
+    "streamNoUrlError": {
+        "message": "URL tidak disediakan.",
+        "description": "Error when stream URL is missing."
+    },
+    "searchLabel": {
+        "message": "Cari berdasarkan nama atau format",
+        "description": "Label for search bar."
+    },
+    "downloadStartedSnackbar": {
+        "message": "Unduhan dimulai...",
+        "description": "Updated/Added during UI string localization audit."
+    },
+    "downloadReconstructingSegments": {
+        "message": "Menyusun ulang file: terkumpul $COUNT$ segmen...",
+        "description": "Progress message while gathering segments.",
+        "placeholders": {
+            "COUNT": {
+                "content": "$1",
+                "example": "5"
+            }
+        }
+    },
+    "downloadAssembling": {
+        "message": "Merakit $COUNT$ segmen...",
+        "description": "Progress message while assembling segments.",
+        "placeholders": {
+            "COUNT": {
+                "content": "$1",
+                "example": "5"
+            }
+        }
+    },
+    "saveFileLabel": {
+        "message": "Simpan $FILENAME$",
+        "description": "Label for the save button with filename.",
+        "placeholders": {
+            "FILENAME": {
+                "content": "$1",
+                "example": "video.mp4"
+            }
+        }
+    },
+    "deleteAllConfirm": {
+        "message": "Apakah Anda yakin ingin menghapus semua media yang terdeteksi?",
+        "description": "Added during audit for consistency."
+    },
+    "defaultMediaName": {
+        "message": "Berkas Media",
+        "description": "Added during audit for consistency."
+    },
+    "dashComputeSegmentsError": {
+        "message": "Tidak dapat menghitung segmen DASH: SegmentTimeline tidak ada dan tidak ada durasi tetap yang diberikan.",
+        "description": "Added during audit for consistency."
+    },
+    "dashNumberSegmentsError": {
+        "message": "Tidak dapat menghitung segmen berbasis angka: tidak ada SegmentTimeline dan durasi/skala waktu tidak ada atau nol.",
+        "description": "Added during audit for consistency."
+    },
+    "drmAbortedError": {
+        "message": "Pengunduhan dibatalkan oleh pengguna karena perlindungan DRM.",
+        "description": "Added during audit for consistency."
+    },
+    "metadataNotFoundError": {
+        "message": "Metadata pengunduhan tidak ditemukan di basis data.",
+        "description": "Added during audit for consistency."
+    },
+    "serverErrorStatus": {
+        "message": "Kesalahan server: $STATUS$",
+        "description": "Added during audit for consistency.",
+        "placeholders": {
+            "STATUS": {
+                "content": "$1"
+            }
+        }
+    },
+    "sessionRequestNotFoundError": {
+        "message": "Detail permintaan tidak ditemukan di penyimpanan sesi.",
+        "description": "Added during audit for consistency."
+    },
+    "unsupportedAudioType": {
+        "message": "Tipe representasi audio tidak didukung",
+        "description": "Added during audit for consistency."
+    },
+    "unsupportedVideoType": {
+        "message": "Tipe representasi video tidak didukung",
+        "description": "Added during audit for consistency."
+    },
+    "zipEmptyError": {
+        "message": "Gagal mengunduh salah satu berkas yang dipilih atau ZIP kosong.",
+        "description": "Added during audit for consistency."
+    },
+    "downloadButton": {
+        "message": "Unduh",
+        "description": "Updated/Added during UI string localization audit."
+    },
+    "downloadErrorLabel": {
+        "message": "Kesalahan Unduhan",
+        "description": "Updated/Added during UI string localization audit."
+    },
+    "idbOpenError": {
+        "message": "Kesalahan Membuka IDB",
+        "description": "Updated/Added during UI string localization audit."
+    },
+    "githubRepositoryLabel": {
+        "message": "Repositori GitHub",
+        "description": "Updated/Added during UI string localization audit."
+    },
+    "extensionDescriptionAbout": {
+        "message": "Pendamping media utama Anda untuk web. Deteksi dan unduh video, musik, dan siaran langsung dengan mudah dari hampir semua situs web. Menampilkan pengambilan permintaan jaringan waktu nyata, pengunduhan latar belakang, dan konversi aliran HLS/Dash tingkat lanjut—semuanya dalam satu alat sumber terbuka yang kuat.",
+        "description": "Updated/Added during UI string localization audit."
+    },
+    "confirmTitle": {
+        "message": "Konfirmasi",
+        "description": "The title of confirmation dialogs."
+    },
+    "selectedCount": {
+        "message": "$COUNT$ terpilih",
+        "description": "Added to eliminate inline text.",
+        "placeholders": {
+            "COUNT": {
+                "content": "$1"
+            }
+        }
+    },
+    "streamInitializing": {
+        "message": "Menginisialisasi Unduhan Siaran",
+        "description": "Added to eliminate inline text."
+    },
+    "fetchingDetails": {
+        "message": "Mengambil detail...",
+        "description": "Added to eliminate inline text."
+    },
+    "preparingManifest": {
+        "message": "Menyiapkan manifest...",
+        "description": "Added to eliminate inline text."
+    },
+    "extensionName": {
+        "message": "Website Media Downloader",
+        "description": "The name of the extension."
+    },
+    "leadDeveloperRole": {
+        "message": "Pengembang Utama",
+        "description": "Developer attribution string."
+    },
+    "leadDeveloperDescription": {
+        "message": "Pengembang utama yang fokus pada peningkatan dan modernisasi ekstensi, menambahkan fitur seperti pengunduhan latar belakang, riwayat, dan peningkatan UI untuk membawanya ke kondisinya saat ini.",
+        "description": "Developer attribution string."
+    },
+    "maintainedByTitle": {
+        "message": "Dipelihara Oleh",
+        "description": "About page title."
+    },
+    "legacyContributionsTitle": {
+        "message": "Kontribusi Lama",
+        "description": "About page title."
+    },
+    "legacyContributorRole": {
+        "message": "Kontributor Lama",
+        "description": "Contributor attribution string."
+    },
+    "legacyContributorDescription": {
+        "message": "Berkontribusi pada versi awal mesin inti proyek.",
+        "description": "Contributor attribution string."
+    },
+    "usefulLinksTitle": {
+        "message": "Tautan Berguna",
+        "description": "Label for external link or section title."
+    },
+    "starOnGithub": {
+        "message": "Beri Bintang di GitHub",
+        "description": "Label for external link or section title."
+    },
+    "rateOnAddons": {
+        "message": "Nilai di Add-ons",
+        "description": "Label for external link or section title."
+    },
+    "releasedUnderLicense": {
+        "message": "Dirilis di bawah Lisensi $LICENSE$",
+        "description": "About page footer/error message.",
+        "placeholders": {
+            "LICENSE": {
+                "content": "$1"
+            }
+        }
+    },
+    "failedToLoadAbout": {
+        "message": "Gagal memuat informasi halaman Tentang.",
+        "description": "About page footer/error message."
+    },
+    "zipDownloadError": {
+        "message": "Gagal mengunduh \"$FILENAME$\". $ERROR$\n\nApakah Anda ingin melanjutkan dengan file yang tersisa?",
+        "description": "Error message when a file in ZIP batch fails.",
+        "placeholders": {
+            "FILENAME": {
+                "content": "$1"
+            },
+            "ERROR": {
+                "content": "$2"
+            }
+        }
+    },
+    "noMatchesFound": {
+        "message": "Tidak ada hasil ditemukan untuk \"$QUERY$\"",
+        "description": "Message shown when search returns no results.",
+        "placeholders": {
+            "QUERY": {
+                "content": "$1"
+            }
+        }
+    },
+    "downloadProgressWithSize": {
+        "message": "Mengunduh: $PERCENT$% ($LOADED$MB / $TOTAL$MB)",
+        "description": "Progress message with size info.",
+        "placeholders": {
+            "PERCENT": {
+                "content": "$1"
+            },
+            "LOADED": {
+                "content": "$2"
+            },
+            "TOTAL": {
+                "content": "$3"
+            }
+        }
+    },
+    "downloadProgressNoSize": {
+        "message": "Mengunduh: $LOADED$MB",
+        "description": "Progress message without total size.",
+        "placeholders": {
+            "LOADED": {
+                "content": "$1"
+            }
+        }
+    },
+    "encodingProgress": {
+        "message": "Mengode: $PERCENT$%",
+        "description": "Message during audio encoding.",
+        "placeholders": {
+            "PERCENT": {
+                "content": "$1"
+            }
+        }
+    },
+    "streamProgressWithSize": {
+        "message": "$LOADED$ MB / $TOTAL$ MB ($PERCENT$%) • sisa $REMAINING$ MB",
+        "description": "Progress message for stream download.",
+        "placeholders": {
+            "LOADED": {
+                "content": "$1"
+            },
+            "TOTAL": {
+                "content": "$2"
+            },
+            "PERCENT": {
+                "content": "$3"
+            },
+            "REMAINING": {
+                "content": "$4"
+            }
+        }
+    },
+    "streamProgressNoSize": {
+        "message": "$LOADED$ MB terunduh",
+        "description": "Progress message for stream download without total size.",
+        "placeholders": {
+            "LOADED": {
+                "content": "$1"
+            }
+        }
+    },
+    "segmentProgress": {
+        "message": "Segmen: $PROCESSED$ / $TOTAL$ ($PERCENT$%)",
+        "description": "Progress message for HLS segments.",
+        "placeholders": {
+            "PROCESSED": {
+                "content": "$1"
+            },
+            "TOTAL": {
+                "content": "$2"
+            },
+            "PERCENT": {
+                "content": "$3"
+            }
+        }
+    },
+    "audioExtractionFailed": {
+        "message": "Gagal mengekstrak audio. $ERROR$",
+        "description": "Error message when audio extraction fails.",
+        "placeholders": {
+            "ERROR": {
+                "content": "$1"
+            }
+        }
+    },
+    "qualityResolutionBandwidthSize": {
+        "message": "$RESOLUTION$ ($BANDWIDTH$ kbps, $SIZE$)",
+        "description": "Stream quality option label.",
+        "placeholders": {
+            "RESOLUTION": {
+                "content": "$1"
+            },
+            "BANDWIDTH": {
+                "content": "$2"
+            },
+            "SIZE": {
+                "content": "$3"
+            }
+        }
+    },
+    "qualityResolutionBandwidth": {
+        "message": "$WIDTH$×$HEIGHT$ ($BANDWIDTH$ kbps)",
+        "description": "Video quality option label.",
+        "placeholders": {
+            "WIDTH": {
+                "content": "$1"
+            },
+            "HEIGHT": {
+                "content": "$2"
+            },
+            "BANDWIDTH": {
+                "content": "$3"
+            }
+        }
+    },
+    "qualityBandwidth": {
+        "message": "$BANDWIDTH$ kbps",
+        "description": "Audio quality option label.",
+        "placeholders": {
+            "BANDWIDTH": {
+                "content": "$1"
+            }
+        }
+    },
+    "downloadPopupProgressWithSize": {
+        "message": "Mengunduh (Popup): $PERCENT$% ($LOADED$MB / $TOTAL$MB)",
+        "description": "Progress message in popup.",
+        "placeholders": {
+            "PERCENT": {
+                "content": "$1"
+            },
+            "LOADED": {
+                "content": "$2"
+            },
+            "TOTAL": {
+                "content": "$3"
+            }
+        }
+    },
+    "downloadPopupProgressNoSize": {
+        "message": "Mengunduh (Popup): $LOADED$MB",
+        "description": "Progress message in popup without total size.",
+        "placeholders": {
+            "LOADED": {
+                "content": "$1"
+            }
+        }
+    },
+    "mpdDownloadCompleteSuccess": {
+        "message": "Berhasil mengunduh ZIP (“$FILENAME$”).",
+        "description": "Success message when MPD ZIP is downloaded.",
+        "placeholders": {
+            "FILENAME": {
+                "content": "$1"
+            }
+        }
+    },
+    "mpdFetchError": {
+        "message": "Gagal mengambil manifest MPD: $STATUS$.",
+        "description": "Error message when MPD manifest fetch fails.",
+        "placeholders": {
+            "STATUS": {
+                "content": "$1"
+            }
+        }
+    },
+    "mpdNoPeriodError": {
+        "message": "MPD tidak memiliki entri Period.",
+        "description": "Error message when MPD manifest is missing Period element."
+    },
+    "mpdNoMediaError": {
+        "message": "Period MPD tidak memiliki AdaptationSet untuk audio/video.",
+        "description": "Error message when no media streams are found in MPD."
+    },
+    "installedTitle": {
+        "message": "Selamat Datang di Website Media Downloader",
+        "description": "Title of the installed page"
+    },
+    "installedHeroTitle": {
+        "message": "Terima Kasih Telah Memilih Kami!",
+        "description": "Hero title of the installed page"
+    },
+    "installedHeroDescription": {
+        "message": "Pendamping media utama Anda untuk web. Rasakan deteksi media yang mulus dan unduhan kecepatan tinggi di semua situs favorit Anda.",
+        "description": "Hero description of the installed page"
+    },
+    "installedVersion": {
+        "message": "Versi",
+        "description": "Label for version number"
+    },
+    "installedChangelogTitle": {
+        "message": "Apa yang Baru di",
+        "description": "Title of the changelog section"
+    },
+    "installedChangelogItem1": {
+        "message": "Peningkatan header spoofing untuk melewati perlindungan server yang ketat.",
+        "description": "Changelog item 1"
+    },
+    "installedChangelogItem2": {
+        "message": "Pemantauan jaringan waktu nyata yang dioptimalkan untuk media bitrate tinggi.",
+        "description": "Changelog item 2"
+    },
+    "installedChangelogItem3": {
+        "message": "Pemindaian DOM mendalam yang disempurnakan untuk lingkungan web yang kompleks.",
+        "description": "Changelog item 3"
+    },
+    "installedChangelogItem4": {
+        "message": "Stabilitas sistem dan konsistensi antarmuka yang ditingkatkan.",
+        "description": "Changelog item 4"
+    },
+    "installedChangelogItem5": {
+        "message": "Internasionalisasi UI penuh untuk pengalaman global.",
+        "description": "Changelog item 5"
+    },
+    "installedMeetDev": {
+        "message": "Kenali Pengembangnya",
+        "description": "Title for the developer section"
+    },
+    "installedSupportTitle": {
+        "message": "Dukung Proyek Ini",
+        "description": "Title for the support section"
+    },
+    "installedSupportDescription": {
+        "message": "Jika Anda merasa alat ini berguna, pertimbangkan untuk mendukung pengembangannya. Masukan Anda membantu kami berkembang!",
+        "description": "Description for the support section"
+    },
+    "installedStarSub": {
+        "message": "Berikan dukungan untuk kode sumber",
+        "description": "Subtitle for GitHub star button"
+    },
+    "installedRateSub": {
+        "message": "Bantu orang lain menemukan alat ini",
+        "description": "Subtitle for rate button"
+    },
+    "installedFooterQuote": {
+        "message": "Terima kasih telah menjadi bagian dari perjalanan kami. Selamat mengunduh!",
+        "description": "Footer quote on the installed page"
+    },
+    "installedFeedbackTitle": {
+        "message": "Umpan Balik & Masalah",
+        "description": "Title for the feedback section"
+    },
+    "installedFeedbackDesc": {
+        "message": "Menemukan bug atau punya saran? Bantu kami berkembang dengan melaporkan masalah di GitHub!",
+        "description": "Description for the feedback section"
+    },
+    "installedFeedbackButton": {
+        "message": "Laporkan Masalah",
+        "description": "Label for the feedback button"
+    },
+    "deleteAllConfirmTitle": {
+        "message": "Konfirmasi Penghapusan",
+        "description": "The title of the confirmation dialog when deleting all detected media."
     }
 }

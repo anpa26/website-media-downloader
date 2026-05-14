@@ -1,8 +1,8 @@
 {
     "extension": {
         "name": "Website Media Downloader",
-        "version": "1.7.2",
-        "description": "A versatile tool to detect and download videos, music, and streams from almost any website. It works by capturing media network requests in real-time.",
+        "version": "1.7.3",
+        "description": "Your ultimate media companion for the web. Effortlessly detect and download videos, music, and live streams from virtually any website. Featuring real-time network request capturing, background downloads, and advanced HLS/Dash stream conversion—all in one powerful, open-source tool.",
         "license": "GPL-3.0"
     },
     "authors": [
@@ -23,6 +23,16 @@
         }
     ],
     "links": [
+        {
+            "label": "Star on GitHub",
+            "url": "https://github.com/anpa26/website-media-downloader",
+            "icon": "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+        },
+        {
+            "label": "Rate on Add-ons",
+            "url": "https://addons.mozilla.org/en-US/firefox/addon/website-media-downloader/",
+            "icon": "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
+        },
         {
             "label": "GitHub Repository",
             "url": "https://github.com/anpa26/website-media-downloader",
