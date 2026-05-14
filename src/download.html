@@ -20,7 +20,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Saving Media...</title>
+  <title data-translate="downloadWaiting">Saving Media...</title>
   <link rel="stylesheet" href="styles/mdui.css">
   <script src="libraries/mdui.global.js"></script>
   <style>
@@ -80,16 +80,17 @@
         <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15l-5-5 1.41-1.41L11 14.17l7.59-7.59L20 8l-9 9z"/></svg>
       </mdui-icon>
     </div>
-    <h3 id="status-title">Preparing...</h3>
-    <p id="status-text">Reconstructing your media file from segments. This may take a moment depending on the file size.</p>
+    <h3 id="status-title" data-translate="downloadPreparing">Preparing...</h3>
+    <p id="status-text" data-translate="downloadReconstructing">Reconstructing your media file from segments. This may take a moment depending on the file size.</p>
 
     <div class="action-area">
-        <mdui-button id="save-button" variant="filled" style="display: none;">Save to Device</mdui-button>
-        <mdui-button id="close-button" variant="tonal">Close Tab</mdui-button>
+        <mdui-button id="save-button" variant="filled" style="display: none;" data-translate="saveToDevice">Save to Device</mdui-button>
+        <mdui-button id="close-button" variant="tonal" data-translate="closeTab">Close Tab</mdui-button>
     </div>
 
-    <p class="footer-text">This tab will close automatically after the download starts.</p>
+    <p class="footer-text" data-translate="downloadAutoCloseText">This tab will close automatically after the download starts.</p>
   </div>
+  <script src="translations.js"></script>
   <script src="download.js"></script>
 </body>
 </html>

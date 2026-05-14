@@ -24,7 +24,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const downloadId = urlParams.get('id');
 const targetUrl = urlParams.get('url');
 const cacheKey = downloadId || targetUrl;
-const filename = urlParams.get('filename') || 'Media File';
+const filename = urlParams.get('filename') || browser.i18n.getMessage("defaultMediaName");
 
 const DB_NAME = "MediaCacheDB";
 const STORE_NAME = "network-cache";
@@ -33,11 +33,11 @@ const CHUNK_STORE_NAME = "download-chunks";
 function openCacheDB() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, 3);
-        request.onerror = (event) => reject(event.target.error || "IDB Open Error");
+        request.onerror = (event) => reject(event.target.error || browser.i18n.getMessage("idbOpenError") || "IDB Open Error");
         request.onblocked = () => {
             console.warn("IndexedDB blocked. Please close other tabs of this extension.");
             const title = document.getElementById('status-title');
-            if (title) title.textContent = "Waiting for other tabs...";
+            if (title) title.textContent = browser.i18n.getMessage("downloadWaiting");
         };
         request.onupgradeneeded = (event) => {
             const db = event.target.result;
@@ -58,10 +58,10 @@ async function triggerDownload() {
     const saveButton = document.getElementById('save-button');
 
     try {
-        statusText.textContent = "Connecting to database...";
+        statusText.textContent = browser.i18n.getMessage("downloadConnectingDB");
         const db = await openCacheDB();
 
-        statusText.textContent = "Fetching file metadata...";
+        statusText.textContent = browser.i18n.getMessage("downloadFetchingMetadata");
         const tx = db.transaction([STORE_NAME], "readonly");
         const store = tx.objectStore(STORE_NAME);
         const getRequest = store.get(cacheKey);
@@ -76,8 +76,8 @@ async function triggerDownload() {
                         blob = item.data;
                     } else {
 
-                        statusTitle.textContent = "Processing...";
-                        statusText.textContent = "Reconstructing file from cache segments...";
+                        statusTitle.textContent = browser.i18n.getMessage("downloadProcessing");
+                        statusText.textContent = browser.i18n.getMessage("downloadReconstructing");
 
                         const chunks = [];
                         const chunkTx = db.transaction([CHUNK_STORE_NAME], "readonly");
@@ -95,7 +95,7 @@ async function triggerDownload() {
 
                                     const now = Date.now();
                                     if (now - lastUpdate > 500) {
-                                        statusText.textContent = `Reconstructing file: gathered ${chunks.length} segments...`;
+                                        statusText.textContent = browser.i18n.getMessage("downloadReconstructingSegments", [chunks.length.toString()]);
                                         lastUpdate = now;
                                     }
 
@@ -108,19 +108,19 @@ async function triggerDownload() {
                         });
 
                         if (chunks.length === 0) {
-                            throw new Error("No data chunks found in cache. The download may have failed or was cleared.");
+                            throw new Error(browser.i18n.getMessage("downloadMetadataNotFound"));
                         }
 
-                        statusText.textContent = `Assembling ${chunks.length} segments...`;
+                        statusText.textContent = browser.i18n.getMessage("downloadAssembling", [chunks.length.toString()]);
                         blob = new Blob(chunks, { type: item.mime || "application/octet-stream" });
                     }
 
                     const objectUrl = URL.createObjectURL(blob);
 
-                    statusTitle.textContent = "Download Ready!";
+                    statusTitle.textContent = browser.i18n.getMessage("downloadReadyTitle");
                     saveButton.style.display = "inline-block";
-                    saveButton.textContent = `Save ${filename}`;
-                    statusText.textContent = "Your file is ready to be saved.";
+                    saveButton.textContent = browser.i18n.getMessage("saveFileLabel", [filename]);
+                    statusText.textContent = browser.i18n.getMessage("downloadReadyText");
 
                     const closeButton = document.getElementById('close-button');
                     closeButton.onclick = () => window.close();
@@ -133,8 +133,8 @@ async function triggerDownload() {
                         a.click();
                         document.body.removeChild(a);
 
-                        statusTitle.textContent = "Download Started!";
-                        statusText.textContent = "Your file is being saved to your device. You can close this tab now.";
+                        statusTitle.textContent = browser.i18n.getMessage("downloadStartedTitle");
+                        statusText.textContent = browser.i18n.getMessage("downloadStartedText");
                         saveButton.disabled = true;
                         saveButton.style.opacity = "0.5";
 
@@ -154,23 +154,23 @@ async function triggerDownload() {
                     saveButton.onclick = performDownload;
                     performDownload();
                 } else {
-                    statusTitle.textContent = "Error";
-                    statusText.textContent = "File metadata not found in cache. It might have been cleared or the ID is incorrect.";
+                    statusTitle.textContent = browser.i18n.getMessage("downloadErrorTitle");
+                    statusText.textContent = browser.i18n.getMessage("downloadMetadataNotFound");
                     setTimeout(() => window.close(), 5000);
                 }
             } catch (innerError) {
-                statusTitle.textContent = "Processing Error";
+                statusTitle.textContent = browser.i18n.getMessage("downloadProcessingError");
                 statusText.textContent = innerError.message;
             }
         };
 
         getRequest.onerror = (e) => {
-            statusTitle.textContent = "Database Error";
-            statusText.textContent = "Could not retrieve the file info from database.";
+            statusTitle.textContent = browser.i18n.getMessage("downloadDatabaseError");
+            statusText.textContent = browser.i18n.getMessage("downloadDatabaseErrorText");
         };
 
     } catch (error) {
-        statusTitle.textContent = "Unexpected Error";
+        statusTitle.textContent = browser.i18n.getMessage("downloadUnexpectedError");
         statusText.textContent = error.message;
         setTimeout(() => window.close(), 5000);
     }

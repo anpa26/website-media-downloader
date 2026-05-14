@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en" class="mdui-theme-auto">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-title-translate="installedTitle">Welcome to Website Media Downloader</title>
+    <link rel="stylesheet" href="styles/mdui.css">
+    <link rel="stylesheet" href="styles/style.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body {
+            background-color: var(--mdui-color-background);
+            color: var(--mdui-color-on-background);
+            padding-bottom: 40px;
+        }
+        .hero {
+            background: linear-gradient(135deg, var(--mdui-color-primary-container), var(--mdui-color-secondary-container));
+            padding: 60px 20px;
+            text-align: center;
+            border-bottom-left-radius: 32px;
+            border-bottom-right-radius: 32px;
+            margin-bottom: 40px;
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--mdui-color-on-primary-container);
+        }
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--mdui-color-on-secondary-container);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .section-card {
+            background-color: var(--mdui-color-surface-container-low);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+        .version-badge {
+            background-color: var(--mdui-color-primary);
+            color: var(--mdui-color-on-primary);
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .changelog-list {
+            padding-left: 20px;
+        }
+        .changelog-list li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        .dev-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .dev-avatar {
+            width: 48px;
+            height: 48px;
+            background-color: var(--mdui-color-primary);
+            color: var(--mdui-color-on-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .footer-thanks {
+            text-align: center;
+            margin-top: 40px;
+            opacity: 0.8;
+            font-style: italic;
+        }
+        .support-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 20px;
+        }
+        @media (max-width: 600px) {
+            .support-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .support-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            border-radius: 16px;
+            text-decoration: none;
+            text-align: center;
+        }
+        .support-item.github {
+            background-color: #24292e;
+            color: #ffffff;
+        }
+        .support-item.addons {
+            background-color: #E3532D;
+            color: #ffffff;
+        }
+        .support-item i {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .support-item .label {
+            font-weight: bold;
+            font-size: 0.95rem;
+            margin-bottom: 2px;
+        }
+        .support-item .sub-label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+        .feedback-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .support-item.feedback {
+            background-color: var(--mdui-color-surface-container-high);
+            color: var(--mdui-color-on-surface);
+            border: 1px solid var(--mdui-color-outline-variant);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hero">
+        <i class="material-icons" style="font-size: 64px; color: var(--mdui-color-primary);">download</i>
+        <h1 data-translate="installedHeroTitle">Thank You for Choosing Us!</h1>
+        <p data-translate="installedHeroDescription">Your ultimate media companion for the web. Experience seamless media detection and high-speed downloads across all your favorite sites.</p>
+        <div class="version-badge"><span data-translate="installedVersion">Version</span> 1.7.3</div>
+    </div>
+
+    <div class="container">
+        <div class="section-card">
+            <div class="section-title">
+                <i class="material-icons" style="color: var(--mdui-color-primary);">new_releases</i>
+                <span data-translate="installedChangelogTitle">What's New in</span> v1.7.3
+            </div>
+            <ul class="changelog-list">
+                <li data-translate="installedChangelogItem1">Enhanced header spoofing to bypass strict server protections.</li>
+                <li data-translate="installedChangelogItem2">Optimized real-time network monitoring for high-bitrate media.</li>
+                <li data-translate="installedChangelogItem3">Refined deep DOM scanning for complex web environments.</li>
+                <li data-translate="installedChangelogItem4">Improved system stability and interface consistency.</li>
+                <li data-translate="installedChangelogItem5">Full UI internationalization for a global experience.</li>
+            </ul>
+        </div>
+
+        <div class="section-card">
+            <div class="section-title">
+                <i class="material-icons" style="color: var(--mdui-color-secondary);">person</i>
+                <span data-translate="installedMeetDev">Meet the Developer</span>
+            </div>
+            <div class="dev-info">
+                <div class="dev-avatar">A</div>
+                <div>
+                    <div style="font-weight: bold; font-size: 1.1rem;">anpa26</div>
+                    <div data-translate="leadDeveloperRole" style="opacity: 0.7;">Lead Developer & Maintainer</div>
+                </div>
+            </div>
+            <p data-translate="leadDeveloperDescription" style="margin-top: 16px; line-height: 1.6;">
+                Passionate about building open-source tools that empower users. Website Media Downloader is constantly evolving to stay ahead of technical challenges.
+            </p>
+        </div>
+
+        <div class="section-card">
+            <div class="section-title">
+                <i class="material-icons" style="color: var(--mdui-color-warning);">bug_report</i>
+                <span data-translate="installedFeedbackTitle">Feedback & Issues</span>
+            </div>
+            <p data-translate="installedFeedbackDesc">Found a bug or have a suggestion? Help us improve by opening an issue on GitHub!</p>
+            
+            <div class="feedback-grid">
+                <a href="https://github.com/anpa26/website-media-downloader/issues" target="_blank" class="support-item feedback">
+                    <i class="material-icons">add_circle_outline</i>
+                    <div class="label" data-translate="installedFeedbackButton">Report an Issue</div>
+                    <div class="sub-label">Bugs, suggestions, or requests</div>
+                </a>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-title">
+                <i class="material-icons" style="color: var(--mdui-color-tertiary);">favorite</i>
+                <span data-translate="installedSupportTitle">Support the Project</span>
+            </div>
+            <p data-translate="installedSupportDescription">If you find this tool useful, please consider supporting its development. Your feedback helps us grow!</p>
+            
+            <div class="support-grid">
+                <a href="https://github.com/anpa26/website-media-downloader" target="_blank" class="support-item github">
+                    <i class="material-icons">star_outline</i>
+                    <div class="label" data-translate="starOnGithub">Star on GitHub</div>
+                    <div class="sub-label" data-translate="installedStarSub">Show some love to the source</div>
+                </a>
+                <a href="https://addons.mozilla.org/firefox/addon/website-media-downloader/" target="_blank" class="support-item addons">
+                    <i class="material-icons">rate_review</i>
+                    <div class="label" data-translate="rateButton">Rate on Add-ons</div>
+                    <div class="sub-label" data-translate="installedRateSub">Help others find this tool</div>
+                </a>
+            </div>
+        </div>
+
+        <div class="footer-thanks">
+            <span data-translate="installedFooterQuote">"Thank you for being part of our journey. Happy downloading!"</span>
+        </div>
+    </div>
+
+    <script src="libraries/mdui.global.js"></script>
+    <script>
+        if (typeof browser === "undefined") {
+            var browser = chrome;
+        }
+    </script>
+    <script src="translations.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set language and direction
+            const lang = browser.i18n.getUILanguage();
+            document.documentElement.lang = lang;
+            const rtlLangs = ['ar', 'he', 'fa', 'ur'];
+            if (rtlLangs.includes(lang.split('-')[0])) {
+                document.documentElement.dir = 'rtl';
+            }
+
+            // Set page title (tab title)
+            const pageTitle = browser.i18n.getMessage('installedTitle');
+            if (pageTitle) document.title = pageTitle;
+        });
+    </script>
+</body>
+</html>

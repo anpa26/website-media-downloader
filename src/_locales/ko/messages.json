@@ -1,50 +1,50 @@
 {
     "actionTitle": {
-        "message": "Download media",
+        "message": "미디어 다운로드",
         "description": "The contents of the context menu when hovering over the extension icon."
     },
     "extensionDescription": {
-        "message": "Download videos, music and live streams to your device!",
+        "message": "동영상, 음악 및 라이브 스트림을 장치에 다운로드하세요!",
         "description": "The description of the extension shown in the browser's settings page."
     },
     "errorTitle1": {
-        "message": "Something went wrong!",
+        "message": "문제가 발생했습니다!",
         "description": "The 1st title of the error popup, randomly selects one of the titles when there is an error."
     },
     "errorTitle2": {
-        "message": "Oops!",
+        "message": "이런!",
         "description": "The 2nd title of the error popup."
     },
     "errorTitle3": {
-        "message": "Uh oh!",
+        "message": "어라!",
         "description": "The 3rd title of the error popup."
     },
     "errorTitle4": {
-        "message": "Error!",
+        "message": "오류!",
         "description": "The 4th title of the error popup."
     },
     "errorTitle5": {
-        "message": "Whoops, it broke!",
+        "message": "앗, 고장 났어요!",
         "description": "The 5th title of the error popup."
     },
     "errorTitle6": {
-        "message": "Oh no!",
+        "message": "안돼요!",
         "description": "The 6th title of the error popup."
     },
     "offlineError": {
-        "message": "Download likely failed because you are offline. Please check your internet connection and try again.",
+        "message": "오프라인 상태라 다운로드에 실패한 것 같습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.",
         "description": "The error message shown when the user tries to download media while offline."
     },
     "reportIssue": {
-        "message": "Report Issue",
+        "message": "문제 신고",
         "description": "Label for external link or section title."
     },
     "okButton": {
-        "message": "OK",
+        "message": "확인",
         "description": "The text of the OK button on the error popup."
     },
     "requestText": {
-        "message": "$METHOD$ request from $SOURCE$ at $TIME$",
+        "message": "$TIME$에 $SOURCE$에서 보낸 $METHOD$ 요청",
         "description": "The text that indicates the type of request made to load the media.",
         "placeholders": {
             "METHOD": {
@@ -62,51 +62,51 @@
         }
     },
     "requestMethodUnknown": {
-        "message": "unknown",
+        "message": "알 수 없음",
         "description": "The text shown when the request method is not recognized."
     },
     "requestSourceUnknown": {
-        "message": "unknown source",
+        "message": "알 수 없는 출처",
         "description": "The text shown when the source of the request is not recognized."
     },
     "sizeText": {
-        "message": "Size",
+        "message": "크기",
         "description": "The text above the size selector in the media list."
     },
     "copyURL": {
-        "message": "Copy URL",
+        "message": "URL 복사",
         "description": "The text of the button to copy the media URL to the clipboard."
     },
     "copyURLSuccess": {
-        "message": "URL successfully copied",
+        "message": "URL을 성공적으로 복사했습니다.",
         "description": "The message when the URL is successfully copied to the clipboard."
     },
     "URLCopyError": {
-        "message": "Failed to copy URL to clipboard",
+        "message": "URL을 클립보드에 복사하지 못했습니다.",
         "description": "The error message when the copy URL operation fails."
     },
     "previewMedia": {
-        "message": "Preview",
+        "message": "미리보기",
         "description": "The text of the preview button in the media list."
     },
     "audioOnly": {
-        "message": "Audio Only",
+        "message": "오디오만",
         "description": "The text of the audio only extraction button in the media list."
     },
     "downloadMedia": {
-        "message": "Download",
+        "message": "다운로드",
         "description": "The text of the download button in the media list."
     },
     "endOfMediaList": {
-        "message": "That's all we could find! If you don't see the media you're looking for, try playing the media and then refresh the list. If it still doesn't show up, change the media detection method in the settings. For more help, click the help button in the bottom left corner.",
+        "message": "찾을 수 있는 전부입니다! 찾는 미디어가 보이지 않으면, 미디어를 재생한 다음 목록을 새로고침해 보세요. 그래도 나타나지 않으면 설정에서 미디어 감지 방법을 변경해 보세요. 도움이 더 필요하시면 왼쪽 하단의 도움말 버튼을 클릭하세요.",
         "description": "The text shown at the end of the media list in the popup."
     },
     "endOfMediaListLink": {
-        "message": "Media not found? Submit here!",
+        "message": "미디어를 찾을 수 없나요? 여기에 제출하세요!",
         "description": "The text of the link at the end of the media list to submit media that wasn't detected."
     },
     "listLoadError": {
-        "message": "Error while fetching media requests. Here's the problem: $ERROR$",
+        "message": "미디어 요청을 가져오는 중 오류가 발생했습니다. 문제 발생: $ERROR$",
         "description": "The error message when the media list fails to load.",
         "placeholders": {
             "ERROR": {
@@ -115,11 +115,11 @@
         }
     },
     "noMediaDetected": {
-        "message": "No media detected on this page. To detect media, please play a video or audio first, and then refresh this list. If it still doesn't appear, try changing the detection method in settings.",
+        "message": "이 페이지에서 감지된 미디어가 없습니다. 미디어를 감지하려면 먼저 동영상이나 오디오를 재생한 다음, 이 목록을 새로고침하세요. 그래도 나타나지 않으면 설정에서 감지 방법을 변경해 보세요.",
         "description": "The message shown when no media is detected on the current page."
     },
     "listClearError": {
-        "message": "Error while clearing media list. Here's the problem: $ERROR$",
+        "message": "미디어 목록을 지우는 중 오류가 발생했습니다. 문제 발생: $ERROR$",
         "description": "The error message when the media list fails to be cleared.",
         "placeholders": {
             "ERROR": {
@@ -128,11 +128,11 @@
         }
     },
     "unknownSize": {
-        "message": "Unknown Size",
+        "message": "알 수 없는 크기",
         "description": "Updated/Added during UI string localization audit."
     },
     "downloadError": {
-        "message": "Error while downloading media. Here's the problem: $ERROR$",
+        "message": "미디어를 다운로드하는 중 오류가 발생했습니다. 문제 발생: $ERROR$",
         "description": "The error message when a media download fails.",
         "placeholders": {
             "ERROR": {
@@ -141,79 +141,79 @@
         }
     },
     "homeTab": {
-        "message": "Home",
+        "message": "홈",
         "description": "The name of the home tab in the popup."
     },
     "settingsTab": {
-        "message": "Settings",
+        "message": "설정",
         "description": "The name of the settings tab in the popup."
     },
     "clearListButton": {
-        "message": "Clear list",
+        "message": "목록 지우기",
         "description": "The label of the button to clear the media list."
     },
     "refreshListButton": {
-        "message": "Refresh list",
+        "message": "목록 새로고침",
         "description": "The label of the button to refresh the media list."
     },
     "settingsDetectionSectionTitle": {
-        "message": "Detection settings",
+        "message": "감지 설정",
         "description": "The title of the detection settings section in the settings tab."
     },
     "settingsDownloadSectionTitle": {
-        "message": "Download settings",
+        "message": "다운로드 설정",
         "description": "The title of the download settings section in the settings tab."
     },
     "settingsInterfaceSectionTitle": {
-        "message": "Interface settings",
+        "message": "인터페이스 설정",
         "description": "The title of the interface settings section in the settings tab."
     },
     "settingsDisplaySectionTitle": {
-        "message": "Display List",
+        "message": "표시 목록",
         "description": "The title of the display settings section in the settings tab."
     },
     "detectionMethodTitle": {
-        "message": "Detection method",
+        "message": "감지 방법",
         "description": "The title of the detection method section in the settings tab."
     },
     "needToRefreshListWarning": {
-        "message": "Need to refresh the list after changing this!",
+        "message": "이 설정을 변경한 후에는 목록을 새로고침해야 합니다!",
         "description": "The warning under the detection method title."
     },
     "detectionDisabledExplain": {
-        "message": "Unchecking both options will not filter anything, showing all requests (even non-media requests!) of the browser.",
+        "message": "두 옵션을 모두 해제하면 아무것도 필터링되지 않으며 브라우저의 모든 요청(미디어가 아닌 요청 포함!)이 표시됩니다.",
         "description": "The explanation when detection is disabled."
     },
     "urlDetectionExplain": {
-        "message": "Detection by checking if the URL contains a known media type (for example .mp4, .m3u8). It's fast, but some sites don't serve medias through these kind of URLs, so it might not detect everything.",
+        "message": "URL에 알려진 미디어 유형(예: .mp4, .m3u8)이 포함되어 있는지 확인하여 감지합니다. 속도는 빠르지만 일부 사이트는 이러한 URL을 통해 미디어를 제공하지 않으므로 모든 미디어를 감지하지 못할 수도 있습니다.",
         "description": "The explanation of the URL-based detection method."
     },
     "urlDetectionCheckbox": {
-        "message": "Detection via URL",
+        "message": "URL을 통한 감지",
         "description": "The label of the checkbox to enable URL-based detection."
     },
     "mimeDetectionExplain": {
-        "message": "Detection by checking the server MIME response (for example video/mp4, application/vnd.apple.mpegurl). This is slower but much more reliable.",
+        "message": "서버 MIME 응답(예: video/mp4, application/vnd.apple.mpegurl)을 확인하여 감지합니다. 더 느리지만 훨씬 더 신뢰할 수 있습니다.",
         "description": "The explanation of the MIME-based detection method."
     },
     "mimeDetectionCheckbox": {
-        "message": "Detection via server MIME response",
+        "message": "서버 MIME 응답을 통한 감지",
         "description": "The label of the checkbox to enable MIME-based detection."
     },
     "downloadMethodTitle": {
-        "message": "Download method",
+        "message": "다운로드 방법",
         "description": "The title of the download method section in the settings tab."
     },
     "browserDownloadExplain": {
-        "message": "Download using the browser's built-in download manager. This is fast and supports disconnection, but only works on some sites and browsers (Firefox PC).",
+        "message": "브라우저의 기본 다운로드 관리자를 사용하여 다운로드합니다. 속도가 빠르고 연결 끊김을 지원하지만, 일부 사이트와 브라우저(Firefox PC)에서만 작동합니다.",
         "description": "The explanation of the browser download method."
     },
     "browserDownloadCheckbox": {
-        "message": "Browser built-in download",
+        "message": "브라우저 기본 다운로드",
         "description": "The label of the checkbox to enable the browser download method."
     },
     "fetchDownloadExplain": {
-        "message": "Download using the Fetch API. This works on most sites and browsers, but might be slower.",
+        "message": "Fetch API를 사용하여 다운로드합니다. 대부분의 사이트와 브라우저에서 작동하지만 속도가 더 느릴 수 있습니다.",
         "description": "The explanation of the fetch download method."
     },
     "fetchDownloadCheckbox": {
@@ -221,187 +221,187 @@
         "description": "The label of the checkbox to enable the fetch download method."
     },
     "mediaCacheTitle": {
-        "message": "Media cache",
+        "message": "미디어 캐시",
         "description": "The title of the media cache section in the settings tab."
     },
     "mediaCacheExplain": {
-        "message": "Attempts to cache the media response so the download is faster and doesn't require a new request to the server. Might slow down the browser.",
+        "message": "다운로드 속도를 높이고 서버에 대한 새로운 요청이 필요하지 않도록 미디어 응답 캐싱을 시도합니다. 브라우저 속도가 느려질 수 있습니다.",
         "description": "The explanation of the media cache option."
     },
     "mediaCacheExplainPrivate": {
-        "message": "This feature is not used because you are in private browsing mode.",
+        "message": "시크릿 브라우징 모드이므로 이 기능이 사용되지 않습니다.",
         "description": "The explanation of why the media cache is disabled in private mode."
     },
     "mediaCacheCheckbox": {
-        "message": "Enable media cache",
+        "message": "미디어 캐시 활성화",
         "description": "The label of the checkbox to enable media cache."
     },
     "hideSegmentsTitle": {
-        "message": "Hide stream segments",
+        "message": "스트림 세그먼트 숨기기",
         "description": "The title of the hide stream segments section in the settings tab."
     },
     "hideSegmentsExplain": {
-        "message": "Live-streams use several small segments to deliver content. Usually, only the stream manifest is required.",
+        "message": "라이브 스트림은 여러 개의 작은 세그먼트를 사용하여 콘텐츠를 전달합니다. 일반적으로 스트림 매니페스트만 필요합니다.",
         "description": "The explanation of the hide stream segments option."
     },
     "hideSegmentsCheckbox": {
-        "message": "Hide stream segments in the media list",
+        "message": "미디어 목록에서 스트림 세그먼트 숨기기",
         "description": "The label of the checkbox to hide stream segments."
     },
     "onlyVideoTitle": {
-        "message": "Show video",
+        "message": "동영상 표시",
         "description": "Toggle visibility of video files"
     },
     "onlyVideoExplain": {
-        "message": "Show detected video files in the list.",
+        "message": "감지된 동영상 파일을 목록에 표시합니다.",
         "description": "Explains purpose of video filter"
     },
     "onlyAudioTitle": {
-        "message": "Show audio",
+        "message": "오디오 표시",
         "description": "Toggle visibility of audio files"
     },
     "onlyAudioExplain": {
-        "message": "Show detected audio files in the list.",
+        "message": "감지된 오디오 파일을 목록에 표시합니다.",
         "description": "Explains purpose of audio filter"
     },
     "onlyStreamTitle": {
-        "message": "Show stream",
+        "message": "스트림 표시",
         "description": "Toggle visibility of stream files"
     },
     "onlyStreamExplain": {
-        "message": "Show detected media streams (HLS, DASH).",
+        "message": "감지된 미디어 스트림(HLS, DASH)을 표시합니다.",
         "description": "Explains purpose of stream filter"
     },
     "onlyImageTitle": {
-        "message": "Show image",
+        "message": "이미지 표시",
         "description": "Toggle visibility of image files"
     },
     "onlyImageExplain": {
-        "message": "Show detected image files (WebP, PNG, JPG, GIF).",
+        "message": "감지된 이미지 파일(WebP, PNG, JPG, GIF)을 표시합니다.",
         "description": "Explains purpose of image filter"
     },
     "onlySubtitleTitle": {
-        "message": "Show subtitle",
+        "message": "자막 표시",
         "description": "Toggle visibility of subtitle files"
     },
     "onlySubtitleExplain": {
-        "message": "Show detected subtitle and caption files.",
+        "message": "감지된 자막 및 캡션 파일을 표시합니다.",
         "description": "Explains purpose of subtitle filter"
     },
     "mediaNotificationTitle": {
-        "message": "Media detected!",
+        "message": "미디어 감지됨!",
         "description": "The title of the notification when media is detected."
     },
     "mediaNotificationCheckbox": {
-        "message": "Enable detection notification",
+        "message": "감지 알림 활성화",
         "description": "The label of the checkbox to enable media detection notification."
     },
     "mediaNotificationExplain": {
-        "message": "Display a notification when media is detected on a website.",
+        "message": "웹사이트에서 미디어가 감지되면 알림을 표시합니다.",
         "description": "The explanation of the media detection notification setting."
     },
     "mediaNotificationDownloadAction": {
-        "message": "Download",
+        "message": "다운로드",
         "description": "The action label to download media from the notification."
     },
     "streamDownloadTitle": {
-        "message": "Stream download preference",
+        "message": "스트림 다운로드 기본 설정",
         "description": "The title of the stream download preference section in the settings tab."
     },
     "streamFileDownloadExplain": {
-        "message": "Download the stream manifest file (.m3u8, .mpd) directly. Requires a media player like VLC to watch it.",
+        "message": "스트림 매니페스트 파일(.m3u8, .mpd)을 직접 다운로드합니다. 시청하려면 VLC와 같은 미디어 플레이어가 필요합니다.",
         "description": "The explanation of the stream manifest download method."
     },
     "streamFileDownloadCheckbox": {
-        "message": "Download stream manifest",
+        "message": "스트림 매니페스트 다운로드",
         "description": "The label of the checkbox to enable the stream manifest download method."
     },
     "offlineDownloadExplain": {
-        "message": "Convert the stream into a single offline video file (.ts or .zip) after it is downloaded.",
+        "message": "스트림을 다운로드한 후 단일 오프라인 동영상 파일(.ts 또는 .zip)로 변환합니다.",
         "description": "The explanation of the offline video file download method."
     },
     "offlineDownloadChecbox": {
-        "message": "Convert to offline video file",
+        "message": "오프라인 동영상 파일로 변환",
         "description": "The label of the checkbox to enable the offline video file download method."
     },
     "streamQualityTitle": {
-        "message": "Stream quality preference",
+        "message": "스트림 화질 기본 설정",
         "description": "The title of the stream quality preference section in the settings tab."
     },
     "askStreamQualityExplain": {
-        "message": "Always ask which quality to download.",
+        "message": "다운로드할 화질을 항상 묻습니다.",
         "description": "The explanation of the 'Always ask' quality preference."
     },
     "askStreamQualityCheckbox": {
-        "message": "Always ask me",
+        "message": "항상 묻기",
         "description": "The label of the radio button to enable the 'Always ask' stream quality preference."
     },
     "highestStreamQualityExplain": {
-        "message": "Always download the highest available quality.",
+        "message": "항상 가능한 최고 화질로 다운로드합니다.",
         "description": "The explanation of the 'Always highest' quality preference."
     },
     "highestStreamQualityCheckbox": {
-        "message": "Highest quality",
+        "message": "최고 화질",
         "description": "The label of the radio button to enable the 'Always highest' stream quality preference."
     },
     "lowestStreamQualityExplain": {
-        "message": "Always download the lowest available quality.",
+        "message": "항상 가능한 최저 화질로 다운로드합니다.",
         "description": "The explanation of the 'Always lowest' quality preference."
     },
     "lowestStreamQualityCheckbox": {
-        "message": "Lowest quality",
+        "message": "최저 화질",
         "description": "The label of the radio button to enable 'Always lowest' stream quality preference."
     },
     "mpdFixExplain": {
-        "message": "Modify .mpd manifests to include only the downloaded quality, ensuring compatibility with players like VLC.",
+        "message": ".mpd 매니페스트를 수정하여 다운로드한 화질만 포함하도록 하여 VLC와 같은 플레이어와의 호환성을 보장합니다.",
         "description": "The explanation of the MPD fix option."
     },
     "mpdFixCheckbox": {
-        "message": "Fix MPD files (recommended)",
+        "message": "MPD 파일 수정 (권장)",
         "description": "The label of the checkbox to enable the MPD fix option."
     },
     "openPreference": {
-        "message": "Add-on opening preference",
+        "message": "추가 기능 열기 기본 설정",
         "description": "The title of the add-on opening preference section in the settings tab."
     },
     "openPreferenceExplain": {
-        "message": "Choose how the add-on opens when you click the icon.",
+        "message": "아이콘을 클릭할 때 추가 기능이 열리는 방식을 선택하세요.",
         "description": "The explanation of the add-on opening preference."
     },
     "newTabCheckbox": {
-        "message": "Open in new tab",
+        "message": "새 탭에서 열기",
         "description": "The label of the radio button to open in a new tab."
     },
     "newWindowCheckbox": {
-        "message": "Open in new window",
+        "message": "새 창에서 열기",
         "description": "The label of the radio button to open in a new window."
     },
     "popupCheckbox": {
-        "message": "Open as popup",
+        "message": "팝업으로 열기",
         "description": "The label of the radio button to open as a popup."
     },
     "colorPickerTitle": {
-        "message": "Interface color",
+        "message": "인터페이스 색상",
         "description": "The title of the interface color section in the settings tab."
     },
     "creditsTitle": {
-        "message": "Credits",
+        "message": "제작 정보",
         "description": "The title of the credits section in the settings tab."
     },
     "creditsDescription1": {
-        "message": "Website Media Downloader is an ",
+        "message": "Website Media Downloader는 ",
         "description": "The first part of the credits description."
     },
     "creditsDescription2": {
-        "message": "open-source project",
+        "message": "오픈 소스 프로젝트",
         "description": "The second part of the credits description."
     },
     "creditsDescription3": {
-        "message": " created by ",
+        "message": "이며, ",
         "description": "The third part of the credits description."
     },
     "creditsDescription4": {
-        "message": "maintained and developed by anpa26",
+        "message": "anpa26에 의해 유지 관리 및 개발되고 있습니다",
         "description": "The fourth part of the credits description."
     },
     "creditsDescription5": {
@@ -409,191 +409,191 @@
         "description": "The fifth part of the credits description."
     },
     "rateButton": {
-        "message": "Rate",
+        "message": "평가하기",
         "description": "The label of the button to rate the extension."
     },
     "shareButton": {
-        "message": "Share",
+        "message": "공유하기",
         "description": "The label of the button to share the extension."
     },
     "donateButton": {
-        "message": "Donate",
+        "message": "기부하기",
         "description": "The label of the button to donate."
     },
     "mobileIncompatibleWarning": {
-        "message": "Incompatible with some mobile browsers.",
+        "message": "일부 모바일 브라우저와 호환되지 않습니다.",
         "description": "The mobile incompatibility warning."
     },
     "permissionRequestTitle": {
-        "message": "Permission Required",
+        "message": "권한 필요",
         "description": "The title of the permission request popup."
     },
     "permissionRequestDescription": {
-        "message": "The extension needs permission to access all URLs in order to function properly.",
+        "message": "확장 프로그램이 제대로 작동하려면 모든 URL에 액세스할 수 있는 권한이 필요합니다.",
         "description": "The description of the permission request popup."
     },
     "grantPermissionButton": {
-        "message": "Grant Permission",
+        "message": "권한 허용",
         "description": "The label of the grant permission button."
     },
     "denyPermissionButton": {
-        "message": "Don't remind me",
+        "message": "다시 보지 않기",
         "description": "The label of the deny permission button."
     },
     "permissionGrantedMessage": {
-        "message": "Permission successfully granted.",
+        "message": "권한이 성공적으로 허용되었습니다.",
         "description": "The message when permission is granted."
     },
     "permissionDeniedMessage": {
-        "message": "Permission denied.",
+        "message": "권한이 거부되었습니다.",
         "description": "The message when permission is denied."
     },
     "permissionGrantFailedMessage": {
-        "message": "Failed to grant permission.",
+        "message": "권한을 허용하지 못했습니다.",
         "description": "The message when permission grant fails."
     },
     "mpdDownloadCompleteTitle": {
-        "message": "MPD Download Complete",
+        "message": "MPD 다운로드 완료",
         "description": "The title of the MPD download complete notification."
     },
     "mpdDownloadCompleteMessage": {
-        "message": "The MPD stream has been downloaded as a ZIP file.",
+        "message": "MPD 스트림이 ZIP 파일로 다운로드되었습니다.",
         "description": "The message of the MPD download complete notification."
     },
     "splitDownloadWarningSnackbar": {
-        "message": "Audio and video streams are separate. Two files will be downloaded.",
+        "message": "오디오와 비디오 스트림이 분리되어 있습니다. 두 개의 파일이 다운로드됩니다.",
         "description": "The snackbar message for separate audio/video streams."
     },
     "downloadingAudioSnackbar": {
-        "message": "Downloading audio stream...",
+        "message": "오디오 스트림 다운로드 중...",
         "description": "The snackbar message when downloading audio."
     },
     "splitAudioVideoDownloadCompleteTitle": {
-        "message": "Separate audio and video streams downloaded successfully",
+        "message": "분리된 오디오 및 비디오 스트림 다운로드 성공",
         "description": "The title of the split audio/video download complete dialog."
     },
     "splitAudioVideoDownloadCompleteDescription": {
-        "message": "Both video and audio streams have been downloaded.",
+        "message": "비디오와 오디오 스트림이 모두 다운로드되었습니다.",
         "description": "The description of the split audio/video download complete dialog."
     },
     "videoQualityDialogTitle": {
-        "message": "Select video quality",
+        "message": "비디오 화질 선택",
         "description": "The title of the video quality selection dialog."
     },
     "videoQualitySelectLabel": {
-        "message": "Video quality",
+        "message": "비디오 화질",
         "description": "The label of the video quality selection."
     },
     "audioQualityDialogTitle": {
-        "message": "Select audio quality",
+        "message": "오디오 음질 선택",
         "description": "The title of the audio quality selection dialog."
     },
     "audioQualitySelectLabel": {
-        "message": "Audio quality",
+        "message": "오디오 음질",
         "description": "The label of the audio quality selection."
     },
     "streamQualityDialogTitle": {
-        "message": "Select stream quality",
+        "message": "스트림 화질 선택",
         "description": "The title of the stream quality selection dialog."
     },
     "streamQualitySelectLabel": {
-        "message": "Stream quality",
+        "message": "스트림 화질",
         "description": "The label of the stream quality selection."
     },
     "mediaPreviewSnackbar": {
-        "message": "Media preview doesn't work on all sites.",
+        "message": "미디어 미리보기는 모든 사이트에서 작동하지는 않습니다.",
         "description": "The media preview snackbar."
     },
     "mediaPreviewDontRemindMe": {
-        "message": "Don't remind me",
+        "message": "다시 보지 않기",
         "description": "The action of the media preview snackbar."
     },
     "helpTooltip": {
-        "message": "Open help",
+        "message": "도움말 열기",
         "description": "The help tooltip."
     },
     "diagnosticDataPermissionDenied": {
-        "message": "Diagnostic data sharing permission denied.",
+        "message": "진단 데이터 공유 권한이 거부되었습니다.",
         "description": "The message when diagnostic permission is denied."
     },
     "diagnosticDataSent": {
-        "message": "Diagnostic data sent successfully. Thank you!",
+        "message": "진단 데이터가 성공적으로 전송되었습니다. 감사합니다!",
         "description": "The message when diagnostic data is sent."
     },
     "diagnosticDataSendError": {
-        "message": "An error occurred while sending diagnostic data.",
+        "message": "진단 데이터를 보내는 중 오류가 발생했습니다.",
         "description": "The error message when sending diagnostic data fails."
     },
     "noRequestFoundError": {
-        "message": "Could not find request info in history.",
+        "message": "기록에서 요청 정보를 찾을 수 없습니다.",
         "description": "The error message when a request is not found."
     },
     "drmWarningTitle": {
-        "message": "DRM Detected",
+        "message": "DRM 감지됨",
         "description": "The DRM warning title."
     },
     "drmWarningDescription": {
-        "message": "This file is using DRM (Content Protection).",
+        "message": "이 파일은 DRM(콘텐츠 보호)을 사용하고 있습니다.",
         "description": "The DRM warning description."
     },
     "drmWarningConntinueButton": {
-        "message": "Continue",
+        "message": "계속",
         "description": "The DRM continue button."
     },
     "drmWarningCancelButton": {
-        "message": "Cancel",
+        "message": "취소",
         "description": "The DRM cancel button."
     },
     "ratingBannerText": {
-        "message": "If you like this add-on, please give it a rating. Thank you!",
+        "message": "이 추가 기능이 마음에 드신다면 평가를 부탁드립니다. 감사합니다!",
         "description": "The rating banner text."
     },
     "ratingBannerRateButton": {
-        "message": "Rate now",
+        "message": "지금 평가하기",
         "description": "The rate now button of the rating banner."
     },
     "ratingBannerDismissButton": {
-        "message": "Dismiss",
+        "message": "닫기",
         "description": "The dismiss button of the rating banner."
     },
     "ratingBannerDontShowAgainButton": {
-        "message": "Don't show again",
+        "message": "다시 보지 않기",
         "description": "The don't show again button of the rating banner."
     },
     "ratingBannerRemindMeLaterButton": {
-        "message": "Remind me in a week",
+        "message": "일주일 후에 알림",
         "description": "The remind later button of the rating banner."
     },
     "youtubeDialogAskTitle": {
-        "message": "Are you trying to download from YouTube?",
+        "message": "YouTube에서 다운로드하려고 하시나요?",
         "description": "The YouTube dialog title."
     },
     "youtubeDialogAskMessage": {
-        "message": "Downloading from YouTube is not directly supported in this extension.",
+        "message": "YouTube에서의 다운로드는 이 확장 프로그램에서 직접 지원되지 않습니다.",
         "description": "The YouTube dialog message."
     },
     "youtubeDialogAskOkButton": {
-        "message": "Yes",
+        "message": "예",
         "description": "The yes button of the YouTube dialog."
     },
     "youtubeDialogDownloaderPCTitle": {
-        "message": "Try with yt-dlp",
+        "message": "yt-dlp를 사용해 보세요",
         "description": "The yt-dlp guide title."
     },
     "youtubeDialogDownloaderPCMessage": {
-        "message": "You can use yt-dlp to download YouTube videos on PC.",
+        "message": "PC에서 YouTube 동영상을 다운로드하려면 yt-dlp를 사용할 수 있습니다.",
         "description": "The yt-dlp guide message."
     },
     "youtubeDialogDownloaderAndroidTitle": {
-        "message": "Try with Seal",
+        "message": "Seal을 사용해 보세요",
         "description": "The Seal Android guide title."
     },
     "youtubeDialogDownloaderAndroidMessage": {
-        "message": "You can use Seal to download YouTube videos on Android.",
+        "message": "Android에서 YouTube 동영상을 다운로드하려면 Seal을 사용할 수 있습니다.",
         "description": "The Seal Android guide message."
     },
     "filenameTemplateTitle": {
-        "message": "Filename template",
+        "message": "파일 이름 템플릿",
         "description": "The title of the filename template section in the settings tab."
     },
     "filenameTemplateHelper": {
@@ -601,119 +601,119 @@
         "description": "The helper text for the filename template section, showing available placeholders."
     },
     "disableRenameDialogTitle": {
-        "message": "Disable rename file dialog",
+        "message": "파일 이름 변경 대화상자 비활성화",
         "description": "The title of the disable rename file dialog switch in the settings tab."
     },
     "renameDialogHeadline": {
-        "message": "Download as...",
+        "message": "다른 이름으로 다운로드...",
         "description": "The headline of the dialog to rename the file before downloading."
     },
     "renameDialogLabel": {
-        "message": "Filename",
+        "message": "파일 이름",
         "description": "The label of the filename input field in the rename dialog."
     },
     "renameDialogDownloadButton": {
-        "message": "Download",
+        "message": "다운로드",
         "description": "The text of the download button in the rename dialog."
     },
     "dontShowRenameDialogCheckbox": {
-        "message": "Don't show again",
+        "message": "다시 보지 않기",
         "description": "The text of the checkbox to disable the rename dialog in the future."
     },
     "renameDialogCancelButton": {
-        "message": "Cancel",
+        "message": "취소",
         "description": "The text of the cancel button in the rename dialog."
     },
     "historyTab": {
-        "message": "History",
+        "message": "기록",
         "description": "The name of the history tab in the popup."
     },
     "aboutTab": {
-        "message": "About",
+        "message": "정보",
         "description": "The name of the about tab in the popup."
     },
     "historyPageTitle": {
-        "message": "Enable history page",
+        "message": "기록 페이지 활성화",
         "description": "The label of the switch to enable the history page."
     },
     "historyPageExplain": {
-        "message": "Keep a local record of your downloads.",
+        "message": "다운로드에 대한 로컬 기록을 유지합니다.",
         "description": "The explanation of the history page option."
     },
     "clearHistoryButton": {
-        "message": "Clear history",
+        "message": "기록 지우기",
         "description": "The label of the button to clear the download history."
     },
     "noHistory": {
-        "message": "No download history found.",
+        "message": "다운로드 기록을 찾을 수 없습니다.",
         "description": "The message shown when the download history is empty."
     },
     "historyVisitPage": {
-        "message": "Visit Page",
+        "message": "페이지 방문",
         "description": "The tooltip for the button to visit the original page of a download in the history."
     },
     "historyRefreshInstruction": {
-        "message": "Please play the video on that page to automatically refresh the link in your history.",
+        "message": "기록의 링크를 자동으로 새로고침하려면 해당 페이지에서 동영상을 재생해 주세요.",
         "description": "Instruction shown when user visits a page to refresh a history link."
     },
     "historyLinkUpdated": {
-        "message": "Link successfully updated.",
+        "message": "링크가 성공적으로 업데이트되었습니다.",
         "description": "Message shown when a history link is automatically updated."
     },
     "cancelButton": {
-        "message": "Cancel",
+        "message": "취소",
         "description": "The text of the cancel button during an active download."
     },
     "downloadCancelled": {
-        "message": "Download cancelled",
+        "message": "다운로드 취소됨",
         "description": "The message shown when a download is manually cancelled."
     },
     "speedBoostTitle": {
-        "message": "Speed boost (Parallel downloads)",
+        "message": "속도 향상 (병렬 다운로드)",
         "description": "The title of the speed boost setting."
     },
     "speedBoostExplain": {
-        "message": "Download multiple parts of a file simultaneously. Only works if the server supports range requests.",
+        "message": "파일의 여러 부분을 동시에 다운로드합니다. 서버가 범위 요청(range request)을 지원하는 경우에만 작동합니다.",
         "description": "The explanation of the speed boost setting."
     },
     "connectionsTitle": {
-        "message": "Parallel connections",
+        "message": "병렬 연결",
         "description": "The title of the connections setting."
     },
     "qrCodeButton": {
-        "message": "QR Code",
+        "message": "QR 코드",
         "description": "The text of the QR code button in the media list."
     },
     "qrCodeDialogTitle": {
-        "message": "Scan QR Code",
+        "message": "QR 코드 스캔",
         "description": "The headline of the QR code dialog."
     },
     "qrCodeDialogDescription": {
-        "message": "Scan this QR code with your phone to open the media URL.",
+        "message": "휴대폰으로 이 QR 코드를 스캔하여 미디어 URL을 엽니다.",
         "description": "The description in the QR code dialog."
     },
     "downloadSelectedButton": {
-        "message": "Download Selected",
+        "message": "선택된 항목 다운로드",
         "description": "The label of the button to download all selected media items."
     },
     "deleteSelectedButton": {
-        "message": "Delete",
+        "message": "삭제",
         "description": "The label of the button to delete selected media items from the list."
     },
     "downloadAllButton": {
-        "message": "Download All",
+        "message": "모두 다운로드",
         "description": "The label of the button to download all media items in the list."
     },
     "cancelSelectedButton": {
-        "message": "Cancel Selected",
+        "message": "선택된 항목 취소",
         "description": "The label of the button to cancel selected active downloads."
     },
     "cancelAllButton": {
-        "message": "Cancel All",
+        "message": "모두 취소",
         "description": "The label of the button to cancel all active downloads."
     },
     "zipPreparing": {
-        "message": "Preparing $COUNT$ files...",
+        "message": "$COUNT$개의 파일 준비 중...",
         "description": "The message when starting to prepare files for a ZIP archive.",
         "placeholders": {
             "COUNT": {
@@ -723,7 +723,7 @@
         }
     },
     "zipDownloading": {
-        "message": "Downloading $INDEX$/$TOTAL$: $FILENAME$",
+        "message": "$INDEX$/$TOTAL$ 다운로드 중: $FILENAME$",
         "description": "The progress message during ZIP download.",
         "placeholders": {
             "INDEX": {
@@ -741,15 +741,15 @@
         }
     },
     "zipGenerating": {
-        "message": "Generating ZIP archive...",
+        "message": "ZIP 아카이브 생성 중...",
         "description": "The message when creating the ZIP file from downloaded blobs."
     },
     "zipComplete": {
-        "message": "Download complete!",
+        "message": "다운로드 완료!",
         "description": "The message when the ZIP download is finished."
     },
     "zipError": {
-        "message": "Failed to generate ZIP: $ERROR$",
+        "message": "ZIP 생성 실패: $ERROR$",
         "description": "The error message when ZIP creation fails.",
         "placeholders": {
             "ERROR": {
@@ -759,59 +759,59 @@
         }
     },
     "zipStartedInBackground": {
-        "message": "ZIP download started in background",
+        "message": "ZIP 다운로드가 백그라운드에서 시작되었습니다",
         "description": "The notification message when the ZIP download process is moved to the background script."
     },
     "backgroundDownloadTitle": {
-        "message": "Background download",
+        "message": "백그라운드 다운로드",
         "description": "The title of the background download setting."
     },
     "themeColorApplied": {
-        "message": "Theme color applied!",
+        "message": "테마 색상이 적용되었습니다!",
         "description": "The message shown in a snackbar when a theme color is applied."
     },
     "openInNewTabHelper": {
-        "message": "Open settings in a new tab",
+        "message": "새 탭에서 설정 열기",
         "description": "The helper text for the button to open settings in a new tab."
     },
     "backgroundDownloadExplain": {
-        "message": "Allows downloads to continue in the background. If disabled, downloads will run in the popup and stop if it's closed (no new tabs on mobile).",
+        "message": "다운로드가 백그라운드에서 계속되도록 허용합니다. 비활성화하면 다운로드가 팝업에서 실행되며 팝업을 닫으면 중단됩니다(모바일에서는 새 탭 없음).",
         "description": "The explanation of the background download setting."
     },
     "disableRenameDialogExplain": {
-        "message": "Skip the filename confirmation dialog and start downloads immediately using the default name.",
+        "message": "파일 이름 확인 대화상자를 건너뛰고 기본 이름을 사용하여 즉시 다운로드를 시작합니다.",
         "description": "The explanation of the disable rename dialog setting."
     },
     "aboutChangelogDescription": {
-        "message": "Visit our GitHub for the latest updates.",
+        "message": "최신 업데이트를 확인하려면 GitHub를 방문하세요.",
         "description": "The description in the changelog dialog."
     },
     "aboutChangelogTitle": {
-        "message": "Changelog",
+        "message": "변경 이력",
         "description": "The title of the changelog dialog."
     },
     "continueAllButton": {
-        "message": "Continue All",
+        "message": "모두 계속",
         "description": "The label of the button to continue all paused downloads."
     },
     "decodingAudio": {
-        "message": "Decoding audio... Please wait (this can be slow for large files).",
+        "message": "오디오 디코딩 중... 잠시 기다려 주세요(파일이 크면 느려질 수 있습니다).",
         "description": "Message shown when decoding audio for extraction."
     },
     "audioExtractionNotSupported": {
-        "message": "Audio-only extraction for DASH (.mpd) is not yet supported. Only HLS (.m3u8) and direct files are supported.",
+        "message": "DASH(.mpd)의 오디오만 추출 기능은 아직 지원되지 않습니다. HLS(.m3u8) 및 직접 파일만 지원됩니다.",
         "description": "Error message when audio extraction is not supported for the format."
     },
     "notSupportedTitle": {
-        "message": "Not Supported",
+        "message": "지원되지 않음",
         "description": "Title for non-supported feature dialogs."
     },
     "downloadCompletePreparingExtraction": {
-        "message": "Download complete. Preparing extraction...",
+        "message": "다운로드 완료. 추출 준비 중...",
         "description": "Message shown when download is finished and extraction starts."
     },
     "audioExtractionError": {
-        "message": "Audio-only extraction error: $ERROR$",
+        "message": "오디오만 추출 오류: $ERROR$",
         "description": "Error message shown when audio extraction fails.",
         "placeholders": {
             "ERROR": {
@@ -821,7 +821,7 @@
         }
     },
     "settingsTemplateAutoGenerated": {
-        "message": "Template auto-generated: $TEMPLATE$",
+        "message": "템플릿 자동 생성됨: $TEMPLATE$",
         "description": "Message shown when a filename template is auto-generated.",
         "placeholders": {
             "TEMPLATE": {
@@ -831,7 +831,7 @@
         }
     },
     "audioExtractionSuccess": {
-        "message": "Audio extracted successfully: $FILENAME$",
+        "message": "오디오 추출 성공: $FILENAME$",
         "description": "Message shown when audio extraction is successful.",
         "placeholders": {
             "FILENAME": {
@@ -841,15 +841,15 @@
         }
     },
     "successTitle": {
-        "message": "Success",
+        "message": "성공",
         "description": "Title for successful operation dialogs."
     },
     "mpdDownloadExplainSnackbar": {
-        "message": "Selected media is an MPEG-DASH stream. This will download the video and audio streams separately, packaged in a ZIP file, so you can play the .mpd file in the ZIP file with VLC or any other compatible player.",
+        "message": "선택한 미디어는 MPEG-DASH 스트림입니다. 비디오와 오디오 스트림을 별도로 다운로드하여 ZIP 파일로 패키징하므로, ZIP 파일 내의 .mpd 파일을 VLC 또는 기타 호환되는 플레이어에서 재생할 수 있습니다.",
         "description": "Explanation shown in a snackbar when starting an MPD download."
     },
     "splitAudioVideoDownloadCompleteSuccess": {
-        "message": "Downloaded separate audio and video files for \"$BASENAME$\".",
+        "message": "\"$BASENAME$\"에 대한 별도의 오디오 및 비디오 파일을 다운로드했습니다.",
         "description": "Success message when separate audio and video files are downloaded.",
         "placeholders": {
             "BASENAME": {
@@ -859,111 +859,111 @@
         }
     },
     "filenameTemplateAutoGenerateTitle": {
-        "message": "Auto-generate template",
+        "message": "템플릿 자동 생성",
         "description": "Tooltip for the auto-generate template button."
     },
     "downloadPreparing": {
-        "message": "Preparing...",
+        "message": "준비 중...",
         "description": "Added to eliminate inline text."
     },
     "downloadWaiting": {
-        "message": "Waiting for other tabs...",
+        "message": "다른 탭을 기다리는 중...",
         "description": "Status text while waiting for other tabs."
     },
     "downloadConnectingDB": {
-        "message": "Connecting to database...",
+        "message": "데이터베이스에 연결 중...",
         "description": "Status text while connecting to database."
     },
     "downloadFetchingMetadata": {
-        "message": "Fetching file metadata...",
+        "message": "파일 메타데이터를 가져오는 중...",
         "description": "Status text while fetching metadata."
     },
     "downloadProcessing": {
-        "message": "Processing...",
+        "message": "처리 중...",
         "description": "Status title during reconstruction."
     },
     "downloadReconstructing": {
-        "message": "Reconstructing your media file from segments. This may take a moment depending on the file size.",
+        "message": "세그먼트에서 미디어 파일을 재구성하고 있습니다. 파일 크기에 따라 시간이 걸릴 수 있습니다.",
         "description": "Added to eliminate inline text."
     },
     "downloadReadyTitle": {
-        "message": "Download Ready!",
+        "message": "다운로드 준비 완료!",
         "description": "Status title when file is ready."
     },
     "downloadReadyText": {
-        "message": "Your file is ready to be saved.",
+        "message": "파일을 저장할 준비가 되었습니다.",
         "description": "Status text when file is ready."
     },
     "downloadStartedTitle": {
-        "message": "Download Started!",
+        "message": "다운로드 시작됨!",
         "description": "Status title when download starts."
     },
     "downloadStartedText": {
-        "message": "Your file is being saved to your device. You can close this tab now.",
+        "message": "파일이 장치에 저장되고 있습니다. 이제 이 탭을 닫으셔도 됩니다.",
         "description": "Status text when download starts."
     },
     "downloadErrorTitle": {
-        "message": "Error",
+        "message": "오류",
         "description": "Generic error title."
     },
     "downloadMetadataNotFound": {
-        "message": "File metadata not found in cache. It might have been cleared or the ID is incorrect.",
+        "message": "캐시에서 파일 메타데이터를 찾을 수 없습니다. 삭제되었거나 ID가 올바르지 않을 수 있습니다.",
         "description": "Error text when metadata is missing."
     },
     "downloadProcessingError": {
-        "message": "Processing Error",
+        "message": "처리 오류",
         "description": "Title when processing fails."
     },
     "downloadDatabaseError": {
-        "message": "Database Error",
+        "message": "데이터베이스 오류",
         "description": "Title when database connection fails."
     },
     "downloadDatabaseErrorText": {
-        "message": "Could not retrieve the file info from database.",
+        "message": "데이터베이스에서 파일 정보를 가져올 수 없습니다.",
         "description": "Error text for database failure."
     },
     "downloadUnexpectedError": {
-        "message": "Unexpected Error",
+        "message": "예기치 않은 오류",
         "description": "Title for unexpected errors."
     },
     "saveToDevice": {
-        "message": "Save to Device",
+        "message": "장치에 저장",
         "description": "Added to eliminate inline text."
     },
     "closeTab": {
-        "message": "Close Tab",
+        "message": "탭 닫기",
         "description": "Added to eliminate inline text."
     },
     "downloadAutoCloseText": {
-        "message": "This tab will close automatically after the download starts.",
+        "message": "다운로드가 시작되면 이 탭이 자동으로 닫힙니다.",
         "description": "Added to eliminate inline text."
     },
     "streamDownloadingTitle": {
-        "message": "Downloading Stream",
+        "message": "스트림 다운로드 중",
         "description": "Status header during stream download."
     },
     "streamDownloadCompleteTitle": {
-        "message": "Download Complete!",
+        "message": "다운로드 완료!",
         "description": "Status header when stream download finishes."
     },
     "streamDownloadSaved": {
-        "message": "Your file has been saved.",
+        "message": "파일이 저장되었습니다.",
         "description": "Status text when stream is saved."
     },
     "streamNoUrlError": {
-        "message": "No URL provided.",
+        "message": "URL이 제공되지 않았습니다.",
         "description": "Error when stream URL is missing."
     },
     "searchLabel": {
-        "message": "Search by name or format",
+        "message": "이름 또는 형식으로 검색",
         "description": "Label for search bar."
     },
     "downloadStartedSnackbar": {
-        "message": "Download started...",
+        "message": "다운로드 시작됨...",
         "description": "Updated/Added during UI string localization audit."
     },
     "downloadReconstructingSegments": {
-        "message": "Reconstructing file: gathered $COUNT$ segments...",
+        "message": "파일 재구성 중: $COUNT$개의 세그먼트 수집됨...",
         "description": "Progress message while gathering segments.",
         "placeholders": {
             "COUNT": {
@@ -973,7 +973,7 @@
         }
     },
     "downloadAssembling": {
-        "message": "Assembling $COUNT$ segments...",
+        "message": "$COUNT$개의 세그먼트 조립 중...",
         "description": "Progress message while assembling segments.",
         "placeholders": {
             "COUNT": {
@@ -983,7 +983,7 @@
         }
     },
     "saveFileLabel": {
-        "message": "Save $FILENAME$",
+        "message": "$FILENAME$ 저장",
         "description": "Label for the save button with filename.",
         "placeholders": {
             "FILENAME": {
@@ -993,43 +993,43 @@
         }
     },
     "defaultMediaName": {
-        "message": "Media File",
+        "message": "미디어 파일",
         "description": "Default name for media files when filename cannot be determined."
     },
     "drmAbortedError": {
-        "message": "Download aborted by user due to DRM protection.",
+        "message": "DRM 보호로 인해 사용자가 다운로드를 중단했습니다.",
         "description": "Error message when user cancels due to DRM."
     },
     "dashComputeSegmentsError": {
-        "message": "Cannot compute $Time$ segments: SegmentTimeline missing and no fixed duration provided.",
+        "message": "$Time$ 세그먼트를 계산할 수 없습니다: SegmentTimeline이 없고 고정된 기간이 제공되지 않았습니다.",
         "description": "Technical error during DASH segment computation."
     },
     "dashNumberSegmentsError": {
-        "message": "Cannot compute number-based segments: no SegmentTimeline and duration/timescale missing or zero.",
+        "message": "번호 기반 세그먼트를 계산할 수 없습니다: SegmentTimeline이 없고 기간/타임스케일이 누락되었거나 0입니다.",
         "description": "Technical error during DASH segment computation."
     },
     "unsupportedVideoType": {
-        "message": "Unsupported video representation type",
+        "message": "지원되지 않는 비디오 표현 유형",
         "description": "Technical error for unsupported video type."
     },
     "unsupportedAudioType": {
-        "message": "Unsupported audio representation type",
+        "message": "지원되지 않는 오디오 표현 유형",
         "description": "Technical error for unsupported audio type."
     },
     "zipEmptyError": {
-        "message": "Failed to download any of the selected files or ZIP is empty.",
+        "message": "선택한 파일 중 어느 것도 다운로드하지 못했거나 ZIP이 비어 있습니다.",
         "description": "Error message when ZIP creation results in an empty or failed file."
     },
     "metadataNotFoundError": {
-        "message": "Download metadata not found in database.",
+        "message": "데이터베이스에서 다운로드 메타데이터를 찾을 수 없습니다.",
         "description": "Error message for missing DB record."
     },
     "sessionRequestNotFoundError": {
-        "message": "Request details not found in session storage.",
+        "message": "세션 저장소에서 요청 세부 정보를 찾을 수 없습니다.",
         "description": "Error message for missing session data."
     },
     "serverErrorStatus": {
-        "message": "Server error: $STATUS$",
+        "message": "서버 오류: $STATUS$",
         "description": "Error message with HTTP status code.",
         "placeholders": {
             "STATUS": {
@@ -1039,35 +1039,35 @@
         }
     },
     "deleteAllConfirm": {
-        "message": "Are you sure you want to delete all detected media?",
+        "message": "감지된 모든 미디어를 정말로 삭제하시겠습니까?",
         "description": "Added during audit for consistency."
     },
     "downloadButton": {
-        "message": "Download",
+        "message": "다운로드",
         "description": "Updated/Added during UI string localization audit."
     },
     "downloadErrorLabel": {
-        "message": "Download Error",
+        "message": "다운로드 오류",
         "description": "Updated/Added during UI string localization audit."
     },
     "idbOpenError": {
-        "message": "IDB Open Error",
+        "message": "IDB 열기 오류",
         "description": "Updated/Added during UI string localization audit."
     },
     "githubRepositoryLabel": {
-        "message": "GitHub Repository",
+        "message": "GitHub 저장소",
         "description": "Updated/Added during UI string localization audit."
     },
     "extensionDescriptionAbout": {
-        "message": "Your ultimate media companion for the web. Effortlessly detect and download videos, music, and live streams from virtually any website. Featuring real-time network request capturing, background downloads, and advanced HLS/Dash stream conversion—all in one powerful, open-source tool.",
+        "message": "웹을 위한 궁극의 미디어 동반자입니다. 사실상 모든 웹사이트에서 동영상, 음악 및 라이브 스트림을 손쉽게 감지하고 다운로드하세요. 실시간 네트워크 요청 캡처, 백그라운드 다운로드, 고급 HLS/Dash 스트림 변환 기능을 모두 하나의 강력한 오픈 소스 도구에서 제공합니다.",
         "description": "Updated/Added during UI string localization audit."
     },
     "confirmTitle": {
-        "message": "Confirm",
+        "message": "확인",
         "description": "The title of confirmation dialogs."
     },
     "selectedCount": {
-        "message": "$COUNT$ selected",
+        "message": "$COUNT$개 선택됨",
         "description": "Added to eliminate inline text.",
         "placeholders": {
             "COUNT": {
@@ -1076,15 +1076,15 @@
         }
     },
     "streamInitializing": {
-        "message": "Initializing Stream Download",
+        "message": "스트림 다운로드 초기화 중",
         "description": "Added to eliminate inline text."
     },
     "fetchingDetails": {
-        "message": "Fetching details...",
+        "message": "세부 정보 가져오는 중...",
         "description": "Added to eliminate inline text."
     },
     "preparingManifest": {
-        "message": "Preparing manifest...",
+        "message": "매니페스트 준비 중...",
         "description": "Added to eliminate inline text."
     },
     "extensionName": {
@@ -1092,43 +1092,43 @@
         "description": "The name of the extension."
     },
     "leadDeveloperRole": {
-        "message": "Lead Developer",
+        "message": "리드 개발자",
         "description": "Developer attribution string."
     },
     "leadDeveloperDescription": {
-        "message": "A lead developer focused on improving and modernizing the extension, adding features like bg downloads, history, and UI enhancements to bring it to its current state.",
+        "message": "백그라운드 다운로드, 기록, UI 개선 등 기능을 추가하여 확장 프로그램을 현대화하고 현재 상태로 개선하는 데 주력한 리드 개발자입니다.",
         "description": "Developer attribution string."
     },
     "maintainedByTitle": {
-        "message": "Maintained By",
+        "message": "유지 관리자",
         "description": "About page title."
     },
     "legacyContributionsTitle": {
-        "message": "Legacy Contributions",
+        "message": "이전 기여",
         "description": "About page title."
     },
     "legacyContributorRole": {
-        "message": "Legacy Contributor",
+        "message": "이전 기여자",
         "description": "Contributor attribution string."
     },
     "legacyContributorDescription": {
-        "message": "Contributed to the early versions of the project core engine.",
+        "message": "프로젝트 핵심 엔진의 초기 버전에 기여했습니다.",
         "description": "Contributor attribution string."
     },
     "usefulLinksTitle": {
-        "message": "Useful Links",
+        "message": "유용한 링크",
         "description": "Label for external link or section title."
     },
     "starOnGithub": {
-        "message": "Star on GitHub",
+        "message": "GitHub에서 Star 주기",
         "description": "Label for external link or section title."
     },
     "rateOnAddons": {
-        "message": "Rate on Add-ons",
+        "message": "추가 기능 평가하기",
         "description": "Label for external link or section title."
     },
     "releasedUnderLicense": {
-        "message": "Released under $LICENSE$ License",
+        "message": "$LICENSE$ 라이선스로 배포됨",
         "description": "About page footer/error message.",
         "placeholders": {
             "LICENSE": {
@@ -1137,11 +1137,11 @@
         }
     },
     "failedToLoadAbout": {
-        "message": "Failed to load About page information.",
+        "message": "정보 페이지 정보를 불러오지 못했습니다.",
         "description": "About page footer/error message."
     },
     "zipDownloadError": {
-        "message": "Failed to download \"$FILENAME$\". $ERROR$\n\nDo you want to continue with the remaining files?",
+        "message": "\"$FILENAME$\" 다운로드 실패. $ERROR$\\n\\n남은 파일로 계속 진행하시겠습니까?",
         "description": "Error message when a file in ZIP batch fails.",
         "placeholders": {
             "FILENAME": {
@@ -1153,7 +1153,7 @@
         }
     },
     "noMatchesFound": {
-        "message": "No matches found for \"$QUERY$\"",
+        "message": "\"$QUERY$\"에 대한 검색 결과가 없습니다",
         "description": "Message shown when search returns no results.",
         "placeholders": {
             "QUERY": {
@@ -1162,7 +1162,7 @@
         }
     },
     "downloadProgressWithSize": {
-        "message": "Downloading: $PERCENT$% ($LOADED$MB / $TOTAL$MB)",
+        "message": "다운로드 중: $PERCENT$% ($LOADED$MB / $TOTAL$MB)",
         "description": "Progress message with size info.",
         "placeholders": {
             "PERCENT": {
@@ -1177,7 +1177,7 @@
         }
     },
     "downloadProgressNoSize": {
-        "message": "Downloading: $LOADED$MB",
+        "message": "다운로드 중: $LOADED$MB",
         "description": "Progress message without total size.",
         "placeholders": {
             "LOADED": {
@@ -1186,7 +1186,7 @@
         }
     },
     "encodingProgress": {
-        "message": "Encoding: $PERCENT$%",
+        "message": "인코딩 중: $PERCENT$ %",
         "description": "Message during audio encoding.",
         "placeholders": {
             "PERCENT": {
@@ -1195,7 +1195,7 @@
         }
     },
     "streamProgressWithSize": {
-        "message": "$LOADED$ MB / $TOTAL$ MB ($PERCENT$%) • $REMAINING$ MB remaining",
+        "message": "$LOADED$ MB / $TOTAL$ MB ($PERCENT$%) • $REMAINING$ MB 남음",
         "description": "Progress message for stream download.",
         "placeholders": {
             "LOADED": {
@@ -1213,7 +1213,7 @@
         }
     },
     "streamProgressNoSize": {
-        "message": "$LOADED$ MB downloaded",
+        "message": "$LOADED$ MB 다운로드됨",
         "description": "Progress message for stream download without total size.",
         "placeholders": {
             "LOADED": {
@@ -1222,7 +1222,7 @@
         }
     },
     "segmentProgress": {
-        "message": "Segments: $PROCESSED$ / $TOTAL$ ($PERCENT$%)",
+        "message": "세그먼트: $PROCESSED$ / $TOTAL$ ($PERCENT$ %)",
         "description": "Progress message for HLS segments.",
         "placeholders": {
             "PROCESSED": {
@@ -1237,7 +1237,7 @@
         }
     },
     "audioExtractionFailed": {
-        "message": "Failed to extract audio. $ERROR$",
+        "message": "오디오 추출 실패. $ERROR$",
         "description": "Error message when audio extraction fails.",
         "placeholders": {
             "ERROR": {
@@ -1285,7 +1285,7 @@
         }
     },
     "downloadPopupProgressWithSize": {
-        "message": "Downloading (Popup): $PERCENT$% ($LOADED$MB / $TOTAL$MB)",
+        "message": "다운로드 중 (팝업): $PERCENT$% ($LOADED$MB / $TOTAL$MB)",
         "description": "Progress message in popup.",
         "placeholders": {
             "PERCENT": {
@@ -1300,7 +1300,7 @@
         }
     },
     "downloadPopupProgressNoSize": {
-        "message": "Downloading (Popup): $LOADED$MB",
+        "message": "다운로드 중 (팝업): $LOADED$MB",
         "description": "Progress message in popup without total size.",
         "placeholders": {
             "LOADED": {
@@ -1309,7 +1309,7 @@
         }
     },
     "mpdDownloadCompleteSuccess": {
-        "message": "Downloaded ZIP (“$FILENAME$”).",
+        "message": "ZIP (\"$FILENAME$\") 다운로드 완료.",
         "description": "Success message when MPD ZIP is downloaded.",
         "placeholders": {
             "FILENAME": {
@@ -1318,7 +1318,7 @@
         }
     },
     "mpdFetchError": {
-        "message": "Failed to fetch MPD manifest: $STATUS$.",
+        "message": "MPD 매니페스트를 가져오지 못했습니다: $STATUS$.",
         "description": "Error message when MPD manifest fetch fails.",
         "placeholders": {
             "STATUS": {
@@ -1327,87 +1327,87 @@
         }
     },
     "mpdNoPeriodError": {
-        "message": "MPD has no Period entry.",
+        "message": "MPD에 Period 항목이 없습니다.",
         "description": "Error message when MPD manifest is missing Period element."
     },
     "mpdNoMediaError": {
-        "message": "MPD’s Period has no AdaptationSet for audio/video.",
+        "message": "MPD의 Period에 오디오/비디오를 위한 AdaptationSet이 없습니다.",
         "description": "Error message when no media streams are found in MPD."
     },
     "installedTitle": {
-        "message": "Welcome to Website Media Downloader",
+        "message": "Website Media Downloader에 오신 것을 환영합니다",
         "description": "Title of the installed page"
     },
     "installedHeroTitle": {
-        "message": "Thank You for Choosing Us!",
+        "message": "저희를 선택해 주셔서 감사합니다!",
         "description": "Hero title of the installed page"
     },
     "installedHeroDescription": {
-        "message": "Your ultimate media companion for the web. Experience seamless media detection and high-speed downloads across all your favorite sites.",
+        "message": "웹을 위한 최고의 미디어 동반자. 즐겨 찾는 모든 사이트에서 원활한 미디어 감지 및 고속 다운로드를 경험해 보세요.",
         "description": "Hero description of the installed page"
     },
     "installedVersion": {
-        "message": "Version",
+        "message": "버전",
         "description": "Label for version number"
     },
     "installedChangelogTitle": {
-        "message": "What's New in",
+        "message": "의 새로운 기능",
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Enhanced header spoofing to bypass strict server protections.",
+        "message": "엄격한 서버 보호를 우회하기 위한 강화된 헤더 스푸핑.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "Optimized real-time network monitoring for high-bitrate media.",
+        "message": "고비트레이트 미디어를 위한 최적화된 실시간 네트워크 모니터링.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "Refined deep DOM scanning for complex web environments.",
+        "message": "복잡한 웹 환경을 위한 정교한 딥 DOM 스캔.",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "Improved system stability and interface consistency.",
+        "message": "시스템 안정성 및 인터페이스 일관성 향상.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "Full UI internationalization for a global experience.",
+        "message": "글로벌 경험을 위한 전체 UI 국제화.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
-        "message": "Meet the Developer",
+        "message": "개발자 만나기",
         "description": "Title for the developer section"
     },
     "installedSupportTitle": {
-        "message": "Support the Project",
+        "message": "프로젝트 후원",
         "description": "Title for the support section"
     },
     "installedSupportDescription": {
-        "message": "If you find this tool useful, please consider supporting its development. Your feedback helps us grow!",
+        "message": "이 도구가 유용하다고 생각하신다면 개발 후원을 고려해 주세요. 여러분의 피드백은 저희의 성장에 큰 도움이 됩니다!",
         "description": "Description for the support section"
     },
     "installedStarSub": {
-        "message": "Show some love to the source",
+        "message": "소스 코드에 별표 남기기",
         "description": "Subtitle for GitHub star button"
     },
     "installedRateSub": {
-        "message": "Help others find this tool",
+        "message": "다른 사람들이 이 도구를 찾을 수 있도록 돕기",
         "description": "Subtitle for rate button"
     },
     "installedFooterQuote": {
-        "message": "Thank you for being part of our journey. Happy downloading!",
+        "message": "저희 여정의 일부가 되어 주셔서 감사합니다. 즐거운 다운로드 되세요!",
         "description": "Footer quote on the installed page"
     },
     "installedFeedbackTitle": {
-        "message": "Feedback & Issues",
+        "message": "피드백 및 문제",
         "description": "Title for the feedback section"
     },
     "installedFeedbackDesc": {
-        "message": "Found a bug or have a suggestion? Help us improve by opening an issue on GitHub!",
+        "message": "버그를 발견하셨거나 제안 사항이 있으신가요? GitHub에서 문제를 제기하여 개선할 수 있도록 도와주세요!",
         "description": "Description for the feedback section"
     },
     "installedFeedbackButton": {
-        "message": "Report an Issue",
+        "message": "문제 보고",
         "description": "Label for the feedback button"
     }
 }

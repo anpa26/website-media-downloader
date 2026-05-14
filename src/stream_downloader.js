@@ -30,8 +30,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const audioOnly = urlParams.get('audioOnly') === 'true';
 
     if (!streamUrl) {
-        document.getElementById('status-header').textContent = "Error";
-        document.getElementById('status-text').textContent = "No URL provided.";
+        document.getElementById('status-header').textContent = browser.i18n.getMessage("downloadErrorTitle");
+        document.getElementById('status-text').textContent = browser.i18n.getMessage("streamNoUrlError");
         return;
     }
 
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const urlParams = new URLSearchParams(window.location.search);
         const customFilename = urlParams.get('filename');
         mediaTitle.textContent = customFilename || getFileName(streamUrl);
-        statusHeader.textContent = "Downloading Stream";
+        statusHeader.textContent = browser.i18n.getMessage("streamDownloadingTitle");
 
         const headers = request.requestHeaders || [];
         const downloadMethod = await browser.storage.local.get('download-method').then(res => res['download-method'] || 'fetch');
@@ -68,18 +68,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (streamUrl.toLowerCase().includes('.mpd')) {
             await downloadMPDOffline(streamUrl, headers, downloadMethod, loadingBar, request, customFilename);
         } else {
-            throw new Error("Unsupported stream format.");
+            throw new Error(browser.i18n.getMessage("audioExtractionNotSupported"));
         }
 
-        statusHeader.textContent = "Download Complete!";
-        statusText.textContent = "Your file has been saved.";
+        statusHeader.textContent = browser.i18n.getMessage("streamDownloadCompleteTitle");
+        statusText.textContent = browser.i18n.getMessage("streamDownloadSaved");
         loadingBar.setAttribute('value', 1);
         loadingBar.removeAttribute('indeterminate');
         actionArea.style.display = 'block';
 
     } catch (error) {
         console.error("Stream download failed:", error);
-        statusHeader.textContent = "Download Failed";
+        statusHeader.textContent = browser.i18n.getMessage("downloadErrorTitle");
         statusText.textContent = error.message;
         loadingBar.style.display = 'none';
         actionArea.style.display = 'block';
@@ -94,7 +94,7 @@ function getFileName(url, maxLength = 30) {
         if (!fileName) fileName = parsedUrl.hostname;
         if (fileName.length > maxLength) fileName = fileName.substring(0, maxLength) + '…';
         return decodeURIComponent(fileName);
-    } catch (e) { return "Media File"; }
+    } catch (e) { return browser.i18n.getMessage("defaultMediaName") || "Media File"; }
 }
 
 // Ensure showDialog and other global helpers expected by offlineStreamConvert are present or shimmed

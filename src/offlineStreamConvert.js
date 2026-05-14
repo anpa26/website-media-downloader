@@ -19,7 +19,7 @@
 function getHumanReadableSize(size) {
   const units = ['b', 'Kb', 'Mb', 'Gb', 'Tb'];
   let sizeInBytes = parseInt(size);
-  if (isNaN(sizeInBytes)) return "Unknown Size";
+  if (isNaN(sizeInBytes)) return browser.i18n.getMessage("unknownSize") || "Unknown Size";
   let i = 0;
   while (sizeInBytes > 1024 && i < units.length - 1) { sizeInBytes /= 1024; i++; }
   return `${sizeInBytes.toFixed(2)} ${units[i]}`;
@@ -183,9 +183,9 @@ function updateProgressStatus(loadingBar, loaded, total) {
     const totalMB = (total / (1024 * 1024)).toFixed(2);
     const percent = Math.round((loaded / total) * 100);
     const remainingMB = ((total - loaded) / (1024 * 1024)).toFixed(2);
-    statusInfo.textContent = `${loadedMB} MB / ${totalMB} MB (${percent}%) • ${remainingMB} MB remaining`;
+    statusInfo.textContent = browser.i18n.getMessage("streamProgressWithSize", [loadedMB, totalMB, percent.toString(), remainingMB]) || `${loadedMB} MB / ${totalMB} MB (${percent}%) • ${remainingMB} MB remaining`;
   } else {
-    statusInfo.textContent = `${loadedMB} MB downloaded`;
+    statusInfo.textContent = browser.i18n.getMessage("streamProgressNoSize", [loadedMB]) || `${loadedMB} MB downloaded`;
   }
 }
 
@@ -198,7 +198,7 @@ function updateSegmentProgressStatus(loadingBar, processed, total) {
     loadingBar.parentNode.appendChild(statusInfo);
   }
   const percent = Math.round((processed / total) * 100);
-  statusInfo.textContent = `Segments: ${processed} / ${total} (${percent}%)`;
+  statusInfo.textContent = browser.i18n.getMessage("segmentProgress", [processed.toString(), total.toString(), percent.toString()]);
 }
 
 async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar, request, customFilename = null, audioOnly = false) {
@@ -303,7 +303,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
     }
 
     if (drmAbort) {
-      throw new Error("Download aborted by user due to DRM protection.");
+      throw new Error(browser.i18n.getMessage("drmAbortedError") || "Download aborted by user due to DRM protection.");
     }
 
     // Build ordered list of playlist "items" so we can process sequentially
@@ -625,9 +625,9 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
     }
 
     if (audioOnly) {
-        showDialog(`✅ Audio extracted successfully: ${audioFullFileName}`, "Success");
+        showDialog(browser.i18n.getMessage("audioExtractionSuccess", [audioFullFileName]), browser.i18n.getMessage("successTitle"));
     } else {
-        showDialog(browser.i18n.getMessage("splitAudioVideoDownloadCompleteDescription", [new Option(baseFileName).innerHTML, ext]), browser.i18n.getMessage("splitAudioVideoDownloadCompleteTitle"), { error: `✅ Downloaded separate audio and video files for "${baseFileName}".`, urls: { video: URL.createObjectURL(videoBlob), audio: audioBlobUrl, m3u8: m3u8Url }, request: request, downloadMethod: downloadMethod });
+        showDialog(browser.i18n.getMessage("splitAudioVideoDownloadCompleteDescription", [new Option(baseFileName).innerHTML, ext]), browser.i18n.getMessage("splitAudioVideoDownloadCompleteTitle"), { error: browser.i18n.getMessage("splitAudioVideoDownloadCompleteSuccess", [baseFileName]), urls: { video: URL.createObjectURL(videoBlob), audio: audioBlobUrl, m3u8: m3u8Url }, request: request, downloadMethod: downloadMethod });
     }
     URL.revokeObjectURL(audioBlobUrl);
     return;
@@ -694,7 +694,9 @@ async function selectStreamVariant(playlistLines, baseUrl, options = {}) {
     variants.forEach((v, index) => {
       const option = document.createElement("mdui-menu-item");
       option.setAttribute("value", index);
-      option.textContent = `${v.resolution} (${Math.round(v.bandwidth / 1000)} kbps, ${getHumanReadableSize(v.estimatedSize) || "Size N/A"})`;
+      const bandwidthKbps = Math.round(v.bandwidth / 1000).toString();
+      const humanSize = getHumanReadableSize(v.estimatedSize) || "Size N/A";
+      option.textContent = browser.i18n.getMessage("qualityResolutionBandwidthSize", [v.resolution, bandwidthKbps, humanSize]) || `${v.resolution} (${bandwidthKbps} kbps, ${humanSize})`;
       select.appendChild(option);
     });
 
@@ -755,7 +757,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     headers: Object.fromEntries(headers.map(h => [h.name, h.value])),
     referrer: request.requestHeaders.find(h => h.name.toLowerCase() === "referer")?.value || ""
   });
-  if (!resp.ok) throw new Error(`Failed to fetch MPD manifest: ${resp.status}.`);
+  if (!resp.ok) throw new Error(browser.i18n.getMessage("mpdFetchError", [resp.status.toString()]));
   let mpdXmlText = await resp.text();
 
   const parser = new DOMParser();
@@ -774,12 +776,12 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     });
   }
 
-  if (drmAbort) {
-    throw new Error("Download aborted by user due to DRM protection.");
-  }
+        if (drmAbort) {
+            throw new Error(browser.i18n.getMessage("drmAbortedError") || "Download aborted by user due to DRM protection.");
+        }
 
   const periodList = xmlDoc.getElementsByTagNameNS(NS, "Period");
-  if (!periodList || periodList.length === 0) throw new Error("MPD has no Period entry.");
+  if (!periodList || periodList.length === 0) throw new Error(browser.i18n.getMessage("mpdNoPeriodError"));
   const period = periodList[0];
 
   let baseURLNode = period.getElementsByTagNameNS(NS, "BaseURL")[0];
@@ -805,7 +807,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     }
     return false;
   });
-  if (adaptationSets.length === 0) throw new Error("MPD’s Period has no AdaptationSet for audio/video.");
+  if (adaptationSets.length === 0) throw new Error(browser.i18n.getMessage("mpdNoMediaError"));
 
   const parsedAdaptations = adaptationSets.map(asNode => {
     const declaredType = asNode.getAttribute("contentType");
@@ -1075,14 +1077,14 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     loadingBar.removeAttribute("indeterminate");
     updateProgressStatus(loadingBar, downloadedBytes, finalMax);
 
-    showDialog(browser.i18n.getMessage("splitAudioVideoDownloadCompleteDescription", [baseName, ".mp4"]), browser.i18n.getMessage("splitAudioVideoDownloadCompleteTitle"), { error: `✅ Downloaded separate audio and video files for "${baseName}".`, url: mpdUrl, request: request, downloadMethod: downloadMethod });
+    showDialog(browser.i18n.getMessage("splitAudioVideoDownloadCompleteDescription", [baseName, ".mp4"]), browser.i18n.getMessage("splitAudioVideoDownloadCompleteTitle"), { error: browser.i18n.getMessage("splitAudioVideoDownloadCompleteSuccess", [baseName]), url: mpdUrl, request: request, downloadMethod: downloadMethod });
     return;
   }
 
   const snackbar = document.createElement('mdui-snackbar');
   snackbar.setAttribute('open', true);
   snackbar.setAttribute('timeout', 10000);
-  snackbar.textContent = 'Selected media is an MPEG-DASH stream. This will download the video and audio streams separately, packaged in a ZIP file, so you can play the .mpd file in the ZIP file with VLC or any other compatible player.';
+  snackbar.textContent = browser.i18n.getMessage("mpdDownloadExplainSnackbar");
   document.body.appendChild(snackbar);
   snackbar.addEventListener('close', () => snackbar.remove());
 
@@ -1162,7 +1164,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
           segmentStartTimes = [];
           for (let i = 0; i < estimatedCount; i++) segmentStartTimes.push(i * segLen);
         } else {
-          throw new Error("Cannot compute $Time$ segments: SegmentTimeline missing and no fixed duration provided.");
+          throw new Error(browser.i18n.getMessage("dashComputeSegmentsError") || "Cannot compute $Time$ segments: SegmentTimeline missing and no fixed duration provided.");
         }
       }
 
@@ -1201,7 +1203,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
         const totalSec = parseISODuration(totalDurationISO);
 
         const segLenSec = (tmpl.duration || 0) / (tmpl.timescale || 1);
-        if (!segLenSec || segLenSec <= 0) throw new Error("Cannot compute number-based segments: no SegmentTimeline and duration/timescale missing or zero.");
+        if (!segLenSec || segLenSec <= 0) throw new Error(browser.i18n.getMessage("dashNumberSegmentsError") || "Cannot compute number-based segments: no SegmentTimeline and duration/timescale missing or zero.");
         const segmentCount = Math.ceil(totalSec / segLenSec);
         for (let i = 0; i < segmentCount; i++) {
           const number = (tmpl.startNumber ?? 1) + i;
@@ -1263,14 +1265,14 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     if (chosenVideoRep.type === "segmentTemplate") queueTemplateDownloads(chosenVideoRep);
     else if (chosenVideoRep.type === "segmentBase") queueBaseDownload(chosenVideoRep);
     else if (chosenVideoRep.type === "segmentList") queueListDownload(chosenVideoRep);
-    else throw new Error("Unsupported video representation type");
+    else throw new Error(browser.i18n.getMessage("unsupportedVideoType") || "Unsupported video representation type");
   }
 
   if (chosenAudioRep) {
     if (chosenAudioRep.type === "segmentTemplate") queueTemplateDownloads(chosenAudioRep);
     else if (chosenAudioRep.type === "segmentBase") queueBaseDownload(chosenAudioRep);
     else if (chosenAudioRep.type === "segmentList") queueListDownload(chosenAudioRep);
-    else throw new Error("Unsupported audio representation type");
+    else throw new Error(browser.i18n.getMessage("unsupportedAudioType") || "Unsupported audio representation type");
   }
 
   let globalTotalSegments = 0;
@@ -1466,7 +1468,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
   }
 
   showDialog(browser.i18n.getMessage("mpdDownloadCompleteMessage", [baseName]), browser.i18n.getMessage("mpdDownloadCompleteTitle"), {
-    error: `✅ Downloaded ZIP (“${zipName}”).`,
+    error: browser.i18n.getMessage("mpdDownloadCompleteSuccess", [zipName]),
     urls: { zip: URL.createObjectURL(zipBlob), mpd: mpdUrl },
     request,
     downloadMethod
@@ -1518,8 +1520,8 @@ async function selectMPDVideoRepresentation(reps) {
     sorted.forEach((r, index) => {
       const option = document.createElement("mdui-menu-item");
       option.setAttribute("value", index);
-      const kbps = Math.round(r.bandwidth / 1000);
-      option.textContent = `${r.width}×${r.height} (${kbps} kbps)`;
+      const kbps = Math.round(r.bandwidth / 1000).toString();
+      option.textContent = browser.i18n.getMessage("qualityResolutionBandwidth", [r.width.toString(), r.height.toString(), kbps]) || `${r.width}×${r.height} (${kbps} kbps)`;
       select.appendChild(option);
     });
 
@@ -1584,8 +1586,8 @@ async function selectMPDAudioRepresentation(reps) {
     sorted.forEach((r, index) => {
       const option = document.createElement("mdui-menu-item");
       option.setAttribute("value", index);
-      const kbps = Math.round(r.bandwidth / 1000);
-      option.textContent = `${kbps} kbps`;
+      const kbps = Math.round(r.bandwidth / 1000).toString();
+      option.textContent = browser.i18n.getMessage("qualityBandwidth", [kbps]);
       select.appendChild(option);
     });
 
@@ -1607,5 +1609,6 @@ async function selectMPDAudioRepresentation(reps) {
     document.body.appendChild(dialog);
 
     requestAnimationFrame(() => { dialog.open = true; });
-  })
+  });
 }
+

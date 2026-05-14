@@ -1,50 +1,50 @@
 {
     "actionTitle": {
-        "message": "Download media",
+        "message": "Скачать медиа",
         "description": "The contents of the context menu when hovering over the extension icon."
     },
     "extensionDescription": {
-        "message": "Download videos, music and live streams to your device!",
+        "message": "Скачивайте видео, музыку и прямые трансляции на свое устройство!",
         "description": "The description of the extension shown in the browser's settings page."
     },
     "errorTitle1": {
-        "message": "Something went wrong!",
+        "message": "Что-то пошло не так!",
         "description": "The 1st title of the error popup, randomly selects one of the titles when there is an error."
     },
     "errorTitle2": {
-        "message": "Oops!",
+        "message": "Ой!",
         "description": "The 2nd title of the error popup."
     },
     "errorTitle3": {
-        "message": "Uh oh!",
+        "message": "Ой-ой!",
         "description": "The 3rd title of the error popup."
     },
     "errorTitle4": {
-        "message": "Error!",
+        "message": "Ошибка!",
         "description": "The 4th title of the error popup."
     },
     "errorTitle5": {
-        "message": "Whoops, it broke!",
+        "message": "Упс, все сломалось!",
         "description": "The 5th title of the error popup."
     },
     "errorTitle6": {
-        "message": "Oh no!",
+        "message": "О нет!",
         "description": "The 6th title of the error popup."
     },
     "offlineError": {
-        "message": "Download likely failed because you are offline. Please check your internet connection and try again.",
+        "message": "Скорее всего, загрузка не удалась, так как вы не в сети. Пожалуйста, проверьте подключение к Интернету и попробуйте еще раз.",
         "description": "The error message shown when the user tries to download media while offline."
     },
     "reportIssue": {
-        "message": "Report Issue",
+        "message": "Сообщить о проблеме",
         "description": "Label for external link or section title."
     },
     "okButton": {
-        "message": "OK",
+        "message": "ОК",
         "description": "The text of the OK button on the error popup."
     },
     "requestText": {
-        "message": "$METHOD$ request from $SOURCE$ at $TIME$",
+        "message": "$METHOD$-запрос от $SOURCE$ в $TIME$",
         "description": "The text that indicates the type of request made to load the media.",
         "placeholders": {
             "METHOD": {
@@ -62,51 +62,51 @@
         }
     },
     "requestMethodUnknown": {
-        "message": "unknown",
+        "message": "неизвестно",
         "description": "The text shown when the request method is not recognized."
     },
     "requestSourceUnknown": {
-        "message": "unknown source",
+        "message": "неизвестный источник",
         "description": "The text shown when the source of the request is not recognized."
     },
     "sizeText": {
-        "message": "Size",
+        "message": "Размер",
         "description": "The text above the size selector in the media list."
     },
     "copyURL": {
-        "message": "Copy URL",
+        "message": "Копировать URL",
         "description": "The text of the button to copy the media URL to the clipboard."
     },
     "copyURLSuccess": {
-        "message": "URL successfully copied",
+        "message": "URL успешно скопирован",
         "description": "The message when the URL is successfully copied to the clipboard."
     },
     "URLCopyError": {
-        "message": "Failed to copy URL to clipboard",
+        "message": "Не удалось скопировать URL в буфер обмена",
         "description": "The error message when the copy URL operation fails."
     },
     "previewMedia": {
-        "message": "Preview",
+        "message": "Предпросмотр",
         "description": "The text of the preview button in the media list."
     },
     "audioOnly": {
-        "message": "Audio Only",
+        "message": "Только аудио",
         "description": "The text of the audio only extraction button in the media list."
     },
     "downloadMedia": {
-        "message": "Download",
+        "message": "Скачать",
         "description": "The text of the download button in the media list."
     },
     "endOfMediaList": {
-        "message": "That's all we could find! If you don't see the media you're looking for, try playing the media and then refresh the list. If it still doesn't show up, change the media detection method in the settings. For more help, click the help button in the bottom left corner.",
+        "message": "Это все, что мы смогли найти! Если вы не видите нужный медиафайл, попробуйте воспроизвести его и обновить список. Если он все еще не появляется, измените метод обнаружения медиа в настройках. Для получения дополнительной помощи нажмите кнопку справки в левом нижнем углу.",
         "description": "The text shown at the end of the media list in the popup."
     },
     "endOfMediaListLink": {
-        "message": "Media not found? Submit here!",
+        "message": "Медиафайл не найден? Отправьте его сюда!",
         "description": "The text of the link at the end of the media list to submit media that wasn't detected."
     },
     "listLoadError": {
-        "message": "Error while fetching media requests. Here's the problem: $ERROR$",
+        "message": "Ошибка при получении медиа-запросов. Проблема: $ERROR$",
         "description": "The error message when the media list fails to load.",
         "placeholders": {
             "ERROR": {
@@ -115,11 +115,11 @@
         }
     },
     "noMediaDetected": {
-        "message": "No media detected on this page. To detect media, please play a video or audio first, and then refresh this list. If it still doesn't appear, try changing the detection method in settings.",
+        "message": "На этой странице медиа не обнаружено. Чтобы обнаружить медиа, сначала воспроизведите видео или аудио, а затем обновите этот список. Если он все еще не появляется, попробуйте изменить метод обнаружения в настройках.",
         "description": "The message shown when no media is detected on the current page."
     },
     "listClearError": {
-        "message": "Error while clearing media list. Here's the problem: $ERROR$",
+        "message": "Ошибка при очистке списка медиа. Проблема: $ERROR$",
         "description": "The error message when the media list fails to be cleared.",
         "placeholders": {
             "ERROR": {
@@ -128,11 +128,11 @@
         }
     },
     "unknownSize": {
-        "message": "Unknown Size",
+        "message": "Неизвестный размер",
         "description": "Updated/Added during UI string localization audit."
     },
     "downloadError": {
-        "message": "Error while downloading media. Here's the problem: $ERROR$",
+        "message": "Ошибка при скачивании медиа. Проблема: $ERROR$",
         "description": "The error message when a media download fails.",
         "placeholders": {
             "ERROR": {
@@ -141,79 +141,79 @@
         }
     },
     "homeTab": {
-        "message": "Home",
+        "message": "Главная",
         "description": "The name of the home tab in the popup."
     },
     "settingsTab": {
-        "message": "Settings",
+        "message": "Настройки",
         "description": "The name of the settings tab in the popup."
     },
     "clearListButton": {
-        "message": "Clear list",
+        "message": "Очистить список",
         "description": "The label of the button to clear the media list."
     },
     "refreshListButton": {
-        "message": "Refresh list",
+        "message": "Обновить список",
         "description": "The label of the button to refresh the media list."
     },
     "settingsDetectionSectionTitle": {
-        "message": "Detection settings",
+        "message": "Настройки обнаружения",
         "description": "The title of the detection settings section in the settings tab."
     },
     "settingsDownloadSectionTitle": {
-        "message": "Download settings",
+        "message": "Настройки скачивания",
         "description": "The title of the download settings section in the settings tab."
     },
     "settingsInterfaceSectionTitle": {
-        "message": "Interface settings",
+        "message": "Настройки интерфейса",
         "description": "The title of the interface settings section in the settings tab."
     },
     "settingsDisplaySectionTitle": {
-        "message": "Display List",
+        "message": "Список отображения",
         "description": "The title of the display settings section in the settings tab."
     },
     "detectionMethodTitle": {
-        "message": "Detection method",
+        "message": "Метод обнаружения",
         "description": "The title of the detection method section in the settings tab."
     },
     "needToRefreshListWarning": {
-        "message": "Need to refresh the list after changing this!",
+        "message": "После изменения этого параметра нужно обновить список!",
         "description": "The warning under the detection method title."
     },
     "detectionDisabledExplain": {
-        "message": "Unchecking both options will not filter anything, showing all requests (even non-media requests!) of the browser.",
+        "message": "Если снять оба флажка, фильтрация не будет производиться, и будут показаны все запросы браузера (даже не относящиеся к медиа!).",
         "description": "The explanation when detection is disabled."
     },
     "urlDetectionExplain": {
-        "message": "Detection by checking if the URL contains a known media type (for example .mp4, .m3u8). It's fast, but some sites don't serve medias through these kind of URLs, so it might not detect everything.",
+        "message": "Обнаружение путем проверки того, содержит ли URL-адрес известный тип медиа (например, .mp4, .m3u8). Это быстро, но некоторые сайты не отдают медиа через такие URL-адреса, поэтому метод может обнаружить не все.",
         "description": "The explanation of the URL-based detection method."
     },
     "urlDetectionCheckbox": {
-        "message": "Detection via URL",
+        "message": "Обнаружение по URL",
         "description": "The label of the checkbox to enable URL-based detection."
     },
     "mimeDetectionExplain": {
-        "message": "Detection by checking the server MIME response (for example video/mp4, application/vnd.apple.mpegurl). This is slower but much more reliable.",
+        "message": "Обнаружение путем проверки MIME-ответа сервера (например, video/mp4, application/vnd.apple.mpegurl). Это медленнее, но гораздо надежнее.",
         "description": "The explanation of the MIME-based detection method."
     },
     "mimeDetectionCheckbox": {
-        "message": "Detection via server MIME response",
+        "message": "Обнаружение по MIME-ответу сервера",
         "description": "The label of the checkbox to enable MIME-based detection."
     },
     "downloadMethodTitle": {
-        "message": "Download method",
+        "message": "Метод скачивания",
         "description": "The title of the download method section in the settings tab."
     },
     "browserDownloadExplain": {
-        "message": "Download using the browser's built-in download manager. This is fast and supports disconnection, but only works on some sites and browsers (Firefox PC).",
+        "message": "Скачивание с использованием встроенного менеджера загрузок браузера. Это быстро и поддерживает докачку при обрыве связи, но работает только на некоторых сайтах и в определенных браузерах (Firefox для ПК).",
         "description": "The explanation of the browser download method."
     },
     "browserDownloadCheckbox": {
-        "message": "Browser built-in download",
+        "message": "Встроенная загрузка браузера",
         "description": "The label of the checkbox to enable the browser download method."
     },
     "fetchDownloadExplain": {
-        "message": "Download using the Fetch API. This works on most sites and browsers, but might be slower.",
+        "message": "Скачивание с использованием Fetch API. Это работает на большинстве сайтов и в большинстве браузеров, но может быть медленнее.",
         "description": "The explanation of the fetch download method."
     },
     "fetchDownloadCheckbox": {
@@ -221,187 +221,187 @@
         "description": "The label of the checkbox to enable the fetch download method."
     },
     "mediaCacheTitle": {
-        "message": "Media cache",
+        "message": "Медиа-кэш",
         "description": "The title of the media cache section in the settings tab."
     },
     "mediaCacheExplain": {
-        "message": "Attempts to cache the media response so the download is faster and doesn't require a new request to the server. Might slow down the browser.",
+        "message": "Попытка кэшировать ответ медиа, чтобы скачивание было быстрее и не требовало нового запроса к серверу. Может замедлить работу браузера.",
         "description": "The explanation of the media cache option."
     },
     "mediaCacheExplainPrivate": {
-        "message": "This feature is not used because you are in private browsing mode.",
+        "message": "Эта функция не используется, так как вы находитесь в режиме инкогнито.",
         "description": "The explanation of why the media cache is disabled in private mode."
     },
     "mediaCacheCheckbox": {
-        "message": "Enable media cache",
+        "message": "Включить медиа-кэш",
         "description": "The label of the checkbox to enable media cache."
     },
     "hideSegmentsTitle": {
-        "message": "Hide stream segments",
+        "message": "Скрывать сегменты потока",
         "description": "The title of the hide stream segments section in the settings tab."
     },
     "hideSegmentsExplain": {
-        "message": "Live-streams use several small segments to deliver content. Usually, only the stream manifest is required.",
+        "message": "Прямые трансляции используют несколько небольших сегментов для доставки контента. Обычно требуется только манифест потока.",
         "description": "The explanation of the hide stream segments option."
     },
     "hideSegmentsCheckbox": {
-        "message": "Hide stream segments in the media list",
+        "message": "Скрывать сегменты потока в списке медиа",
         "description": "The label of the checkbox to hide stream segments."
     },
     "onlyVideoTitle": {
-        "message": "Show video",
+        "message": "Показывать видео",
         "description": "Toggle visibility of video files"
     },
     "onlyVideoExplain": {
-        "message": "Show detected video files in the list.",
+        "message": "Показывать обнаруженные видеофайлы в списке.",
         "description": "Explains purpose of video filter"
     },
     "onlyAudioTitle": {
-        "message": "Show audio",
+        "message": "Показывать аудио",
         "description": "Toggle visibility of audio files"
     },
     "onlyAudioExplain": {
-        "message": "Show detected audio files in the list.",
+        "message": "Показывать обнаруженные аудиофайлы в списке.",
         "description": "Explains purpose of audio filter"
     },
     "onlyStreamTitle": {
-        "message": "Show stream",
+        "message": "Показывать потоки",
         "description": "Toggle visibility of stream files"
     },
     "onlyStreamExplain": {
-        "message": "Show detected media streams (HLS, DASH).",
+        "message": "Показывать обнаруженные медиапотоки (HLS, DASH).",
         "description": "Explains purpose of stream filter"
     },
     "onlyImageTitle": {
-        "message": "Show image",
+        "message": "Показывать изображения",
         "description": "Toggle visibility of image files"
     },
     "onlyImageExplain": {
-        "message": "Show detected image files (WebP, PNG, JPG, GIF).",
+        "message": "Показывать обнаруженные файлы изображений (WebP, PNG, JPG, GIF).",
         "description": "Explains purpose of image filter"
     },
     "onlySubtitleTitle": {
-        "message": "Show subtitle",
+        "message": "Показывать субтитры",
         "description": "Toggle visibility of subtitle files"
     },
     "onlySubtitleExplain": {
-        "message": "Show detected subtitle and caption files.",
+        "message": "Показывать обнаруженные файлы субтитров и подписей.",
         "description": "Explains purpose of subtitle filter"
     },
     "mediaNotificationTitle": {
-        "message": "Media detected!",
+        "message": "Медиа обнаружено!",
         "description": "The title of the notification when media is detected."
     },
     "mediaNotificationCheckbox": {
-        "message": "Enable detection notification",
+        "message": "Включить уведомление об обнаружении",
         "description": "The label of the checkbox to enable media detection notification."
     },
     "mediaNotificationExplain": {
-        "message": "Display a notification when media is detected on a website.",
+        "message": "Отображать уведомление при обнаружении медиа на веб-сайте.",
         "description": "The explanation of the media detection notification setting."
     },
     "mediaNotificationDownloadAction": {
-        "message": "Download",
+        "message": "Скачать",
         "description": "The action label to download media from the notification."
     },
     "streamDownloadTitle": {
-        "message": "Stream download preference",
+        "message": "Предпочтения скачивания потока",
         "description": "The title of the stream download preference section in the settings tab."
     },
     "streamFileDownloadExplain": {
-        "message": "Download the stream manifest file (.m3u8, .mpd) directly. Requires a media player like VLC to watch it.",
+        "message": "Скачать манифест потока (.m3u8, .mpd) напрямую. Для просмотра потребуется медиаплеер, например VLC.",
         "description": "The explanation of the stream manifest download method."
     },
     "streamFileDownloadCheckbox": {
-        "message": "Download stream manifest",
+        "message": "Скачать манифест потока",
         "description": "The label of the checkbox to enable the stream manifest download method."
     },
     "offlineDownloadExplain": {
-        "message": "Convert the stream into a single offline video file (.ts or .zip) after it is downloaded.",
+        "message": "Конвертировать поток в один офлайн-видеофайл (.ts или .zip) после его скачивания.",
         "description": "The explanation of the offline video file download method."
     },
     "offlineDownloadChecbox": {
-        "message": "Convert to offline video file",
+        "message": "Конвертировать в офлайн-видеофайл",
         "description": "The label of the checkbox to enable the offline video file download method."
     },
     "streamQualityTitle": {
-        "message": "Stream quality preference",
+        "message": "Предпочтения качества потока",
         "description": "The title of the stream quality preference section in the settings tab."
     },
     "askStreamQualityExplain": {
-        "message": "Always ask which quality to download.",
+        "message": "Всегда спрашивать, в каком качестве скачивать.",
         "description": "The explanation of the 'Always ask' quality preference."
     },
     "askStreamQualityCheckbox": {
-        "message": "Always ask me",
+        "message": "Всегда спрашивать меня",
         "description": "The label of the radio button to enable the 'Always ask' stream quality preference."
     },
     "highestStreamQualityExplain": {
-        "message": "Always download the highest available quality.",
+        "message": "Всегда скачивать в максимально доступном качестве.",
         "description": "The explanation of the 'Always highest' quality preference."
     },
     "highestStreamQualityCheckbox": {
-        "message": "Highest quality",
+        "message": "Максимальное качество",
         "description": "The label of the radio button to enable the 'Always highest' stream quality preference."
     },
     "lowestStreamQualityExplain": {
-        "message": "Always download the lowest available quality.",
+        "message": "Всегда скачивать в минимально доступном качестве.",
         "description": "The explanation of the 'Always lowest' quality preference."
     },
     "lowestStreamQualityCheckbox": {
-        "message": "Lowest quality",
+        "message": "Минимальное качество",
         "description": "The label of the radio button to enable 'Always lowest' stream quality preference."
     },
     "mpdFixExplain": {
-        "message": "Modify .mpd manifests to include only the downloaded quality, ensuring compatibility with players like VLC.",
+        "message": "Изменять манифесты .mpd так, чтобы они содержали только скачанное качество, обеспечивая совместимость с такими плеерами, как VLC.",
         "description": "The explanation of the MPD fix option."
     },
     "mpdFixCheckbox": {
-        "message": "Fix MPD files (recommended)",
+        "message": "Исправлять MPD-файлы (рекомендуется)",
         "description": "The label of the checkbox to enable the MPD fix option."
     },
     "openPreference": {
-        "message": "Add-on opening preference",
+        "message": "Предпочтение открытия расширения",
         "description": "The title of the add-on opening preference section in the settings tab."
     },
     "openPreferenceExplain": {
-        "message": "Choose how the add-on opens when you click the icon.",
+        "message": "Выберите, как открывается расширение при нажатии на иконку.",
         "description": "The explanation of the add-on opening preference."
     },
     "newTabCheckbox": {
-        "message": "Open in new tab",
+        "message": "Открыть в новой вкладке",
         "description": "The label of the radio button to open in a new tab."
     },
     "newWindowCheckbox": {
-        "message": "Open in new window",
+        "message": "Открыть в новом окне",
         "description": "The label of the radio button to open in a new window."
     },
     "popupCheckbox": {
-        "message": "Open as popup",
+        "message": "Открыть как всплывающее окно",
         "description": "The label of the radio button to open as a popup."
     },
     "colorPickerTitle": {
-        "message": "Interface color",
+        "message": "Цвет интерфейса",
         "description": "The title of the interface color section in the settings tab."
     },
     "creditsTitle": {
-        "message": "Credits",
+        "message": "Авторы",
         "description": "The title of the credits section in the settings tab."
     },
     "creditsDescription1": {
-        "message": "Website Media Downloader is an ",
+        "message": "Website Media Downloader — это ",
         "description": "The first part of the credits description."
     },
     "creditsDescription2": {
-        "message": "open-source project",
+        "message": "проект с открытым исходным кодом",
         "description": "The second part of the credits description."
     },
     "creditsDescription3": {
-        "message": " created by ",
+        "message": ", созданный ",
         "description": "The third part of the credits description."
     },
     "creditsDescription4": {
-        "message": "maintained and developed by anpa26",
+        "message": "и поддерживаемый anpa26",
         "description": "The fourth part of the credits description."
     },
     "creditsDescription5": {
@@ -409,191 +409,191 @@
         "description": "The fifth part of the credits description."
     },
     "rateButton": {
-        "message": "Rate",
+        "message": "Оценить",
         "description": "The label of the button to rate the extension."
     },
     "shareButton": {
-        "message": "Share",
+        "message": "Поделиться",
         "description": "The label of the button to share the extension."
     },
     "donateButton": {
-        "message": "Donate",
+        "message": "Пожертвовать",
         "description": "The label of the button to donate."
     },
     "mobileIncompatibleWarning": {
-        "message": "Incompatible with some mobile browsers.",
+        "message": "Несовместимо с некоторыми мобильными браузерами.",
         "description": "The mobile incompatibility warning."
     },
     "permissionRequestTitle": {
-        "message": "Permission Required",
+        "message": "Требуется разрешение",
         "description": "The title of the permission request popup."
     },
     "permissionRequestDescription": {
-        "message": "The extension needs permission to access all URLs in order to function properly.",
+        "message": "Для правильной работы расширению требуется разрешение на доступ ко всем URL-адресам.",
         "description": "The description of the permission request popup."
     },
     "grantPermissionButton": {
-        "message": "Grant Permission",
+        "message": "Предоставить разрешение",
         "description": "The label of the grant permission button."
     },
     "denyPermissionButton": {
-        "message": "Don't remind me",
+        "message": "Не напоминать мне",
         "description": "The label of the deny permission button."
     },
     "permissionGrantedMessage": {
-        "message": "Permission successfully granted.",
+        "message": "Разрешение успешно предоставлено.",
         "description": "The message when permission is granted."
     },
     "permissionDeniedMessage": {
-        "message": "Permission denied.",
+        "message": "В разрешении отказано.",
         "description": "The message when permission is denied."
     },
     "permissionGrantFailedMessage": {
-        "message": "Failed to grant permission.",
+        "message": "Не удалось предоставить разрешение.",
         "description": "The message when permission grant fails."
     },
     "mpdDownloadCompleteTitle": {
-        "message": "MPD Download Complete",
+        "message": "Загрузка MPD завершена",
         "description": "The title of the MPD download complete notification."
     },
     "mpdDownloadCompleteMessage": {
-        "message": "The MPD stream has been downloaded as a ZIP file.",
+        "message": "MPD-поток был скачан как ZIP-архив.",
         "description": "The message of the MPD download complete notification."
     },
     "splitDownloadWarningSnackbar": {
-        "message": "Audio and video streams are separate. Two files will be downloaded.",
+        "message": "Аудио- и видеопотоки разделены. Будет скачано два файла.",
         "description": "The snackbar message for separate audio/video streams."
     },
     "downloadingAudioSnackbar": {
-        "message": "Downloading audio stream...",
+        "message": "Скачивание аудиопотока...",
         "description": "The snackbar message when downloading audio."
     },
     "splitAudioVideoDownloadCompleteTitle": {
-        "message": "Separate audio and video streams downloaded successfully",
+        "message": "Раздельные аудио- и видеопотоки успешно скачаны",
         "description": "The title of the split audio/video download complete dialog."
     },
     "splitAudioVideoDownloadCompleteDescription": {
-        "message": "Both video and audio streams have been downloaded.",
+        "message": "И видео-, и аудиопотоки были скачаны.",
         "description": "The description of the split audio/video download complete dialog."
     },
     "videoQualityDialogTitle": {
-        "message": "Select video quality",
+        "message": "Выберите качество видео",
         "description": "The title of the video quality selection dialog."
     },
     "videoQualitySelectLabel": {
-        "message": "Video quality",
+        "message": "Качество видео",
         "description": "The label of the video quality selection."
     },
     "audioQualityDialogTitle": {
-        "message": "Select audio quality",
+        "message": "Выберите качество аудио",
         "description": "The title of the audio quality selection dialog."
     },
     "audioQualitySelectLabel": {
-        "message": "Audio quality",
+        "message": "Качество аудио",
         "description": "The label of the audio quality selection."
     },
     "streamQualityDialogTitle": {
-        "message": "Select stream quality",
+        "message": "Выберите качество потока",
         "description": "The title of the stream quality selection dialog."
     },
     "streamQualitySelectLabel": {
-        "message": "Stream quality",
+        "message": "Качество потока",
         "description": "The label of the stream quality selection."
     },
     "mediaPreviewSnackbar": {
-        "message": "Media preview doesn't work on all sites.",
+        "message": "Предпросмотр медиа работает не на всех сайтах.",
         "description": "The media preview snackbar."
     },
     "mediaPreviewDontRemindMe": {
-        "message": "Don't remind me",
+        "message": "Не напоминать мне",
         "description": "The action of the media preview snackbar."
     },
     "helpTooltip": {
-        "message": "Open help",
+        "message": "Открыть справку",
         "description": "The help tooltip."
     },
     "diagnosticDataPermissionDenied": {
-        "message": "Diagnostic data sharing permission denied.",
+        "message": "В разрешении на отправку диагностических данных отказано.",
         "description": "The message when diagnostic permission is denied."
     },
     "diagnosticDataSent": {
-        "message": "Diagnostic data sent successfully. Thank you!",
+        "message": "Диагностические данные успешно отправлены. Спасибо!",
         "description": "The message when diagnostic data is sent."
     },
     "diagnosticDataSendError": {
-        "message": "An error occurred while sending diagnostic data.",
+        "message": "При отправке диагностических данных произошла ошибка.",
         "description": "The error message when sending diagnostic data fails."
     },
     "noRequestFoundError": {
-        "message": "Could not find request info in history.",
+        "message": "Не удалось найти информацию о запросе в истории.",
         "description": "The error message when a request is not found."
     },
     "drmWarningTitle": {
-        "message": "DRM Detected",
+        "message": "Обнаружен DRM",
         "description": "The DRM warning title."
     },
     "drmWarningDescription": {
-        "message": "This file is using DRM (Content Protection).",
+        "message": "Этот файл использует DRM (защиту контента).",
         "description": "The DRM warning description."
     },
     "drmWarningConntinueButton": {
-        "message": "Continue",
+        "message": "Продолжить",
         "description": "The DRM continue button."
     },
     "drmWarningCancelButton": {
-        "message": "Cancel",
+        "message": "Отмена",
         "description": "The DRM cancel button."
     },
     "ratingBannerText": {
-        "message": "If you like this add-on, please give it a rating. Thank you!",
+        "message": "Если вам нравится это расширение, пожалуйста, оцените его. Спасибо!",
         "description": "The rating banner text."
     },
     "ratingBannerRateButton": {
-        "message": "Rate now",
+        "message": "Оценить сейчас",
         "description": "The rate now button of the rating banner."
     },
     "ratingBannerDismissButton": {
-        "message": "Dismiss",
+        "message": "Закрыть",
         "description": "The dismiss button of the rating banner."
     },
     "ratingBannerDontShowAgainButton": {
-        "message": "Don't show again",
+        "message": "Больше не показывать",
         "description": "The don't show again button of the rating banner."
     },
     "ratingBannerRemindMeLaterButton": {
-        "message": "Remind me in a week",
+        "message": "Напомнить через неделю",
         "description": "The remind later button of the rating banner."
     },
     "youtubeDialogAskTitle": {
-        "message": "Are you trying to download from YouTube?",
+        "message": "Вы пытаетесь скачать с YouTube?",
         "description": "The YouTube dialog title."
     },
     "youtubeDialogAskMessage": {
-        "message": "Downloading from YouTube is not directly supported in this extension.",
+        "message": "Скачивание с YouTube напрямую не поддерживается в этом расширении.",
         "description": "The YouTube dialog message."
     },
     "youtubeDialogAskOkButton": {
-        "message": "Yes",
+        "message": "Да",
         "description": "The yes button of the YouTube dialog."
     },
     "youtubeDialogDownloaderPCTitle": {
-        "message": "Try with yt-dlp",
+        "message": "Попробуйте yt-dlp",
         "description": "The yt-dlp guide title."
     },
     "youtubeDialogDownloaderPCMessage": {
-        "message": "You can use yt-dlp to download YouTube videos on PC.",
+        "message": "Вы можете использовать yt-dlp для скачивания видео с YouTube на ПК.",
         "description": "The yt-dlp guide message."
     },
     "youtubeDialogDownloaderAndroidTitle": {
-        "message": "Try with Seal",
+        "message": "Попробуйте Seal",
         "description": "The Seal Android guide title."
     },
     "youtubeDialogDownloaderAndroidMessage": {
-        "message": "You can use Seal to download YouTube videos on Android.",
+        "message": "Вы можете использовать Seal для скачивания видео с YouTube на Android.",
         "description": "The Seal Android guide message."
     },
     "filenameTemplateTitle": {
-        "message": "Filename template",
+        "message": "Шаблон имени файла",
         "description": "The title of the filename template section in the settings tab."
     },
     "filenameTemplateHelper": {
@@ -601,119 +601,119 @@
         "description": "The helper text for the filename template section, showing available placeholders."
     },
     "disableRenameDialogTitle": {
-        "message": "Disable rename file dialog",
+        "message": "Отключить диалог переименования файла",
         "description": "The title of the disable rename file dialog switch in the settings tab."
     },
     "renameDialogHeadline": {
-        "message": "Download as...",
+        "message": "Скачать как...",
         "description": "The headline of the dialog to rename the file before downloading."
     },
     "renameDialogLabel": {
-        "message": "Filename",
+        "message": "Имя файла",
         "description": "The label of the filename input field in the rename dialog."
     },
     "renameDialogDownloadButton": {
-        "message": "Download",
+        "message": "Скачать",
         "description": "The text of the download button in the rename dialog."
     },
     "dontShowRenameDialogCheckbox": {
-        "message": "Don't show again",
+        "message": "Больше не показывать",
         "description": "The text of the checkbox to disable the rename dialog in the future."
     },
     "renameDialogCancelButton": {
-        "message": "Cancel",
+        "message": "Отмена",
         "description": "The text of the cancel button in the rename dialog."
     },
     "historyTab": {
-        "message": "History",
+        "message": "История",
         "description": "The name of the history tab in the popup."
     },
     "aboutTab": {
-        "message": "About",
+        "message": "О программе",
         "description": "The name of the about tab in the popup."
     },
     "historyPageTitle": {
-        "message": "Enable history page",
+        "message": "Включить страницу истории",
         "description": "The label of the switch to enable the history page."
     },
     "historyPageExplain": {
-        "message": "Keep a local record of your downloads.",
+        "message": "Сохранять локальную запись ваших загрузок.",
         "description": "The explanation of the history page option."
     },
     "clearHistoryButton": {
-        "message": "Clear history",
+        "message": "Очистить историю",
         "description": "The label of the button to clear the download history."
     },
     "noHistory": {
-        "message": "No download history found.",
+        "message": "История загрузок не найдена.",
         "description": "The message shown when the download history is empty."
     },
     "historyVisitPage": {
-        "message": "Visit Page",
+        "message": "Перейти на страницу",
         "description": "The tooltip for the button to visit the original page of a download in the history."
     },
     "historyRefreshInstruction": {
-        "message": "Please play the video on that page to automatically refresh the link in your history.",
+        "message": "Пожалуйста, воспроизведите видео на этой странице, чтобы автоматически обновить ссылку в вашей истории.",
         "description": "Instruction shown when user visits a page to refresh a history link."
     },
     "historyLinkUpdated": {
-        "message": "Link successfully updated.",
+        "message": "Ссылка успешно обновлена.",
         "description": "Message shown when a history link is automatically updated."
     },
     "cancelButton": {
-        "message": "Cancel",
+        "message": "Отмена",
         "description": "The text of the cancel button during an active download."
     },
     "downloadCancelled": {
-        "message": "Download cancelled",
+        "message": "Загрузка отменена",
         "description": "The message shown when a download is manually cancelled."
     },
     "speedBoostTitle": {
-        "message": "Speed boost (Parallel downloads)",
+        "message": "Ускорение (Параллельные загрузки)",
         "description": "The title of the speed boost setting."
     },
     "speedBoostExplain": {
-        "message": "Download multiple parts of a file simultaneously. Only works if the server supports range requests.",
+        "message": "Скачивать несколько частей файла одновременно. Работает только в том случае, если сервер поддерживает диапазонные запросы (range requests).",
         "description": "The explanation of the speed boost setting."
     },
     "connectionsTitle": {
-        "message": "Parallel connections",
+        "message": "Параллельные соединения",
         "description": "The title of the connections setting."
     },
     "qrCodeButton": {
-        "message": "QR Code",
+        "message": "QR-код",
         "description": "The text of the QR code button in the media list."
     },
     "qrCodeDialogTitle": {
-        "message": "Scan QR Code",
+        "message": "Сканировать QR-код",
         "description": "The headline of the QR code dialog."
     },
     "qrCodeDialogDescription": {
-        "message": "Scan this QR code with your phone to open the media URL.",
+        "message": "Отсканируйте этот QR-код телефоном, чтобы открыть URL-адрес медиа.",
         "description": "The description in the QR code dialog."
     },
     "downloadSelectedButton": {
-        "message": "Download Selected",
+        "message": "Скачать выбранное",
         "description": "The label of the button to download all selected media items."
     },
     "deleteSelectedButton": {
-        "message": "Delete",
+        "message": "Удалить",
         "description": "The label of the button to delete selected media items from the list."
     },
     "downloadAllButton": {
-        "message": "Download All",
+        "message": "Скачать все",
         "description": "The label of the button to download all media items in the list."
     },
     "cancelSelectedButton": {
-        "message": "Cancel Selected",
+        "message": "Отменить выбранное",
         "description": "The label of the button to cancel selected active downloads."
     },
     "cancelAllButton": {
-        "message": "Cancel All",
+        "message": "Отменить все",
         "description": "The label of the button to cancel all active downloads."
     },
     "zipPreparing": {
-        "message": "Preparing $COUNT$ files...",
+        "message": "Подготовка файлов ($COUNT$)...",
         "description": "The message when starting to prepare files for a ZIP archive.",
         "placeholders": {
             "COUNT": {
@@ -723,7 +723,7 @@
         }
     },
     "zipDownloading": {
-        "message": "Downloading $INDEX$/$TOTAL$: $FILENAME$",
+        "message": "Скачивание $INDEX$/$TOTAL$: $FILENAME$",
         "description": "The progress message during ZIP download.",
         "placeholders": {
             "INDEX": {
@@ -741,15 +741,15 @@
         }
     },
     "zipGenerating": {
-        "message": "Generating ZIP archive...",
+        "message": "Создание ZIP-архива...",
         "description": "The message when creating the ZIP file from downloaded blobs."
     },
     "zipComplete": {
-        "message": "Download complete!",
+        "message": "Загрузка завершена!",
         "description": "The message when the ZIP download is finished."
     },
     "zipError": {
-        "message": "Failed to generate ZIP: $ERROR$",
+        "message": "Не удалось создать ZIP: $ERROR$",
         "description": "The error message when ZIP creation fails.",
         "placeholders": {
             "ERROR": {
@@ -759,59 +759,59 @@
         }
     },
     "zipStartedInBackground": {
-        "message": "ZIP download started in background",
+        "message": "Скачивание ZIP-архива началось в фоновом режиме",
         "description": "The notification message when the ZIP download process is moved to the background script."
     },
     "backgroundDownloadTitle": {
-        "message": "Background download",
+        "message": "Фоновая загрузка",
         "description": "The title of the background download setting."
     },
     "themeColorApplied": {
-        "message": "Theme color applied!",
+        "message": "Цвет темы применен!",
         "description": "The message shown in a snackbar when a theme color is applied."
     },
     "openInNewTabHelper": {
-        "message": "Open settings in a new tab",
+        "message": "Открыть настройки в новой вкладке",
         "description": "The helper text for the button to open settings in a new tab."
     },
     "backgroundDownloadExplain": {
-        "message": "Allows downloads to continue in the background. If disabled, downloads will run in the popup and stop if it's closed (no new tabs on mobile).",
+        "message": "Позволяет загрузкам продолжаться в фоновом режиме. Если отключено, загрузки будут выполняться во всплывающем окне и остановятся, если оно будет закрыто (на мобильных устройствах не открываются новые вкладки).",
         "description": "The explanation of the background download setting."
     },
     "disableRenameDialogExplain": {
-        "message": "Skip the filename confirmation dialog and start downloads immediately using the default name.",
+        "message": "Пропускать диалог подтверждения имени файла и начинать загрузку немедленно, используя имя по умолчанию.",
         "description": "The explanation of the disable rename dialog setting."
     },
     "aboutChangelogDescription": {
-        "message": "Visit our GitHub for the latest updates.",
+        "message": "Посетите наш GitHub, чтобы узнать о последних обновлениях.",
         "description": "The description in the changelog dialog."
     },
     "aboutChangelogTitle": {
-        "message": "Changelog",
+        "message": "Список изменений",
         "description": "The title of the changelog dialog."
     },
     "continueAllButton": {
-        "message": "Continue All",
+        "message": "Продолжить все",
         "description": "The label of the button to continue all paused downloads."
     },
     "decodingAudio": {
-        "message": "Decoding audio... Please wait (this can be slow for large files).",
+        "message": "Декодирование аудио... Пожалуйста, подождите (это может быть медленно для больших файлов).",
         "description": "Message shown when decoding audio for extraction."
     },
     "audioExtractionNotSupported": {
-        "message": "Audio-only extraction for DASH (.mpd) is not yet supported. Only HLS (.m3u8) and direct files are supported.",
+        "message": "Извлечение только аудио для DASH (.mpd) пока не поддерживается. Поддерживаются только HLS (.m3u8) и прямые файлы.",
         "description": "Error message when audio extraction is not supported for the format."
     },
     "notSupportedTitle": {
-        "message": "Not Supported",
+        "message": "Не поддерживается",
         "description": "Title for non-supported feature dialogs."
     },
     "downloadCompletePreparingExtraction": {
-        "message": "Download complete. Preparing extraction...",
+        "message": "Загрузка завершена. Подготовка к извлечению...",
         "description": "Message shown when download is finished and extraction starts."
     },
     "audioExtractionError": {
-        "message": "Audio-only extraction error: $ERROR$",
+        "message": "Ошибка извлечения аудио: $ERROR$",
         "description": "Error message shown when audio extraction fails.",
         "placeholders": {
             "ERROR": {
@@ -821,7 +821,7 @@
         }
     },
     "settingsTemplateAutoGenerated": {
-        "message": "Template auto-generated: $TEMPLATE$",
+        "message": "Шаблон создан автоматически: $TEMPLATE$",
         "description": "Message shown when a filename template is auto-generated.",
         "placeholders": {
             "TEMPLATE": {
@@ -831,7 +831,7 @@
         }
     },
     "audioExtractionSuccess": {
-        "message": "Audio extracted successfully: $FILENAME$",
+        "message": "Аудио успешно извлечено: $FILENAME$",
         "description": "Message shown when audio extraction is successful.",
         "placeholders": {
             "FILENAME": {
@@ -841,15 +841,15 @@
         }
     },
     "successTitle": {
-        "message": "Success",
+        "message": "Успех",
         "description": "Title for successful operation dialogs."
     },
     "mpdDownloadExplainSnackbar": {
-        "message": "Selected media is an MPEG-DASH stream. This will download the video and audio streams separately, packaged in a ZIP file, so you can play the .mpd file in the ZIP file with VLC or any other compatible player.",
+        "message": "Выбранный медиафайл является потоком MPEG-DASH. Видео- и аудиопотоки будут скачаны отдельно и упакованы в ZIP-архив, чтобы вы могли воспроизвести .mpd-файл из архива с помощью VLC или любого другого совместимого плеера.",
         "description": "Explanation shown in a snackbar when starting an MPD download."
     },
     "splitAudioVideoDownloadCompleteSuccess": {
-        "message": "Downloaded separate audio and video files for \"$BASENAME$\".",
+        "message": "Скачаны отдельные файлы аудио и видео для «$BASENAME$».",
         "description": "Success message when separate audio and video files are downloaded.",
         "placeholders": {
             "BASENAME": {
@@ -859,111 +859,111 @@
         }
     },
     "filenameTemplateAutoGenerateTitle": {
-        "message": "Auto-generate template",
+        "message": "Создать шаблон автоматически",
         "description": "Tooltip for the auto-generate template button."
     },
     "downloadPreparing": {
-        "message": "Preparing...",
+        "message": "Подготовка...",
         "description": "Added to eliminate inline text."
     },
     "downloadWaiting": {
-        "message": "Waiting for other tabs...",
+        "message": "Ожидание других вкладок...",
         "description": "Status text while waiting for other tabs."
     },
     "downloadConnectingDB": {
-        "message": "Connecting to database...",
+        "message": "Подключение к базе данных...",
         "description": "Status text while connecting to database."
     },
     "downloadFetchingMetadata": {
-        "message": "Fetching file metadata...",
+        "message": "Получение метаданных файла...",
         "description": "Status text while fetching metadata."
     },
     "downloadProcessing": {
-        "message": "Processing...",
+        "message": "Обработка...",
         "description": "Status title during reconstruction."
     },
     "downloadReconstructing": {
-        "message": "Reconstructing your media file from segments. This may take a moment depending on the file size.",
+        "message": "Восстановление медиафайла из сегментов. Это может занять некоторое время в зависимости от размера файла.",
         "description": "Added to eliminate inline text."
     },
     "downloadReadyTitle": {
-        "message": "Download Ready!",
+        "message": "Загрузка готова!",
         "description": "Status title when file is ready."
     },
     "downloadReadyText": {
-        "message": "Your file is ready to be saved.",
+        "message": "Ваш файл готов к сохранению.",
         "description": "Status text when file is ready."
     },
     "downloadStartedTitle": {
-        "message": "Download Started!",
+        "message": "Загрузка началась!",
         "description": "Status title when download starts."
     },
     "downloadStartedText": {
-        "message": "Your file is being saved to your device. You can close this tab now.",
+        "message": "Ваш файл сохраняется на устройство. Теперь вы можете закрыть эту вкладку.",
         "description": "Status text when download starts."
     },
     "downloadErrorTitle": {
-        "message": "Error",
+        "message": "Ошибка",
         "description": "Generic error title."
     },
     "downloadMetadataNotFound": {
-        "message": "File metadata not found in cache. It might have been cleared or the ID is incorrect.",
+        "message": "Метаданные файла не найдены в кэше. Возможно, они были очищены или ID указан неверно.",
         "description": "Error text when metadata is missing."
     },
     "downloadProcessingError": {
-        "message": "Processing Error",
+        "message": "Ошибка обработки",
         "description": "Title when processing fails."
     },
     "downloadDatabaseError": {
-        "message": "Database Error",
+        "message": "Ошибка базы данных",
         "description": "Title when database connection fails."
     },
     "downloadDatabaseErrorText": {
-        "message": "Could not retrieve the file info from database.",
+        "message": "не удалось получить информацию о файле из базы данных.",
         "description": "Error text for database failure."
     },
     "downloadUnexpectedError": {
-        "message": "Unexpected Error",
+        "message": "Непредвиденная ошибка",
         "description": "Title for unexpected errors."
     },
     "saveToDevice": {
-        "message": "Save to Device",
+        "message": "Сохранить на устройство",
         "description": "Added to eliminate inline text."
     },
     "closeTab": {
-        "message": "Close Tab",
+        "message": "Закрыть вкладку",
         "description": "Added to eliminate inline text."
     },
     "downloadAutoCloseText": {
-        "message": "This tab will close automatically after the download starts.",
+        "message": "Эта вкладка закроется автоматически после начала загрузки.",
         "description": "Added to eliminate inline text."
     },
     "streamDownloadingTitle": {
-        "message": "Downloading Stream",
+        "message": "Скачивание потока",
         "description": "Status header during stream download."
     },
     "streamDownloadCompleteTitle": {
-        "message": "Download Complete!",
+        "message": "Загрузка завершена!",
         "description": "Status header when stream download finishes."
     },
     "streamDownloadSaved": {
-        "message": "Your file has been saved.",
+        "message": "Ваш файл был сохранен.",
         "description": "Status text when stream is saved."
     },
     "streamNoUrlError": {
-        "message": "No URL provided.",
+        "message": "URL-адрес не предоставлен.",
         "description": "Error when stream URL is missing."
     },
     "searchLabel": {
-        "message": "Search by name or format",
+        "message": "Поиск по имени или формату",
         "description": "Label for search bar."
     },
     "downloadStartedSnackbar": {
-        "message": "Download started...",
+        "message": "Загрузка началась...",
         "description": "Updated/Added during UI string localization audit."
     },
     "downloadReconstructingSegments": {
-        "message": "Reconstructing file: gathered $COUNT$ segments...",
+        "message": "Восстановление файла: собрано $COUNT$ сегментов...",
         "description": "Progress message while gathering segments.",
         "placeholders": {
             "COUNT": {
@@ -973,7 +973,7 @@
         }
     },
     "downloadAssembling": {
-        "message": "Assembling $COUNT$ segments...",
+        "message": "Сборка $COUNT$ сегментов...",
         "description": "Progress message while assembling segments.",
         "placeholders": {
             "COUNT": {
@@ -983,7 +983,7 @@
         }
     },
     "saveFileLabel": {
-        "message": "Save $FILENAME$",
+        "message": "Сохранить $FILENAME$",
         "description": "Label for the save button with filename.",
         "placeholders": {
             "FILENAME": {
@@ -993,43 +993,43 @@
         }
     },
     "defaultMediaName": {
-        "message": "Media File",
+        "message": "Медиафайл",
         "description": "Default name for media files when filename cannot be determined."
     },
     "drmAbortedError": {
-        "message": "Download aborted by user due to DRM protection.",
+        "message": "Загрузка прервана пользователем из-за защиты DRM.",
         "description": "Error message when user cancels due to DRM."
     },
     "dashComputeSegmentsError": {
-        "message": "Cannot compute $Time$ segments: SegmentTimeline missing and no fixed duration provided.",
+        "message": "Не удалось вычислить сегменты $Time$: SegmentTimeline отсутствует, и не указана фиксированная длительность.",
         "description": "Technical error during DASH segment computation."
     },
     "dashNumberSegmentsError": {
-        "message": "Cannot compute number-based segments: no SegmentTimeline and duration/timescale missing or zero.",
+        "message": "Не удалось вычислить сегменты на основе номеров: SegmentTimeline отсутствует, а длительность/шкала времени не указаны или равны нулю.",
         "description": "Technical error during DASH segment computation."
     },
     "unsupportedVideoType": {
-        "message": "Unsupported video representation type",
+        "message": "Неподдерживаемый тип представления видео",
         "description": "Technical error for unsupported video type."
     },
     "unsupportedAudioType": {
-        "message": "Unsupported audio representation type",
+        "message": "Неподдерживаемый тип представления аудио",
         "description": "Technical error for unsupported audio type."
     },
     "zipEmptyError": {
-        "message": "Failed to download any of the selected files or ZIP is empty.",
+        "message": "Не удалось скачать ни один из выбранных файлов, или ZIP-архив пуст.",
         "description": "Error message when ZIP creation results in an empty or failed file."
     },
     "metadataNotFoundError": {
-        "message": "Download metadata not found in database.",
+        "message": "Метаданные загрузки не найдены в базе данных.",
         "description": "Error message for missing DB record."
     },
     "sessionRequestNotFoundError": {
-        "message": "Request details not found in session storage.",
+        "message": "Детали запроса не найдены в хранилище сессии.",
         "description": "Error message for missing session data."
     },
     "serverErrorStatus": {
-        "message": "Server error: $STATUS$",
+        "message": "Ошибка сервера: $STATUS$",
         "description": "Error message with HTTP status code.",
         "placeholders": {
             "STATUS": {
@@ -1039,35 +1039,35 @@
         }
     },
     "deleteAllConfirm": {
-        "message": "Are you sure you want to delete all detected media?",
+        "message": "Вы уверены, что хотите удалить все обнаруженные медиафайлы?",
         "description": "Added during audit for consistency."
     },
     "downloadButton": {
-        "message": "Download",
+        "message": "Скачать",
         "description": "Updated/Added during UI string localization audit."
     },
     "downloadErrorLabel": {
-        "message": "Download Error",
+        "message": "Ошибка загрузки",
         "description": "Updated/Added during UI string localization audit."
     },
     "idbOpenError": {
-        "message": "IDB Open Error",
+        "message": "Ошибка открытия IDB",
         "description": "Updated/Added during UI string localization audit."
     },
     "githubRepositoryLabel": {
-        "message": "GitHub Repository",
+        "message": "Репозиторий GitHub",
         "description": "Updated/Added during UI string localization audit."
     },
     "extensionDescriptionAbout": {
-        "message": "Your ultimate media companion for the web. Effortlessly detect and download videos, music, and live streams from virtually any website. Featuring real-time network request capturing, background downloads, and advanced HLS/Dash stream conversion—all in one powerful, open-source tool.",
+        "message": "Ваш идеальный медиа-спутник в Интернете. Без труда обнаруживайте и скачивайте видео, музыку и прямые трансляции практически с любого веб-сайта. Захват сетевых запросов в реальном времени, фоновые загрузки и продвинутая конвертация потоков HLS/Dash — все это в одном мощном инструменте с открытым исходным кодом.",
         "description": "Updated/Added during UI string localization audit."
     },
     "confirmTitle": {
-        "message": "Confirm",
+        "message": "Подтверждение",
         "description": "The title of confirmation dialogs."
     },
     "selectedCount": {
-        "message": "$COUNT$ selected",
+        "message": "Выбрано: $COUNT$",
         "description": "Added to eliminate inline text.",
         "placeholders": {
             "COUNT": {
@@ -1076,15 +1076,15 @@
         }
     },
     "streamInitializing": {
-        "message": "Initializing Stream Download",
+        "message": "Инициализация скачивания потока",
         "description": "Added to eliminate inline text."
     },
     "fetchingDetails": {
-        "message": "Fetching details...",
+        "message": "Получение деталей...",
         "description": "Added to eliminate inline text."
     },
     "preparingManifest": {
-        "message": "Preparing manifest...",
+        "message": "Подготовка манифеста...",
         "description": "Added to eliminate inline text."
     },
     "extensionName": {
@@ -1092,43 +1092,43 @@
         "description": "The name of the extension."
     },
     "leadDeveloperRole": {
-        "message": "Lead Developer",
+        "message": "Ведущий разработчик",
         "description": "Developer attribution string."
     },
     "leadDeveloperDescription": {
-        "message": "A lead developer focused on improving and modernizing the extension, adding features like bg downloads, history, and UI enhancements to bring it to its current state.",
+        "message": "Ведущий разработчик, сосредоточенный на улучшении и модернизации расширения, добавлении таких функций, как фоновые загрузки, история и улучшения интерфейса, чтобы привести его к нынешнему состоянию.",
         "description": "Developer attribution string."
     },
     "maintainedByTitle": {
-        "message": "Maintained By",
+        "message": "Поддерживается",
         "description": "About page title."
     },
     "legacyContributionsTitle": {
-        "message": "Legacy Contributions",
+        "message": "Предыдущий вклад",
         "description": "About page title."
     },
     "legacyContributorRole": {
-        "message": "Legacy Contributor",
+        "message": "Предыдущий контрибьютор",
         "description": "Contributor attribution string."
     },
     "legacyContributorDescription": {
-        "message": "Contributed to the early versions of the project core engine.",
+        "message": "Внес вклад в ранние версии основного движка проекта.",
         "description": "Contributor attribution string."
     },
     "usefulLinksTitle": {
-        "message": "Useful Links",
+        "message": "Полезные ссылки",
         "description": "Label for external link or section title."
     },
     "starOnGithub": {
-        "message": "Star on GitHub",
+        "message": "Поставить звезду на GitHub",
         "description": "Label for external link or section title."
     },
     "rateOnAddons": {
-        "message": "Rate on Add-ons",
+        "message": "Оценить расширение",
         "description": "Label for external link or section title."
     },
     "releasedUnderLicense": {
-        "message": "Released under $LICENSE$ License",
+        "message": "Выпущено под лицензией $LICENSE$",
         "description": "About page footer/error message.",
         "placeholders": {
             "LICENSE": {
@@ -1137,11 +1137,11 @@
         }
     },
     "failedToLoadAbout": {
-        "message": "Failed to load About page information.",
+        "message": "Не удалось загрузить информацию о странице «О программе».",
         "description": "About page footer/error message."
     },
     "zipDownloadError": {
-        "message": "Failed to download \"$FILENAME$\". $ERROR$\n\nDo you want to continue with the remaining files?",
+        "message": "Не удалось скачать «$FILENAME$». $ERROR$\n\nХотите продолжить работу с остальными файлами?",
         "description": "Error message when a file in ZIP batch fails.",
         "placeholders": {
             "FILENAME": {
@@ -1153,7 +1153,7 @@
         }
     },
     "noMatchesFound": {
-        "message": "No matches found for \"$QUERY$\"",
+        "message": "Совпадений по запросу «$QUERY$» не найдено",
         "description": "Message shown when search returns no results.",
         "placeholders": {
             "QUERY": {
@@ -1162,7 +1162,7 @@
         }
     },
     "downloadProgressWithSize": {
-        "message": "Downloading: $PERCENT$% ($LOADED$MB / $TOTAL$MB)",
+        "message": "Скачивание: $PERCENT$% ($LOADED$ МБ / $TOTAL$ МБ)",
         "description": "Progress message with size info.",
         "placeholders": {
             "PERCENT": {
@@ -1177,7 +1177,7 @@
         }
     },
     "downloadProgressNoSize": {
-        "message": "Downloading: $LOADED$MB",
+        "message": "Скачивание: $LOADED$ МБ",
         "description": "Progress message without total size.",
         "placeholders": {
             "LOADED": {
@@ -1186,7 +1186,7 @@
         }
     },
     "encodingProgress": {
-        "message": "Encoding: $PERCENT$%",
+        "message": "Кодирование: $PERCENT$ %",
         "description": "Message during audio encoding.",
         "placeholders": {
             "PERCENT": {
@@ -1195,7 +1195,7 @@
         }
     },
     "streamProgressWithSize": {
-        "message": "$LOADED$ MB / $TOTAL$ MB ($PERCENT$%) • $REMAINING$ MB remaining",
+        "message": "$LOADED$ МБ / $TOTAL$ МБ ($PERCENT$%) • осталось $REMAINING$ МБ",
         "description": "Progress message for stream download.",
         "placeholders": {
             "LOADED": {
@@ -1213,7 +1213,7 @@
         }
     },
     "streamProgressNoSize": {
-        "message": "$LOADED$ MB downloaded",
+        "message": "Скачано $LOADED$ МБ",
         "description": "Progress message for stream download without total size.",
         "placeholders": {
             "LOADED": {
@@ -1222,7 +1222,7 @@
         }
     },
     "segmentProgress": {
-        "message": "Segments: $PROCESSED$ / $TOTAL$ ($PERCENT$%)",
+        "message": "Сегменты: $PROCESSED$ / $TOTAL$ ($PERCENT$ %)",
         "description": "Progress message for HLS segments.",
         "placeholders": {
             "PROCESSED": {
@@ -1237,7 +1237,7 @@
         }
     },
     "audioExtractionFailed": {
-        "message": "Failed to extract audio. $ERROR$",
+        "message": "Не удалось извлечь аудио. $ERROR$",
         "description": "Error message when audio extraction fails.",
         "placeholders": {
             "ERROR": {
@@ -1246,7 +1246,7 @@
         }
     },
     "qualityResolutionBandwidthSize": {
-        "message": "$RESOLUTION$ ($BANDWIDTH$ kbps, $SIZE$)",
+        "message": "$RESOLUTION$ ($BANDWIDTH$ кбит/с, $SIZE$)",
         "description": "Stream quality option label.",
         "placeholders": {
             "RESOLUTION": {
@@ -1261,7 +1261,7 @@
         }
     },
     "qualityResolutionBandwidth": {
-        "message": "$WIDTH$×$HEIGHT$ ($BANDWIDTH$ kbps)",
+        "message": "$WIDTH$×$HEIGHT$ ($BANDWIDTH$ кбит/с)",
         "description": "Video quality option label.",
         "placeholders": {
             "WIDTH": {
@@ -1276,7 +1276,7 @@
         }
     },
     "qualityBandwidth": {
-        "message": "$BANDWIDTH$ kbps",
+        "message": "$BANDWIDTH$ кбит/с",
         "description": "Audio quality option label.",
         "placeholders": {
             "BANDWIDTH": {
@@ -1285,7 +1285,7 @@
         }
     },
     "downloadPopupProgressWithSize": {
-        "message": "Downloading (Popup): $PERCENT$% ($LOADED$MB / $TOTAL$MB)",
+        "message": "Скачивание (всплывающее окно): $PERCENT$% ($LOADED$ МБ / $TOTAL$ МБ)",
         "description": "Progress message in popup.",
         "placeholders": {
             "PERCENT": {
@@ -1300,7 +1300,7 @@
         }
     },
     "downloadPopupProgressNoSize": {
-        "message": "Downloading (Popup): $LOADED$MB",
+        "message": "Скачивание (всплывающее окно): $LOADED$ МБ",
         "description": "Progress message in popup without total size.",
         "placeholders": {
             "LOADED": {
@@ -1309,7 +1309,7 @@
         }
     },
     "mpdDownloadCompleteSuccess": {
-        "message": "Downloaded ZIP (“$FILENAME$”).",
+        "message": "Скачан ZIP-архив («$FILENAME$»).",
         "description": "Success message when MPD ZIP is downloaded.",
         "placeholders": {
             "FILENAME": {
@@ -1318,7 +1318,7 @@
         }
     },
     "mpdFetchError": {
-        "message": "Failed to fetch MPD manifest: $STATUS$.",
+        "message": "Не удалось получить манифест MPD: $STATUS$.",
         "description": "Error message when MPD manifest fetch fails.",
         "placeholders": {
             "STATUS": {
@@ -1327,87 +1327,87 @@
         }
     },
     "mpdNoPeriodError": {
-        "message": "MPD has no Period entry.",
+        "message": "В MPD отсутствует запись Period.",
         "description": "Error message when MPD manifest is missing Period element."
     },
     "mpdNoMediaError": {
-        "message": "MPD’s Period has no AdaptationSet for audio/video.",
+        "message": "В записи Period (MPD) отсутствует AdaptationSet для аудио/видео.",
         "description": "Error message when no media streams are found in MPD."
     },
     "installedTitle": {
-        "message": "Welcome to Website Media Downloader",
+        "message": "Добро пожаловать в Website Media Downloader",
         "description": "Title of the installed page"
     },
     "installedHeroTitle": {
-        "message": "Thank You for Choosing Us!",
+        "message": "Спасибо, что выбрали нас!",
         "description": "Hero title of the installed page"
     },
     "installedHeroDescription": {
-        "message": "Your ultimate media companion for the web. Experience seamless media detection and high-speed downloads across all your favorite sites.",
+        "message": "Ваш идеальный медиа-спутник в Интернете. Оцените бесшовное обнаружение медиа и высокую скорость загрузки на всех ваших любимых сайтах.",
         "description": "Hero description of the installed page"
     },
     "installedVersion": {
-        "message": "Version",
+        "message": "Версия",
         "description": "Label for version number"
     },
     "installedChangelogTitle": {
-        "message": "What's New in",
+        "message": "Что нового в",
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Enhanced header spoofing to bypass strict server protections.",
+        "message": "Улучшенная подмена заголовков для обхода строгих серверных защит.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "Optimized real-time network monitoring for high-bitrate media.",
+        "message": "Оптимизированный мониторинг сети в реальном времени для медиа с высоким битрейтом.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "Refined deep DOM scanning for complex web environments.",
+        "message": "Улучшенное глубокое сканирование DOM для сложных веб-сред.",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "Improved system stability and interface consistency.",
+        "message": "Улучшена стабильность системы и согласованность интерфейса.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "Full UI internationalization for a global experience.",
+        "message": "Полная интернационализация интерфейса для глобального использования.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
-        "message": "Meet the Developer",
+        "message": "Познакомьтесь с разработчиком",
         "description": "Title for the developer section"
     },
     "installedSupportTitle": {
-        "message": "Support the Project",
+        "message": "Поддержать проект",
         "description": "Title for the support section"
     },
     "installedSupportDescription": {
-        "message": "If you find this tool useful, please consider supporting its development. Your feedback helps us grow!",
+        "message": "Если вы считаете этот инструмент полезным, пожалуйста, поддержите его разработку. Ваши отзывы помогают нам расти!",
         "description": "Description for the support section"
     },
     "installedStarSub": {
-        "message": "Show some love to the source",
+        "message": "Поддержите исходный код",
         "description": "Subtitle for GitHub star button"
     },
     "installedRateSub": {
-        "message": "Help others find this tool",
+        "message": "Помогите другим найти этот инструмент",
         "description": "Subtitle for rate button"
     },
     "installedFooterQuote": {
-        "message": "Thank you for being part of our journey. Happy downloading!",
+        "message": "Спасибо, что вы с нами. Приятного скачивания!",
         "description": "Footer quote on the installed page"
     },
     "installedFeedbackTitle": {
-        "message": "Feedback & Issues",
+        "message": "Отзывы и ошибки",
         "description": "Title for the feedback section"
     },
     "installedFeedbackDesc": {
-        "message": "Found a bug or have a suggestion? Help us improve by opening an issue on GitHub!",
+        "message": "Нашли ошибку или есть предложение? Помогите нам стать лучше, создав обращение на GitHub!",
         "description": "Description for the feedback section"
     },
     "installedFeedbackButton": {
-        "message": "Report an Issue",
+        "message": "Сообщить об ошибке",
         "description": "Label for the feedback button"
     }
 }

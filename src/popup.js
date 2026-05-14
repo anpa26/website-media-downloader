@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       githubButton.style.marginRight = "auto";
       githubButton.style.marginLeft = "-8px";
       githubButton.innerHTML = `
-        <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></mdui-icon> GitHub Repository
+        <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></mdui-icon> ${browser.i18n.getMessage("githubRepositoryLabel") || "GitHub Repository"}
       `;
 
       showDialog(changelogHtml, headlineHtml, [githubButton]);
@@ -277,17 +277,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       githubButton.style.marginRight = "auto";
       githubButton.style.marginLeft = "-8px";
       githubButton.innerHTML = `
-        <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></mdui-icon> GitHub Repository
+        <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></mdui-icon> ${browser.i18n.getMessage("githubRepositoryLabel") || "GitHub Repository"}
       `;
-      showDialog("Visit our GitHub for the latest updates.", "Changelog", [githubButton]);
+      showDialog(browser.i18n.getMessage("aboutChangelogDescription"), browser.i18n.getMessage("aboutChangelogTitle"), [githubButton]);
     }
   });
 
   const urlParams = new URLSearchParams(window.location.search);
+  const mode = urlParams.get('mode');
   if (urlParams.get('options') === 'true') {
     document.getElementById('navbar').value = 'settings';
   } else {
-    document.body.classList.add('is-popup');
+    if (mode !== 'tab' && mode !== 'window') {
+      document.body.classList.add('is-popup');
+    }
     if (urlParams.get('tab') === 'history') {
       document.getElementById('navbar').value = 'history';
       loadHistoryList();
@@ -331,8 +334,8 @@ browser.runtime.onMessage.addListener((message) => {
     }, 5000);
   } else if (message.action === 'confirmZipSkip') {
     showConfirmDialog(
-      `Failed to download "${message.filename}". ${message.error || ""}\n\nDo you want to continue with the remaining files?`,
-      "Download Error"
+      browser.i18n.getMessage("zipDownloadError", [message.filename, message.error || ""]),
+      browser.i18n.getMessage("downloadErrorTitle") || "Download Error"
     ).then(result => {
       browser.runtime.sendMessage({ action: 'confirmZipSkipResponse', result: result });
     });
@@ -414,12 +417,12 @@ function updateProgressUI(id, loaded, total) {
       const totalMB = (total / (1024 * 1024)).toFixed(2);
       const percent = Math.round((loaded / total) * 100);
       const remainingMB = ((total - loaded) / (1024 * 1024)).toFixed(2);
-      statusInfo.textContent = `${loadedMB} MB / ${totalMB} MB (${percent}%) • ${remainingMB} MB remaining`;
+      statusInfo.textContent = browser.i18n.getMessage("streamProgressWithSize", [loadedMB, totalMB, percent.toString(), remainingMB]) || `${loadedMB} MB / ${totalMB} MB (${percent}%) • ${remainingMB} MB remaining`;
       loadingBar.indeterminate = false;
       loadingBar.max = total;
       loadingBar.value = loaded;
     } else {
-      statusInfo.textContent = `${loadedMB} MB downloaded`;
+      statusInfo.textContent = browser.i18n.getMessage("streamProgressNoSize", [loadedMB]) || `${loadedMB} MB downloaded`;
       if (loadingBar.indeterminate !== true && !loadingBar.value) {
           loadingBar.indeterminate = true;
       }
@@ -447,7 +450,7 @@ function finishDownloadUI(id, isSuccess = false) {
 
           const dlBtn = element.querySelector('#download-button');
           if (dlBtn) {
-            dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>Download`;
+            dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>${browser.i18n.getMessage("downloadButton") || "Download"}`;
             dlBtn.classList.remove('cancel-active');
             dlBtn.disabled = false;
           }
@@ -476,7 +479,7 @@ function finishDownloadUI(id, isSuccess = false) {
 
         const dlBtn = item.querySelector('#download-button');
         if (dlBtn) {
-          dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>Download`;
+          dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>${browser.i18n.getMessage("downloadButton") || "Download"}`;
           dlBtn.classList.remove('cancel-active');
           dlBtn.disabled = false;
         }
@@ -489,7 +492,7 @@ function finishDownloadUI(id, isSuccess = false) {
 
 function updateDownloadingCount(change) {
   downloadingCount = Math.max(0, downloadingCount + change);
-  document.title = downloadingCount > 0 ? `${downloadingCount}` : "Website Media Downloader";
+  document.title = downloadingCount > 0 ? `(${downloadingCount}) ${browser.i18n.getMessage("extensionName")}` : browser.i18n.getMessage("extensionName");
 
   const cancelAllBtn = document.getElementById('cancel-all');
   if (cancelAllBtn) {
@@ -500,7 +503,7 @@ function updateDownloadingCount(change) {
 function showConfirmDialog(message, title = null) {
   return new Promise((resolve) => {
     const dialog = document.createElement('mdui-dialog');
-    dialog.headline = title || "Confirm";
+    dialog.headline = title || browser.i18n.getMessage("confirmTitle") || "Confirm";
 
     const description = document.createElement('div');
     description.setAttribute('slot', 'description');
@@ -510,7 +513,7 @@ function showConfirmDialog(message, title = null) {
 
     const cancelButton = document.createElement('mdui-button');
     cancelButton.variant = "text";
-    cancelButton.textContent = "Cancel All";
+    cancelButton.textContent = browser.i18n.getMessage("cancelAllButton");
     cancelButton.slot = 'action';
     cancelButton.addEventListener('click', () => {
       dialog.open = false;
@@ -520,7 +523,7 @@ function showConfirmDialog(message, title = null) {
 
     const continueButton = document.createElement('mdui-button');
     continueButton.variant = "tonal";
-    continueButton.textContent = "Continue All";
+    continueButton.textContent = browser.i18n.getMessage("continueAllButton");
     continueButton.slot = 'action';
     continueButton.addEventListener('click', () => {
       dialog.open = false;
@@ -547,7 +550,7 @@ function showDialog(message, title = null, extraActions = []) {
     headline.innerHTML = title;
     dialog.appendChild(headline);
   } else {
-    dialog.headline = title || "Changelog";
+    dialog.headline = title || browser.i18n.getMessage("aboutChangelogTitle") || "Changelog";
   }
 
   const description = document.createElement('div');
@@ -626,7 +629,7 @@ function updateSelectedCount() {
     // but this is mostly for the UI labels.
   }
 
-  document.getElementById('selected-count').textContent = `${selectedCount} selected`;
+  document.getElementById('selected-count').textContent = browser.i18n.getMessage("selectedCount", [selectedCount.toString()]);
 
   if (selectedCount > 0) {
     downloadSelectedBtn.style.display = 'inline-flex';
@@ -874,7 +877,7 @@ function createMediaItem(item) {
 
   const dlBtn = document.createElement('mdui-segmented-button');
   dlBtn.id = 'download-button';
-  dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>Download`;
+  dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>${browser.i18n.getMessage("downloadButton") || "Download"}`;
   if (isSubtitle) dlBtn.style.borderRadius = '100px';
   dlBtn.addEventListener('click', () => {
     if (dlBtn.classList.contains('cancel-active')) {
@@ -888,7 +891,7 @@ function createMediaItem(item) {
   });
 
   const prvBtn = document.createElement('mdui-segmented-button');
-  prvBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="m380-300 280-180-280-180v360ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg></mdui-icon>Preview`;
+  prvBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="m380-300 280-180-280-180v360ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg></mdui-icon>${browser.i18n.getMessage("previewMedia") || "Preview"}`;
   if (isSubtitle) prvBtn.style.display = 'none';
 
   let hlsLarge = null;
@@ -1249,7 +1252,7 @@ async function loadHistoryList() {
             filename: item.filename
           });
           if (typeof mdui !== 'undefined' && mdui.snackbar) {
-            mdui.snackbar({ message: "Download started...", placement: "top" });
+            mdui.snackbar({ message: browser.i18n.getMessage("downloadStartedSnackbar") || "Download started...", placement: "top" });
           }
         } else {
           browser.downloads.download({
@@ -1307,22 +1310,21 @@ async function loadAboutPage() {
 
     let html = `
       <div style="padding: 16px; display: flex; flex-direction: column; gap: 24px;">
-        <div style="text-align: center; padding: 24px 16px; background: var(--surface-low); border-radius: var(--app-border-radius); border: 1px solid rgb(var(--mdui-color-outline-variant));">
+        <div style="text-align: center; padding: 24px 16px 16px; background: var(--surface-low); border-radius: var(--app-border-radius); border: 1px solid rgb(var(--mdui-color-outline-variant));">
           <div style="width: 48px; height: 48px; margin: 0 auto 16px; color: var(--primary);">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
           </div>
           <h1 style="margin: 0; font-size: 1.4rem; font-weight: 700; color: rgb(var(--mdui-color-on-surface));">${data.extension.name}</h1>
           <div style="display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 4px 12px; background: rgb(var(--mdui-color-secondary-container)); color: rgb(var(--mdui-color-on-secondary-container)); border-radius: 20px; font-size: 0.75rem; font-weight: 600;">
-            <svg viewBox="0 0 24 24" fill="currentColor" style="width: 14px; height: 14px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
             Version ${browser.runtime.getManifest().version}
           </div>
-          <p style="font-size: 0.9rem; line-height: 1.6; margin-top: 16px; color: var(--on-surface-variant);">${data.extension.description}</p>
+          <p style="font-size: 0.9rem; line-height: 1.6; margin-top: 16px; color: var(--on-surface-variant);">${browser.i18n.getMessage("extensionDescriptionAbout") || data.extension.description}</p>
         </div>
     `;
 
     html += `
         <div style="display: flex; flex-direction: column; gap: 12px;">
-          <h2 style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary); margin: 0 8px;">Maintained By</h2>
+          <h2 style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary); margin: 0 8px;">${browser.i18n.getMessage("maintainedByTitle") || "Maintained By"}</h2>
     `;
 
     const lead = data.authors[0];
@@ -1332,10 +1334,10 @@ async function loadAboutPage() {
             <mdui-avatar src="${lead.avatar}" style="width: 56px; height: 56px; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></mdui-avatar>
             <div style="flex-grow: 1;">
               <b style="font-size: 1.1rem; color: rgb(var(--mdui-color-on-primary-container));">${lead.name}</b>
-              <p style="margin: 8px 0 0; font-size: 0.85rem; line-height: 1.5; color: rgb(var(--mdui-color-on-primary-container)); opacity: 0.9;">${lead.description}</p>
+              <p style="margin: 8px 0 0; font-size: 0.85rem; line-height: 1.5; color: rgb(var(--mdui-color-on-primary-container)); opacity: 0.9;">${browser.i18n.getMessage("leadDeveloperDescription") || lead.description}</p>
             </div>
             <div style="display: flex; flex-direction: column; align-items: flex-end; align-self: stretch; justify-content: center; min-width: 80px;">
-              <span style="font-size: 0.65rem; color: rgb(var(--mdui-color-on-primary-container)); opacity: 0.7; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; position: absolute; top: -4px; right: 0;">${lead.role}</span>
+              <span style="font-size: 0.65rem; color: rgb(var(--mdui-color-on-primary-container)); opacity: 0.7; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; position: absolute; top: -4px; right: 0;">${browser.i18n.getMessage("leadDeveloperRole") || lead.role}</span>
               <mdui-button-icon variant="filled" style="--mdui-color-primary: var(--mdui-color-on-primary-container); --mdui-color-on-primary: var(--mdui-color-primary-container); flex-shrink: 0;" href="${lead.github}" target="_blank">
                 <svg viewBox="0 0 24 24" style="fill: currentColor;"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
               </mdui-button-icon>
@@ -1346,7 +1348,7 @@ async function loadAboutPage() {
 
     if (data.authors.length > 1) {
       html += `
-        <h2 style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--on-surface-variant); margin: 12px 8px 0;">Legacy Contributions</h2>
+        <h2 style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--on-surface-variant); margin: 12px 8px 0;">${browser.i18n.getMessage("legacyContributionsTitle") || "Legacy Contributions"}</h2>
         <mdui-list style="background: transparent;">
       `;
 
@@ -1355,7 +1357,8 @@ async function loadAboutPage() {
           <mdui-list-item nonclickable style="border-radius: 12px; margin-bottom: 4px;">
             <mdui-avatar slot="icon" src="${author.avatar}" style="width: 32px; height: 32px;"></mdui-avatar>
             <div style="font-weight: 600; font-size: 0.9rem;">${author.name}</div>
-            <div slot="description" style="font-size: 0.8rem; opacity: 0.7;">${author.description}</div>
+            <div slot="description" style="font-size: 0.8rem; opacity: 0.7;">${browser.i18n.getMessage("legacyContributorDescription") || author.description}</div>
+            <span slot="description" style="font-size: 0.7rem; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-top: 4px; display: block;">${browser.i18n.getMessage("legacyContributorRole") || author.role}</span>
             <mdui-button-icon slot="end-icon" href="${author.github}" target="_blank">
               <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: currentColor;"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
             </mdui-button-icon>
@@ -1368,29 +1371,39 @@ async function loadAboutPage() {
 
     html += `
         </div>
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          <h2 style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary); margin: 8px 8px 0;">Useful Links</h2>
-          <mdui-list style="background: var(--surface-low); border-radius: 16px; border: 1px solid rgb(var(--mdui-color-outline-variant)); overflow: hidden;">
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <h2 style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary); margin: 8px 8px 0;">${browser.i18n.getMessage("usefulLinksTitle") || "Useful Links"}</h2>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
     `;
 
-    data.links.forEach((link, index) => {
+    const linkTranslationMap = {
+      "Star on GitHub": "starOnGithub",
+      "Rate on Add-ons": "rateOnAddons",
+      "GitHub Repository": "githubRepositoryLabel",
+      "Report Issue": "reportIssue"
+    };
+
+    data.links.forEach((link) => {
+      const transKey = linkTranslationMap[link.label];
+      const localizedLabel = transKey ? (browser.i18n.getMessage(transKey) || link.label) : link.label;
       html += `
-        <mdui-list-item href="${link.url}" target="_blank" style="${index < data.links.length - 1 ? 'border-bottom: 1px solid rgb(var(--mdui-color-outline-variant));' : ''}">
-          <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="${link.icon}"/></svg></mdui-icon>
-          ${link.label}
-          <div slot="end-icon" style="width: 18px; height: 18px; opacity: 0.5;">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+        <mdui-card href="${link.url}" target="_blank" clickable style="background: var(--surface-low); border: 1px solid rgb(var(--mdui-color-outline-variant)); border-radius: 12px; transition: var(--transition); height: 100%;">
+          <div style="padding: 12px; display: flex; align-items: center; gap: 12px; height: 100%; box-sizing: border-box;">
+            <div style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: rgba(var(--mdui-color-primary), 0.1); color: var(--primary); border-radius: 10px; flex-shrink: 0;">
+              <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; fill: currentColor;"><path d="${link.icon}"/></svg>
+            </div>
+            <span style="font-size: 0.8rem; font-weight: 600; line-height: 1.2; color: rgb(var(--mdui-color-on-surface));">${localizedLabel}</span>
           </div>
-        </mdui-list-item>
+        </mdui-card>
       `;
     });
 
     html += `
-          </mdui-list>
+          </div>
         </div>
 
         <div style="text-align: center; margin-top: 12px; opacity: 0.5; font-size: 0.7rem;">
-          Released under ${data.extension.license} License
+          ${browser.i18n.getMessage("releasedUnderLicense", [data.extension.license]) || `Released under ${data.extension.license} License`}
         </div>
       </div>
     `;
@@ -1398,7 +1411,7 @@ async function loadAboutPage() {
     container.innerHTML = html;
   } catch (error) {
     console.error("Failed to load about page:", error);
-    container.innerHTML = `<div style="padding: 40px; text-align: center;">Failed to load About page information.</div>`;
+    container.innerHTML = `<div style="padding: 40px; text-align: center;">${browser.i18n.getMessage("failedToLoadAbout") || "Failed to load About page information."}</div>`;
   }
 }
 
@@ -1476,8 +1489,8 @@ async function downloadAllAsZip(items) {
             if (skipAllErrors) continue;
 
             const result = await showConfirmDialog(
-              `Failed to download "${item.filename}". ${err.message}\n\nDo you want to continue with the remaining files?`,
-              "Download Error"
+              browser.i18n.getMessage("zipDownloadError", [item.filename, err.message]),
+              browser.i18n.getMessage("downloadErrorTitle") || "Download Error"
             );
 
             if (result === 'continue-all') {
@@ -1517,7 +1530,7 @@ async function downloadAllAsZip(items) {
       } catch (e) {
         if (e.message !== "Cancelled") {
           console.error("Local ZIP error:", e);
-          showDialog("ZIP error: " + e.message);
+          showDialog(browser.i18n.getMessage("zipError", [e.message]));
         }
         progressContainer.style.display = 'none';
       }
@@ -1554,13 +1567,13 @@ function getFileName(url, maxLength = 30) {
     if(!fileName) fileName = parsedUrl.hostname;
     if (fileName.length > maxLength) fileName = fileName.substring(0, maxLength) + '…';
     return decodeURIComponent(fileName);
-  } catch (e) { return "Media File"; }
+  } catch (e) { return browser.i18n.getMessage("defaultMediaName") || "Media File"; }
 }
 
 function getHumanReadableSize(size) {
   const units = ['b', 'Kb', 'Mb', 'Gb', 'Tb'];
   let sizeInBytes = parseInt(size);
-  if (isNaN(sizeInBytes)) return "Unknown Size";
+  if (isNaN(sizeInBytes)) return browser.i18n.getMessage("unknownSize") || "Unknown Size";
   let i = 0;
   while (sizeInBytes > 1024 && i < units.length - 1) { sizeInBytes /= 1024; i++; }
   return `${sizeInBytes.toFixed(2)} ${units[i]}`;
@@ -1612,7 +1625,7 @@ async function extractAudioFromBlob(blob, filename, downloadMethod, loadingBar) 
   if (loadingBar) {
       loadingBar.setAttribute('indeterminate', 'true');
       statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
-      if (statusInfo) statusInfo.textContent = "Decoding audio... Please wait (this can be slow for large files).";
+      if (statusInfo) statusInfo.textContent = browser.i18n.getMessage("decodingAudio");
   }
 
   // Force a small pause so the browser has time to paint the status above
@@ -1632,7 +1645,7 @@ async function extractAudioFromBlob(blob, filename, downloadMethod, loadingBar) 
           if (loadingBar) {
               const percent = Math.round(progress * 100);
               loadingBar.value = percent;
-              if (statusInfo) statusInfo.textContent = `Encoding: ${percent}%`;
+              if (statusInfo) statusInfo.textContent = browser.i18n.getMessage("encodingProgress", [percent.toString()]) || `Encoding: ${percent}%`;
           }
       });
 
@@ -1774,7 +1787,7 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
               await extractAudioFromBlob(result.blob, newName, downloadMethod, loadingBar);
           }
       } else {
-          showDialog("Audio-only extraction for DASH (.mpd) is not yet supported. Only HLS (.m3u8) and direct files are supported.", "Not Supported");
+          showDialog(browser.i18n.getMessage("audioExtractionNotSupported"), browser.i18n.getMessage("notSupportedTitle"));
           finishDownloadUI(url);
           return;
       }
@@ -1804,25 +1817,27 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
             if (contentLength > 0) {
                 loadingBar.value = receivedLength;
                 const percent = Math.round((receivedLength / contentLength) * 100);
-                statusInfo.textContent = `Downloading: ${percent}% (${(receivedLength/1048576).toFixed(1)}MB / ${(contentLength/1048576).toFixed(1)}MB)`;
-            } else {
-                statusInfo.textContent = `Downloading: ${(receivedLength/1048576).toFixed(1)}MB`;
-            }
-          }
+                const loadedMB = (receivedLength / 1048576).toFixed(1);
+                const totalMB = (contentLength / 1048576).toFixed(1);
+                statusInfo.textContent = browser.i18n.getMessage("downloadProgressWithSize", [percent.toString(), loadedMB, totalMB]) || `Downloading: ${percent}% (${loadedMB}MB / ${totalMB}MB)`;
+                } else {
+                const loadedMB = (receivedLength / 1048576).toFixed(1);
+                statusInfo.textContent = browser.i18n.getMessage("downloadProgressNoSize", [loadedMB]) || `Downloading: ${loadedMB}MB`;
+                }          }
 
           const blob = new Blob(chunks);
-          statusInfo.textContent = "Download complete. Preparing extraction...";
+          statusInfo.textContent = browser.i18n.getMessage("downloadCompletePreparingExtraction");
           await new Promise(r => setTimeout(r, 500)); // Small pause to let user see it's done
           if (window.activeCancellations.has(url)) throw new Error("Cancelled");
           await extractAudioFromBlob(blob, newName, downloadMethod, loadingBar);
       } catch (e) {
-          throw new Error(e.message === "Cancelled" ? "Cancelled" : "Download failed: " + e.message);
+          throw new Error(e.message === "Cancelled" ? "Cancelled" : browser.i18n.getMessage("downloadError", [e.message]));
       }
    }
    finishDownloadUI(url, true);
   } catch (error) {
     if (error.message !== "Cancelled") {
-      showDialog("Audio-only extraction error: " + error.message);
+      showDialog(browser.i18n.getMessage("audioExtractionError", [error.message]));
     }
     finishDownloadUI(url);
   } finally {
@@ -1990,9 +2005,12 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false) {
             if (contentLength > 0) {
               loadingBar.value = receivedLength;
               const percent = Math.round((receivedLength / contentLength) * 100);
-              statusInfo.textContent = `Downloading (Popup): ${percent}% (${(receivedLength/1048576).toFixed(1)}MB / ${(contentLength/1048576).toFixed(1)}MB)`;
+              const loadedMB = (receivedLength / 1048576).toFixed(1);
+              const totalMB = (contentLength / 1048576).toFixed(1);
+              statusInfo.textContent = browser.i18n.getMessage("downloadPopupProgressWithSize", [percent.toString(), loadedMB, totalMB]);
             } else {
-              statusInfo.textContent = `Downloading (Popup): ${(receivedLength/1048576).toFixed(1)}MB`;
+              const loadedMB = (receivedLength / 1048576).toFixed(1);
+              statusInfo.textContent = browser.i18n.getMessage("downloadPopupProgressNoSize", [loadedMB]);
             }
           }
 
@@ -2012,7 +2030,7 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false) {
           }, 1000);
         } catch (e) {
           console.error("Popup fetch error:", e);
-          if (e.message !== "Cancelled") showDialog("Download error: " + e.message);
+          if (e.message !== "Cancelled") showDialog(browser.i18n.getMessage("downloadError", [e.message]));
           finishDownloadUI(url);
         }
       } else {
@@ -2026,7 +2044,7 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false) {
         });
       }
     }  } catch (error) {
-    showDialog("Download error: " + error.message);
+    showDialog(browser.i18n.getMessage("downloadError", [error.message]));
     finishDownloadUI(url);
   } finally {
     if (wakeLock) wakeLock.release();
@@ -2129,4 +2147,3 @@ function showRenameDialog(initialValue) {
     });
 }
 
-const beforeUnloadHandler = (event) => { event.preventDefault(); };

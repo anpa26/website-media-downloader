@@ -1,12 +1,12 @@
 {
     "name": "Website Media Downloader",
     "manifest_version": 3,
-    "version": "1.7.2",
+    "version": "1.7.3",
     "description": "__MSG_extensionDescription__",
     "author": "anpa26",
     "developer": {
         "name": "anpa26",
-        "url": "https://anpa.dev/"
+        "url": "https://github.com/anpa26"
     },
     "browser_specific_settings": {
         "gecko": {
