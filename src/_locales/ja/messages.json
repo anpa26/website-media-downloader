@@ -203,6 +203,14 @@
         "message": "サーバーのMIMEレスポンスによる検出",
         "description": "The label of the checkbox to enable MIME-based detection method."
     },
+    "detectDownloadLinksCheckbox": {
+        "message": "ダウンロードリンクを検出",
+        "description": "Label kotak centang untuk mengaktifkan deteksi tautan unduhan."
+    },
+    "detectDownloadLinksExplain": {
+        "message": "ファイルへのリンクや、ダウンロード属性を持つすべてのリンクを検出します。",
+        "description": "Penjelasan opsi deteksi tautan unduhan."
+    },
     "downloadMethodTitle": {
         "message": "ダウンロード方法",
         "description": "The title of the download method section in the settings tab."
@@ -290,6 +298,14 @@
     "onlySubtitleExplain": {
         "message": "検出された字幕およびキャプションファイルを表示します。",
         "description": "Explains what the subtitle filter does"
+    },
+    "onlyFileTitle": {
+        "message": "ダウンロードリンクを表示",
+        "description": "Toggle visibility of download links and general files"
+    },
+    "onlyFileExplain": {
+        "message": "検出されたダウンロードリンクとファイルをリストに表示します。",
+        "description": "Menjelaskan kegunaan filter tautan unduhan"
     },
     "mediaNotificationTitle": {
         "message": "メディアが検出されました！",
@@ -613,10 +629,6 @@
         "message": "ファイル名変更ダイアログを無効にする",
         "description": "The title of the disable rename file dialog switch in the settings tab."
     },
-    "disableRenameDialogExplain": {
-        "message": "Skip the filename confirmation dialog and start downloads immediately using the default name.",
-        "description": "The explanation of the disable rename dialog setting."
-    },
     "renameDialogHeadline": {
         "message": "名前を付けてダウンロード...",
         "description": "The headline of the dialog to rename the file before downloading."
@@ -790,6 +802,10 @@
     "backgroundDownloadExplain": {
         "message": "バックグラウンドでのダウンロードを許可します。無効にすると、ダウンロードはポップアップ内で実行され、ポップアップを閉じると停止します（モバイルでは新しいタブは開きません）。",
         "description": "The explanation of the background download setting."
+    },
+    "disableRenameDialogExplain": {
+        "message": "Skip the filename confirmation dialog and start downloads immediately using the default name.",
+        "description": "The explanation of the disable rename dialog setting."
     },
     "aboutChangelogDescription": {
         "message": "最新のアップデートについては、GitHubをご覧ください。",
@@ -1001,12 +1017,12 @@
             }
         }
     },
-    "deleteAllConfirm": {
-        "message": "検出されたすべてのメディアを削除してもよろしいですか？",
-        "description": "Added during audit for consistency."
-    },
     "defaultMediaName": {
         "message": "メディアファイル",
+        "description": "Added during audit for consistency."
+    },
+    "drmAbortedError": {
+        "message": "DRM保護のため、ユーザーによってダウンロードが中止されました。",
         "description": "Added during audit for consistency."
     },
     "dashComputeSegmentsError": {
@@ -1017,12 +1033,24 @@
         "message": "数値ベースのセグメントを計算できません：SegmentTimelineがなく、期間/タイムスケールが欠落しているかゼロです。",
         "description": "Added during audit for consistency."
     },
-    "drmAbortedError": {
-        "message": "DRM保護のため、ユーザーによってダウンロードが中止されました。",
+    "unsupportedVideoType": {
+        "message": "サポートされていないビデオ表現タイプ",
+        "description": "Added during audit for consistency."
+    },
+    "unsupportedAudioType": {
+        "message": "サポートされていないオーディオ表現タイプ",
+        "description": "Added during audit for consistency."
+    },
+    "zipEmptyError": {
+        "message": "選択したファイルのダウンロードに失敗したか、ZIPが空です。",
         "description": "Added during audit for consistency."
     },
     "metadataNotFoundError": {
         "message": "ダウンロードメタデータがデータベースに見つかりません。",
+        "description": "Added during audit for consistency."
+    },
+    "sessionRequestNotFoundError": {
+        "message": "セッションストレージにリクエストの詳細が見つかりません。",
         "description": "Added during audit for consistency."
     },
     "serverErrorStatus": {
@@ -1034,20 +1062,8 @@
             }
         }
     },
-    "sessionRequestNotFoundError": {
-        "message": "セッションストレージにリクエストの詳細が見つかりません。",
-        "description": "Added during audit for consistency."
-    },
-    "unsupportedAudioType": {
-        "message": "サポートされていないオーディオ表現タイプ",
-        "description": "Added during audit for consistency."
-    },
-    "unsupportedVideoType": {
-        "message": "サポートされていないビデオ表現タイプ",
-        "description": "Added during audit for consistency."
-    },
-    "zipEmptyError": {
-        "message": "選択したファイルのダウンロードに失敗したか、ZIPが空です。",
+    "deleteAllConfirm": {
+        "message": "検出されたすべてのメディアを削除してもよろしいですか？",
         "description": "Added during audit for consistency."
     },
     "downloadButton": {
@@ -1160,6 +1176,188 @@
             }
         }
     },
+    "noMatchesFound": {
+        "message": "「$QUERY$」に一致するものは見つかりませんでした",
+        "description": "Message shown when search returns no results.",
+        "placeholders": {
+            "QUERY": {
+                "content": "$1"
+            }
+        }
+    },
+    "downloadProgressWithSize": {
+        "message": "ダウンロード中: $PERCENT$% ($LOADED$MB / $TOTAL$MB)",
+        "description": "Progress message with size info.",
+        "placeholders": {
+            "PERCENT": {
+                "content": "$1"
+            },
+            "LOADED": {
+                "content": "$2"
+            },
+            "TOTAL": {
+                "content": "$3"
+            }
+        }
+    },
+    "downloadProgressNoSize": {
+        "message": "ダウンロード中: $LOADED$MB",
+        "description": "Progress message without total size.",
+        "placeholders": {
+            "LOADED": {
+                "content": "$1"
+            }
+        }
+    },
+    "encodingProgress": {
+        "message": "エンコード中: $PERCENT$%",
+        "description": "Message during audio encoding.",
+        "placeholders": {
+            "PERCENT": {
+                "content": "$1"
+            }
+        }
+    },
+    "streamProgressWithSize": {
+        "message": "$LOADED$ MB / $TOTAL$ MB ($PERCENT$%) • 残り $REMAINING$ MB",
+        "description": "Progress message for stream download.",
+        "placeholders": {
+            "LOADED": {
+                "content": "$1"
+            },
+            "TOTAL": {
+                "content": "$2"
+            },
+            "PERCENT": {
+                "content": "$3"
+            },
+            "REMAINING": {
+                "content": "$4"
+            }
+        }
+    },
+    "streamProgressNoSize": {
+        "message": "$LOADED$ MB ダウンロード済み",
+        "description": "Progress message for stream download without total size.",
+        "placeholders": {
+            "LOADED": {
+                "content": "$1"
+            }
+        }
+    },
+    "segmentProgress": {
+        "message": "セグメント: $PROCESSED$ / $TOTAL$ ($PERCENT$%)",
+        "description": "Progress message for HLS segments.",
+        "placeholders": {
+            "PROCESSED": {
+                "content": "$1"
+            },
+            "TOTAL": {
+                "content": "$2"
+            },
+            "PERCENT": {
+                "content": "$3"
+            }
+        }
+    },
+    "audioExtractionFailed": {
+        "message": "オーディオの抽出に失敗しました。$ERROR$",
+        "description": "Error message when audio extraction fails.",
+        "placeholders": {
+            "ERROR": {
+                "content": "$1"
+            }
+        }
+    },
+    "qualityResolutionBandwidthSize": {
+        "message": "$RESOLUTION$ ($BANDWIDTH$ kbps, $SIZE$)",
+        "description": "Stream quality option label.",
+        "placeholders": {
+            "RESOLUTION": {
+                "content": "$1"
+            },
+            "BANDWIDTH": {
+                "content": "$2"
+            },
+            "SIZE": {
+                "content": "$3"
+            }
+        }
+    },
+    "qualityResolutionBandwidth": {
+        "message": "$WIDTH$×$HEIGHT$ ($BANDWIDTH$ kbps)",
+        "description": "Video quality option label.",
+        "placeholders": {
+            "WIDTH": {
+                "content": "$1"
+            },
+            "HEIGHT": {
+                "content": "$2"
+            },
+            "BANDWIDTH": {
+                "content": "$3"
+            }
+        }
+    },
+    "qualityBandwidth": {
+        "message": "$BANDWIDTH$ kbps",
+        "description": "Audio quality option label.",
+        "placeholders": {
+            "BANDWIDTH": {
+                "content": "$1"
+            }
+        }
+    },
+    "downloadPopupProgressWithSize": {
+        "message": "ダウンロード中 (ポップアップ): $PERCENT$% ($LOADED$MB / $TOTAL$MB)",
+        "description": "Progress message in popup.",
+        "placeholders": {
+            "PERCENT": {
+                "content": "$1"
+            },
+            "LOADED": {
+                "content": "$2"
+            },
+            "TOTAL": {
+                "content": "$3"
+            }
+        }
+    },
+    "downloadPopupProgressNoSize": {
+        "message": "ダウンロード中 (ポップアップ): $LOADED$MB",
+        "description": "Progress message in popup without total size.",
+        "placeholders": {
+            "LOADED": {
+                "content": "$1"
+            }
+        }
+    },
+    "mpdDownloadCompleteSuccess": {
+        "message": "ZIPをダウンロードしました (“$FILENAME$”)。",
+        "description": "Success message when MPD ZIP is downloaded.",
+        "placeholders": {
+            "FILENAME": {
+                "content": "$1"
+            }
+        }
+    },
+    "mpdFetchError": {
+        "message": "MPDマニフェストの取得に失敗しました: $STATUS$。",
+        "description": "Error message when MPD manifest fetch fails.",
+        "placeholders": {
+            "STATUS": {
+                "content": "$1"
+            }
+        }
+    },
+    "mpdNoPeriodError": {
+        "message": "MPDにPeriodエントリがありません。",
+        "description": "Error message when MPD manifest is missing Period element."
+    },
+    "mpdNoMediaError": {
+        "message": "MPDのPeriodにオーディオ/ビデオのAdaptationSetがありません。",
+        "description": "Error message when no media streams are found in MPD."
+    },
     "installedTitle": {
         "message": "Website Media Downloader へようこそ",
         "description": "Title of the installed page"
@@ -1181,23 +1379,23 @@
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "厳格なサーバー保護を回避するための強化されたヘッダースプーフィング。",
+        "message": "キャンセル機能を改善し、UIで即座にフィードバックを表示するようにしました。",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "高ビットレートメディア向けの最適化されたリアルタイムネットワーク監視。",
+        "message": "ポップアップを再開した際に進行状況バーが重複する問題を解決しました。",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "複雑なウェブ環境向けの洗練されたディープ DOM スキャン。",
+        "message": "ファイル検出ロジックを強化し、すべてのローカライズを同期しました。",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "システムの安定性とインターフェースの一貫性の向上。",
+        "message": "UIの一貫性とダウンロードステータス情報の表示を改善しました。",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "グローバルな体験のための完全な UI 国際化。",
+        "message": "ドキュメントおよび検出でサポートされるファイル形式を拡張しました。",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {

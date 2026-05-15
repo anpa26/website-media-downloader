@@ -27,9 +27,10 @@
     const streamExtensions = [".f4f", ".f4m", ".m3u8", ".mpd", ".smil"];
     const subtitleExtensions = [".vtt", ".srt", ".ass", ".ssa", ".ttml", ".dfxp"];
     const imageExtensions = [".webp", ".png", ".jpg", ".jpeg", ".gif"];
+    const downloadExtensions = [".zip", ".rar", ".7z", ".tar", ".gz", ".exe", ".msi", ".apk", ".dmg", ".iso", ".bin", ".pdf", ".epub", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"];
     const allExtensions = videoExtensions.concat(audioExtensions, streamExtensions, subtitleExtensions, imageExtensions);
 
-    function isMediaUrl(url) {
+    function isMediaUrl(url, extraExtensions = []) {
         if (!url || typeof url !== 'string') return false;
         const urlLower = url.toLowerCase();
 
@@ -42,7 +43,8 @@
 
         try {
             const path = new URL(url, window.location.href).pathname.toLowerCase();
-            return allExtensions.some(ext => path.endsWith(ext));
+            const extensionsToCheck = allExtensions.concat(extraExtensions);
+            return extensionsToCheck.some(ext => path.endsWith(ext));
         } catch (e) {
             return false;
         }
@@ -68,48 +70,54 @@
     }
 
     window.mdu_scan = function() {
-        const initialSize = detected.size;
+        chrome.storage.local.get('detect-download-links', (result) => {
+            const detectDownloads = result['detect-download-links'] === '1' || result['detect-download-links'] === true;
+            const initialSize = detected.size;
+            const extraExts = detectDownloads ? downloadExtensions : [];
 
-        document.querySelectorAll('video, audio, source, img, track, a').forEach(el => {
-            let url = el.src || el.href || el.getAttribute('data-src') || el.getAttribute('data-original');
-            if (el.tagName === 'SOURCE' || el.tagName === 'TRACK') {
-                url = el.src || el.srcset;
-            }
-            if (url) {
-                const absolute = getAbsoluteUrl(url);
-                if (absolute && (isMediaUrl(absolute) || el.tagName === 'VIDEO' || el.tagName === 'AUDIO')) {
-                    detected.add(absolute);
+            document.querySelectorAll('video, audio, source, img, track, a, area, embed, iframe').forEach(el => {
+                let url = el.src || el.href || el.getAttribute('data-src') || el.getAttribute('data-url') || el.getAttribute('data-href') || el.getAttribute('data-original');
+                if (el.tagName === 'SOURCE' || el.tagName === 'TRACK') {
+                    url = el.src || el.srcset;
                 }
-            }
-        });
-
-        document.querySelectorAll('*').forEach(el => {
-            const bg = window.getComputedStyle(el).backgroundImage;
-            if (bg && bg !== 'none') {
-                const match = bg.match(/url\(['"]?([^'"]+)['"]?\)/);
-                if (match && match[1]) {
-                    const absolute = getAbsoluteUrl(match[1]);
-                    if (absolute && isMediaUrl(absolute)) {
-                        detected.add(absolute);
+                if (url) {
+                    const absolute = getAbsoluteUrl(url);
+                    if (absolute) {
+                        const isDownloadAttr = detectDownloads && el.tagName === 'A' && el.hasAttribute('download');
+                        if (isMediaUrl(absolute, extraExts) || el.tagName === 'VIDEO' || el.tagName === 'AUDIO' || isDownloadAttr) {
+                            detected.add(absolute);
+                        }
                     }
                 }
-            }
-        });
+            });
 
-        document.querySelectorAll('*').forEach(el => {
-            for (let i = 0; i < el.attributes.length; i++) {
-                const attr = el.attributes[i];
-                if (attr.name.startsWith('data-') && isMediaUrl(attr.value)) {
-                    const absolute = getAbsoluteUrl(attr.value);
-                    if (absolute) detected.add(absolute);
+            document.querySelectorAll('*').forEach(el => {
+                const bg = window.getComputedStyle(el).backgroundImage;
+                if (bg && bg !== 'none') {
+                    const match = bg.match(/url\(['"]?([^'"]+)['"]?\)/);
+                    if (match && match[1]) {
+                        const absolute = getAbsoluteUrl(match[1]);
+                        if (absolute && isMediaUrl(absolute, extraExts)) {
+                            detected.add(absolute);
+                        }
+                    }
                 }
+
+                for (let i = 0; i < el.attributes.length; i++) {
+                    const attr = el.attributes[i];
+                    const attrName = attr.name.toLowerCase();
+                    if ((attrName.startsWith('data-') || attrName === 'value' || attrName === 'action' || attrName === 'formaction') && isMediaUrl(attr.value, extraExts)) {
+                        const absolute = getAbsoluteUrl(attr.value);
+                        if (absolute) detected.add(absolute);
+                    }
+                }
+            });
+
+            if (detected.size > initialSize || initialSize === 0) {
+                if (reportTimeout) clearTimeout(reportTimeout);
+                reportTimeout = setTimeout(report, 500);
             }
         });
-
-        if (detected.size > initialSize || initialSize === 0) {
-            if (reportTimeout) clearTimeout(reportTimeout);
-            reportTimeout = setTimeout(report, 500);
-        }
     };
 
     window.mdu_scan();

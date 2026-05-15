@@ -31,8 +31,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function initializeSettings() {
     const settings = [
-        'url-detection', 'mime-detection', 'hide-segments',
-        'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle',
+        'url-detection', 'mime-detection', 'detect-download-links', 'hide-segments',
+        'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file',
         'media-notification', 'download-method', 'media-cache', 'speed-boost', 'connections', 'stream-download',
         'stream-quality', 'mpd-fix', 'background-download', 'open-preference',
         'filename-template', 'disable-rename-dialog', 'history-page'
@@ -46,14 +46,14 @@ async function initializeSettings() {
             const defaultsEnabled = [
                 'url-detection', 'mime-detection', 'history-page',
                 'media-notification', 'only-video', 'only-audio', 'only-stream',
-                'background-download'
+                'background-download', 'only-file'
             ];
             if (defaultsEnabled.includes(setting)) {
                 value = '1';
                 browser.storage.local.set({ [setting]: value });
             }
 
-            if (['only-image', 'only-subtitle'].includes(setting)) {
+            if (['only-image', 'only-subtitle', 'detect-download-links'].includes(setting)) {
                 value = '0';
                 browser.storage.local.set({ [setting]: value });
             }

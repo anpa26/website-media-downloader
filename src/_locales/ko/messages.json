@@ -200,6 +200,14 @@
         "message": "서버 MIME 응답을 통한 감지",
         "description": "The label of the checkbox to enable MIME-based detection."
     },
+    "detectDownloadLinksCheckbox": {
+        "message": "다운로드 링크 감지",
+        "description": "Label kotak centang untuk mengaktifkan deteksi tautan unduhan."
+    },
+    "detectDownloadLinksExplain": {
+        "message": "파일을 가리키거나 다운로드 속성이 있는 모든 링크를 감지합니다.",
+        "description": "Penjelasan opsi deteksi tautan unduhan."
+    },
     "downloadMethodTitle": {
         "message": "다운로드 방법",
         "description": "The title of the download method section in the settings tab."
@@ -287,6 +295,14 @@
     "onlySubtitleExplain": {
         "message": "감지된 자막 및 캡션 파일을 표시합니다.",
         "description": "Explains purpose of subtitle filter"
+    },
+    "onlyFileTitle": {
+        "message": "다운로드 링크 표시",
+        "description": "Toggle visibility of download links and general files"
+    },
+    "onlyFileExplain": {
+        "message": "감지된 다운로드 링크와 파일을 목록에 표시합니다.",
+        "description": "Menjelaskan kegunaan filter tautan unduhan"
     },
     "mediaNotificationTitle": {
         "message": "미디어 감지됨!",
@@ -1186,7 +1202,7 @@
         }
     },
     "encodingProgress": {
-        "message": "인코딩 중: $PERCENT$ %",
+        "message": "인코딩 중: $PERCENT$%",
         "description": "Message during audio encoding.",
         "placeholders": {
             "PERCENT": {
@@ -1222,7 +1238,7 @@
         }
     },
     "segmentProgress": {
-        "message": "세그먼트: $PROCESSED$ / $TOTAL$ ($PERCENT$ %)",
+        "message": "세그먼트: $PROCESSED$ / $TOTAL$ ($PERCENT$%)",
         "description": "Progress message for HLS segments.",
         "placeholders": {
             "PROCESSED": {
@@ -1309,7 +1325,7 @@
         }
     },
     "mpdDownloadCompleteSuccess": {
-        "message": "ZIP (\"$FILENAME$\") 다운로드 완료.",
+        "message": "ZIP 다운로드 완료 (“$FILENAME$”).",
         "description": "Success message when MPD ZIP is downloaded.",
         "placeholders": {
             "FILENAME": {
@@ -1331,7 +1347,7 @@
         "description": "Error message when MPD manifest is missing Period element."
     },
     "mpdNoMediaError": {
-        "message": "MPD의 Period에 오디오/비디오를 위한 AdaptationSet이 없습니다.",
+        "message": "MPD의 Period에 오디오/비디오에 대한 AdaptationSet이 없습니다.",
         "description": "Error message when no media streams are found in MPD."
     },
     "installedTitle": {
@@ -1355,23 +1371,23 @@
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "엄격한 서버 보호를 우회하기 위한 강화된 헤더 스푸핑.",
+        "message": "즉각적인 UI 피드백과 함께 취소 기능을 개선했습니다.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "고비트레이트 미디어를 위한 최적화된 실시간 네트워크 모니터링.",
+        "message": "팝업을 다시 열 때 진행률 표시줄이 중복되는 문제를 해결했습니다.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "복잡한 웹 환경을 위한 정교한 딥 DOM 스캔.",
+        "message": "파일 감지 로직을 강화하고 모든 현지화를 동기화했습니다.",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "시스템 안정성 및 인터페이스 일관성 향상.",
+        "message": "UI 일관성 및 다운로드 상태 정보를 개선했습니다.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "글로벌 경험을 위한 전체 UI 국제화.",
+        "message": "문서 및 감지에서 지원되는 파일 형식을 확장했습니다.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {

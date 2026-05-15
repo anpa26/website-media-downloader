@@ -200,6 +200,14 @@
         "message": "Deteksi via respons MIME server",
         "description": "Label kotak centang untuk deteksi berbasis MIME."
     },
+    "detectDownloadLinksCheckbox": {
+        "message": "Deteksi tautan unduhan",
+        "description": "Label kotak centang untuk mengaktifkan deteksi tautan unduhan."
+    },
+    "detectDownloadLinksExplain": {
+        "message": "Deteksi semua tautan yang mengarah ke file atau memiliki atribut unduhan.",
+        "description": "Penjelasan opsi deteksi tautan unduhan."
+    },
     "downloadMethodTitle": {
         "message": "Metode unduhan",
         "description": "Judul bagian metode unduhan di tab pengaturan."
@@ -287,6 +295,14 @@
     "onlySubtitleExplain": {
         "message": "Tampilkan file subtitle dan takarir yang terdeteksi.",
         "description": "Menjelaskan kegunaan filter subtitle"
+    },
+    "onlyFileTitle": {
+        "message": "Tampilkan tautan unduhan",
+        "description": "Toggle visibility of download links and general files"
+    },
+    "onlyFileExplain": {
+        "message": "Tampilkan tautan unduhan dan file yang terdeteksi di daftar.",
+        "description": "Menjelaskan kegunaan filter tautan unduhan"
     },
     "mediaNotificationTitle": {
         "message": "Media terdeteksi!",
@@ -1354,23 +1370,23 @@
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Peningkatan header spoofing untuk melewati perlindungan server yang ketat.",
+        "message": "Peningkatan fungsi pembatalan dengan umpan balik UI instan.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "Pemantauan jaringan waktu nyata yang dioptimalkan untuk media bitrate tinggi.",
+        "message": "Perbaikan bilah progres ganda saat membuka kembali popup.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "Pemindaian DOM mendalam yang disempurnakan untuk lingkungan web yang kompleks.",
+        "message": "Peningkatan logika deteksi file dan sinkronisasi semua pelokalan.",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "Stabilitas sistem dan konsistensi antarmuka yang ditingkatkan.",
+        "message": "Peningkatan konsistensi UI dan informasi status unduhan.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "Internasionalisasi UI penuh untuk pengalaman global.",
+        "message": "Perluasan format file yang didukung dalam dokumentasi dan deteksi.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {

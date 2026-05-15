@@ -203,6 +203,14 @@
         "message": "Détection via le type MIME",
         "description": "The label of the checkbox to enable MIME-based detection method."
     },
+    "detectDownloadLinksCheckbox": {
+        "message": "Détecter les liens de téléchargement",
+        "description": "Label kotak centang untuk mengaktifkan deteksi tautan unduhan."
+    },
+    "detectDownloadLinksExplain": {
+        "message": "Détecter tous les liens qui pointent vers des fichiers ou possèdent un attribut de téléchargement.",
+        "description": "Penjelasan opsi deteksi tautan unduhan."
+    },
     "downloadMethodTitle": {
         "message": "Méthode de téléchargement",
         "description": "The title of the download method section in the settings tab."
@@ -290,6 +298,14 @@
     "onlySubtitleExplain": {
         "message": "Afficher les fichiers de sous-titres et de légendes détectés.",
         "description": "Explique l'utilité du filtre de sous-titres"
+    },
+    "onlyFileTitle": {
+        "message": "Afficher les liens de téléchargement",
+        "description": "Toggle visibility of download links and general files"
+    },
+    "onlyFileExplain": {
+        "message": "Afficher les liens de téléchargement et les fichiers détectés dans la liste.",
+        "description": "Menjelaskan kegunaan filter tautan unduhan"
     },
     "mediaNotificationTitle": {
         "message": "Média détecté !",
@@ -613,10 +629,6 @@
         "message": "Désactiver la confirmation du nom de fichier",
         "description": "The title of the disable rename file dialog switch in the settings tab."
     },
-    "disableRenameDialogExplain": {
-        "message": "Passer la boîte de dialogue de confirmation du nom de fichier et démarrer les téléchargements immédiatement.",
-        "description": "The explanation of the disable rename dialog setting."
-    },
     "renameDialogHeadline": {
         "message": "Enregistrer sous...",
         "description": "The headline of the dialog to rename the file before downloading."
@@ -790,6 +802,10 @@
     "backgroundDownloadExplain": {
         "message": "Permet aux téléchargements de continuer en arrière-plan. Si désactivé, les téléchargements s'arrêteront si le popup est fermé.",
         "description": "The explanation of the background download setting."
+    },
+    "disableRenameDialogExplain": {
+        "message": "Passer la boîte de dialogue de confirmation du nom de fichier et démarrer les téléchargements immédiatement.",
+        "description": "The explanation of the disable rename dialog setting."
     },
     "aboutChangelogDescription": {
         "message": "Visitez notre GitHub pour les dernières mises à jour.",
@@ -1001,12 +1017,12 @@
             }
         }
     },
-    "deleteAllConfirm": {
-        "message": "Êtes-vous sûr de vouloir supprimer tous les médias détectés ?",
-        "description": "Added during audit for consistency."
-    },
     "defaultMediaName": {
         "message": "Fichier média",
+        "description": "Added during audit for consistency."
+    },
+    "drmAbortedError": {
+        "message": "Téléchargement interrompu par l utilisateur en raison de la protection DRM.",
         "description": "Added during audit for consistency."
     },
     "dashComputeSegmentsError": {
@@ -1017,12 +1033,24 @@
         "message": "Impossible de calculer les segments basés sur le nombre : pas de SegmentTimeline et durée/échelle de temps manquante ou nulle.",
         "description": "Added during audit for consistency."
     },
-    "drmAbortedError": {
-        "message": "Téléchargement interrompu par l utilisateur en raison de la protection DRM.",
+    "unsupportedVideoType": {
+        "message": "Type de représentation vidéo non pris en charge",
+        "description": "Added during audit for consistency."
+    },
+    "unsupportedAudioType": {
+        "message": "Type de représentation audio non pris en charge",
+        "description": "Added during audit for consistency."
+    },
+    "zipEmptyError": {
+        "message": "Échec du téléchargement des fichiers sélectionnés ou le ZIP est vide.",
         "description": "Added during audit for consistency."
     },
     "metadataNotFoundError": {
         "message": "Métadonnées de téléchargement introuvables dans la base de données.",
+        "description": "Added during audit for consistency."
+    },
+    "sessionRequestNotFoundError": {
+        "message": "Détails de la requête introuvables dans le stockage de session.",
         "description": "Added during audit for consistency."
     },
     "serverErrorStatus": {
@@ -1034,20 +1062,8 @@
             }
         }
     },
-    "sessionRequestNotFoundError": {
-        "message": "Détails de la requête introuvables dans le stockage de session.",
-        "description": "Added during audit for consistency."
-    },
-    "unsupportedAudioType": {
-        "message": "Type de représentation audio non pris en charge",
-        "description": "Added during audit for consistency."
-    },
-    "unsupportedVideoType": {
-        "message": "Type de représentation vidéo non pris en charge",
-        "description": "Added during audit for consistency."
-    },
-    "zipEmptyError": {
-        "message": "Échec du téléchargement des fichiers sélectionnés ou le ZIP est vide.",
+    "deleteAllConfirm": {
+        "message": "Êtes-vous sûr de vouloir supprimer tous les médias détectés ?",
         "description": "Added during audit for consistency."
     },
     "downloadButton": {
@@ -1160,6 +1176,188 @@
             }
         }
     },
+    "noMatchesFound": {
+        "message": "Aucun résultat trouvé pour « $QUERY$ »",
+        "description": "Message shown when search returns no results.",
+        "placeholders": {
+            "QUERY": {
+                "content": "$1"
+            }
+        }
+    },
+    "downloadProgressWithSize": {
+        "message": "Téléchargement : $PERCENT$ % ($LOADED$ Mo / $TOTAL$ Mo)",
+        "description": "Progress message with size info.",
+        "placeholders": {
+            "PERCENT": {
+                "content": "$1"
+            },
+            "LOADED": {
+                "content": "$2"
+            },
+            "TOTAL": {
+                "content": "$3"
+            }
+        }
+    },
+    "downloadProgressNoSize": {
+        "message": "Téléchargement : $LOADED$ Mo",
+        "description": "Progress message without total size.",
+        "placeholders": {
+            "LOADED": {
+                "content": "$1"
+            }
+        }
+    },
+    "encodingProgress": {
+        "message": "Encodage : $PERCENT$ %",
+        "description": "Message during audio encoding.",
+        "placeholders": {
+            "PERCENT": {
+                "content": "$1"
+            }
+        }
+    },
+    "streamProgressWithSize": {
+        "message": "$LOADED$ Mo / $TOTAL$ Mo ($PERCENT$ %) • $REMAINING$ Mo restants",
+        "description": "Progress message for stream download.",
+        "placeholders": {
+            "LOADED": {
+                "content": "$1"
+            },
+            "TOTAL": {
+                "content": "$2"
+            },
+            "PERCENT": {
+                "content": "$3"
+            },
+            "REMAINING": {
+                "content": "$4"
+            }
+        }
+    },
+    "streamProgressNoSize": {
+        "message": "$LOADED$ Mo téléchargés",
+        "description": "Progress message for stream download without total size.",
+        "placeholders": {
+            "LOADED": {
+                "content": "$1"
+            }
+        }
+    },
+    "segmentProgress": {
+        "message": "Segments : $PROCESSED$ / $TOTAL$ ($PERCENT$ %)",
+        "description": "Progress message for HLS segments.",
+        "placeholders": {
+            "PROCESSED": {
+                "content": "$1"
+            },
+            "TOTAL": {
+                "content": "$2"
+            },
+            "PERCENT": {
+                "content": "$3"
+            }
+        }
+    },
+    "audioExtractionFailed": {
+        "message": "Échec de l'extraction audio. $ERROR$",
+        "description": "Error message when audio extraction fails.",
+        "placeholders": {
+            "ERROR": {
+                "content": "$1"
+            }
+        }
+    },
+    "qualityResolutionBandwidthSize": {
+        "message": "$RESOLUTION$ ($BANDWIDTH$ kbps, $SIZE$)",
+        "description": "Stream quality option label.",
+        "placeholders": {
+            "RESOLUTION": {
+                "content": "$1"
+            },
+            "BANDWIDTH": {
+                "content": "$2"
+            },
+            "SIZE": {
+                "content": "$3"
+            }
+        }
+    },
+    "qualityResolutionBandwidth": {
+        "message": "$WIDTH$×$HEIGHT$ ($BANDWIDTH$ kbps)",
+        "description": "Video quality option label.",
+        "placeholders": {
+            "WIDTH": {
+                "content": "$1"
+            },
+            "HEIGHT": {
+                "content": "$2"
+            },
+            "BANDWIDTH": {
+                "content": "$3"
+            }
+        }
+    },
+    "qualityBandwidth": {
+        "message": "$BANDWIDTH$ kbps",
+        "description": "Audio quality option label.",
+        "placeholders": {
+            "BANDWIDTH": {
+                "content": "$1"
+            }
+        }
+    },
+    "downloadPopupProgressWithSize": {
+        "message": "Téléchargement (Popup) : $PERCENT$ % ($LOADED$ Mo / $TOTAL$ Mo)",
+        "description": "Progress message in popup.",
+        "placeholders": {
+            "PERCENT": {
+                "content": "$1"
+            },
+            "LOADED": {
+                "content": "$2"
+            },
+            "TOTAL": {
+                "content": "$3"
+            }
+        }
+    },
+    "downloadPopupProgressNoSize": {
+        "message": "Téléchargement (Popup) : $LOADED$ Mo",
+        "description": "Progress message in popup without total size.",
+        "placeholders": {
+            "LOADED": {
+                "content": "$1"
+            }
+        }
+    },
+    "mpdDownloadCompleteSuccess": {
+        "message": "ZIP téléchargé (« $FILENAME$ »).",
+        "description": "Success message when MPD ZIP is downloaded.",
+        "placeholders": {
+            "FILENAME": {
+                "content": "$1"
+            }
+        }
+    },
+    "mpdFetchError": {
+        "message": "Échec de la récupération du manifeste MPD : $STATUS$.",
+        "description": "Error message when MPD manifest fetch fails.",
+        "placeholders": {
+            "STATUS": {
+                "content": "$1"
+            }
+        }
+    },
+    "mpdNoPeriodError": {
+        "message": "Le MPD n'a pas d'entrée Period.",
+        "description": "Error message when MPD manifest is missing Period element."
+    },
+    "mpdNoMediaError": {
+        "message": "Le Period du MPD n'a pas d'AdaptationSet pour l'audio/vidéo.",
+        "description": "Error message when no media streams are found in MPD."
+    },
     "installedTitle": {
         "message": "Bienvenue sur Website Media Downloader",
         "description": "Title of the installed page"
@@ -1181,23 +1379,23 @@
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Usurpation d'en-tête améliorée pour contourner les protections strictes des serveurs.",
+        "message": "Amélioration de la fonctionnalité d'annulation avec un retour immédiat de l'interface utilisateur.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "Surveillance réseau en temps réel optimisée pour les médias à haut débit.",
+        "message": "Résolution du problème des barres de progression en double lors de la réouverture de la fenêtre contextuelle.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "Analyse approfondie du DOM affinée pour les environnements web complexes.",
+        "message": "Amélioration de la logique de détection des fichiers et synchronisation de toutes les localisations.",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "Amélioration de la stabilité du système et de la cohérence de l'interface.",
+        "message": "Amélioration de la cohérence de l'interface utilisateur et des informations sur l'état du téléchargement.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "Internationalisation complète de l'interface utilisateur pour une expérience mondiale.",
+        "message": "Extension des formats de fichiers pris en charge dans la documentation et la détection.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {

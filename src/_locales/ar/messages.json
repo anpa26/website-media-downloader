@@ -200,6 +200,14 @@
         "message": "الاكتشاف عبر استجابة خادم MIME",
         "description": "The label of the checkbox to enable MIME-based detection."
     },
+    "detectDownloadLinksCheckbox": {
+        "message": "كشف روابط التحميل",
+        "description": "Label kotak centang untuk mengaktifkan deteksi tautan unduhan."
+    },
+    "detectDownloadLinksExplain": {
+        "message": "كشف جميع الروابط التي تشير إلى ملفات أو تحتوي على سمة تحميل.",
+        "description": "Penjelasan opsi deteksi tautan unduhan."
+    },
     "downloadMethodTitle": {
         "message": "طريقة التنزيل",
         "description": "The title of the download method section in the settings tab."
@@ -287,6 +295,14 @@
     "onlySubtitleExplain": {
         "message": "إظهار ملفات الترجمة والتعليقات المكتشفة.",
         "description": "Explains purpose of subtitle filter"
+    },
+    "onlyFileTitle": {
+        "message": "إظهار روابط التحميل",
+        "description": "Toggle visibility of download links and general files"
+    },
+    "onlyFileExplain": {
+        "message": "إظهار روابط التحميل والملفات المكتشفة في القائمة.",
+        "description": "Menjelaskan kegunaan filter tautan unduhan"
     },
     "mediaNotificationTitle": {
         "message": "تم اكتشاف وسائط!",
@@ -1153,7 +1169,7 @@
         }
     },
     "noMatchesFound": {
-        "message": "لم يتم العثور على تطابقات لـ \"$QUERY$\"",
+        "message": "لم يتم العثور على نتائج لـ \"$QUERY$\"",
         "description": "Message shown when search returns no results.",
         "placeholders": {
             "QUERY": {
@@ -1162,7 +1178,7 @@
         }
     },
     "downloadProgressWithSize": {
-        "message": "جاري التنزيل: $PERCENT$% ($LOADED$ ميجابايت / $TOTAL$ ميجابايت)",
+        "message": "جاري التحميل: $PERCENT$% ($LOADED$ ميجابايت / $TOTAL$ ميجابايت)",
         "description": "Progress message with size info.",
         "placeholders": {
             "PERCENT": {
@@ -1177,7 +1193,7 @@
         }
     },
     "downloadProgressNoSize": {
-        "message": "جاري التنزيل: $LOADED$ ميجابايت",
+        "message": "جاري التحميل: $LOADED$ ميجابايت",
         "description": "Progress message without total size.",
         "placeholders": {
             "LOADED": {
@@ -1195,7 +1211,7 @@
         }
     },
     "streamProgressWithSize": {
-        "message": "$LOADED$ ميجابايت / $TOTAL$ ميجابايت ($PERCENT$%) • متبقي $REMAINING$ ميجابايت",
+        "message": "$LOADED$ ميجابايت / $TOTAL$ ميجابايت ($PERCENT$%) • المتبقي $REMAINING$ ميجابايت",
         "description": "Progress message for stream download.",
         "placeholders": {
             "LOADED": {
@@ -1213,7 +1229,7 @@
         }
     },
     "streamProgressNoSize": {
-        "message": "تم تنزيل $LOADED$ ميجابايت",
+        "message": "تم تحميل $LOADED$ ميجابايت",
         "description": "Progress message for stream download without total size.",
         "placeholders": {
             "LOADED": {
@@ -1222,7 +1238,7 @@
         }
     },
     "segmentProgress": {
-        "message": "الأجزاء: $PROCESSED$ / $TOTAL$ ($PERCENT$%)",
+        "message": "الشرائح: $PROCESSED$ / $TOTAL$ ($PERCENT$%)",
         "description": "Progress message for HLS segments.",
         "placeholders": {
             "PROCESSED": {
@@ -1285,7 +1301,7 @@
         }
     },
     "downloadPopupProgressWithSize": {
-        "message": "جاري التنزيل (منبثق): $PERCENT$% ($LOADED$ ميجابايت / $TOTAL$ ميجابايت)",
+        "message": "جاري التحميل (نافذة منبثقة): $PERCENT$% ($LOADED$ ميجابايت / $TOTAL$ ميجابايت)",
         "description": "Progress message in popup.",
         "placeholders": {
             "PERCENT": {
@@ -1300,7 +1316,7 @@
         }
     },
     "downloadPopupProgressNoSize": {
-        "message": "جاري التنزيل (منبثق): $LOADED$ ميجابايت",
+        "message": "جاري التحميل (نافذة منبثقة): $LOADED$ ميجابايت",
         "description": "Progress message in popup without total size.",
         "placeholders": {
             "LOADED": {
@@ -1309,7 +1325,7 @@
         }
     },
     "mpdDownloadCompleteSuccess": {
-        "message": "تم تنزيل ZIP (\"$FILENAME$\").",
+        "message": "تم تحميل ملف ZIP (“$FILENAME$”).",
         "description": "Success message when MPD ZIP is downloaded.",
         "placeholders": {
             "FILENAME": {
@@ -1318,7 +1334,7 @@
         }
     },
     "mpdFetchError": {
-        "message": "فشل جلب ملف تعريف MPD: $STATUS$.",
+        "message": "فشل جلب بيان MPD: $STATUS$.",
         "description": "Error message when MPD manifest fetch fails.",
         "placeholders": {
             "STATUS": {
@@ -1327,11 +1343,11 @@
         }
     },
     "mpdNoPeriodError": {
-        "message": "لا يحتوي MPD على إدخال Period.",
+        "message": "لا يحتوي MPD على إإدخال Period.",
         "description": "Error message when MPD manifest is missing Period element."
     },
     "mpdNoMediaError": {
-        "message": "لا يحتوي إدخال Period في MPD على AdaptationSet للصوت/الفيديو.",
+        "message": "لا يحتوي Period الخاص بـ MPD على AdaptationSet للصوت/الفيديو.",
         "description": "Error message when no media streams are found in MPD."
     },
     "installedTitle": {
@@ -1355,23 +1371,23 @@
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "تحسين خداع الرأس لتجاوز حمايات الخادم الصارمة.",
+        "message": "تحسين وظيفة الإلغاء مع استجابة فورية لواجهة المستخدم.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "تحسين مراقبة الشبكة في الوقت الفعلي للوسائط ذات معدل البت العالي.",
+        "message": "حل مشكلة تكرار أشرطة التقدم عند إعادة فتح النافذة المنبثقة.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "تحسين مسح DOM العميق لبيئات الويب المعقدة.",
+        "message": "تحسين منطق اكتشاف الملفات ومزامنة جميع الترجمات.",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "تحسين استقرار النظام واتساق الواجهة.",
+        "message": "تحسين اتساق واجهة المستخدم ومعلومات حالة التنزيل.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "تدويل كامل لواجهة المستخدم لتجربة عالمية.",
+        "message": "توسيع تنسيقات الملفات المدعومة في الوثائق والاكتشاف.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {

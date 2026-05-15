@@ -203,6 +203,14 @@
         "message": "Detecção via resposta MIME do servidor",
         "description": "The label of the checkbox to enable MIME-based detection method."
     },
+    "detectDownloadLinksCheckbox": {
+        "message": "Detetar links de download",
+        "description": "Label kotak centang untuk mengaktifkan deteksi tautan unduhan."
+    },
+    "detectDownloadLinksExplain": {
+        "message": "Detetar todos os links que apontam para ficheiros ou têm um atributo de download.",
+        "description": "Penjelasan opsi deteksi tautan unduhan."
+    },
     "downloadMethodTitle": {
         "message": "Método de download",
         "description": "The title of the download method section in the settings tab."
@@ -290,6 +298,14 @@
     "onlySubtitleExplain": {
         "message": "Mostrar arquivos de legendas e legendas ocultas detectados.",
         "description": "Explica o que o filtro de legendas faz"
+    },
+    "onlyFileTitle": {
+        "message": "Mostrar links de download",
+        "description": "Toggle visibility of download links and general files"
+    },
+    "onlyFileExplain": {
+        "message": "Mostrar os links de download e ficheiros detetados na lista.",
+        "description": "Menjelaskan kegunaan filter tautan unduhan"
     },
     "mediaNotificationTitle": {
         "message": "Mídia detectada!",
@@ -613,10 +629,6 @@
         "message": "Desativar caixa de diálogo de renomear arquivo",
         "description": "The title of the disable rename file dialog switch in the settings tab."
     },
-    "disableRenameDialogExplain": {
-        "message": "Ignorar a caixa de diálogo de confirmação de nome de arquivo e iniciar os downloads imediatamente.",
-        "description": "The explanation of the disable rename dialog setting."
-    },
     "renameDialogHeadline": {
         "message": "Salvar como...",
         "description": "The headline of the dialog to rename the file before downloading."
@@ -790,6 +802,10 @@
     "backgroundDownloadExplain": {
         "message": "Permite que os downloads continuem em segundo plano. Se desativado, os downloads pararão se o popup for fechado.",
         "description": "The explanation of the background download setting."
+    },
+    "disableRenameDialogExplain": {
+        "message": "Ignorar a caixa de diálogo de confirmação de nome de arquivo e iniciar os downloads imediatamente.",
+        "description": "The explanation of the disable rename dialog setting."
     },
     "aboutChangelogDescription": {
         "message": "Visite nosso GitHub para as atualizações mais recentes.",
@@ -1001,12 +1017,12 @@
             }
         }
     },
-    "deleteAllConfirm": {
-        "message": "Tem certeza de que deseja excluir todos os arquivos de mídia detectados?",
-        "description": "Added during audit for consistency."
-    },
     "defaultMediaName": {
         "message": "Arquivo de Mídia",
+        "description": "Added during audit for consistency."
+    },
+    "drmAbortedError": {
+        "message": "Download abortado pelo usuário devido à proteção DRM.",
         "description": "Added during audit for consistency."
     },
     "dashComputeSegmentsError": {
@@ -1017,12 +1033,24 @@
         "message": "Não é possível calcular segmentos baseados em números: sem SegmentTimeline e duração/escala de tempo ausente ou zero.",
         "description": "Added during audit for consistency."
     },
-    "drmAbortedError": {
-        "message": "Download abortado pelo usuário devido à proteção DRM.",
+    "unsupportedVideoType": {
+        "message": "Tipo de representação de vídeo não suportado",
+        "description": "Added during audit for consistency."
+    },
+    "unsupportedAudioType": {
+        "message": "Tipo de representação de áudio não suportado",
+        "description": "Added during audit for consistency."
+    },
+    "zipEmptyError": {
+        "message": "Falha ao baixar qualquer um dos arquivos selecionados ou o ZIP está vazio.",
         "description": "Added during audit for consistency."
     },
     "metadataNotFoundError": {
         "message": "Metadados de download não encontrados no banco de dados.",
+        "description": "Added during audit for consistency."
+    },
+    "sessionRequestNotFoundError": {
+        "message": "Detalhes da solicitação não encontrados no armazenamento da sessão.",
         "description": "Added during audit for consistency."
     },
     "serverErrorStatus": {
@@ -1034,20 +1062,8 @@
             }
         }
     },
-    "sessionRequestNotFoundError": {
-        "message": "Detalhes da solicitação não encontrados no armazenamento da sessão.",
-        "description": "Added during audit for consistency."
-    },
-    "unsupportedAudioType": {
-        "message": "Tipo de representação de áudio não suportado",
-        "description": "Added during audit for consistency."
-    },
-    "unsupportedVideoType": {
-        "message": "Tipo de representação de vídeo não suportado",
-        "description": "Added during audit for consistency."
-    },
-    "zipEmptyError": {
-        "message": "Falha ao baixar qualquer um dos arquivos selecionados ou o ZIP está vazio.",
+    "deleteAllConfirm": {
+        "message": "Tem certeza de que deseja excluir todos os arquivos de mídia detectados?",
         "description": "Added during audit for consistency."
     },
     "downloadButton": {
@@ -1160,6 +1176,188 @@
             }
         }
     },
+    "noMatchesFound": {
+        "message": "Nenhum resultado encontrado para \"$QUERY$\"",
+        "description": "Message shown when search returns no results.",
+        "placeholders": {
+            "QUERY": {
+                "content": "$1"
+            }
+        }
+    },
+    "downloadProgressWithSize": {
+        "message": "A transferir: $PERCENT$% ($LOADED$MB / $TOTAL$MB)",
+        "description": "Progress message with size info.",
+        "placeholders": {
+            "PERCENT": {
+                "content": "$1"
+            },
+            "LOADED": {
+                "content": "$2"
+            },
+            "TOTAL": {
+                "content": "$3"
+            }
+        }
+    },
+    "downloadProgressNoSize": {
+        "message": "A transferir: $LOADED$MB",
+        "description": "Progress message without total size.",
+        "placeholders": {
+            "LOADED": {
+                "content": "$1"
+            }
+        }
+    },
+    "encodingProgress": {
+        "message": "A codificar: $PERCENT$%",
+        "description": "Message during audio encoding.",
+        "placeholders": {
+            "PERCENT": {
+                "content": "$1"
+            }
+        }
+    },
+    "streamProgressWithSize": {
+        "message": "$LOADED$ MB / $TOTAL$ MB ($PERCENT$%) • $REMAINING$ MB restantes",
+        "description": "Progress message for stream download.",
+        "placeholders": {
+            "LOADED": {
+                "content": "$1"
+            },
+            "TOTAL": {
+                "content": "$2"
+            },
+            "PERCENT": {
+                "content": "$3"
+            },
+            "REMAINING": {
+                "content": "$4"
+            }
+        }
+    },
+    "streamProgressNoSize": {
+        "message": "$LOADED$ MB transferidos",
+        "description": "Progress message for stream download without total size.",
+        "placeholders": {
+            "LOADED": {
+                "content": "$1"
+            }
+        }
+    },
+    "segmentProgress": {
+        "message": "Segmentos: $PROCESSED$ / $TOTAL$ ($PERCENT$%)",
+        "description": "Progress message for HLS segments.",
+        "placeholders": {
+            "PROCESSED": {
+                "content": "$1"
+            },
+            "TOTAL": {
+                "content": "$2"
+            },
+            "PERCENT": {
+                "content": "$3"
+            }
+        }
+    },
+    "audioExtractionFailed": {
+        "message": "Falha ao extrair áudio. $ERROR$",
+        "description": "Error message when audio extraction fails.",
+        "placeholders": {
+            "ERROR": {
+                "content": "$1"
+            }
+        }
+    },
+    "qualityResolutionBandwidthSize": {
+        "message": "$RESOLUTION$ ($BANDWIDTH$ kbps, $SIZE$)",
+        "description": "Stream quality option label.",
+        "placeholders": {
+            "RESOLUTION": {
+                "content": "$1"
+            },
+            "BANDWIDTH": {
+                "content": "$2"
+            },
+            "SIZE": {
+                "content": "$3"
+            }
+        }
+    },
+    "qualityResolutionBandwidth": {
+        "message": "$WIDTH$×$HEIGHT$ ($BANDWIDTH$ kbps)",
+        "description": "Video quality option label.",
+        "placeholders": {
+            "WIDTH": {
+                "content": "$1"
+            },
+            "HEIGHT": {
+                "content": "$2"
+            },
+            "BANDWIDTH": {
+                "content": "$3"
+            }
+        }
+    },
+    "qualityBandwidth": {
+        "message": "$BANDWIDTH$ kbps",
+        "description": "Audio quality option label.",
+        "placeholders": {
+            "BANDWIDTH": {
+                "content": "$1"
+            }
+        }
+    },
+    "downloadPopupProgressWithSize": {
+        "message": "A transferir (Popup): $PERCENT$% ($LOADED$MB / $TOTAL$MB)",
+        "description": "Progress message in popup.",
+        "placeholders": {
+            "PERCENT": {
+                "content": "$1"
+            },
+            "LOADED": {
+                "content": "$2"
+            },
+            "TOTAL": {
+                "content": "$3"
+            }
+        }
+    },
+    "downloadPopupProgressNoSize": {
+        "message": "A transferir (Popup): $LOADED$MB",
+        "description": "Progress message in popup without total size.",
+        "placeholders": {
+            "LOADED": {
+                "content": "$1"
+            }
+        }
+    },
+    "mpdDownloadCompleteSuccess": {
+        "message": "ZIP transferido (“$FILENAME$”).",
+        "description": "Success message when MPD ZIP is downloaded.",
+        "placeholders": {
+            "FILENAME": {
+                "content": "$1"
+            }
+        }
+    },
+    "mpdFetchError": {
+        "message": "Falha ao obter manifesto MPD: $STATUS$.",
+        "description": "Error message when MPD manifest fetch fails.",
+        "placeholders": {
+            "STATUS": {
+                "content": "$1"
+            }
+        }
+    },
+    "mpdNoPeriodError": {
+        "message": "O MPD não tem entrada Period.",
+        "description": "Error message when MPD manifest is missing Period element."
+    },
+    "mpdNoMediaError": {
+        "message": "O Period do MPD não tem AdaptationSet para áudio/vídeo.",
+        "description": "Error message when no media streams are found in MPD."
+    },
     "installedTitle": {
         "message": "Bem-vindo ao Website Media Downloader",
         "description": "Title of the installed page"
@@ -1181,23 +1379,23 @@
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Spoofing de cabeçalho aprimorado para contornar proteções rígidas do servidor.",
+        "message": "Funcionalidade de cancelamento aprimorada com feedback imediato da interface do usuário.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "Monitoramento de rede em tempo real otimizado para mídia de alta taxa de bits.",
+        "message": "Resolvido o problema de barras de progresso duplicadas ao reabrir o pop-up.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "Refinamento de varredura profunda de DOM para ambientes web complexos.",
+        "message": "Lógica de detecção de arquivos aprimorada e sincronização de todas as localizações.",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "Melhoria da estabilidade do sistema e consistência da interface.",
+        "message": "Melhoria na consistência da interface do usuário e nas informações de status de download.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "Internacionalização completa da interface para uma experiência global.",
+        "message": "Expandidos os formatos de arquivo suportados na documentação e detecção.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {

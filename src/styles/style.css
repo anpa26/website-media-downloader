@@ -284,7 +284,7 @@ mdui-card {
 .download-status-info {
     font-size: 11px;
     color: var(--on-surface-variant);
-    text-align: right;
+    text-align: center;
     font-weight: 500;
 }
 

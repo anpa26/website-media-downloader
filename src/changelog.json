@@ -1,92 +1,83 @@
 {
     "en": {
-        "headline": "What's New (v1.7.3)",
+        "headline": "What's New (v1.7.4)",
         "changes": [
-            "Enhanced header spoofing and origin synthesis algorithms to bypass strict server-side access controls",
-            "Optimized real-time network request monitoring for more accurate identification of high-bitrate media",
-            "Refined deep DOM scanning logic to improve detection performance in complex web environments",
-            "Standardized internal core modules and data processing for improved system stability and speed",
-            "Resolved minor UI layout inconsistencies and improved the reliability of dynamic interface elements"
+            "Improved cancel functionality: progress bar and status text are now removed immediately upon cancellation",
+            "Fixed an issue where double progress bars appeared when reopening the popup during an active download",
+            "Enhanced file detection logic and synchronized localizations",
+            "UI improvements for download status information"
         ]
     },
     "id": {
-        "headline": "Yang Baru (v1.7.3)",
+        "headline": "Yang Baru (v1.7.4)",
         "changes": [
-            "Peningkatan algoritma spoofing header dan sintesis origin untuk melewati kontrol akses sisi server yang ketat",
-            "Optimasi pemantauan permintaan jaringan real-time untuk identifikasi media bitrate tinggi yang lebih akurat",
-            "Penyempurnaan logika pemindaian DOM mendalam untuk meningkatkan performa deteksi di lingkungan web yang kompleks",
-            "Standarisasi modul inti internal dan pemrosesan data untuk meningkatkan stabilitas dan kecepatan sistem",
-            "Perbaikan inkonsistensi tata letak UI kecil dan peningkatan keandalan elemen antarmuka dinamis"
+            "Peningkatan fungsionalitas batal: bilah progres dan teks status kini langsung dihapus saat pembatalan",
+            "Memperbaiki masalah di mana bilah progres ganda muncul saat membuka kembali popup selama unduhan aktif",
+            "Peningkatan logika deteksi file dan sinkronisasi pelokalan",
+            "Peningkatan UI untuk informasi status unduhan"
         ]
     },
     "ja": {
-        "headline": "新機能 (v1.7.3)",
+        "headline": "新機能 (v1.7.4)",
         "changes": [
-            "サーバー側の厳格なアクセス制御を回避するために、ヘッダースプーフィングとオリジン合成アルゴリズムを強化しました",
-            "高ビットレートメディアをより正確に特定するために、リアルタイムのネットワークリクエスト監視を最適化しました",
-            "複雑なウェブ環境での検出パフォーマンスを向上させるために、ディープDOMスキャンロジックを改良しました",
-            "システムの安定性と速度を向上させるために、内部コアモジュールとデータ処理を標準化しました",
-            "マイナーなUIレイアウトの不整合を解決し、動的インターフェース要素の信頼性を向上させました"
+            "キャンセル機能の改善: キャンセル時にプログレスバーとステータステキストが即座に削除されるようになりました",
+            "アクティブなダウンロード中にポップアップを再度開いたときに二重のプログレスバーが表示される問題を修正しました",
+            "ファイル検出ロジックを強化し、ローカリゼーションを同期しました",
+            "ダウンロードステータス情報のUIを改善しました"
         ]
     },
     "de": {
-        "headline": "Was gibt's Neues (v1.7.3)",
+        "headline": "Was gibt's Neues (v1.7.4)",
         "changes": [
-            "Verbesserte Algorithmen für Header-Spoofing und Origin-Synthese zur Umgehung strenger serverseitiger Zugriffskontrollen",
-            "Optimierte Echtzeit-Überwachung von Netzwerkanfragen zur genaueren Identifizierung von Medien mit hoher Bitrate",
-            "Verfeinerte tiefe DOM-Scanning-Logik zur Verbesserung der Erkennungsleistung in komplexen Webumgebungen",
-            "Standardisierte interne Kernmodule und Datenverarbeitung für verbesserte Systemstabilität und Geschwindigkeit",
-            "Kleinere Inkonsistenzen im UI-Layout behoben und die Zuverlässigkeit dynamischer Schnittstellenelemente verbessert"
+            "Verbesserte Abbrechen-Funktion: Fortschrittsbalken und Statustext werden bei Abbruch nun sofort entfernt",
+            "Ein Problem wurde behoben, bei dem beim erneuten Öffnen des Popups während eines aktiven Downloads doppelte Fortschrittsbalken angezeigt wurden",
+            "Verbesserte Dateierkennungslogik und synchronisierte Lokalisierungen",
+            "UI-Verbesserungen für Download-Statusinformationen"
         ]
     },
     "fr": {
-        "headline": "Nouveautés (v1.7.3)",
+        "headline": "Nouveautés (v1.7.4)",
         "changes": [
-            "Amélioration des algorithmes d'usurpation d'en-tête et de synthèse d'origine pour contourner les contrôles d'accès stricts côté serveur",
-            "Optimisation de la surveillance des requêtes réseau en temps réel pour une identification plus précise des médias à haut débit",
-            "Affinement de la logique de balayage approfondi du DOM pour améliorer les performances de détection dans les environnements web complexes",
-            "Standardisation des modules de base internes et du traitement des données pour une stabilité et une rapidité accrues du système",
-            "Résolution d'incohérences mineures dans la mise en page de l'interface utilisateur et amélioration de la fiabilité des éléments d'interface dynamiques"
+            "Fonctionnalité d'annulation améliorée : la barre de progression et le texte d'état sont désormais supprimés immédiatement lors de l'annulation",
+            "Correction d'un problème où des doubles barres de progression apparaissaient lors de la réouverture de la fenêtre contextuelle pendant un téléchargement actif",
+            "Amélioration de la logique de détection des fichiers et synchronisation des localisations",
+            "Améliorations de l'interface utilisateur pour les informations sur l'état du téléchargement"
         ]
     },
     "pt": {
-        "headline": "Novidades (v1.7.3)",
+        "headline": "Novidades (v1.7.4)",
         "changes": [
-            "Algoritmos aprimorados de falsificação de cabeçalho e síntese de origem para contornar controles de acesso rígidos do lado do servidor",
-            "Monitoramento de solicitações de rede em tempo real otimizado para identificação mais precisa de mídia de alta taxa de bits",
-            "Lógica de varredura profunda de DOM refinada para melhorar o desempenho de detecção em ambientes web complexos",
-            "Módulos principais internos e processamento de dados padronizados para melhor estabilidade e velocidade do sistema",
-            "Inconsistências menores no layout da interface do usuário resolvidas e confiabilidade aprimorada dos elementos de interface dinâmica"
+            "Funcionalidade de cancelamento aprimorada: a barra de progresso e o texto de status agora são removidos imediatamente após o cancelamento",
+            "Corrigido um problema em que barras de progresso duplas apareciam ao reabrir o pop-up durante um download ativo",
+            "Lógica de detecção de arquivos aprimorada e localizações sincronizadas",
+            "Melhorias na interface do usuário para informações de status de download"
         ]
     },
     "ko": {
-        "headline": "새로운 기능 (v1.7.3)",
+        "headline": "새로운 기능 (v1.7.4)",
         "changes": [
-            "엄격한 서버 측 액세스 제어를 우회하기 위해 헤더 스푸핑 및 오리진 합성 알고리즘 강화",
-            "고비트레이트 미디어의 보다 정확한 식별을 위해 실시간 네트워크 요청 모니터링 최적화",
-            "복잡한 웹 환경에서의 탐지 성능 향상을 위해 심층 DOM 스캔 로직 정교화",
-            "시스템 안정성 및 속도 향상을 위해 내부 핵심 모듈 및 데이터 처리 표준화",
-            "사소한 UI 레이아웃 불일치 해결 및 동적 인터페이스 요소의 안정성 개선"
+            "취소 기능 개선: 취소 시 진행률 표시줄과 상태 텍스트가 즉시 제거됩니다",
+            "활성 다운로드 중 팝업을 다시 열 때 이중 진행률 표시줄이 나타나는 문제를 수정했습니다",
+            "파일 감지 로직 강화 및 현지화 동기화",
+            "다운로드 상태 정보에 대한 UI 개선"
         ]
     },
     "ar": {
-        "headline": "ما الجديد (v1.7.3)",
+        "headline": "ما الجديد (v1.7.4)",
         "changes": [
-            "تحسين خوارزميات تزييف العناوين وتوليف الأصل لتجاوز ضوابط الوصول الصارمة من جانب الخادم",
-            "تحسين مراقبة طلبات الشبكة في الوقت الفعلي لتحديد أكثر دقة للوسائط ذات معدл البت العالي",
-            "صقل منطق المسح العميق لـ DOM لتحسين أداء الكشف في بيئات الويب المعقدة",
-            "توحيد الوحدات الأساسية الداخلية ومعالجة البيانات لتحسين استقرار وسرعة النظام",
-            "حل التناقضات الطفيفة في تخطيط واجهة المستخدم وتحسين موثوقية عناصر الواجهة الديناميكية"
+            "تحسين وظيفة الإلغاء: تتم الآن إزالة شريط التقدم ونص الحالة على الفور عند الإلغاء",
+            "إصلاح مشكلة ظهور أشرطة تقدم مزدوجة عند إعادة فتح النافذة المنبثقة أثناء التنزيل النشط",
+            "تعزيز منطق اكتشاف الملفات ومزامنة الترجمات",
+            "تحسينات واجهة المستخدم لمعلومات حالة التنزيل"
         ]
     },
     "ru": {
-        "headline": "Что нового (v1.7.3)",
+        "headline": "Что нового (v1.7.4)",
         "changes": [
-            "Улучшены алгоритмы подмены заголовков и синтеза происхождения для обхода строгих механизмов контроля доступа на стороне сервера",
-            "Оптимизирован мониторинг сетевых запросов в реальном времени для более точной идентификации медиаконтента с высоким битрейтом",
-            "Усовершенствована логика глубокого сканирования DOM для повышения производительности обнаружения в сложных веб-средах",
-            "Стандартизированы внутренние основные модули и обработка данных для повышения стабильности и скорости работы системы",
-            "Устранены незначительные несоответствия в макете пользовательского интерфейса и повышена надежность динамических элементов интерфейса"
+            "Улучшена функция отмены: индикатор выполнения и текст статуса теперь удаляются сразу после отмены",
+            "Исправлена проблема, из-за которой при повторном открытии всплывающего окна во время активной загрузки появлялись двойные индикаторы выполнения",
+            "Улучшена логика обнаружения файлов и синхронизированы локализации",
+            "Улучшения пользовательского интерфейса для информации о статусе загрузки"
         ]
     }
 }

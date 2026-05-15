@@ -200,6 +200,14 @@
         "message": "Detection via server MIME response",
         "description": "The label of the checkbox to enable MIME-based detection."
     },
+    "detectDownloadLinksCheckbox": {
+        "message": "Detect download links",
+        "description": "The label of the checkbox to enable detection of download links."
+    },
+    "detectDownloadLinksExplain": {
+        "message": "Detect all links that point to files or have a download attribute.",
+        "description": "The explanation of the detect download links option."
+    },
     "downloadMethodTitle": {
         "message": "Download method",
         "description": "The title of the download method section in the settings tab."
@@ -286,7 +294,15 @@
     },
     "onlySubtitleExplain": {
         "message": "Show detected subtitle and caption files.",
-        "description": "Explains purpose of subtitle filter"
+        "description": "Explains the filter for subtitle files"
+    },
+    "onlyFileTitle": {
+        "message": "Show download links",
+        "description": "Toggle visibility of download links and general files"
+    },
+    "onlyFileExplain": {
+        "message": "Show detected download links and files in the list.",
+        "description": "Explains the filter for download links"
     },
     "mediaNotificationTitle": {
         "message": "Media detected!",
@@ -1355,23 +1371,23 @@
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Enhanced header spoofing to bypass strict server protections.",
+        "message": "Improved cancel functionality with immediate UI feedback.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "Optimized real-time network monitoring for high-bitrate media.",
+        "message": "Resolved duplicate progress bars when reopening the popup.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "Refined deep DOM scanning for complex web environments.",
+        "message": "Enhanced file detection logic and synchronization of all localizations.",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "Improved system stability and interface consistency.",
+        "message": "Improved UI consistency and download status information.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "Full UI internationalization for a global experience.",
+        "message": "Expanded supported file formats in documentation and detection.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {

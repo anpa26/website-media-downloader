@@ -200,6 +200,14 @@
         "message": "Обнаружение по MIME-ответу сервера",
         "description": "The label of the checkbox to enable MIME-based detection."
     },
+    "detectDownloadLinksCheckbox": {
+        "message": "Обнаруживать ссылки на скачивание",
+        "description": "Label kotak centang untuk mengaktifkan deteksi tautan unduhan."
+    },
+    "detectDownloadLinksExplain": {
+        "message": "Обнаруживать все ссылки, указывающие на файлы или имеющие атрибут скачивания.",
+        "description": "Penjelasan opsi deteksi tautan unduhan."
+    },
     "downloadMethodTitle": {
         "message": "Метод скачивания",
         "description": "The title of the download method section in the settings tab."
@@ -287,6 +295,14 @@
     "onlySubtitleExplain": {
         "message": "Показывать обнаруженные файлы субтитров и подписей.",
         "description": "Explains purpose of subtitle filter"
+    },
+    "onlyFileTitle": {
+        "message": "Показывать ссылки на скачивание",
+        "description": "Toggle visibility of download links and general files"
+    },
+    "onlyFileExplain": {
+        "message": "Показывать обнаруженные ссылки на скачивание и файлы в списке.",
+        "description": "Menjelaskan kegunaan filter tautan unduhan"
     },
     "mediaNotificationTitle": {
         "message": "Медиа обнаружено!",
@@ -1153,7 +1169,7 @@
         }
     },
     "noMatchesFound": {
-        "message": "Совпадений по запросу «$QUERY$» не найдено",
+        "message": "Совпадений для «$QUERY$» не найдено",
         "description": "Message shown when search returns no results.",
         "placeholders": {
             "QUERY": {
@@ -1162,7 +1178,7 @@
         }
     },
     "downloadProgressWithSize": {
-        "message": "Скачивание: $PERCENT$% ($LOADED$ МБ / $TOTAL$ МБ)",
+        "message": "Загрузка: $PERCENT$% ($LOADED$МБ / $TOTAL$МБ)",
         "description": "Progress message with size info.",
         "placeholders": {
             "PERCENT": {
@@ -1177,7 +1193,7 @@
         }
     },
     "downloadProgressNoSize": {
-        "message": "Скачивание: $LOADED$ МБ",
+        "message": "Загрузка: $LOADED$МБ",
         "description": "Progress message without total size.",
         "placeholders": {
             "LOADED": {
@@ -1186,7 +1202,7 @@
         }
     },
     "encodingProgress": {
-        "message": "Кодирование: $PERCENT$ %",
+        "message": "Кодирование: $PERCENT$%",
         "description": "Message during audio encoding.",
         "placeholders": {
             "PERCENT": {
@@ -1213,7 +1229,7 @@
         }
     },
     "streamProgressNoSize": {
-        "message": "Скачано $LOADED$ МБ",
+        "message": "Загружено $LOADED$ МБ",
         "description": "Progress message for stream download without total size.",
         "placeholders": {
             "LOADED": {
@@ -1222,7 +1238,7 @@
         }
     },
     "segmentProgress": {
-        "message": "Сегменты: $PROCESSED$ / $TOTAL$ ($PERCENT$ %)",
+        "message": "Сегменты: $PROCESSED$ / $TOTAL$ ($PERCENT$%)",
         "description": "Progress message for HLS segments.",
         "placeholders": {
             "PROCESSED": {
@@ -1237,7 +1253,7 @@
         }
     },
     "audioExtractionFailed": {
-        "message": "Не удалось извлечь аудио. $ERROR$",
+        "message": "Ошибка извлечения аудио. $ERROR$",
         "description": "Error message when audio extraction fails.",
         "placeholders": {
             "ERROR": {
@@ -1285,7 +1301,7 @@
         }
     },
     "downloadPopupProgressWithSize": {
-        "message": "Скачивание (всплывающее окно): $PERCENT$% ($LOADED$ МБ / $TOTAL$ МБ)",
+        "message": "Загрузка (всплывающее окно): $PERCENT$% ($LOADED$МБ / $TOTAL$МБ)",
         "description": "Progress message in popup.",
         "placeholders": {
             "PERCENT": {
@@ -1300,7 +1316,7 @@
         }
     },
     "downloadPopupProgressNoSize": {
-        "message": "Скачивание (всплывающее окно): $LOADED$ МБ",
+        "message": "Загрузка (всплывающее окно): $LOADED$МБ",
         "description": "Progress message in popup without total size.",
         "placeholders": {
             "LOADED": {
@@ -1309,7 +1325,7 @@
         }
     },
     "mpdDownloadCompleteSuccess": {
-        "message": "Скачан ZIP-архив («$FILENAME$»).",
+        "message": "ZIP-архив загружен («$FILENAME$»).",
         "description": "Success message when MPD ZIP is downloaded.",
         "placeholders": {
             "FILENAME": {
@@ -1318,7 +1334,7 @@
         }
     },
     "mpdFetchError": {
-        "message": "Не удалось получить манифест MPD: $STATUS$.",
+        "message": "Ошибка получения манифеста MPD: $STATUS$.",
         "description": "Error message when MPD manifest fetch fails.",
         "placeholders": {
             "STATUS": {
@@ -1331,7 +1347,7 @@
         "description": "Error message when MPD manifest is missing Period element."
     },
     "mpdNoMediaError": {
-        "message": "В записи Period (MPD) отсутствует AdaptationSet для аудио/видео.",
+        "message": "В Period MPD отсутствует AdaptationSet для аудио/видео.",
         "description": "Error message when no media streams are found in MPD."
     },
     "installedTitle": {
@@ -1355,23 +1371,23 @@
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Улучшенная подмена заголовков для обхода строгих серверных защит.",
+        "message": "Улучшена функция отмены с немедленной обратной связью в интерфейсе.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "Оптимизированный мониторинг сети в реальном времени для медиа с высоким битрейтом.",
+        "message": "Решена проблема дублирования индикаторов выполнения при повторном открытии всплывающего окна.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "Улучшенное глубокое сканирование DOM для сложных веб-сред.",
+        "message": "Улучшена логика обнаружения файлов и синхронизация всех локализаций.",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "Улучшена стабильность системы и согласованность интерфейса.",
+        "message": "Повышена согласованность интерфейса и информативность статуса загрузки.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "Полная интернационализация интерфейса для глобального использования.",
+        "message": "Расширен список поддерживаемых форматов файлов в документации и при обнаружении.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {

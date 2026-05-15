@@ -1,6 +1,6 @@
 # Website Media Downloader
 
-[![Version](https://img.shields.io/badge/version-1.7.3-blue.svg)](src/manifest.json)
+[![Version](https://img.shields.io/badge/version-1.7.4-blue.svg)](src/manifest.json)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE.md)
 [![Platform](https://img.shields.io/badge/platform-Firefox%20%7C%20Android-orange.svg)](#installation)
 
@@ -46,15 +46,16 @@ Designed with a focus on privacy and technical transparency, all operations—in
 
 ---
 
-## Technical Features (v1.7.3)
+## Technical Features (v1.7.4)
 
 ### Core Detection Engine
 The detection engine has been optimized to handle complex web environments more efficiently. This version introduces:
-- **Advanced Network Interception**: Enhanced header spoofing and origin synthesis algorithms to effectively navigate strict server-side access controls and hotlinking protections.
-- **Media Detection Optimization**: Refined deep DOM scanning and real-time network request monitoring to improve the identification of high-bitrate media assets.
+- **Improved Lifecycle Management**: Enhanced cleanup and state persistence when reopening the extension popup during active downloads.
+- **Streamlined Download Logic**: Refined cancel functionality with immediate UI feedback and removal of redundant progress indicators.
+- **Localization Sync**: Fully synchronized translations across all core modules for a consistent global experience.
 
 ### UI Architecture
-The interface has been completely overhauled using Material Design 3 (MDUI) components, providing a responsive and standardized user experience.
+The interface is built using Material Design 3 (MDUI) components, providing a responsive and standardized user experience with real-time status updates and robust progress tracking.
 
 ### Detection Methodology
 - Network Traffic Interception: Monitors real-time network requests to identify high-bitrate media and dynamic streaming manifests (M3U8 and MPD).
@@ -75,11 +76,12 @@ The extension utilizes header management (Referer, Origin, and Cookies) to repli
 
 | Category | Formats |
 | :--- | :--- |
-| **Video** | mp4, mkv, webm, avi, mov, flv, ts, m4v, 3gp, mpeg, mpg, vob, vp9 |
-| **Audio** | mp3, aac, flac, wav, ogg, m4a, opus, ac3, m4b, mka, vorbis |
-| **Streams** | m3u8 (HLS), mpd (DASH), f4m (HDS), ism/isml |
+| **Video** | mp4, mkv, webm, avi, mov, flv, ts, m4v, 3gp, mpeg, mpg, vob, vp9, divx, 4v, m2t, m2ts, m2v, m4s, mk3d, mng, mp2v, mp4v, mpe, mxf, ogm, ogv, qt, rm, swf |
+| **Audio** | mp3, aac, flac, wav, ogg, m4a, opus, ac3, m4b, mka, vorbis, 3ga, adts, aif, aiff, alac, ape, asf, au, dts, f4a, f4b, isma, it, m4r, mid, mod, mp1, mp2, mp4a, mpa, mpga, oga, ogx, ra, shn, spx, weba, wma, xm |
+| **Streams** | m3u8 (HLS), mpd (DASH), f4m (HDS), ism/isml, f4f, smil |
 | **Images** | webp, png, jpg, jpeg, gif |
-| **Subtitles** | vtt, srt, ass, ssa, ttml |
+| **Subtitles** | vtt, srt, ass, ssa, ttml, dfxp |
+| **Other Files** | zip, rar, 7z, tar, gz, exe, msi, apk, dmg, iso, bin, pdf, epub, doc, docx, xls, xlsx, ppt, pptx |
 
 ---
 
