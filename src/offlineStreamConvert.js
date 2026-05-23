@@ -240,7 +240,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
 
     const selectedVariant = await selectStreamVariant(lines, base, {
       headers: Object.fromEntries(headers.map(h => [h.name, h.value])),
-      referrer: request.requestHeaders.find(h => h.name.toLowerCase() === "referer")?.value,
+      referrer: request.requestHeaders?.find(h => h.name.toLowerCase() === "referer")?.value,
       method: request.method
     });
     videoUrl = selectedVariant.uri;
@@ -273,7 +273,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
     // helpers for fetch options
     const fetchOpts = {
       headers: Object.fromEntries(headers.map(h => [h.name, h.value])),
-      referrer: request.requestHeaders.find(h => h.name.toLowerCase() === "referer")?.value,
+      referrer: request.requestHeaders?.find(h => h.name.toLowerCase() === "referer")?.value,
       method: request.method
     };
 
@@ -755,7 +755,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
   const resp = await fetchWithCache(mpdUrl, {
     method: request.method,
     headers: Object.fromEntries(headers.map(h => [h.name, h.value])),
-    referrer: request.requestHeaders.find(h => h.name.toLowerCase() === "referer")?.value || ""
+    referrer: request.requestHeaders?.find(h => h.name.toLowerCase() === "referer")?.value || ""
   });
   if (!resp.ok) throw new Error(browser.i18n.getMessage("mpdFetchError", [resp.status.toString()]));
   let mpdXmlText = await resp.text();

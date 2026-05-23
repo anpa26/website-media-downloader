@@ -356,7 +356,7 @@ browser.webRequest.onBeforeSendHeaders.addListener(
             }
         }
 
-        const cookieHeader = details.requestHeaders.find(h => h.name.toLowerCase() === 'cookie');
+        const cookieHeader = details.requestHeaders?.find(h => h.name.toLowerCase() === 'cookie');
         if (cookieHeader) temporaryCookieMap.set(details.requestId, cookieHeader.value);
 
         return { requestHeaders: details.requestHeaders };
@@ -849,7 +849,7 @@ function initListener() {
         }
 
         beforeSendHeadersListener = async function (details) {
-            const cookie = details.requestHeaders.find(h => h.name.toLowerCase() === 'cookie')?.value || '';
+            const cookie = details.requestHeaders?.find(h => h.name.toLowerCase() === 'cookie')?.value || '';
             temporaryCookieMap.set(details.requestId, cookie);
 
             return { requestHeaders: details.requestHeaders };
