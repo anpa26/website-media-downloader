@@ -16,8 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-document.addEventListener('DOMContentLoaded', () => {
-
+window.mdu_translate = function() {
     document.querySelectorAll('[data-translate]').forEach(element => {
         const key = element.getAttribute('data-translate');
         const translation = browser.i18n.getMessage(key);
@@ -60,4 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
             element.setAttribute('label', translation);
         }
     });
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    window.mdu_translate();
 });

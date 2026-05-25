@@ -1,83 +1,92 @@
 {
     "en": {
-        "headline": "What's New (v1.7.4)",
+        "headline": "What's New (v1.7.7)",
         "changes": [
-            "Improved cancel functionality: progress bar and status text are now removed immediately upon cancellation",
-            "Fixed an issue where double progress bars appeared when reopening the popup during an active download",
-            "Enhanced file detection logic and synchronized localizations",
-            "UI improvements for download status information"
+            "Introduced custom pill dropdowns with dynamic sizing and visual indicators for Speed Boost",
+            "Implemented settings confirmation UI and fully localized the installed page",
+            "Enhanced stream segment detection, filtering, and fixed potential download crashes",
+            "Overhauled parallel downloads and resolved various popup UI and theme issues",
+            "Disabled history page by default to improve initial loading performance"
         ]
     },
     "id": {
-        "headline": "Yang Baru (v1.7.4)",
+        "headline": "Yang Baru (v1.7.7)",
         "changes": [
-            "Peningkatan fungsionalitas batal: bilah progres dan teks status kini langsung dihapus saat pembatalan",
-            "Memperbaiki masalah di mana bilah progres ganda muncul saat membuka kembali popup selama unduhan aktif",
-            "Peningkatan logika deteksi file dan sinkronisasi pelokalan",
-            "Peningkatan UI untuk informasi status unduhan"
+            "Menghadirkan dropdown pill kustom dengan ukuran dinamis dan indikator visual untuk Speed Boost",
+            "Mengimplementasikan UI konfirmasi pengaturan dan melokalisasi penuh halaman instalasi",
+            "Meningkatkan deteksi segmen stream, pemfilteran, dan memperbaiki potensi crash saat mengunduh",
+            "Merombak unduhan paralel serta memperbaiki berbagai masalah tema dan bug UI popup",
+            "Menonaktifkan halaman riwayat secara default untuk meningkatkan performa pemuatan awal"
         ]
     },
     "ja": {
-        "headline": "新機能 (v1.7.4)",
+        "headline": "新機能 (v1.7.7)",
         "changes": [
-            "キャンセル機能の改善: キャンセル時にプログレスバーとステータステキストが即座に削除されるようになりました",
-            "アクティブなダウンロード中にポップアップを再度開いたときに二重のプログレスバーが表示される問題を修正しました",
-            "ファイル検出ロジックを強化し、ローカリゼーションを同期しました",
-            "ダウンロードステータス情報のUIを改善しました"
+            "ダイナミックサイズ対応のカスタムピルドロップダウンとSpeed Boostの視覚的インジケータを導入",
+            "設定確認UIの実装とインストールページの完全なローカライズ",
+            "ストリームセグメント検出とフィルタリングの強化、およびダウンロード時のクラッシュを修正",
+            "並列ダウンロードの刷新と、ポップアップUIおよびテーマに関する各種問題の解決",
+            "初期読み込みパフォーマンス向上のため、履歴ページをデフォルトで無効化"
         ]
     },
     "de": {
-        "headline": "Was gibt's Neues (v1.7.4)",
+        "headline": "Was gibt's Neues (v1.7.7)",
         "changes": [
-            "Verbesserte Abbrechen-Funktion: Fortschrittsbalken und Statustext werden bei Abbruch nun sofort entfernt",
-            "Ein Problem wurde behoben, bei dem beim erneuten Öffnen des Popups während eines aktiven Downloads doppelte Fortschrittsbalken angezeigt wurden",
-            "Verbesserte Dateierkennungslogik und synchronisierte Lokalisierungen",
-            "UI-Verbesserungen für Download-Statusinformationen"
+            "Einführung von benutzerdefinierten Pill-Dropdowns mit dynamischer Größe und visuellen Indikatoren für Speed Boost",
+            "Implementierung der Einstellungsbestätigungs-UI und vollständige Lokalisierung der installierten Seite",
+            "Verbesserte Erkennung von Stream-Segmenten, Filterung und Behebung potenzieller Download-Abstürze",
+            "Überarbeitung paralleler Downloads und Behebung verschiedener Popup-UI- und Themenprobleme",
+            "Verlauf-Seite standardmäßig deaktiviert, um die anfängliche Ladeleistung zu verbessern"
         ]
     },
     "fr": {
-        "headline": "Nouveautés (v1.7.4)",
+        "headline": "Nouveautés (v1.7.7)",
         "changes": [
-            "Fonctionnalité d'annulation améliorée : la barre de progression et le texte d'état sont désormais supprimés immédiatement lors de l'annulation",
-            "Correction d'un problème où des doubles barres de progression apparaissaient lors de la réouverture de la fenêtre contextuelle pendant un téléchargement actif",
-            "Amélioration de la logique de détection des fichiers et synchronisation des localisations",
-            "Améliorations de l'interface utilisateur pour les informations sur l'état du téléchargement"
+            "Introduction de listes déroulantes personnalisées avec taille dynamique et indicateurs visuels pour Speed Boost",
+            "Implémentation de l'UI de confirmation des paramètres et localisation complète de la page installée",
+            "Amélioration de la détection et du filtrage des segments de flux, et correction des plantages potentiels",
+            "Refonte des téléchargements parallèles et résolution de divers problèmes d'interface et de thème",
+            "Désactivation de la page d'historique par défaut pour améliorer les performances de chargement"
         ]
     },
     "pt": {
-        "headline": "Novidades (v1.7.4)",
+        "headline": "Novidades (v1.7.7)",
         "changes": [
-            "Funcionalidade de cancelamento aprimorada: a barra de progresso e o texto de status agora são removidos imediatamente após o cancelamento",
-            "Corrigido um problema em que barras de progresso duplas apareciam ao reabrir o pop-up durante um download ativo",
-            "Lógica de detecção de arquivos aprimorada e localizações sincronizadas",
-            "Melhorias na interface do usuário para informações de status de download"
+            "Introdução de menus suspensos personalizados com redimensionamento dinâmico e indicadores visuais para Speed Boost",
+            "Implementação da interface de confirmação de configurações e localização total da página instalada",
+            "Detecção e filtragem de segmentos de stream aprimoradas, e correção de falhas nos downloads",
+            "Reformulação dos downloads paralelos e resolução de vários problemas de tema e interface do popup",
+            "Página de histórico desativada por padrão para melhorar o desempenho de carregamento inicial"
         ]
     },
     "ko": {
-        "headline": "새로운 기능 (v1.7.4)",
+        "headline": "새로운 기능 (v1.7.7)",
         "changes": [
-            "취소 기능 개선: 취소 시 진행률 표시줄과 상태 텍스트가 즉시 제거됩니다",
-            "활성 다운로드 중 팝업을 다시 열 때 이중 진행률 표시줄이 나타나는 문제를 수정했습니다",
-            "파일 감지 로직 강화 및 현지화 동기화",
-            "다운로드 상태 정보에 대한 UI 개선"
+            "동적 크기 조정이 가능한 맞춤형 알약 드롭다운 및 Speed Boost용 시각적 표시기 도입",
+            "설정 확인 UI 구현 및 설치된 페이지의 완전한 현지화",
+            "스트림 세그먼트 감지 및 필터링 강화, 다운로드 중 발생할 수 있는 충돌 문제 수정",
+            "병렬 다운로드 개편 및 다양한 팝업 UI 및 테마 관련 문제 해결",
+            "초기 로딩 성능 향상을 위해 기본적으로 히스토리 페이지 비활성화"
         ]
     },
     "ar": {
-        "headline": "ما الجديد (v1.7.4)",
+        "headline": "ما الجديد (v1.7.7)",
         "changes": [
-            "تحسين وظيفة الإلغاء: تتم الآن إزالة شريط التقدم ونص الحالة على الفور عند الإلغاء",
-            "إصلاح مشكلة ظهور أشرطة تقدم مزدوجة عند إعادة فتح النافذة المنبثقة أثناء التنزيل النشط",
-            "تعزيز منطق اكتشاف الملفات ومزامنة الترجمات",
-            "تحسينات واجهة المستخدم لمعلومات حالة التنزيل"
+            "تقديم قوائم منسدلة مخصصة مع تغيير الحجم ديناميكيًا ومؤشرات مرئية لـ Speed Boost",
+            "تنفيذ واجهة مستخدم لتأكيد الإعدادات وتعريب كامل لصفحة التثبيت",
+            "تحسين اكتشاف مقاطع البث وتصفيتها وإصلاح حالات التعطل المحتملة أثناء التنزيل",
+            "إصلاح التنزيلات المتوازية وحل العديد من مشكلات واجهة المستخدم والسمات",
+            "تعطيل صفحة السجل افتراضيًا لتحسين أداء التحميل الأولي"
         ]
     },
     "ru": {
-        "headline": "Что нового (v1.7.4)",
+        "headline": "Что нового (v1.7.7)",
         "changes": [
-            "Улучшена функция отмены: индикатор выполнения и текст статуса теперь удаляются сразу после отмены",
-            "Исправлена проблема, из-за которой при повторном открытии всплывающего окна во время активной загрузки появлялись двойные индикаторы выполнения",
-            "Улучшена логика обнаружения файлов и синхронизированы локализации",
-            "Улучшения пользовательского интерфейса для информации о статусе загрузки"
+            "Добавлены кастомные выпадающие списки с динамическим размером и визуальные индикаторы для Speed Boost",
+            "Реализован интерфейс подтверждения настроек и полная локализация установленной страницы",
+            "Улучшено обнаружение и фильтрация сегментов потока, исправлены возможные сбои при загрузке",
+            "Переработаны параллельные загрузки и решены различные проблемы с интерфейсом и темами",
+            "Страница истории отключена по умолчанию для повышения производительности загрузки"
         ]
     }
 }

@@ -1,6 +1,6 @@
 # Website Media Downloader
 
-[![Version](https://img.shields.io/badge/version-1.7.4-blue.svg)](src/manifest.json)
+[![Version](https://img.shields.io/badge/version-1.7.7-blue.svg)](src/manifest.json)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE.md)
 [![Platform](https://img.shields.io/badge/platform-Firefox%20%7C%20Android-orange.svg)](#installation)
 
@@ -46,16 +46,19 @@ Designed with a focus on privacy and technical transparency, all operations—in
 
 ---
 
-## Technical Features (v1.7.4)
+## Technical Features (v1.7.7)
 
 ### Core Detection Engine
 The detection engine has been optimized to handle complex web environments more efficiently. This version introduces:
+- **Enhanced Stream Detection**: Improved accuracy in identifying and filtering HLS/DASH segments to prevent redundant entries.
+- **Parallel Acquisition Overhaul**: Refined multi-threaded fetching mechanism for more stable and efficient Speed Boost downloads.
 - **Improved Lifecycle Management**: Enhanced cleanup and state persistence when reopening the extension popup during active downloads.
-- **Streamlined Download Logic**: Refined cancel functionality with immediate UI feedback and removal of redundant progress indicators.
-- **Localization Sync**: Fully synchronized translations across all core modules for a consistent global experience.
 
 ### UI Architecture
-The interface is built using Material Design 3 (MDUI) components, providing a responsive and standardized user experience with real-time status updates and robust progress tracking.
+The interface is built using Material Design 3 (MDUI) components, now featuring:
+- **Custom Pill Dropdowns**: A modern, space-efficient settings interface with dynamic sizing that fits content perfectly.
+- **Visual Status Indicators**: Real-time visual feedback for Speed Boost status and multi-threaded acquisition progress.
+- **Comprehensive Localization**: Fully localized experience across 9 languages for all UI elements, including installation and error pages.
 
 ### Detection Methodology
 - Network Traffic Interception: Monitors real-time network requests to identify high-bitrate media and dynamic streaming manifests (M3U8 and MPD).

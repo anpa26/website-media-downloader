@@ -1,4 +1,21 @@
 <!DOCTYPE html>
+<!--
+    website-media-downloader - A versatile tool to detect and download videos, music, and streams from almost any website.
+    Copyright (C) 2026 anpa26
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
 <html lang="en" class="mdui-theme-auto">
 <head>
     <meta charset="UTF-8">
@@ -6,249 +23,321 @@
     <title data-title-translate="installedTitle">Welcome to Website Media Downloader</title>
     <link rel="stylesheet" href="styles/mdui.css">
     <link rel="stylesheet" href="styles/style.css">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <style>
-        body {
-            background-color: var(--mdui-color-background);
-            color: var(--mdui-color-on-background);
-            padding-bottom: 40px;
+    <script src="libraries/mdui.global.js"></script>
+    <script>
+        // Set extension default blue theme immediately
+        if (typeof mdui !== 'undefined') {
+            mdui.setColorScheme('#bbdefb');
         }
-        .hero {
-            background: linear-gradient(135deg, var(--mdui-color-primary-container), var(--mdui-color-secondary-container));
-            padding: 60px 20px;
-            text-align: center;
-            border-bottom-left-radius: 32px;
-            border-bottom-right-radius: 32px;
+    </script>
+    <style>
+        :root {
+            --app-max-width: 760px;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: rgb(var(--mdui-color-surface));
+            color: rgb(var(--mdui-color-on-surface));
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: var(--app-max-width);
+            margin: 0 auto;
+            padding: 32px 24px 60px;
+        }
+
+        /* Top Header */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 40px;
         }
-        .hero h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            color: var(--mdui-color-on-primary-container);
-        }
-        .hero p {
-            font-size: 1.2rem;
-            color: var(--mdui-color-on-secondary-container);
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        .section-card {
-            background-color: var(--mdui-color-surface-container-low);
-            border-radius: 24px;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        .section-title {
+
+        .brand {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 16px;
-            font-weight: bold;
+            font-weight: 900;
             font-size: 1.25rem;
+            letter-spacing: -0.02em;
         }
-        .version-badge {
-            background-color: var(--mdui-color-primary);
-            color: var(--mdui-color-on-primary);
+
+        .version-tag {
+            font-size: 0.8rem;
+            font-weight: 800;
+            background: rgb(var(--mdui-color-surface-container-highest));
             padding: 4px 12px;
             border-radius: 100px;
-            font-size: 0.9rem;
-            display: inline-block;
-            margin-top: 10px;
+            color: rgb(var(--mdui-color-primary));
         }
-        .changelog-list {
-            padding-left: 20px;
+
+        /* Hero Content */
+        .hero {
+            text-align: center;
+            margin-bottom: 48px;
         }
-        .changelog-list li {
-            margin-bottom: 8px;
-            line-height: 1.5;
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            margin: 0 0 16px;
+            letter-spacing: -0.04em;
+            line-height: 1;
         }
-        .dev-info {
+
+        .hero p {
+            font-size: 1.25rem;
+            opacity: 0.7;
+            max-width: 580px;
+            margin: 0 auto 32px;
+            font-weight: 500;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgb(var(--mdui-color-primary));
+            color: rgb(var(--mdui-color-on-primary));
+            padding: 12px 28px;
+            border-radius: 100px;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 10px rgba(var(--mdui-color-primary), 0.15);
+        }
+
+        /* Sections Grid */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            color: rgb(var(--mdui-color-primary));
+        }
+
+        /* Numbered Changelog */
+        .step-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        @media (max-width: 650px) {
+            .step-list { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 2.25rem; }
+        }
+
+        .step-item {
             display: flex;
             align-items: center;
             gap: 16px;
+            background: rgb(var(--mdui-color-surface));
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgb(var(--mdui-color-outline-variant));
         }
-        .dev-avatar {
-            width: 48px;
-            height: 48px;
-            background-color: var(--mdui-color-primary);
-            color: var(--mdui-color-on-primary);
-            border-radius: 50%;
+
+        .step-number {
+            width: 36px;
+            height: 36px;
+            background: rgb(var(--mdui-color-primary-container));
+            color: rgb(var(--mdui-color-on-primary-container));
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
+            font-weight: 900;
+            flex-shrink: 0;
+            font-size: 0.95rem;
+            line-height: 1;
         }
-        .footer-thanks {
-            text-align: center;
-            margin-top: 40px;
-            opacity: 0.8;
-            font-style: italic;
+
+        .step-content {
+            font-weight: 600;
+            font-size: 0.95rem;
+            line-height: 1.4;
         }
-        .support-grid {
+
+        /* Refined Bottom Grid */
+        .bottom-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(3, 1fr);
             gap: 16px;
-            margin-top: 20px;
         }
-        @media (max-width: 600px) {
-            .support-grid {
-                grid-template-columns: 1fr;
-            }
+
+        @media (max-width: 750px) {
+            .bottom-grid { grid-template-columns: 1fr; }
         }
-        .support-item {
+
+        .action-card {
+            background: rgb(var(--mdui-color-surface));
+            border: 1px solid rgb(var(--mdui-color-outline-variant));
+            border-radius: 20px;
+            padding: 28px 20px;
+            text-align: center;
+            text-decoration: none;
+            color: inherit;
             display: flex;
             flex-direction: column;
             align-items: center;
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            background: rgb(var(--mdui-color-surface-container-high));
+            color: rgb(var(--mdui-color-primary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
             justify-content: center;
-            padding: 16px;
-            border-radius: 16px;
-            text-decoration: none;
+            margin-bottom: 20px;
+        }
+
+        .card-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .card-label {
+            font-size: 0.8rem;
+            font-weight: 800;
+            opacity: 0.5;
+            margin-bottom: 4px;
+        }
+
+        .card-value {
+            font-weight: 900;
+            font-size: 1.05rem;
+            letter-spacing: -0.01em;
+        }
+
+        footer {
+            margin-top: 40px;
             text-align: center;
+            padding: 24px 0;
+            border-top: 1px solid rgb(var(--mdui-color-outline-variant));
         }
-        .support-item.github {
-            background-color: #24292e;
-            color: #ffffff;
+
+        .footer-quote {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: rgb(var(--mdui-color-primary));
         }
-        .support-item.addons {
-            background-color: #E3532D;
-            color: #ffffff;
-        }
-        .support-item i {
-            font-size: 28px;
-            margin-bottom: 8px;
-        }
-        .support-item .label {
-            font-weight: bold;
-            font-size: 0.95rem;
-            margin-bottom: 2px;
-        }
-        .support-item .sub-label {
-            font-size: 0.75rem;
-            opacity: 0.8;
-        }
-        .feedback-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 16px;
-            margin-top: 20px;
-        }
-        .support-item.feedback {
-            background-color: var(--mdui-color-surface-container-high);
-            color: var(--mdui-color-on-surface);
-            border: 1px solid var(--mdui-color-outline-variant);
-        }
+
+        /* RTL Handling */
+        [dir="rtl"] .step-list .step-item { gap: 16px; }
     </style>
 </head>
 <body>
 
-    <div class="hero">
-        <i class="material-icons" style="font-size: 64px; color: var(--mdui-color-primary);">download</i>
-        <h1 data-translate="installedHeroTitle">Thank You for Choosing Us!</h1>
-        <p data-translate="installedHeroDescription">Your ultimate media companion for the web. Experience seamless media detection and high-speed downloads across all your favorite sites.</p>
-        <div class="version-badge"><span data-translate="installedVersion">Version</span> 1.7.4</div>
-    </div>
-
     <div class="container">
-        <div class="section-card">
-            <div class="section-title">
-                <i class="material-icons" style="color: var(--mdui-color-primary);">new_releases</i>
-                <span data-translate="installedChangelogTitle">What's New in</span> v1.7.4
+        <nav class="top-nav">
+            <div class="brand" data-translate="installedBrand">
+                WMD
             </div>
-            <ul class="changelog-list">
-                <li data-translate="installedChangelogItem1">Enhanced header spoofing to bypass strict server protections.</li>
-                <li data-translate="installedChangelogItem2">Optimized real-time network monitoring for high-bitrate media.</li>
-                <li data-translate="installedChangelogItem3">Refined deep DOM scanning for complex web environments.</li>
-                <li data-translate="installedChangelogItem4">Improved system stability and interface consistency.</li>
-                <li data-translate="installedChangelogItem5">Full UI internationalization for a global experience.</li>
-            </ul>
-        </div>
+            <div class="version-tag"><span data-translate="installedVersion">Version</span> <span id="extension-version">1.7.7</span></div>
+        </nav>
 
-        <div class="section-card">
-            <div class="section-title">
-                <i class="material-icons" style="color: var(--mdui-color-secondary);">person</i>
-                <span data-translate="installedMeetDev">Meet the Developer</span>
-            </div>
-            <div class="dev-info">
-                <div class="dev-avatar">A</div>
-                <div>
-                    <div style="font-weight: bold; font-size: 1.1rem;">anpa26</div>
-                    <div data-translate="leadDeveloperRole" style="opacity: 0.7;">Lead Developer & Maintainer</div>
+        <header class="hero">
+            <h1 data-translate="installedHeroTitle">Installation Complete</h1>
+            <p data-translate="installedHeroDescription">The ultimate media companion is ready. Start detecting and downloading your favorite content with a single click.</p>
+            <a href="popup.html" class="cta-button" id="get-started-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z"/></svg>
+                <span data-translate="getStarted">Get Started Now</span>
+            </a>
+        </header>
+
+        <div class="section-header" data-translate="installedChangelogTitle">Improvements & Updates</div>
+        <ul class="step-list" style="margin-bottom: 48px;">
+            <li class="step-item">
+                <div class="step-number">01</div>
+                <div class="step-content" data-translate="installedChangelogItem1">Enhanced header spoofing for strict protections.</div>
+            </li>
+            <li class="step-item">
+                <div class="step-number">02</div>
+                <div class="step-content" data-translate="installedChangelogItem2">Optimized real-time network monitoring.</div>
+            </li>
+            <li class="step-item">
+                <div class="step-number">03</div>
+                <div class="step-content" data-translate="installedChangelogItem3">Refined deep DOM scanning for complex sites.</div>
+            </li>
+            <li class="step-item">
+                <div class="step-number">04</div>
+                <div class="step-content" data-translate="installedChangelogItem4">Improved system stability and interface.</div>
+            </li>
+            <li class="step-item">
+                <div class="step-number">05</div>
+                <div class="step-content" data-translate="installedChangelogItem5">Expanded supported file formats in documentation.</div>
+            </li>
+        </ul>
+
+        <div class="bottom-grid">
+            <a href="https://github.com/anpa26" target="_blank" class="action-card">
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
                 </div>
-            </div>
-            <p data-translate="leadDeveloperDescription" style="margin-top: 16px; line-height: 1.6;">
-                Passionate about building open-source tools that empower users. Website Media Downloader is constantly evolving to stay ahead of technical challenges.
-            </p>
+                <span class="card-label" data-translate="installedMeetDev">Developer</span>
+                <span class="card-value">anpa26</span>
+            </a>
+
+            <a href="https://github.com/anpa26/website-media-downloader" target="_blank" class="action-card">
+                <div class="card-icon" style="background: #24292e; color: white;">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.4-1.09.73-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2.01 1.03-2.72-.1-.25-.45-1.29.1-2.69 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.4.2 2.44.1 2.69.65.71 1.03 1.61 1.03 2.72 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/></svg>
+                </div>
+                <span class="card-label" data-translate="installedCommunity">Community</span>
+                <span class="card-value" data-translate="installedGitHubProject">GitHub Project</span>
+            </a>
+
+            <a href="https://addons.mozilla.org/firefox/addon/website-media-downloader/" target="_blank" class="action-card">
+                <div class="card-icon" style="background: #E3532D; color: white;">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12,15.39L8.24,17.66L9.23,13.38L5.91,10.5L10.29,10.13L12,6.09L13.71,10.13L18.09,10.5L14.77,13.38L15.76,17.66L12,15.39M22,9.24L14.81,8.63L12,2L9.19,8.63L2,9.24L7.45,13.97L5.82,21L12,17.27L18.18,21L16.54,13.97L22,9.24Z"/></svg>
+                </div>
+                <span class="card-label" data-translate="installedSupport">Support</span>
+                <span class="card-value" data-translate="installedAddonsStore">Add-ons Store</span>
+            </a>
         </div>
 
-        <div class="section-card">
-            <div class="section-title">
-                <i class="material-icons" style="color: var(--mdui-color-warning);">bug_report</i>
-                <span data-translate="installedFeedbackTitle">Feedback & Issues</span>
-            </div>
-            <p data-translate="installedFeedbackDesc">Found a bug or have a suggestion? Help us improve by opening an issue on GitHub!</p>
-            
-            <div class="feedback-grid">
-                <a href="https://github.com/anpa26/website-media-downloader/issues" target="_blank" class="support-item feedback">
-                    <i class="material-icons">add_circle_outline</i>
-                    <div class="label" data-translate="installedFeedbackButton">Report an Issue</div>
-                    <div class="sub-label">Bugs, suggestions, or requests</div>
-                </a>
-            </div>
-        </div>
-
-        <div class="section-card">
-            <div class="section-title">
-                <i class="material-icons" style="color: var(--mdui-color-tertiary);">favorite</i>
-                <span data-translate="installedSupportTitle">Support the Project</span>
-            </div>
-            <p data-translate="installedSupportDescription">If you find this tool useful, please consider supporting its development. Your feedback helps us grow!</p>
-            
-            <div class="support-grid">
-                <a href="https://github.com/anpa26/website-media-downloader" target="_blank" class="support-item github">
-                    <i class="material-icons">star_outline</i>
-                    <div class="label" data-translate="starOnGithub">Star on GitHub</div>
-                    <div class="sub-label" data-translate="installedStarSub">Show some love to the source</div>
-                </a>
-                <a href="https://addons.mozilla.org/firefox/addon/website-media-downloader/" target="_blank" class="support-item addons">
-                    <i class="material-icons">rate_review</i>
-                    <div class="label" data-translate="rateButton">Rate on Add-ons</div>
-                    <div class="sub-label" data-translate="installedRateSub">Help others find this tool</div>
-                </a>
-            </div>
-        </div>
-
-        <div class="footer-thanks">
-            <span data-translate="installedFooterQuote">"Thank you for being part of our journey. Happy downloading!"</span>
-        </div>
+        <footer>
+            <div class="footer-quote" data-translate="installedFooterQuote">"Thank you for being part of our journey."</div>
+            <div style="opacity: 0.5; margin-top: 8px; font-weight: 600;" data-translate="installedCopyright">Website Media Downloader © 2026</div>
+        </footer>
     </div>
 
-    <script src="libraries/mdui.global.js"></script>
     <script>
         if (typeof browser === "undefined") {
             var browser = chrome;
         }
-    </script>
-    <script src="translations.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Set language and direction
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Language & Direction
             const lang = browser.i18n.getUILanguage();
             document.documentElement.lang = lang;
             const rtlLangs = ['ar', 'he', 'fa', 'ur'];
             if (rtlLangs.includes(lang.split('-')[0])) {
                 document.documentElement.dir = 'rtl';
             }
-
-            // Set page title (tab title)
             const pageTitle = browser.i18n.getMessage('installedTitle');
             if (pageTitle) document.title = pageTitle;
+
+            const versionEl = document.getElementById('extension-version');
+            if (versionEl) {
+                versionEl.textContent = browser.runtime.getManifest().version;
+            }
         });
     </script>
+    <script src="translations.js"></script>
 </body>
 </html>

@@ -20,6 +20,10 @@ if (typeof browser === 'undefined') {
   var browser = chrome;
 }
 
+function isFlagEnabled(val) {
+  return val === '1' || val === 1 || val === true || val === 'true';
+}
+
 if (!browser.storage.session) {
   browser.storage.session = {
       get: (keys, cb) => browser.storage.local.get(keys, cb),
@@ -63,13 +67,145 @@ window.activeCancellations.setRestoreCallback = (url, cb) => {
   window.activeCancellations.restoreCallbacks.set(url, cb);
 };
 
+async function checkForUpdates() {
+  const MANIFEST_URL = 'https://raw.githubusercontent.com/anpa26/website-media-downloader/wmd-1/src/manifest.json';
+  const RELEASES_URL = 'https://github.com/anpa26/website-media-downloader/releases';
+  const AMO_URL = 'https://addons.mozilla.org/en-US/firefox/addon/website-media-downloader';
+  
+  try {
+    const response = await fetch(MANIFEST_URL + '?t=' + Date.now());
+    if (!response.ok) throw new Error('Failed to fetch manifest from GitHub');
+    
+    const data = await response.json();
+    const latestVersion = data.version;
+    const currentVersion = browser.runtime.getManifest().version;
+
+    if (compareVersions(latestVersion, currentVersion) > 0) {
+      showUpdateNotification(RELEASES_URL, latestVersion);
+    }
+  } catch (error) {
+    console.warn('Manual update check failed, falling back to native check:', error);
+    if (browser.runtime.requestUpdateCheck) {
+      browser.runtime.requestUpdateCheck().then(([status, details]) => {
+        if (status === 'update_available') {
+          showUpdateNotification(AMO_URL, details.version || 'new');
+        }
+      }).catch(err => console.error('Native update check failed:', err));
+    }
+  }
+}
+
+function compareVersions(v1, v2) {
+  const parts1 = v1.split('.').map(Number);
+  const parts2 = v2.split('.').map(Number);
+  for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+    const p1 = parts1[i] || 0;
+    const p2 = parts2[i] || 0;
+    if (p1 > p2) return 1;
+    if (p1 < p2) return -1;
+  }
+  return 0;
+}
+
+function showTopBarUpdateNotification(url, latestVersion) {
+  const notification = document.getElementById('update-notification');
+  if (!notification) return;
+  
+  notification.style.display = 'flex';
+  
+  const textSpan = notification.querySelector('[data-translate="updateAvailable"]');
+  if (textSpan) {
+    textSpan.textContent = browser.i18n.getMessage("updateAvailable", [latestVersion]) || `New version available! (v${latestVersion})`;
+  }
+  
+  const updateLink = document.getElementById('update-link');
+  if (updateLink) {
+    // Remove existing listeners to avoid multiple tabs opening
+    const newUpdateLink = updateLink.cloneNode(true);
+    updateLink.parentNode.replaceChild(newUpdateLink, updateLink);
+    newUpdateLink.addEventListener('click', () => {
+      browser.tabs.create({ url: url });
+    });
+  }
+  
+  const closeBtn = document.getElementById('close-update-notification');
+  if (closeBtn) {
+    const newCloseBtn = closeBtn.cloneNode(true);
+    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+    newCloseBtn.addEventListener('click', () => {
+      notification.style.display = 'none';
+      sessionStorage.setItem('update-topbar-closed', 'true');
+    });
+  }
+}
+
+function showUpdateDialog(url, latestVersion) {
+  const dialog = document.createElement('mdui-dialog');
+  dialog.headline = browser.i18n.getMessage("updateAvailable", [latestVersion]) || `New version available! (v${latestVersion})`;
+  
+  const description = document.createElement('div');
+  description.setAttribute('slot', 'description');
+  description.innerHTML = browser.i18n.getMessage("updateDialogMessage", [latestVersion]) || `Version ${latestVersion} is available. Would you like to update now?`;
+  dialog.appendChild(description);
+
+  const laterButton = document.createElement('mdui-button');
+  laterButton.variant = "text";
+  laterButton.textContent = browser.i18n.getMessage("updateLaterButton") || "Later";
+  laterButton.slot = 'action';
+  laterButton.addEventListener('click', () => {
+    dialog.open = false;
+    sessionStorage.setItem('update-dismissed', 'true');
+    showTopBarUpdateNotification(url, latestVersion);
+  });
+  dialog.appendChild(laterButton);
+
+  const updateButton = document.createElement('mdui-button');
+  updateButton.variant = "tonal";
+  updateButton.textContent = browser.i18n.getMessage("updateButton") || "Update";
+  updateButton.slot = 'action';
+  updateButton.addEventListener('click', () => {
+    dialog.open = false;
+    browser.tabs.create({ url: url });
+  });
+  dialog.appendChild(updateButton);
+
+  document.body.appendChild(dialog);
+  dialog.open = true;
+
+  dialog.addEventListener('closed', () => {
+    dialog.remove();
+  });
+}
+
+function showUpdateNotification(url, latestVersion) {
+  if (sessionStorage.getItem('update-topbar-closed') === 'true') return;
+  
+  if (sessionStorage.getItem('update-dismissed') === 'true') {
+    showTopBarUpdateNotification(url, latestVersion);
+    return;
+  }
+
+  showUpdateDialog(url, latestVersion);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+  checkForUpdates();
   const colorResult = await browser.storage.local.get('theme-color');
   mdui.setColorScheme(colorResult['theme-color'] || '#bbdefb');
 
   const historyPageResult = await browser.storage.local.get('history-page');
   if (historyPageResult['history-page'] === '1') {
     document.getElementById('history-tab').style.display = 'inline-flex';
+    const navbar = document.getElementById('navbar');
+    if (navbar) {
+      setTimeout(() => {
+        if (typeof navbar.requestUpdate === 'function') navbar.requestUpdate();
+        window.dispatchEvent(new Event('resize'));
+        const currentVal = navbar.value;
+        navbar.value = '';
+        navbar.value = currentVal;
+      }, 100);
+    }
   }
 
   const savedTab = sessionStorage.getItem('activeTab');
@@ -229,11 +365,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   browser.storage.onChanged.addListener((changes, area) => {
-    if (area === 'local' && changes['history-page']) {
+    if (area !== 'local') return;
+    
+    // Settings that require re-filtering and re-rendering the media list
+    const mediaFilterSettings = [
+      'only-video', 'only-audio', 'only-stream', 'only-image', 
+      'only-subtitle', 'only-file', 'hide-segments'
+    ];
+    
+    if (mediaFilterSettings.some(s => Object.prototype.hasOwnProperty.call(changes, s))) {
+      if (document.getElementById('navbar').value === 'home') {
+        loadMediaList();
+      }
+    }
 
-      sessionStorage.setItem('activeTab', document.getElementById('navbar').value);
-      sessionStorage.setItem('scrollPos', window.scrollY);
-      location.reload();
+    if (changes['history-page']) {
+      const historyTab = document.getElementById('history-tab');
+      if (changes['history-page'].newValue === '1') {
+        if (historyTab) historyTab.style.display = 'inline-flex';
+      } else {
+        if (historyTab) historyTab.style.display = 'none';
+      }
+    }
+
+    if (changes['theme-color'] && typeof mdui !== 'undefined') {
+      mdui.setColorScheme(changes['theme-color'].newValue);
     }
   });
 
@@ -243,8 +399,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('clear-list').addEventListener('click', () => clearMediaList());
 
   document.getElementById('help-button').addEventListener('click', async () => {
+    const CHANGELOG_REMOTE_URL = 'https://raw.githubusercontent.com/anpa26/website-media-downloader/wmd-1/src/changelog.json';
+    const CHANGELOG_LOCAL_URL = browser.runtime.getURL('changelog.json');
+    
     try {
-      const response = await fetch(browser.runtime.getURL('changelog.json'));
+      let response;
+      try {
+        response = await fetch(CHANGELOG_REMOTE_URL + '?t=' + Date.now());
+        if (!response.ok) throw new Error('Remote fetch failed');
+      } catch (remoteError) {
+        console.warn("Failed to fetch remote changelog, using local fallback:", remoteError);
+        response = await fetch(CHANGELOG_LOCAL_URL);
+      }
+      
       const data = await response.json();
       const lang = browser.i18n.getUILanguage().split('-')[0];
       const content = data[lang] || data['en'];
@@ -301,7 +468,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 browser.runtime.onMessage.addListener((message) => {
   if (message.action === 'downloadProgress') {
-    updateProgressUI(message.id || message.url, message.loaded, message.total);
+    updateProgressUI(message.id || message.url, message.loaded, message.total, message.isParallel);
   } else if (message.action === 'zipProgress') {
     const progressContainer = document.getElementById('global-progress-container');
     const progressBar = document.getElementById('global-progress-bar');
@@ -375,7 +542,7 @@ browser.runtime.onMessage.addListener((message) => {
   }
 });
 
-function updateProgressUI(id, loaded, total) {
+function updateProgressUI(id, loaded, total, isParallel = false) {
   let item = uiCache.get(id);
 
   if (!item) {
@@ -413,6 +580,15 @@ function updateProgressUI(id, loaded, total) {
 
   if (item) {
     const { loadingBar, statusInfo } = item;
+    
+    if (isParallel) {
+        statusInfo.style.color = 'rgb(var(--mdui-color-primary))';
+        statusInfo.style.fontWeight = 'bold';
+    } else {
+        statusInfo.style.color = '';
+        statusInfo.style.fontWeight = '';
+    }
+
     const loadedMB = (loaded / (1024 * 1024)).toFixed(2);
     if (total > 0) {
       const totalMB = (total / (1024 * 1024)).toFixed(2);
@@ -1005,6 +1181,41 @@ function getMediaType(url, responseHeaders) {
     return null;
 }
 
+function checkIsSegment(url, responseHeaders) {
+    if (!url) return false;
+    const urlLower = url.toLowerCase();
+    const contentType = responseHeaders?.find(h => h.name.toLowerCase() === "content-type")?.value?.toLowerCase() || "";
+    const contentLength = responseHeaders?.find(h => h.name.toLowerCase() === "content-length")?.value || "0";
+    const size = parseInt(contentLength) || 0;
+
+    // Common segment extensions
+    if (urlLower.includes('.ts') || 
+        urlLower.includes('.m4s') || 
+        urlLower.includes('.m4v') || 
+        urlLower.includes('.m4a')) {
+        return true;
+    }
+
+    // Common segment MIME types
+    if (contentType === 'video/mp2t' || 
+        contentType === 'video/iso.segment' || 
+        contentType === 'audio/iso.segment') {
+        return true;
+    }
+
+    // Heuristics for segments without clear extensions or special MIME types
+    if (size > 0 && size < 5242880) { // < 5MB
+        if (urlLower.includes('chunk') || 
+            urlLower.includes('fragment') || 
+            urlLower.includes('segment') || 
+            urlLower.includes('range/')) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 async function loadMediaList() {
   const mediaContainer = document.getElementById('media-list');
   const loadingSpinner = document.getElementById('loading-media-list');
@@ -1048,7 +1259,7 @@ async function loadMediaList() {
         return;
     }
 
-    const settings = await browser.storage.local.get(['only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file']);
+    const settings = await browser.storage.local.get(['only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'hide-segments']);
 
     const mediaGroups = new Map();
     for (const rawUrl in mediaRequests) {
@@ -1057,7 +1268,10 @@ async function loadMediaList() {
       const requests = mediaRequests[rawUrl];
       if (!Array.isArray(requests) || requests.length === 0) continue;
 
-      const type = getMediaType(rawUrl, requests[requests.length - 1].responseHeaders);
+      const lastResponseHeaders = requests[requests.length - 1].responseHeaders;
+      if (isFlagEnabled(settings['hide-segments']) && checkIsSegment(rawUrl, lastResponseHeaders)) continue;
+
+      const type = getMediaType(rawUrl, lastResponseHeaders);
       if (!type) continue;
 
       if (type === 'video' && settings['only-video'] === '0') continue;
@@ -1067,8 +1281,7 @@ async function loadMediaList() {
       if (type === 'subtitle' && settings['only-subtitle'] === '0') continue;
       if (type === 'file' && settings['only-file'] === '0') continue;
 
-      const fileName = getFileName(rawUrl, 255).toLowerCase();
-      const identity = fileName;
+      const identity = rawUrl;
 
       if (!mediaGroups.has(identity)) {
         mediaGroups.set(identity, { requests: [], type });
@@ -1139,12 +1352,13 @@ async function loadMediaList() {
             dlBtn.classList.add('cancel-active');
           }
 
-          if (!item.querySelector('.download-progress-container')) {
+          if (item.querySelector('.download-progress-container')) {
             updateDownloadingCount(1);
           }
-          updateProgressUI(id, downloadData.loaded, downloadData.total);
-        }
-      });
+          updateProgressUI(id, downloadData.loaded, downloadData.total, downloadData.isParallel);
+          }
+          });
+
     }
   } catch (err) {
     console.error("Error loading media list:", err);
@@ -1317,15 +1531,22 @@ async function loadAboutPage() {
 
     let html = `
       <div style="padding: 16px; display: flex; flex-direction: column; gap: 24px;">
-        <div style="text-align: center; padding: 24px 16px 16px; background: var(--surface-low); border-radius: var(--app-border-radius); border: 1px solid rgb(var(--mdui-color-outline-variant));">
+        <div style="text-align: center; padding: 24px 16px; background: var(--surface-low); border-radius: var(--app-border-radius); border: 1px solid rgb(var(--mdui-color-outline-variant));">
           <div style="width: 48px; height: 48px; margin: 0 auto 16px; color: var(--primary);">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
           </div>
           <h1 style="margin: 0; font-size: 1.4rem; font-weight: 700; color: rgb(var(--mdui-color-on-surface));">${data.extension.name}</h1>
-          <div style="display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 4px 12px; background: rgb(var(--mdui-color-secondary-container)); color: rgb(var(--mdui-color-on-secondary-container)); border-radius: 20px; font-size: 0.75rem; font-weight: 600;">
-            Version ${browser.runtime.getManifest().version}
+          <p style="font-size: 0.9rem; line-height: 1.6; margin: 16px 0 0; color: var(--on-surface-variant);">${browser.i18n.getMessage("extensionDescriptionAbout") || data.extension.description}</p>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--surface-low); border-radius: var(--app-border-radius); border: 1px solid rgb(var(--mdui-color-outline-variant));">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--on-surface-variant); padding-left: 4px;">
+            ${browser.i18n.getMessage("installedVersion") || "Version"} ${browser.runtime.getManifest().version}
           </div>
-          <p style="font-size: 0.9rem; line-height: 1.6; margin-top: 16px; color: var(--on-surface-variant);">${browser.i18n.getMessage("extensionDescriptionAbout") || data.extension.description}</p>
+          <mdui-button variant="tonal" id="manual-check-update" style="--mdui-shape-corner-extra-small: 16px; height: 32px; font-size: 12px;">
+            <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></mdui-icon>
+            ${browser.i18n.getMessage("checkUpdateButton") || "Check for Updates"}
+          </mdui-button>
         </div>
     `;
 
@@ -1416,6 +1637,41 @@ async function loadAboutPage() {
     `;
 
     container.innerHTML = html;
+
+    // Add listener for the manual check button
+    const checkBtn = document.getElementById('manual-check-update');
+    if (checkBtn) {
+      checkBtn.addEventListener('click', async () => {
+        checkBtn.loading = true;
+        checkBtn.disabled = true;
+
+        const MANIFEST_URL = 'https://raw.githubusercontent.com/anpa26/website-media-downloader/wmd-1/src/manifest.json';
+        try {
+          const response = await fetch(MANIFEST_URL + '?t=' + Date.now());
+          if (!response.ok) throw new Error('Failed to fetch');
+
+          const data = await response.json();
+          const latestVersion = data.version;
+          const currentVersion = browser.runtime.getManifest().version;
+
+          if (compareVersions(latestVersion, currentVersion) > 0) {
+            showUpdateDialog('https://github.com/anpa26/website-media-downloader/releases', latestVersion);
+          } else {
+            if (typeof mdui !== 'undefined' && mdui.snackbar) {
+              mdui.snackbar({ message: browser.i18n.getMessage("alreadyLatestVersion") || "You are using the latest version.", placement: "top" });
+            }
+          }
+        } catch (error) {
+          console.error('Manual check failed:', error);
+          if (typeof mdui !== 'undefined' && mdui.snackbar) {
+            mdui.snackbar({ message: browser.i18n.getMessage("updateCheckError") || "Failed to check for updates.", placement: "top" });
+          }
+        } finally {
+          checkBtn.loading = false;
+          checkBtn.disabled = false;
+        }
+      });
+    }
   } catch (error) {
     console.error("Failed to load about page:", error);
     container.innerHTML = `<div style="padding: 40px; text-align: center;">${browser.i18n.getMessage("failedToLoadAbout") || "Failed to load About page information."}</div>`;

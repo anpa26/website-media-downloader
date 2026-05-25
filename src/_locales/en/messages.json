@@ -1354,65 +1354,77 @@
         "message": "Welcome to Website Media Downloader",
         "description": "Title of the installed page"
     },
+    "installedBrand": {
+        "message": "WMD",
+        "description": "Short brand name for the installed page"
+    },
     "installedHeroTitle": {
-        "message": "Thank You for Choosing Us!",
+        "message": "Installation Complete",
         "description": "Hero title of the installed page"
     },
     "installedHeroDescription": {
-        "message": "Your ultimate media companion for the web. Experience seamless media detection and high-speed downloads across all your favorite sites.",
+        "message": "The ultimate media companion is ready. Start detecting and downloading your favorite content with a single click.",
         "description": "Hero description of the installed page"
+    },
+    "getStarted": {
+        "message": "Get Started Now",
+        "description": "Label for the get started button"
     },
     "installedVersion": {
         "message": "Version",
         "description": "Label for version number"
     },
     "installedChangelogTitle": {
-        "message": "What's New in",
+        "message": "Improvements & Updates",
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Improved cancel functionality with immediate UI feedback.",
+        "message": "Introduced custom pill dropdowns and visual indicators for Speed Boost.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "Resolved duplicate progress bars when reopening the popup.",
+        "message": "Implemented settings confirmation UI and fully localized the installed page.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "Enhanced file detection logic and synchronization of all localizations.",
+        "message": "Enhanced stream segment detection, filtering, and fixed potential crashes.",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "Improved UI consistency and download status information.",
+        "message": "Overhauled parallel downloads and resolved various popup UI bugs.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "Expanded supported file formats in documentation and detection.",
+        "message": "Disabled history page by default to improve initial loading performance.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
-        "message": "Meet the Developer",
-        "description": "Title for the developer section"
+        "message": "Developer",
+        "description": "Label for developer card"
     },
-    "installedSupportTitle": {
-        "message": "Support the Project",
-        "description": "Title for the support section"
+    "installedCommunity": {
+        "message": "Community",
+        "description": "Label for community card"
     },
-    "installedSupportDescription": {
-        "message": "If you find this tool useful, please consider supporting its development. Your feedback helps us grow!",
-        "description": "Description for the support section"
+    "installedGitHubProject": {
+        "message": "GitHub Project",
+        "description": "Value for GitHub project link"
     },
-    "installedStarSub": {
-        "message": "Show some love to the source",
-        "description": "Subtitle for GitHub star button"
+    "installedSupport": {
+        "message": "Support",
+        "description": "Label for support card"
     },
-    "installedRateSub": {
-        "message": "Help others find this tool",
-        "description": "Subtitle for rate button"
+    "installedAddonsStore": {
+        "message": "Add-ons Store",
+        "description": "Value for add-ons store link"
     },
     "installedFooterQuote": {
-        "message": "Thank you for being part of our journey. Happy downloading!",
+        "message": "Thank you for being part of our journey.",
         "description": "Footer quote on the installed page"
+    },
+    "installedCopyright": {
+        "message": "Website Media Downloader © 2026",
+        "description": "Copyright notice"
     },
     "installedFeedbackTitle": {
         "message": "Feedback & Issues",
@@ -1426,8 +1438,60 @@
         "message": "Report an Issue",
         "description": "Label for the feedback button"
     },
+    "applyChangesPrompt": {
+        "message": "Apply changes?",
+        "description": "Prompt in the bottom bar when settings are modified."
+    },
+    "applyButton": {
+        "message": "Apply",
+        "description": "Button to confirm and save setting changes."
+    },
+    "settingsApplied": {
+        "message": "Settings applied successfully",
+        "description": "Snackbar message after settings are saved."
+    },
     "deleteAllConfirmTitle": {
         "message": "Confirm Deletion",
         "description": "The title of the confirmation dialog when deleting all detected media."
+    },
+    "updateAvailable": {
+        "message": "New version v$VERSION$ is available.",
+        "description": "Message shown in the update notification bar.",
+        "placeholders": {
+            "VERSION": {
+                "content": "$1",
+                "example": "1.7.9"
+            }
+        }
+    },
+    "updateButton": {
+        "message": "Update",
+        "description": "Text for the update button in the notification bar."
+    },
+    "updateLaterButton": {
+        "message": "Later",
+        "description": "Text for the later button in the update dialog."
+    },
+    "updateDialogMessage": {
+        "message": "Version $VERSION$ is available. Would you like to update now?",
+        "description": "Message shown in the update dialog.",
+        "placeholders": {
+            "VERSION": {
+                "content": "$1",
+                "example": "1.7.9"
+            }
+        }
+    },
+    "checkUpdateButton": {
+        "message": "Check for Updates",
+        "description": "Text for the manual update check button in the about page."
+    },
+    "alreadyLatestVersion": {
+        "message": "You are using the latest version.",
+        "description": "Snackbar message when no update is found."
+    },
+    "updateCheckError": {
+        "message": "Failed to check for updates.",
+        "description": "Snackbar message when update check fails."
     }
 }

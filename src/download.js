@@ -91,7 +91,10 @@ async function triggerDownload() {
                             cursorRequest.onsuccess = (e) => {
                                 const cursor = e.target.result;
                                 if (cursor) {
-                                    chunks.push(cursor.value.data);
+                                    chunks.push({ 
+                                        index: cursor.value.chunkIndex, 
+                                        data: cursor.value.data 
+                                    });
 
                                     const now = Date.now();
                                     if (now - lastUpdate > 500) {
@@ -111,8 +114,12 @@ async function triggerDownload() {
                             throw new Error(browser.i18n.getMessage("downloadMetadataNotFound"));
                         }
 
+                        // Ensure they are strictly ordered by byte offset
+                        chunks.sort((a, b) => a.index - b.index);
+
                         statusText.textContent = browser.i18n.getMessage("downloadAssembling", [chunks.length.toString()]);
-                        blob = new Blob(chunks, { type: item.mime || "application/octet-stream" });
+                        const blobData = chunks.map(c => c.data);
+                        blob = new Blob(blobData, { type: item.mime || "application/octet-stream" });
                     }
 
                     const objectUrl = URL.createObjectURL(blob);
@@ -179,8 +186,8 @@ async function triggerDownload() {
 document.addEventListener('DOMContentLoaded', async () => {
 
     const colorResult = await browser.storage.local.get('theme-color');
-    if (colorResult['theme-color'] && typeof mdui !== 'undefined') {
-        mdui.setColorScheme(colorResult['theme-color']);
+    if (typeof mdui !== 'undefined') {
+        mdui.setColorScheme(colorResult['theme-color'] || '#bbdefb');
     }
 
     if (targetUrl) {

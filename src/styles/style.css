@@ -64,8 +64,12 @@ mdui-tab {
 }
 
 mdui-tab-panel {
-    padding-bottom: 90px;
+    padding-bottom: 20px;
     animation: fadeIn 0.3s ease;
+}
+
+mdui-tab-panel[value="settings"] {
+    padding-bottom: 100px;
 }
 
 @keyframes fadeIn {
@@ -368,4 +372,93 @@ mdui-segmented-button[selected]::part(button) {
     background-color: rgba(var(--mdui-color-primary), 0.12) !important;
     color: var(--primary) !important;
     font-weight: 600;
+}
+
+/* Custom Pill Select */
+.pill-select-wrapper {
+    position: relative;
+    width: auto;
+    display: inline-block;
+}
+
+.pill-select {
+    width: auto;
+    min-width: 60px;
+    field-sizing: content;
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: var(--surface-lowest);
+    border: 1px solid rgb(var(--mdui-color-outline-variant));
+    border-radius: 9999px;
+    padding: 6px 32px 6px 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: rgb(var(--mdui-color-on-surface));
+    cursor: pointer;
+    transition: var(--transition);
+    outline: none;
+}
+
+.pill-select:hover {
+    background-color: rgba(var(--mdui-color-primary), 0.04);
+    border-color: rgb(var(--mdui-color-outline));
+}
+
+.pill-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--mdui-color-primary), 0.15);
+}
+
+/* Custom Pill Input */
+.pill-input {
+    width: auto;
+    min-width: 100px;
+    max-width: 100%;
+    field-sizing: content;
+    background-color: var(--surface-lowest);
+    border: 1px solid rgb(var(--mdui-color-outline-variant));
+    border-radius: 9999px;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: rgb(var(--mdui-color-on-surface));
+    transition: var(--transition);
+    outline: none;
+}
+
+.pill-input:hover {
+    background-color: rgba(var(--mdui-color-primary), 0.04);
+    border-color: rgb(var(--mdui-color-outline));
+}
+
+.pill-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--mdui-color-primary), 0.15);
+}
+
+.pill-helper-text {
+    font-size: 0.75rem;
+    color: var(--on-surface-variant);
+    padding: 4px 16px 0;
+    opacity: 0.8;
+}
+
+.pill-select-wrapper::after {
+    content: "";
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    transform: translateY(-70%) rotate(45deg);
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.pill-select option {
+    background-color: rgb(var(--mdui-color-surface-container-high));
+    color: rgb(var(--mdui-color-on-surface));
+    padding: 12px;
 }

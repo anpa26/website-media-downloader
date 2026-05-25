@@ -30,6 +30,16 @@
     const downloadExtensions = [".zip", ".rar", ".7z", ".tar", ".gz", ".exe", ".msi", ".apk", ".dmg", ".iso", ".bin", ".pdf", ".epub", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"];
     const allExtensions = videoExtensions.concat(audioExtensions, streamExtensions, subtitleExtensions, imageExtensions);
 
+    function checkIsSegment(url) {
+        if (!url) return false;
+        const urlLower = url.toLowerCase();
+        // Without headers, we can only check extensions
+        return urlLower.includes('.ts') || 
+               urlLower.includes('.m4s') || 
+               urlLower.includes('.m4v') || 
+               urlLower.includes('.m4a');
+    }
+
     function isMediaUrl(url, extraExtensions = []) {
         if (!url || typeof url !== 'string') return false;
         const urlLower = url.toLowerCase();
@@ -70,8 +80,9 @@
     }
 
     window.mdu_scan = function() {
-        chrome.storage.local.get('detect-download-links', (result) => {
+        chrome.storage.local.get(['detect-download-links', 'hide-segments'], (result) => {
             const detectDownloads = result['detect-download-links'] === '1' || result['detect-download-links'] === true;
+            const hideSegments = result['hide-segments'] === '1' || result['hide-segments'] === true;
             const initialSize = detected.size;
             const extraExts = detectDownloads ? downloadExtensions : [];
 
@@ -83,6 +94,7 @@
                 if (url) {
                     const absolute = getAbsoluteUrl(url);
                     if (absolute) {
+                        if (hideSegments && checkIsSegment(absolute)) return;
                         const isDownloadAttr = detectDownloads && el.tagName === 'A' && el.hasAttribute('download');
                         if (isMediaUrl(absolute, extraExts) || el.tagName === 'VIDEO' || el.tagName === 'AUDIO' || isDownloadAttr) {
                             detected.add(absolute);
@@ -98,7 +110,9 @@
                     if (match && match[1]) {
                         const absolute = getAbsoluteUrl(match[1]);
                         if (absolute && isMediaUrl(absolute, extraExts)) {
-                            detected.add(absolute);
+                            if (!(hideSegments && checkIsSegment(absolute))) {
+                                detected.add(absolute);
+                            }
                         }
                     }
                 }
@@ -108,7 +122,11 @@
                     const attrName = attr.name.toLowerCase();
                     if ((attrName.startsWith('data-') || attrName === 'value' || attrName === 'action' || attrName === 'formaction') && isMediaUrl(attr.value, extraExts)) {
                         const absolute = getAbsoluteUrl(attr.value);
-                        if (absolute) detected.add(absolute);
+                        if (absolute) {
+                            if (!(hideSegments && checkIsSegment(absolute))) {
+                                detected.add(absolute);
+                            }
+                        }
                     }
                 }
             });

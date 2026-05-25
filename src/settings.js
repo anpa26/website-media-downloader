@@ -27,7 +27,45 @@ document.addEventListener('DOMContentLoaded', async () => {
         customElements.whenDefined('mdui-segmented-button')
     ]);
     initializeSettings();
+    setupConfirmationBar();
 });
+
+let pendingChanges = {};
+
+function setupConfirmationBar() {
+    const bar = document.getElementById('settings-apply-bar');
+    const applyBtn = document.getElementById('apply-settings');
+    const cancelBtn = document.getElementById('cancel-settings');
+
+    if (!bar || !applyBtn || !cancelBtn) return;
+
+    applyBtn.addEventListener('click', async () => {
+        if (Object.keys(pendingChanges).length === 0) return;
+
+        // Save current tab and scroll position before reload
+        const navbar = document.getElementById('navbar');
+        if (navbar && typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem('activeTab', navbar.value);
+            sessionStorage.setItem('scrollPos', window.scrollY);
+        }
+
+        await browser.storage.local.set(pendingChanges);
+        
+        // No need to manually update theme or popup state here as reload will handle it
+        location.reload();
+    });
+
+    cancelBtn.addEventListener('click', () => {
+        pendingChanges = {};
+        bar.style.display = 'none';
+        initializeSettings(); // Re-sync UI with actual storage
+    });
+}
+
+function showApplyBar() {
+    const bar = document.getElementById('settings-apply-bar');
+    if (bar) bar.style.display = 'flex';
+}
 
 async function initializeSettings() {
     const settings = [
@@ -44,7 +82,7 @@ async function initializeSettings() {
 
         if (value === undefined) {
             const defaultsEnabled = [
-                'url-detection', 'mime-detection', 'history-page',
+                'url-detection', 'mime-detection',
                 'media-notification', 'only-video', 'only-audio', 'only-stream',
                 'background-download', 'only-file'
             ];
@@ -53,7 +91,7 @@ async function initializeSettings() {
                 browser.storage.local.set({ [setting]: value });
             }
 
-            if (['only-image', 'only-subtitle', 'detect-download-links'].includes(setting)) {
+            if (['only-image', 'only-subtitle', 'detect-download-links', 'history-page'].includes(setting)) {
                 value = '0';
                 browser.storage.local.set({ [setting]: value });
             }
@@ -68,75 +106,43 @@ async function initializeSettings() {
         }
 
         const element = document.getElementById(setting);
-        if (element && element.tagName === 'MDUI-SWITCH') {
+        if (!element) continue;
+
+        if (element.tagName === 'MDUI-SWITCH') {
             element.checked = value === '1' || value === true;
-            element.addEventListener('change', () => {
-                browser.storage.local.set({ [setting]: element.checked ? '1' : '0' });
+            element.onchange = () => {
+                pendingChanges[setting] = element.checked ? '1' : '0';
+                showApplyBar();
 
                 if (setting === 'background-download') {
                     syncNotificationSetting(element.checked);
                 }
-            });
+            };
             continue;
         }
 
-        if (element && element.tagName === 'MDUI-TEXT-FIELD') {
+        if (element.tagName === 'MDUI-TEXT-FIELD') {
             element.value = value || '';
-            element.addEventListener('input', () => {
-                browser.storage.local.set({ [setting]: element.value });
-            });
+            element.oninput = () => {
+                pendingChanges[setting] = element.value;
+                showApplyBar();
+            };
             continue;
         }
 
-        const group = document.getElementById(setting + '-group');
-        if (group) {
+        if (element.tagName === 'MDUI-SELECT' || element.tagName === 'SELECT') {
             const defaultValue = setting === 'open-preference' ? 'tab' :
                                 (setting === 'download-method' ? 'browser' :
                                 (setting === 'stream-quality' ? 'highest' :
                                 (setting === 'connections' ? '4' :
                                 (setting === 'stream-download' ? 'offline' : 'stream'))));
-            const activeValue = value || defaultValue;
-
-            group.value = activeValue;
-
-            const updateSelection = (val) => {
-                const buttons = group.querySelectorAll('mdui-segmented-button');
-                buttons.forEach(btn => {
-                    if (btn.value === val) {
-                        btn.setAttribute('selected', '');
-                        btn.selected = true;
-                    } else {
-                        btn.removeAttribute('selected');
-                        btn.selected = false;
-                    }
-                });
+            
+            element.value = value || defaultValue;
+            element.onchange = () => {
+                pendingChanges[setting] = element.value;
+                showApplyBar();
             };
-
-            setTimeout(() => updateSelection(activeValue), 50);
-
-            group.addEventListener('change', () => {
-                const newVal = group.value;
-                if (newVal) {
-                    browser.storage.local.set({ [setting]: newVal });
-                    updateSelection(newVal);
-                    if (setting === 'open-preference') updatePopupState(newVal);
-                } else {
-
-                    group.value = activeValue;
-                    updateSelection(activeValue);
-                }
-            });
-
-            group.addEventListener('click', (e) => {
-                const btn = e.target.closest('mdui-segmented-button');
-                if (btn) {
-                    const clickedVal = btn.value;
-                    group.value = clickedVal;
-                    browser.storage.local.set({ [setting]: clickedVal });
-                    updateSelection(clickedVal);
-                    if (setting === 'open-preference') updatePopupState(clickedVal);
-                }
-            });
+            continue;
         }
     }
 
@@ -160,10 +166,11 @@ async function initializeSettings() {
     }
 
     if (autoGenBtn && filenameInput) {
-        autoGenBtn.addEventListener('click', () => {
+        autoGenBtn.onclick = () => {
             const defaultTemplate = "{title} - {name}";
             filenameInput.value = defaultTemplate;
-            browser.storage.local.set({ 'filename-template': defaultTemplate });
+            pendingChanges['filename-template'] = defaultTemplate;
+            showApplyBar();
             updateDisableRenameState();
 
             if (typeof mdui !== 'undefined' && mdui.snackbar) {
@@ -172,69 +179,59 @@ async function initializeSettings() {
                     placement: "top"
                 });
             }
-        });
+        };
     }
 
-    const colorInput = document.getElementById('color-picker-input');
-    const applyColorBtn = document.getElementById('apply-color-button');
     const presets = document.querySelectorAll('.color-preset');
+    const hexInput = document.getElementById('color-hex-input');
     const openSettingsTabBtn = document.getElementById('open-settings-tab');
 
-    if (colorInput) {
-        const activeColor = colorResult['theme-color'] || '#bbdefb';
-        colorInput.value = activeColor;
-        mdui.setColorScheme(activeColor);
+    const activeColor = colorResult['theme-color'] || '#bbdefb';
+    mdui.setColorScheme(activeColor);
+    if (hexInput) hexInput.value = activeColor;
 
-        const updateActivePreset = (color) => {
-            presets.forEach(p => {
-                if (p.dataset.color.toLowerCase() === color.toLowerCase()) {
-                    p.classList.add('active');
-                } else {
-                    p.classList.remove('active');
-                }
-            });
+    const updateActivePreset = (color) => {
+        presets.forEach(p => {
+            if (p.dataset.color && p.dataset.color.toLowerCase() === color.toLowerCase()) {
+                p.classList.add('active');
+            } else {
+                p.classList.remove('active');
+            }
+        });
+    };
+    updateActivePreset(activeColor);
+
+    const stageColor = (newColor) => {
+        pendingChanges['theme-color'] = newColor;
+        showApplyBar();
+        mdui.setColorScheme(newColor);
+        updateActivePreset(newColor);
+    };
+
+    if (hexInput) {
+        hexInput.oninput = (e) => {
+            let val = e.target.value;
+            if (!val.startsWith('#')) val = '#' + val;
+            if (/^#[0-9A-F]{6}$/i.test(val)) {
+                stageColor(val);
+            }
         };
-        updateActivePreset(activeColor);
+    }
 
-        const saveColor = (newColor) => {
-            browser.storage.local.set({ 'theme-color': newColor });
-            mdui.setColorScheme(newColor);
-            updateActivePreset(newColor);
+    presets.forEach(preset => {
+        preset.onclick = () => {
+            const color = preset.dataset.color;
+            if (color) {
+                if (hexInput) hexInput.value = color;
+                stageColor(color);
+            }
         };
+    });
 
-        colorInput.addEventListener('input', (e) => {
-            saveColor(e.target.value);
+    if (openSettingsTabBtn) {
+        openSettingsTabBtn.addEventListener('click', () => {
+            browser.tabs.create({ url: 'popup.html?options=true' });
         });
-
-        colorInput.addEventListener('change', (e) => {
-            saveColor(e.target.value);
-        });
-
-        if (applyColorBtn) {
-            applyColorBtn.addEventListener('click', () => {
-                saveColor(colorInput.value);
-                if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                    mdui.snackbar({
-                        message: browser.i18n.getMessage("themeColorApplied"),
-                        placement: "top"
-                    });
-                }
-            });
-        }
-
-        presets.forEach(preset => {
-            preset.addEventListener('click', () => {
-                const color = preset.dataset.color;
-                colorInput.value = color;
-                saveColor(color);
-            });
-        });
-
-        if (openSettingsTabBtn) {
-            openSettingsTabBtn.addEventListener('click', () => {
-                browser.tabs.create({ url: 'popup.html?options=true' });
-            });
-        }
     }
 
     const bgDlSwitch = document.getElementById('background-download');

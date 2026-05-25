@@ -202,11 +202,11 @@
     },
     "detectDownloadLinksCheckbox": {
         "message": "كشف روابط التحميل",
-        "description": "Label kotak centang untuk mengaktifkan deteksi tautan unduhan."
+        "description": "The label of the checkbox to enable detection of download links."
     },
     "detectDownloadLinksExplain": {
         "message": "كشف جميع الروابط التي تشير إلى ملفات أو تحتوي على سمة تحميل.",
-        "description": "Penjelasan opsi deteksi tautan unduhan."
+        "description": "The explanation of the detect download links option."
     },
     "downloadMethodTitle": {
         "message": "طريقة التنزيل",
@@ -294,7 +294,7 @@
     },
     "onlySubtitleExplain": {
         "message": "إظهار ملفات الترجمة والتعليقات المكتشفة.",
-        "description": "Explains purpose of subtitle filter"
+        "description": "Explains the filter for subtitle files"
     },
     "onlyFileTitle": {
         "message": "إظهار روابط التحميل",
@@ -302,7 +302,7 @@
     },
     "onlyFileExplain": {
         "message": "إظهار روابط التحميل والملفات المكتشفة في القائمة.",
-        "description": "Menjelaskan kegunaan filter tautan unduhan"
+        "description": "Explains the filter for download links"
     },
     "mediaNotificationTitle": {
         "message": "تم اكتشاف وسائط!",
@@ -1355,11 +1355,11 @@
         "description": "Title of the installed page"
     },
     "installedHeroTitle": {
-        "message": "شكرًا لاختيارك لنا!",
+        "message": "Installation Complete",
         "description": "Hero title of the installed page"
     },
     "installedHeroDescription": {
-        "message": "رفيقك الأمثل للوسائط على الويب. جرب الكشف السلس عن الوسائط والتنزيلات عالية السرعة عبر جميع مواقعك المفضلة.",
+        "message": "The ultimate media companion is ready. Start detecting and downloading your favorite content with a single click.",
         "description": "Hero description of the installed page"
     },
     "installedVersion": {
@@ -1367,67 +1367,126 @@
         "description": "Label for version number"
     },
     "installedChangelogTitle": {
-        "message": "ما الجديد في",
+        "message": "Improvements & Updates",
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "تحسين وظيفة الإلغاء مع استجابة فورية لواجهة المستخدم.",
+        "message": "تقديم قوائم منسدلة مخصصة ومؤشرات مرئية لتعزيز السرعة.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "حل مشكلة تكرار أشرطة التقدم عند إعادة فتح النافذة المنبثقة.",
+        "message": "تنفيذ واجهة مستخدم لتأكيد الإعدادات وتوطين صفحة التثبيت بالكامل.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "تحسين منطق اكتشاف الملفات ومزامنة جميع الترجمات.",
+        "message": "تحسين اكتشاف مقاطع البث وتصفيتها وإصلاح الأعطال المحتملة.",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "تحسين اتساق واجهة المستخدم ومعلومات حالة التنزيل.",
+        "message": "إصلاح شامل للتنزيلات المتوازية وحل العديد من أخطاء واجهة المستخدم المنبثقة.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "توسيع تنسيقات الملفات المدعومة في الوثائق والاكتشاف.",
+        "message": "تعطيل صفحة السجل افتراضيًا لتحسين أداء التحميل الأولي.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
-        "message": "تعرف على المطور",
-        "description": "Title for the developer section"
-    },
-    "installedSupportTitle": {
-        "message": "دعم المشروع",
-        "description": "Title for the support section"
-    },
-    "installedSupportDescription": {
-        "message": "إذا وجدت هذه الأداة مفيدة، يرجى التفكير في دعم تطويرها. ملاحظاتك تساعدنا على النمو!",
-        "description": "Description for the support section"
-    },
-    "installedStarSub": {
-        "message": "أظهر بعض الحب للمصدر",
-        "description": "Subtitle for GitHub star button"
-    },
-    "installedRateSub": {
-        "message": "ساعد الآخرين في العثور على هذه الأداة",
-        "description": "Subtitle for rate button"
+        "message": "Developer",
+        "description": "Label for developer card"
     },
     "installedFooterQuote": {
-        "message": "شكرًا لكونك جزءًا من رحلتنا. تحميل سعيد!",
+        "message": "Thank you for being part of our journey.",
         "description": "Footer quote on the installed page"
     },
     "installedFeedbackTitle": {
-        "message": "التعليقات والمشكلات",
+        "message": "Feedback & Issues",
         "description": "Title for the feedback section"
     },
     "installedFeedbackDesc": {
-        "message": "هل وجدت خطأً أو لديك اقتراح؟ ساعدنا على التحسن من خلال فتح مشكلة على GitHub!",
+        "message": "Found a bug or have a suggestion? Help us improve by opening an issue on GitHub!",
         "description": "Description for the feedback section"
     },
     "installedFeedbackButton": {
-        "message": "الإبلاغ عن مشكلة",
+        "message": "Report an Issue",
         "description": "Label for the feedback button"
+    },
+    "applyChangesPrompt": {
+        "message": "هل تريد تطبيق التغييرات؟",
+        "description": "Prompt in the bottom bar when settings are modified."
+    },
+    "applyButton": {
+        "message": "تطبيق",
+        "description": "Button to confirm and save setting changes."
+    },
+    "settingsApplied": {
+        "message": "تم تطبيق الإعدادات بنجاح",
+        "description": "Snackbar message after settings are saved."
     },
     "deleteAllConfirmTitle": {
         "message": "تأكيد الحذف",
         "description": "The title of the confirmation dialog when deleting all detected media."
+    },
+    "installedBrand": {
+        "message": "WMD",
+        "description": "Short brand name for the installed page"
+    },
+    "getStarted": {
+        "message": "Get Started Now",
+        "description": "Label for the get started button"
+    },
+    "installedCommunity": {
+        "message": "Community",
+        "description": "Label for community card"
+    },
+    "installedGitHubProject": {
+        "message": "GitHub Project",
+        "description": "Value for GitHub project link"
+    },
+    "installedSupport": {
+        "message": "Support",
+        "description": "Label for support card"
+    },
+    "installedAddonsStore": {
+        "message": "Add-ons Store",
+        "description": "Value for add-ons store link"
+    },
+    "installedCopyright": {
+        "message": "Website Media Downloader © 2026",
+        "description": "Copyright notice"
+    },
+    "updateAvailable": {
+        "message": "إصدار جديد v$VERSION$ متوفر.",
+        "description": "Message shown in the update notification bar.",
+        "placeholders": {
+            "VERSION": {
+                "content": "$1"
+            }
+        }
+    },
+    "updateButton": {
+        "message": "تحديث",
+        "description": "Text for the update button in the notification bar."
+    },
+    "updateLaterButton": {
+        "message": "لاحقاً",
+        "description": "Text for the later button in the update dialog."
+    },
+    "updateDialogMessage": {
+        "message": "إصدار $VERSION$ متوفر. هل تريد التحديث الآن؟",
+        "description": "Message shown in the update dialog.",
+        "placeholders": {
+            "VERSION": {
+                "content": "$1"
+            }
+        }
+    },
+    "checkUpdateButton": {
+        "message": "التحقق من التحديثات"
+    },
+    "alreadyLatestVersion": {
+        "message": "أنت تستخدم أحدث إصدار."
+    },
+    "updateCheckError": {
+        "message": "فشل التحقق من التحديثات."
     }
 }

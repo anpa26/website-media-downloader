@@ -490,6 +490,41 @@ function getMediaType(url, contentType) {
     return null;
 }
 
+function checkIsSegment(url, contentType, contentLength) {
+    if (!url) return false;
+    const urlLower = url.toLowerCase();
+    const mimeLower = (contentType || '').toLowerCase();
+    const size = parseInt(contentLength) || 0;
+
+    // Common segment extensions
+    if (urlLower.includes('.ts') || 
+        urlLower.includes('.m4s') || 
+        urlLower.includes('.m4v') || 
+        urlLower.includes('.m4a')) {
+        return true;
+    }
+
+    // Common segment MIME types
+    if (mimeLower === 'video/mp2t' || 
+        mimeLower === 'video/iso.segment' || 
+        mimeLower === 'audio/iso.segment') {
+        return true;
+    }
+
+    // Heuristics for segments without clear extensions or special MIME types
+    // Segments are usually small and often have specific keywords in URL
+    if (size > 0 && size < 5242880) { // < 5MB
+        if (urlLower.includes('chunk') || 
+            urlLower.includes('fragment') || 
+            urlLower.includes('segment') || 
+            urlLower.includes('range/')) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 async function addToHistory(item) {
     const result = await browser.storage.local.get('history-page');
     if (result['history-page'] !== '1') return;
@@ -636,8 +671,7 @@ async function showMediaNotification(details, settings) {
 
     if (!mediaType) return;
 
-    const isSegment = url.toLowerCase().includes('.ts') || (contentLength > 0 && contentLength < 1048576 && contentType === 'video/mp2t');
-    if (settings.hideSegments && isSegment) return;
+    if (settings.hideSegments && checkIsSegment(url, contentType, contentLength)) return;
 
     const now = Date.now();
 
@@ -979,6 +1013,7 @@ function initListener() {
                         const urlEnabledNow = !!currentSettings.urlDetection;
 
                         const shouldSaveNow = (() => {
+                            if (currentSettings.hideSegments && checkIsSegment(details.url, contentType, size)) return false;
                             if (!mimeEnabledNow && !urlEnabledNow) return true;
                             if (mimeEnabledNow && mimeMatches) return true;
                             if (urlEnabledNow && urlMatches) return true;
@@ -1208,7 +1243,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 id: id,
                 loaded: value.loaded,
                 total: value.total,
-                url: value.url
+                url: value.url,
+                isParallel: !!value.isParallel
             };
         }
         sendResponse(downloadsObj);
@@ -1529,38 +1565,39 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
         await saveDownloadState(downloadId, { url, filename, total, loaded: 0, originalRequest: null, isParallel: true });
 
         const partSize = Math.ceil(total / connections);
-        const BUFFER_THRESHOLD = 1024 * 1024;
+        const CHUNK_SIZE = 1024 * 1024; // 1MB chunks for storage
         let totalLoaded = 0;
         let lastReportTime = 0;
 
         const partPromises = [];
 
         for (let i = 0; i < connections; i++) {
-            const start = i * partSize;
-            const end = Math.min((i + 1) * partSize - 1, total - 1);
-            if (start >= total) break;
+            const partStart = i * partSize;
+            const partEnd = Math.min((i + 1) * partSize - 1, total - 1);
+            if (partStart >= total) break;
 
-            partPromises.push((async (partIndex) => {
+            partPromises.push((async (pIdx, pStart, pEnd) => {
                 const partOptions = {
                     ...baseOptions,
                     headers: {
                         ...baseOptions.headers,
-                        'Range': `bytes=${start}-${end}`
+                        'Range': `bytes=${pStart}-${pEnd}`
                     }
                 };
 
                 const response = await fetch(url, partOptions);
                 if (!response.ok && response.status !== 206) {
-                    throw new Error(`Part ${partIndex} failed with status ${response.status}`);
+                    throw new Error(`Part ${pIdx} failed with status ${response.status}`);
                 }
 
                 const reader = response.body.getReader();
-                let localChunkIndex = 0;
+                let currentPos = pStart;
                 let currentBuffer = [];
                 let currentBufferSize = 0;
 
                 async function flushPartBuffer() {
                     if (currentBuffer.length === 0) return;
+                    
                     const combined = new Uint8Array(currentBufferSize);
                     let offset = 0;
                     for (const b of currentBuffer) {
@@ -1568,12 +1605,17 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                         offset += b.length;
                     }
 
-                    const globalChunkIndex = (partIndex * 1000000) + localChunkIndex++;
-                    await storeChunkInCache(downloadId, globalChunkIndex, combined);
+                    // Store with absolute byte offset as index to ensure correct ordering
+                    const absoluteChunkIndex = Math.floor((currentPos - currentBufferSize) / CHUNK_SIZE);
+                    // If a chunk spans across part boundaries, we might need a more complex indexing
+                    // but since partSize is usually multiple of CHUNK_SIZE or handled by download.js correctly,
+                    // we use (absolute offset / CHUNK_SIZE) and offset within chunk if needed.
+                    // To keep it simple and robust, we store segments by their START BYTE as the index.
+                    
+                    await storeChunkInCache(downloadId, currentPos - currentBufferSize, combined);
 
                     currentBuffer = [];
                     currentBufferSize = 0;
-
                     saveDownloadState(downloadId, { url, filename, total, loaded: totalLoaded, originalRequest: null, isParallel: true });
                 }
 
@@ -1583,6 +1625,7 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
 
                     currentBuffer.push(value);
                     currentBufferSize += value.length;
+                    currentPos += value.length;
                     totalLoaded += value.length;
 
                     activeDownloads.set(downloadId, { loaded: totalLoaded, total: total, abortController, url: url });
@@ -1595,16 +1638,17 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                             id: downloadId,
                             url: url,
                             loaded: totalLoaded,
-                            total: total
+                            total: total,
+                            isParallel: true
                         }).catch(() => {});
                     }
 
-                    if (currentBufferSize >= BUFFER_THRESHOLD) {
+                    if (currentBufferSize >= CHUNK_SIZE) {
                         await flushPartBuffer();
                     }
                 }
                 await flushPartBuffer();
-            })(i));
+            })(i, partStart, partEnd));
         }
 
         await Promise.all(partPromises);
@@ -1613,12 +1657,14 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
             action: 'downloadProgress',
             id: downloadId,
             url: url,
-            loaded: totalLoaded,
-            total: total
+            loaded: total,
+            total: total,
+            isParallel: true
         }).catch(() => {});
 
         const finalFilename = filename || getFileName(url);
-        const contentType = providedContentType || baseOptions.headers['Content-Type'] || 'application/octet-stream';
+        const contentType = providedContentType || 'application/octet-stream';
+        
         await storeInCache(downloadId, null, contentType);
 
         pendingSaveQueue.push({ id: downloadId, url, filename: finalFilename });
@@ -1629,15 +1675,17 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
         removeMediaRequest(url);
         browser.runtime.sendMessage({ action: 'downloadComplete', id: downloadId, url: url }).catch(() => {});
 
-    } catch (error) {
+    } catch (err) {
+        if (err.name === 'AbortError') return;
+        console.error("Parallel download error:", err);
+        browser.runtime.sendMessage({ 
+            action: 'downloadError', 
+            id: downloadId, 
+            url: url, 
+            error: err.message 
+        }).catch(() => {});
         activeDownloads.delete(downloadId);
-        removeDownloadState(downloadId);
-        if (error.name === 'AbortError') {
-            browser.runtime.sendMessage({ action: 'downloadError', url: url, error: 'USER_CANCELED' }).catch(() => {});
-        } else {
-            console.error("Parallel download failed:", error);
-            browser.runtime.sendMessage({ action: 'downloadError', url: url, error: error.message }).catch(() => {});
-        }
+        cleanupDownload(downloadId);
     }
 }
 
@@ -1831,7 +1879,8 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
                     id: downloadId,
                     url: url,
                     loaded: loaded,
-                    total: total
+                    total: total,
+                    isParallel: false
                 }).catch(() => {});
             }
 
@@ -1849,7 +1898,8 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
             id: downloadId,
             url: url,
             loaded: loaded,
-            total: total
+            total: total,
+            isParallel: false
         }).catch(() => {});
 
         const finalFilename = filename || getFileName(url);
@@ -1887,7 +1937,8 @@ browser.runtime.onInstalled.addListener(async (details) => {
             'download-method': 'browser',
             'mime-detection': '1',
             'url-detection': '1',
-            'media-cache': '1'
+            'media-cache': '1',
+            'history-page': '0'
         };
         await browser.storage.local.set(defaults);
 
@@ -2088,16 +2139,26 @@ async function initCacheState() {
 
 browser.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local') return;
-    if (!Object.prototype.hasOwnProperty.call(changes, 'media-cache')) return;
 
-    const newEnabled = !!isFlagEnabled(changes['media-cache'].newValue);
-    if (newEnabled === mediaCacheEnabled) return;
+    if (Object.prototype.hasOwnProperty.call(changes, 'media-cache')) {
+        const newEnabled = !!isFlagEnabled(changes['media-cache'].newValue);
+        if (newEnabled !== mediaCacheEnabled) {
+            mediaCacheEnabled = newEnabled;
+            if (mediaCacheEnabled) {
+                attachCacheListener();
+            } else {
+                detachCacheListener();
+            }
+        }
+    }
 
-    mediaCacheEnabled = newEnabled;
-    if (mediaCacheEnabled) {
-        attachCacheListener();
-    } else {
-        detachCacheListener();
+    if (Object.prototype.hasOwnProperty.call(changes, 'open-preference')) {
+        const newVal = changes['open-preference'].newValue;
+        if (newVal === 'popup') {
+            browser.action.setPopup({ popup: 'popup.html' });
+        } else {
+            browser.action.setPopup({ popup: '' });
+        }
     }
 });
 

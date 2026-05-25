@@ -9,7 +9,7 @@
     },
     "errorTitle1": {
         "message": "Etwas ist schiefgelaufen!",
-        "description": "The 1st title of the error popup."
+        "description": "The 1st title of the error popup, randomly selects one of the titles when there is an error."
     },
     "errorTitle2": {
         "message": "Oops!",
@@ -41,11 +41,11 @@
     },
     "okButton": {
         "message": "OK",
-        "description": "OK button text."
+        "description": "The text of the OK button on the error popup."
     },
     "requestText": {
         "message": "$METHOD$-Anfrage von $SOURCE$ at $TIME$",
-        "description": "Request type text.",
+        "description": "The text that indicates the type of request made to load the media.",
         "placeholders": {
             "METHOD": {
                 "content": "$1",
@@ -63,55 +63,54 @@
     },
     "requestMethodUnknown": {
         "message": "Unbekannte Methode",
-        "description": "Unknown request method."
+        "description": "The text shown when the request method is not recognized."
     },
     "requestSourceUnknown": {
         "message": "unbekannte Quelle",
-        "description": "Unknown request source."
+        "description": "The text shown when the source of the request is not recognized."
     },
     "sizeText": {
         "message": "Dateigröße",
-        "description": "Label for media size."
+        "description": "The text above the size selector in the media list."
     },
     "copyURL": {
         "message": "URL kopieren",
-        "description": "Copy URL button."
+        "description": "The text of the button to copy the media URL to the clipboard."
     },
     "copyURLSuccess": {
         "message": "URL copied to clipboard",
-        "description": "The message shown when the URL is successfully copied to clipboard."
+        "description": "The message when the URL is successfully copied to the clipboard."
     },
     "URLCopyError": {
         "message": "Die URL konnte nicht in die Zwischenablage kopiert werden.",
-        "description": "URL copy error."
+        "description": "The error message when the copy URL operation fails."
     },
     "previewMedia": {
         "message": "Vorschau",
-        "description": "Preview button."
+        "description": "The text of the preview button in the media list."
     },
     "audioOnly": {
         "message": "Audio-Only",
-        "description": "The text of the audio-only extraction button in the media list."
+        "description": "The text of the audio only extraction button in the media list."
     },
     "downloadMedia": {
         "message": "Herunterladen",
-        "description": "Download button."
+        "description": "The text of the download button in the media list."
     },
     "endOfMediaList": {
         "message": "Das ist alles, was gefunden wurde! Wenn der gewünschte Inhalt nicht angezeigt wird, starte die Wiedabe und aktualisiere anschließend die Liste. Falls der Stream weiterhin nicht erscheint, versuche es mit einer anderen Erkennungsmethode in den Einstellungen. Für weitere Hilfe klicke auf die '?'-Schaltfläche unten links.",
-        "description": "End of list text."
+        "description": "The text shown at the end of the media list in the popup."
     },
     "endOfMediaListLink": {
         "message": "Dein Medium nicht gefunden? Hier melden!",
-        "description": "The text of the link shown at the end of the media list in the popup, which leads to a form to submit undetected media."
+        "description": "The text of the link at the end of the media list to submit media that wasn't detected."
     },
     "listLoadError": {
         "message": "Medienanfragen konnten nicht geladen werden. Details: $ERROR$",
-        "description": "List load error.",
+        "description": "The error message when the media list fails to load.",
         "placeholders": {
             "ERROR": {
-                "content": "$1",
-                "example": "Network error"
+                "content": "$1"
             }
         }
     },
@@ -121,11 +120,10 @@
     },
     "listClearError": {
         "message": "Medienliste konnte nicht geleert werden. Details: $ERROR$",
-        "description": "List clear error.",
+        "description": "The error message when the media list fails to be cleared.",
         "placeholders": {
             "ERROR": {
-                "content": "$1",
-                "example": "Network error"
+                "content": "$1"
             }
         }
     },
@@ -135,29 +133,28 @@
     },
     "downloadError": {
         "message": "Medien konnten nicht heruntergeladen werden. Details: $ERROR$",
-        "description": "Download error.",
+        "description": "The error message when a media download fails.",
         "placeholders": {
             "ERROR": {
-                "content": "$1",
-                "example": "Network error"
+                "content": "$1"
             }
         }
     },
     "homeTab": {
         "message": "Start",
-        "description": "Home tab name."
+        "description": "The name of the home tab in the popup."
     },
     "settingsTab": {
         "message": "Einstellungen",
-        "description": "Settings tab name."
+        "description": "The name of the settings tab in the popup."
     },
     "clearListButton": {
         "message": "Liste leeren",
-        "description": "Clear list button."
+        "description": "The label of the button to clear the media list."
     },
     "refreshListButton": {
         "message": "Liste aktualisieren",
-        "description": "Refresh list button."
+        "description": "The label of the button to refresh the media list."
     },
     "settingsDetectionSectionTitle": {
         "message": "Detection settings",
@@ -177,59 +174,59 @@
     },
     "detectionMethodTitle": {
         "message": "Medienerkennung",
-        "description": "Detection method title."
+        "description": "The title of the detection method section in the settings tab."
     },
     "needToRefreshListWarning": {
         "message": "Bitte klicke auf \"Liste aktualisieren\", nachdem du diese Einstellung geändert hast, damit die Änderungen sichtbar werden!",
-        "description": "Warning after setting change."
+        "description": "The warning under the detection method title."
     },
     "detectionDisabledExplain": {
         "message": "Wenn Sie beide Optionen deaktivieren, wird nichts gefiltert und es werden alle Anfragen (auch Nicht-Medienanfragen!) des Browsers angezeigt.",
-        "description": "The explanation on how disabling detection works, shown in the settings tab"
+        "description": "The explanation when detection is disabled."
     },
     "urlDetectionExplain": {
         "message": "Erkennung durch Überprüfung, ob die URL einen bekannten Medientyp enthält (z.B. .mp4, .m3u8). Schnell, aber einige Websites verwenden andere Methoden bei denen sich der Medientyp nicht direkt vorhersagen lässt und werden daher eventuell nicht erkannt.",
-        "description": "URL detection explanation."
+        "description": "The explanation of the URL-based detection method."
     },
     "urlDetectionCheckbox": {
         "message": "Erkennung anhand der URL",
-        "description": "URL detection label."
+        "description": "The label of the checkbox to enable URL-based detection."
     },
     "mimeDetectionExplain": {
         "message": "Erkennung durch Analyse der MIME-Antwort des Servers (z.B. video/mp4, application/vnd.apple.mpegurl). Etwas langsamer, aber zuverlässiger als die URL-Erkennung.",
-        "description": "MIME detection explanation."
+        "description": "The explanation of the MIME-based detection method."
     },
     "mimeDetectionCheckbox": {
         "message": "Erkennung über MIME-Antwort des Servers",
-        "description": "MIME detection label."
+        "description": "The label of the checkbox to enable MIME-based detection."
     },
     "detectDownloadLinksCheckbox": {
         "message": "Download-Links erkennen",
-        "description": "Label kotak centang untuk mengaktifkan deteksi tautan unduhan."
+        "description": "The label of the checkbox to enable detection of download links."
     },
     "detectDownloadLinksExplain": {
         "message": "Alle Links erkennen, die auf Dateien verweisen oder ein Download-Attribut haben.",
-        "description": "Penjelasan opsi deteksi tautan unduhan."
+        "description": "The explanation of the detect download links option."
     },
     "downloadMethodTitle": {
         "message": "Download-Methode",
-        "description": "Download method title."
+        "description": "The title of the download method section in the settings tab."
     },
     "browserDownloadExplain": {
         "message": "Lädt Medien über den nativen Download-Manager des Browsers herunter. Schnell und stabil bei Verbindungsabbrüchen, funktioniert jedoch nur auf bestimmten Websites und Browsern (z.B. Firefox am PC).",
-        "description": "Browser download explanation."
+        "description": "The explanation of the browser download method."
     },
     "browserDownloadCheckbox": {
         "message": "Natives Herunterladen über den Browser",
-        "description": "Browser download label."
+        "description": "The label of the checkbox to enable the browser download method."
     },
     "fetchDownloadExplain": {
         "message": "Lädt Medien mithilfe der Fetch-API herunter. Funktioniert auf den meisten Seiten, kann aber langsamer sein und reagiert empfindlich auf Verbindungsprobleme.",
-        "description": "Fetch download explanation."
+        "description": "The explanation of the fetch download method."
     },
     "fetchDownloadCheckbox": {
         "message": "Fetch API",
-        "description": "Fetch API label."
+        "description": "The label of the checkbox to enable the fetch download method."
     },
     "mediaCacheTitle": {
         "message": "Medien-Cache",
@@ -237,11 +234,11 @@
     },
     "mediaCacheExplain": {
         "message": "Versucht, die Medienantwort zu speichern, damit der Download ohne eine Anfrage an den Server erfolgen kann. Downloads werden schneller, können aber Ihren Browser verlangsamen. Deaktivieren Sie dies, wenn Sie Probleme mit dem Add-on oder eingefrorenen Seiten haben.",
-        "description": "The explanation of the media cache option shown in a tooltip."
+        "description": "The explanation of the media cache option."
     },
     "mediaCacheExplainPrivate": {
         "message": "Diese Funktion ist derzeit nicht in Verwendung, da du dich im privaten Modus befindest. Um diese Einstellung zu verwenden oder zu ändern, öffne bitte das Add-on und deine Medien in einem normalen Fenster.",
-        "description": "The explanation of why media cache option is disabled in private mode, shown in a tooltip."
+        "description": "The explanation of why the media cache is disabled in private mode."
     },
     "mediaCacheCheckbox": {
         "message": "Medien-Cache aktivieren",
@@ -253,11 +250,11 @@
     },
     "hideSegmentsExplain": {
         "message": "Live-Streams verwenden mehrere Segmente, um Inhalte in kleinen Teilen zu liefern. Normalerweise benötigen Sie nur das Stream-Manifest, daher können die Segmente ausgeblendet werden, um Unordnung zu reduzieren.",
-        "description": "The explanation of the hide stream segments option shown in a tooltip."
+        "description": "The explanation of the hide stream segments option."
     },
     "hideSegmentsCheckbox": {
         "message": "Stream-Segmente in der Medienliste ausblenden",
-        "description": "The label of the checkbox to enable hiding stream segments in the media list."
+        "description": "The label of the checkbox to hide stream segments."
     },
     "onlyVideoTitle": {
         "message": "Video anzeigen",
@@ -265,7 +262,7 @@
     },
     "onlyVideoExplain": {
         "message": "Erkannte Videodateien in der Liste anzeigen.",
-        "description": "Erklärt, was der Videofilter bewirkt"
+        "description": "Explains purpose of video filter"
     },
     "onlyAudioTitle": {
         "message": "Audio anzeigen",
@@ -273,7 +270,7 @@
     },
     "onlyAudioExplain": {
         "message": "Erkannte Audiodateien in der Liste anzeigen.",
-        "description": "Erklärt, was der Audiofilter bewirkt"
+        "description": "Explains purpose of audio filter"
     },
     "onlyStreamTitle": {
         "message": "Streams anzeigen",
@@ -281,7 +278,7 @@
     },
     "onlyStreamExplain": {
         "message": "Erkannte Medienstreams (HLS, DASH) anzeigen.",
-        "description": "Erklärt, was der Streamfilter bewirkt"
+        "description": "Explains purpose of stream filter"
     },
     "onlyImageTitle": {
         "message": "Bilder anzeigen",
@@ -289,7 +286,7 @@
     },
     "onlyImageExplain": {
         "message": "Erkannte Bilddateien (WebP, PNG, JPG, GIF) anzeigen.",
-        "description": "Erklärt, was der Bildfilter bewirkt"
+        "description": "Explains purpose of image filter"
     },
     "onlySubtitleTitle": {
         "message": "Untertitel anzeigen",
@@ -297,7 +294,7 @@
     },
     "onlySubtitleExplain": {
         "message": "Erkannte Untertitel- und Beschriftungsdateien anzeigen.",
-        "description": "Erklärt, was der Untertitelfilter bewirkt"
+        "description": "Explains the filter for subtitle files"
     },
     "onlyFileTitle": {
         "message": "Download-Links anzeigen",
@@ -305,7 +302,7 @@
     },
     "onlyFileExplain": {
         "message": "Erkannte Download-Links und Dateien in der Liste anzeigen.",
-        "description": "Menjelaskan kegunaan filter tautan unduhan"
+        "description": "Explains the filter for download links"
     },
     "mediaNotificationTitle": {
         "message": "Media detected!",
@@ -325,297 +322,291 @@
     },
     "streamDownloadTitle": {
         "message": "Stream-Download Einstellungen",
-        "description": "Stream download title."
+        "description": "The title of the stream download preference section in the settings tab."
     },
     "streamFileDownloadExplain": {
         "message": "Lädt die Stream-Manifestdatei (.m3u8, .mpd) direkt herunter. Zum Abspielen wird ein kompatibler Player wie z.B. der VLC-Media-Player von Videolan benötigt. Leichterer Download, jedoch nur online abspielbar.",
-        "description": "Stream manifest explanation."
+        "description": "The explanation of the stream manifest download method."
     },
     "streamFileDownloadCheckbox": {
         "message": "Stream-Manifest herunterladen",
-        "description": "Stream manifest checkbox."
+        "description": "The label of the checkbox to enable the stream manifest download method."
     },
     "offlineDownloadExplain": {
         "message": "Konvertiert den Stream nach dem Download in eine einzelne Offline-Videodatei (.ts oder .zip). Dauert länger und benötigt mehr Speicher, funktioniert aber komplett offline.",
-        "description": "Offline conversion explanation."
+        "description": "The explanation of the offline video file download method."
     },
     "offlineDownloadChecbox": {
         "message": "In Offline-Videodatei umwandeln",
-        "description": "Offline conversion checkbox."
+        "description": "The label of the checkbox to enable the offline video file download method."
     },
     "streamQualityTitle": {
         "message": "Bevorzugte Stream-Qualität",
-        "description": "Stream quality title."
+        "description": "The title of the stream quality preference section in the settings tab."
     },
     "askStreamQualityExplain": {
         "message": "Beim Herunterladen eines Streams immer nach der gewünschten Qualität fragen.",
-        "description": "Ask quality explanation."
+        "description": "The explanation of the 'Always ask' quality preference."
     },
     "askStreamQualityCheckbox": {
         "message": "Immer nachfragen",
-        "description": "Ask quality checkbox."
+        "description": "The label of the radio button to enable the 'Always ask' stream quality preference."
     },
     "highestStreamQualityExplain": {
         "message": "Immer die höchste verfügbare Qualität herunterladen. Bessere Qualität, aber größere Dateien und längere Downloads.",
-        "description": "Highest quality explanation."
+        "description": "The explanation of the 'Always highest' quality preference."
     },
     "highestStreamQualityCheckbox": {
         "message": "Höchste Qualität",
-        "description": "Highest quality checkbox."
+        "description": "The label of the radio button to enable the 'Always highest' stream quality preference."
     },
     "lowestStreamQualityExplain": {
         "message": "Immer die niedrigste verfügbare Qualität herunterladen. Kleinere Dateien und schnellere Downloads, aber geringere Qualität.",
-        "description": "Lowest quality explanation."
+        "description": "The explanation of the 'Always lowest' quality preference."
     },
     "lowestStreamQualityCheckbox": {
         "message": "Niedrigste Qualität",
-        "description": "Lowest quality checkbox."
+        "description": "The label of the radio button to enable 'Always lowest' stream quality preference."
     },
     "mpdFixExplain": {
         "message": "Passt die heruntergeladene .mpd-Datei an, damit sie nur die tatsächlich heruntergeladene Qualität enthält. Ohne diese Option können Player wie VLC versuchen, nicht vorhandene Qualitäten abzuspielen, was möglicherweise zu Abspielfehlern führt.",
-        "description": "MPD fix explanation."
+        "description": "The explanation of the MPD fix option."
     },
     "mpdFixCheckbox": {
         "message": "MPD-Dateien korrigieren (empfohlen)",
-        "description": "MPD fix checkbox."
+        "description": "The label of the checkbox to enable the MPD fix option."
     },
     "openPreference": {
         "message": "Add-on-Öffnungseinstellungen",
-        "description": "Open preference title."
+        "description": "The title of the add-on opening preference section in the settings tab."
     },
     "openPreferenceExplain": {
         "message": "Wähle, wie das Add-on geöffnet werden soll, wenn du auf das Symbol klickst.",
-        "description": "Open preference explanation."
+        "description": "The explanation of the add-on opening preference."
     },
     "newTabCheckbox": {
         "message": "In neuem Tab öffnen",
-        "description": "New tab option."
+        "description": "The label of the radio button to open in a new tab."
     },
     "newWindowCheckbox": {
         "message": "In neuem Fenster öffnen",
-        "description": "New window option."
+        "description": "The label of the radio button to open in a new window."
     },
     "popupCheckbox": {
         "message": "Als Popup öffnen",
-        "description": "The label of the radio button to open the add-on as a popup."
+        "description": "The label of the radio button to open as a popup."
     },
     "colorPickerTitle": {
         "message": "Oberflächenfarbe",
-        "description": "Interface color title."
+        "description": "The title of the interface color section in the settings tab."
     },
     "creditsTitle": {
         "message": "Danksagungen",
-        "description": "Credits title."
+        "description": "The title of the credits section in the settings tab."
     },
     "creditsDescription1": {
         "message": "Website Media Downloader ist ein ",
-        "description": "Credits part 1."
+        "description": "The first part of the credits description."
     },
     "creditsDescription2": {
         "message": "Open-Source-Projekt",
-        "description": "Credits part 2."
+        "description": "The second part of the credits description."
     },
     "creditsDescription3": {
         "message": " entwickelt von ",
-        "description": "Credits part 3."
+        "description": "The third part of the credits description."
     },
     "creditsDescription4": {
         "message": "gepflegt und entwickelt von anpa26",
-        "description": "Credits part 4."
+        "description": "The fourth part of the credits description."
     },
     "creditsDescription5": {
         "message": ". Deutsche Übersetzung von @morihofi auf GitHub.",
-        "description": "Credits part 5."
+        "description": "The fifth part of the credits description."
     },
     "rateButton": {
         "message": "Bewertung abgeben",
-        "description": "Rate button."
+        "description": "The label of the button to rate the extension."
     },
     "shareButton": {
         "message": "Teilen",
-        "description": "Share button."
+        "description": "The label of the button to share the extension."
     },
     "donateButton": {
         "message": "Spenden",
-        "description": "Donate button."
+        "description": "The label of the button to donate."
     },
     "mobileIncompatibleWarning": {
         "message": "Diese Option ist mit einigen Browsern, z.B. Firefox für Android, nicht kompatibel. Wenn du diesen Browser verwendest, ändere die Einstellung bitte zurück.",
-        "description": "Mobile warning."
+        "description": "The mobile incompatibility warning."
     },
     "permissionRequestTitle": {
         "message": "Berechtigung erforderlich",
-        "description": "Permission popup title."
+        "description": "The title of the permission request popup."
     },
     "permissionRequestDescription": {
         "message": "Die Erweiterung benötigt Zugriff auf alle URLs, um korrekt zu funktionieren. Dadurch kann sie Medien auf allen Websites erkennen. Deine Browserdaten werden nur lokal gespeichert und nicht weitergegeben. Bitte gewähre die Berechtigung oder lehne ab, wenn du eingeschränkten Zugriff bevorzugst.",
-        "description": "Permission popup description."
+        "description": "The description of the permission request popup."
     },
     "grantPermissionButton": {
         "message": "Berechtigung gewähren",
-        "description": "Grant permission button."
+        "description": "The label of the grant permission button."
     },
     "denyPermissionButton": {
         "message": "Nicht erneut erinnern",
-        "description": "Deny permission button."
+        "description": "The label of the deny permission button."
     },
     "permissionGrantedMessage": {
         "message": "Berechtigung erfolgreich erteilt.",
-        "description": "Permission granted message."
+        "description": "The message when permission is granted."
     },
     "permissionDeniedMessage": {
         "message": "Berechtigung verweigert. Die Erweiterung funktioniert möglicherweise nicht wie erwartet.",
-        "description": "Permission denied message."
+        "description": "The message when permission is denied."
     },
     "permissionGrantFailedMessage": {
         "message": "Berechtigung konnte nicht erteilt werden. Die Erweiterung funktioniert möglicherweise nicht wie erwartet.",
-        "description": "Permission grant failed message."
+        "description": "The message when permission grant fails."
     },
     "mpdDownloadCompleteTitle": {
         "message": "MPD-Download abgeschlossen",
-        "description": "The title of the notification shown when an MPD download is complete."
+        "description": "The title of the MPD download complete notification."
     },
     "mpdDownloadCompleteMessage": {
         "message": "Der MPD-Stream wurde als ZIP-Datei heruntergeladen. Du kannst sie entpacken und das $BASENAME$.mpd-Video mit VLC oder einem anderen kompatiblen Player abspielen.",
-        "description": "The message of the notification shown when an MPD download is complete.",
-        "placeholders": {
-            "BASENAME": {
-                "content": "$1",
-                "example": "video"
-            }
-        }
+        "description": "The message of the MPD download complete notification."
     },
     "splitDownloadWarningSnackbar": {
         "message": "Die Audio- und Videoströme sind getrennt. Zwei Dateien werden heruntergeladen.",
-        "description": "The snackbar text that appears when an m3u8 stream with split audio and video starts to download"
+        "description": "The snackbar message for separate audio/video streams."
     },
     "downloadingAudioSnackbar": {
         "message": "Audio-Stream wird heruntergeladen...",
-        "description": "The snackbar text that appears when an m3u8 stream with split audio and video has the video portion downloaded and switches to downloading audio"
+        "description": "The snackbar message when downloading audio."
     },
     "splitAudioVideoDownloadCompleteTitle": {
         "message": "Getrennte Audio- und Videoströme heruntergeladen",
-        "description": "The title of the dialog shown when an m3u8 stream with split audio and video is downloaded."
+        "description": "The title of the split audio/video download complete dialog."
     },
     "splitAudioVideoDownloadCompleteDescription": {
         "message": "Sowohl Video- als auch Audioströme wurden heruntergeladen.",
-        "description": "The message of the dialog shown when an m3u8 stream with split audio and video is downloaded."
+        "description": "The description of the split audio/video download complete dialog."
     },
     "videoQualityDialogTitle": {
         "message": "Videoqualität auswählen",
-        "description": "The title of the dialog to select video quality when downloading a stream for MPD streams."
+        "description": "The title of the video quality selection dialog."
     },
     "videoQualitySelectLabel": {
         "message": "Videoqualität",
-        "description": "The label of the quality selection dropdown in the video quality dialog for MPD streams."
+        "description": "The label of the video quality selection."
     },
     "audioQualityDialogTitle": {
         "message": "Audioqualität auswählen",
-        "description": "The title of the dialog to select audio quality when downloading an stream for MPD streams."
+        "description": "The title of the audio quality selection dialog."
     },
     "audioQualitySelectLabel": {
         "message": "Audioqualität",
-        "description": "The label of the quality selection dropdown in the audio quality dialog for MPD streams."
+        "description": "The label of the audio quality selection."
     },
     "streamQualityDialogTitle": {
         "message": "SStreamqualität auswählen",
-        "description": "The title of the dialog to select the stream quality when downloading an m3u8 stream."
+        "description": "The title of the stream quality selection dialog."
     },
     "streamQualitySelectLabel": {
         "message": "Streamqualität",
-        "description": "The label of the quality selection dropdown in the stream quality dialog for m3u8 streams."
+        "description": "The label of the stream quality selection."
     },
     "mediaPreviewSnackbar": {
         "message": "Media preview does not work with all sites and media types. If nothing loads, try to download instead.",
-        "description": "The snackbar shown when someone uses the preview mode for the first time."
+        "description": "The media preview snackbar."
     },
     "mediaPreviewDontRemindMe": {
         "message": "Nicht mehr anzeigen",
-        "description": "The action in the snackbar from above which will make it no longer show up."
+        "description": "The action of the media preview snackbar."
     },
     "helpTooltip": {
         "message": "Hilfe öffnen",
-        "description": "The text of the tooltip shown when hovering over the button at the bottom left, to open the wiki page"
+        "description": "The help tooltip."
     },
     "diagnosticDataPermissionDenied": {
         "message": "Permission to share diagnostic data was denied.",
-        "description": "The message shown when the user denies permission to share diagnostic data."
+        "description": "The message when diagnostic permission is denied."
     },
     "diagnosticDataSent": {
         "message": "Diagnostic data has been sent successfully. Thank you for helping improve the extension!",
-        "description": "The message shown when diagnostic data has been sent successfully."
+        "description": "The message when diagnostic data is sent."
     },
     "diagnosticDataSendError": {
         "message": "An error occurred while sending diagnostic data. Please try again later.",
-        "description": "The message shown when there is an error sending diagnostic data."
+        "description": "The error message when sending diagnostic data fails."
     },
     "noRequestFoundError": {
         "message": "Cannot find the corresponding request's info in the request history. This can happen when the request was already made and cached in your browser before installing the add-on. Clear your browsing data from the website you try to download from, then restart the browser and try again.",
-        "description": "The error message shown when there is no request found for the selected size."
+        "description": "The error message when a request is not found."
     },
     "drmWarningTitle": {
         "message": "DRM Detected",
-        "description": "The title of the warning shown when a DRM-protected MPD is detected."
+        "description": "The DRM warning title."
     },
     "drmWarningDescription": {
         "message": "This file uses DRM (ContentProtection). It can be downloaded, but not played without decrypting the stream. Maybe you can get around this by setting your browser to deny DRM content (e.g. In Firefox: about:preferences#general → Digital Rights Management Content). But on some sites they won't load the media at all if DRM is disabled, so this has a low chance to work.",
-        "description": "The description of the warning shown when a DRM-protected MPD is detected."
+        "description": "The DRM warning description."
     },
     "drmWarningConntinueButton": {
         "message": "Continue",
-        "description": "The text of the OK button in the DRM warning dialog."
+        "description": "The DRM continue button."
     },
     "drmWarningCancelButton": {
         "message": "Cancel",
-        "description": "The text of the Cancel button in the DRM warning dialog and other dialogs."
+        "description": "The DRM cancel button."
     },
     "ratingBannerText": {
         "message": "If you enjoy using this add-on, please take a moment to rate it. Thank you very much!",
-        "description": "The text shown in the rating banner."
+        "description": "The rating banner text."
     },
     "ratingBannerRateButton": {
         "message": "Rate now",
-        "description": "The label of the button to rate the extension in the rating banner."
+        "description": "The rate now button of the rating banner."
     },
     "ratingBannerDismissButton": {
         "message": "Dismiss",
-        "description": "The label of the button to dismiss the rating banner."
+        "description": "The dismiss button of the rating banner."
     },
     "ratingBannerDontShowAgainButton": {
         "message": "Don't ask again",
-        "description": "The label of the button to not show the rating banner again."
+        "description": "The don't show again button of the rating banner."
     },
     "ratingBannerRemindMeLaterButton": {
         "message": "Ask again in a week",
-        "description": "The label of the button to be reminded later in the rating banner."
+        "description": "The remind later button of the rating banner."
     },
     "youtubeDialogAskTitle": {
         "message": "Are you trying to download from YouTube?",
-        "description": "The title of the dialog shown when a YouTube media request is detected."
+        "description": "The YouTube dialog title."
     },
     "youtubeDialogAskMessage": {
         "message": "Das Herunterladen von YouTube wird in dieser Erweiterung nicht direkt unterstützt.",
-        "description": "The message of the dialog shown when a YouTube media request is detected."
+        "description": "The YouTube dialog message."
     },
     "youtubeDialogAskOkButton": {
         "message": "Yes",
-        "description": "The text of the OK button in the YouTube media request dialog."
+        "description": "The yes button of the YouTube dialog."
     },
     "youtubeDialogDownloaderPCTitle": {
         "message": "Try with yt-dlp",
-        "description": "The title of the dialog shown when guiding the user to download YouTube videos on PC."
+        "description": "The yt-dlp guide title."
     },
     "youtubeDialogDownloaderPCMessage": {
         "message": "You can use yt-dlp, a powerful command-line tool to download videos from YouTube and many other platforms. You can find installation instructions on their GitHub page.",
-        "description": "The message of the dialog shown when guiding the user to download YouTube videos on PC."
+        "description": "The yt-dlp guide message."
     },
     "youtubeDialogDownloaderAndroidTitle": {
         "message": "Try with Seal",
-        "description": "The title of the dialog shown when guiding the user to download YouTube videos on Android."
+        "description": "The Seal Android guide title."
     },
     "youtubeDialogDownloaderAndroidMessage": {
         "message": "You can use Seal, an Android app that allows you to download videos from YouTube and other platforms. You can find the download link on their GitHub page.",
-        "description": "The message of the dialog shown when guiding the user to download YouTube videos on Android."
+        "description": "The Seal Android guide message."
     },
     "filenameTemplateTitle": {
         "message": "Dateiname-Vorlage",
@@ -739,7 +730,7 @@
     },
     "zipPreparing": {
         "message": "Preparing $COUNT$ files...",
-        "description": "Message shown when starting to prepare files for ZIP archive.",
+        "description": "The message when starting to prepare files for a ZIP archive.",
         "placeholders": {
             "COUNT": {
                 "content": "$1",
@@ -749,7 +740,7 @@
     },
     "zipDownloading": {
         "message": "Downloading $INDEX$/$TOTAL$: $FILENAME$",
-        "description": "Progress message during ZIP download.",
+        "description": "The progress message during ZIP download.",
         "placeholders": {
             "INDEX": {
                 "content": "$1",
@@ -767,15 +758,15 @@
     },
     "zipGenerating": {
         "message": "Generating ZIP archive...",
-        "description": "Message shown when generating the ZIP file from downloaded blobs."
+        "description": "The message when creating the ZIP file from downloaded blobs."
     },
     "zipComplete": {
         "message": "Download complete!",
-        "description": "Message shown when the ZIP download is finished."
+        "description": "The message when the ZIP download is finished."
     },
     "zipError": {
         "message": "Error creating ZIP: $ERROR$",
-        "description": "Error message shown when ZIP creation fails.",
+        "description": "The error message when ZIP creation fails.",
         "placeholders": {
             "ERROR": {
                 "content": "$1",
@@ -785,7 +776,7 @@
     },
     "zipStartedInBackground": {
         "message": "ZIP download started in background",
-        "description": "Notification message when the ZIP download process is moved to the background script."
+        "description": "The notification message when the ZIP download process is moved to the background script."
     },
     "backgroundDownloadTitle": {
         "message": "Background download",
@@ -793,7 +784,7 @@
     },
     "themeColorApplied": {
         "message": "Theme color applied!",
-        "description": "The message shown in a snackbar when the theme color is applied."
+        "description": "The message shown in a snackbar when a theme color is applied."
     },
     "openInNewTabHelper": {
         "message": "Open settings in a new tab",
@@ -1019,46 +1010,47 @@
     },
     "defaultMediaName": {
         "message": "Mediendatei",
-        "description": "Added during audit for consistency."
+        "description": "Default name for media files when filename cannot be determined."
     },
     "drmAbortedError": {
         "message": "Download vom Benutzer wegen DRM-Schutz abgebrochen.",
-        "description": "Added during audit for consistency."
+        "description": "Error message when user cancels due to DRM."
     },
     "dashComputeSegmentsError": {
         "message": "DASH-Segmente können nicht berechnet werden: SegmentTimeline fehlt und keine feste Dauer angegeben.",
-        "description": "Added during audit for consistency."
+        "description": "Technical error during DASH segment computation."
     },
     "dashNumberSegmentsError": {
         "message": "Zahlenbasierte Segmente können nicht berechnet werden: keine SegmentTimeline und Dauer/Zeitskala fehlt oder ist Null.",
-        "description": "Added during audit for consistency."
+        "description": "Technical error during DASH segment computation."
     },
     "unsupportedVideoType": {
         "message": "Nicht unterstützter Video-Repräsentationstyp",
-        "description": "Added during audit for consistency."
+        "description": "Technical error for unsupported video type."
     },
     "unsupportedAudioType": {
         "message": "Nicht unterstützter Audio-Repräsentationstyp",
-        "description": "Added during audit for consistency."
+        "description": "Technical error for unsupported audio type."
     },
     "zipEmptyError": {
         "message": "Fehler beim Herunterladen der ausgewählten Dateien oder ZIP ist leer.",
-        "description": "Added during audit for consistency."
+        "description": "Error message when ZIP creation results in an empty or failed file."
     },
     "metadataNotFoundError": {
         "message": "Download-Metadaten nicht in der Datenbank gefunden.",
-        "description": "Added during audit for consistency."
+        "description": "Error message for missing DB record."
     },
     "sessionRequestNotFoundError": {
         "message": "Anfragedetails nicht im Sitzungsspeicher gefunden.",
-        "description": "Added during audit for consistency."
+        "description": "Error message for missing session data."
     },
     "serverErrorStatus": {
         "message": "Serverfehler: $STATUS$",
-        "description": "Added during audit for consistency.",
+        "description": "Error message with HTTP status code.",
         "placeholders": {
             "STATUS": {
-                "content": "$1"
+                "content": "$1",
+                "example": "500"
             }
         }
     },
@@ -1363,11 +1355,11 @@
         "description": "Title of the installed page"
     },
     "installedHeroTitle": {
-        "message": "Vielen Dank, dass Sie sich für uns entschieden haben!",
+        "message": "Installation Complete",
         "description": "Hero title of the installed page"
     },
     "installedHeroDescription": {
-        "message": "Ihr ultimativer Medienbegleiter für das Web. Erleben Sie nahtlose Medienerkennung und Hochgeschwindigkeits-Downloads auf all Ihren Lieblingsseiten.",
+        "message": "The ultimate media companion is ready. Start detecting and downloading your favorite content with a single click.",
         "description": "Hero description of the installed page"
     },
     "installedVersion": {
@@ -1375,67 +1367,126 @@
         "description": "Label for version number"
     },
     "installedChangelogTitle": {
-        "message": "Was ist neu in",
+        "message": "Improvements & Updates",
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Verbesserte Abbruchfunktion mit sofortigem UI-Feedback.",
+        "message": "Benutzerdefinierte Pillen-Dropdowns und visuelle Indikatoren für Speed Boost eingeführt.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "Problem mit doppelten Fortschrittsbalken beim erneuten Öffnen des Popups behoben.",
+        "message": "Einstellungsbestätigungs-UI implementiert und die Installationsseite vollständig lokalisiert.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "Verbesserte Dateierkennungslogik und Synchronisation aller Lokalisierungen.",
+        "message": "Stream-Segment-Erkennung und -Filterung verbessert sowie mögliche Abstürze behoben.",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "Verbesserte UI-Konsistenz und Download-Statusinformationen.",
+        "message": "Parallele Downloads überarbeitet und verschiedene Popup-UI-Fehler behoben.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "Erweiterte unterstützte Dateiformate in Dokumentation und Erkennung.",
+        "message": "Verlaufsseite standardmäßig deaktiviert, um die anfängliche Ladeleistung zu verbessern.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
-        "message": "Treffen Sie den Entwickler",
-        "description": "Title for the developer section"
-    },
-    "installedSupportTitle": {
-        "message": "Unterstützen Sie das Projekt",
-        "description": "Title for the support section"
-    },
-    "installedSupportDescription": {
-        "message": "Wenn Sie dieses Tool nützlich finden, ziehen Sie bitte in Erwägung, seine Entwicklung zu unterstützen. Ihr Feedback hilft uns zu wachsen!",
-        "description": "Description for the support section"
-    },
-    "installedStarSub": {
-        "message": "Zeigen Sie dem Quellcode etwas Liebe",
-        "description": "Subtitle for GitHub star button"
-    },
-    "installedRateSub": {
-        "message": "Helfen Sie anderen, dieses Tool zu finden",
-        "description": "Subtitle for rate button"
+        "message": "Developer",
+        "description": "Label for developer card"
     },
     "installedFooterQuote": {
-        "message": "Vielen Dank, dass Sie Teil unserer Reise sind. Viel Spaß beim Herunterladen!",
+        "message": "Thank you for being part of our journey.",
         "description": "Footer quote on the installed page"
     },
     "installedFeedbackTitle": {
-        "message": "Feedback & Probleme",
+        "message": "Feedback & Issues",
         "description": "Title for the feedback section"
     },
     "installedFeedbackDesc": {
-        "message": "Haben Sie einen Fehler gefunden oder einen Vorschlag? Helfen Sie uns, besser zu werden, indem Sie ein Problem auf GitHub melden!",
+        "message": "Found a bug or have a suggestion? Help us improve by opening an issue on GitHub!",
         "description": "Description for the feedback section"
     },
     "installedFeedbackButton": {
-        "message": "Ein Problem melden",
+        "message": "Report an Issue",
         "description": "Label for the feedback button"
+    },
+    "applyChangesPrompt": {
+        "message": "Änderungen übernehmen?",
+        "description": "Prompt in the bottom bar when settings are modified."
+    },
+    "applyButton": {
+        "message": "Übernehmen",
+        "description": "Button to confirm and save setting changes."
+    },
+    "settingsApplied": {
+        "message": "Einstellungen erfolgreich übernommen",
+        "description": "Snackbar message after settings are saved."
     },
     "deleteAllConfirmTitle": {
         "message": "Löschen bestätigen",
         "description": "The title of the confirmation dialog when deleting all detected media."
+    },
+    "installedBrand": {
+        "message": "WMD",
+        "description": "Short brand name for the installed page"
+    },
+    "getStarted": {
+        "message": "Get Started Now",
+        "description": "Label for the get started button"
+    },
+    "installedCommunity": {
+        "message": "Community",
+        "description": "Label for community card"
+    },
+    "installedGitHubProject": {
+        "message": "GitHub Project",
+        "description": "Value for GitHub project link"
+    },
+    "installedSupport": {
+        "message": "Support",
+        "description": "Label for support card"
+    },
+    "installedAddonsStore": {
+        "message": "Add-ons Store",
+        "description": "Value for add-ons store link"
+    },
+    "installedCopyright": {
+        "message": "Website Media Downloader © 2026",
+        "description": "Copyright notice"
+    },
+    "updateAvailable": {
+        "message": "Neue Version v$VERSION$ ist verfügbar.",
+        "description": "Message shown in the update notification bar.",
+        "placeholders": {
+            "VERSION": {
+                "content": "$1"
+            }
+        }
+    },
+    "updateButton": {
+        "message": "Update",
+        "description": "Text for the update button in the notification bar."
+    },
+    "updateLaterButton": {
+        "message": "Später",
+        "description": "Text for the later button in the update dialog."
+    },
+    "updateDialogMessage": {
+        "message": "Version $VERSION$ ist verfügbar. Möchten Sie jetzt aktualisieren?",
+        "description": "Message shown in the update dialog.",
+        "placeholders": {
+            "VERSION": {
+                "content": "$1"
+            }
+        }
+    },
+    "checkUpdateButton": {
+        "message": "Auf Updates prüfen"
+    },
+    "alreadyLatestVersion": {
+        "message": "Sie verwenden die neueste Version."
+    },
+    "updateCheckError": {
+        "message": "Fehler beim Überprüfen auf Updates."
     }
 }

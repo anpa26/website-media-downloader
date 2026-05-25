@@ -202,11 +202,11 @@
     },
     "detectDownloadLinksCheckbox": {
         "message": "Обнаруживать ссылки на скачивание",
-        "description": "Label kotak centang untuk mengaktifkan deteksi tautan unduhan."
+        "description": "The label of the checkbox to enable detection of download links."
     },
     "detectDownloadLinksExplain": {
         "message": "Обнаруживать все ссылки, указывающие на файлы или имеющие атрибут скачивания.",
-        "description": "Penjelasan opsi deteksi tautan unduhan."
+        "description": "The explanation of the detect download links option."
     },
     "downloadMethodTitle": {
         "message": "Метод скачивания",
@@ -294,7 +294,7 @@
     },
     "onlySubtitleExplain": {
         "message": "Показывать обнаруженные файлы субтитров и подписей.",
-        "description": "Explains purpose of subtitle filter"
+        "description": "Explains the filter for subtitle files"
     },
     "onlyFileTitle": {
         "message": "Показывать ссылки на скачивание",
@@ -302,7 +302,7 @@
     },
     "onlyFileExplain": {
         "message": "Показывать обнаруженные ссылки на скачивание и файлы в списке.",
-        "description": "Menjelaskan kegunaan filter tautan unduhan"
+        "description": "Explains the filter for download links"
     },
     "mediaNotificationTitle": {
         "message": "Медиа обнаружено!",
@@ -1355,11 +1355,11 @@
         "description": "Title of the installed page"
     },
     "installedHeroTitle": {
-        "message": "Спасибо, что выбрали нас!",
+        "message": "Installation Complete",
         "description": "Hero title of the installed page"
     },
     "installedHeroDescription": {
-        "message": "Ваш идеальный медиа-спутник в Интернете. Оцените бесшовное обнаружение медиа и высокую скорость загрузки на всех ваших любимых сайтах.",
+        "message": "The ultimate media companion is ready. Start detecting and downloading your favorite content with a single click.",
         "description": "Hero description of the installed page"
     },
     "installedVersion": {
@@ -1367,67 +1367,126 @@
         "description": "Label for version number"
     },
     "installedChangelogTitle": {
-        "message": "Что нового в",
+        "message": "Improvements & Updates",
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Улучшена функция отмены с немедленной обратной связью в интерфейсе.",
+        "message": "Внедрены настраиваемые выпадающие списки и визуальные индикаторы для ускорения загрузки.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "Решена проблема дублирования индикаторов выполнения при повторном открытии всплывающего окна.",
+        "message": "Реализован пользовательский интерфейс подтверждения настроек и полностью локализована страница установки.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "Улучшена логика обнаружения файлов и синхронизация всех локализаций.",
+        "message": "Улучшено обнаружение и фильтрация сегментов потока, а также исправлены потенциальные сбои.",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "Повышена согласованность интерфейса и информативность статуса загрузки.",
+        "message": "Переработаны параллельные загрузки и устранены различные ошибки всплывающего интерфейса.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "Расширен список поддерживаемых форматов файлов в документации и при обнаружении.",
+        "message": "Страница истории отключена по умолчанию для улучшения начальной производительности загрузки.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
-        "message": "Познакомьтесь с разработчиком",
-        "description": "Title for the developer section"
-    },
-    "installedSupportTitle": {
-        "message": "Поддержать проект",
-        "description": "Title for the support section"
-    },
-    "installedSupportDescription": {
-        "message": "Если вы считаете этот инструмент полезным, пожалуйста, поддержите его разработку. Ваши отзывы помогают нам расти!",
-        "description": "Description for the support section"
-    },
-    "installedStarSub": {
-        "message": "Поддержите исходный код",
-        "description": "Subtitle for GitHub star button"
-    },
-    "installedRateSub": {
-        "message": "Помогите другим найти этот инструмент",
-        "description": "Subtitle for rate button"
+        "message": "Developer",
+        "description": "Label for developer card"
     },
     "installedFooterQuote": {
-        "message": "Спасибо, что вы с нами. Приятного скачивания!",
+        "message": "Thank you for being part of our journey.",
         "description": "Footer quote on the installed page"
     },
     "installedFeedbackTitle": {
-        "message": "Отзывы и ошибки",
+        "message": "Feedback & Issues",
         "description": "Title for the feedback section"
     },
     "installedFeedbackDesc": {
-        "message": "Нашли ошибку или есть предложение? Помогите нам стать лучше, создав обращение на GitHub!",
+        "message": "Found a bug or have a suggestion? Help us improve by opening an issue on GitHub!",
         "description": "Description for the feedback section"
     },
     "installedFeedbackButton": {
-        "message": "Сообщить об ошибке",
+        "message": "Report an Issue",
         "description": "Label for the feedback button"
+    },
+    "applyChangesPrompt": {
+        "message": "Применить изменения?",
+        "description": "Prompt in the bottom bar when settings are modified."
+    },
+    "applyButton": {
+        "message": "Применить",
+        "description": "Button to confirm and save setting changes."
+    },
+    "settingsApplied": {
+        "message": "Настройки успешно применены",
+        "description": "Snackbar message after settings are saved."
     },
     "deleteAllConfirmTitle": {
         "message": "Подтверждение удаления",
         "description": "The title of the confirmation dialog when deleting all detected media."
+    },
+    "installedBrand": {
+        "message": "WMD",
+        "description": "Short brand name for the installed page"
+    },
+    "getStarted": {
+        "message": "Get Started Now",
+        "description": "Label for the get started button"
+    },
+    "installedCommunity": {
+        "message": "Community",
+        "description": "Label for community card"
+    },
+    "installedGitHubProject": {
+        "message": "GitHub Project",
+        "description": "Value for GitHub project link"
+    },
+    "installedSupport": {
+        "message": "Support",
+        "description": "Label for support card"
+    },
+    "installedAddonsStore": {
+        "message": "Add-ons Store",
+        "description": "Value for add-ons store link"
+    },
+    "installedCopyright": {
+        "message": "Website Media Downloader © 2026",
+        "description": "Copyright notice"
+    },
+    "updateAvailable": {
+        "message": "Доступна новая версия v$VERSION$.",
+        "description": "Message shown in the update notification bar.",
+        "placeholders": {
+            "VERSION": {
+                "content": "$1"
+            }
+        }
+    },
+    "updateButton": {
+        "message": "Обновить",
+        "description": "Text for the update button in the notification bar."
+    },
+    "updateLaterButton": {
+        "message": "Позже",
+        "description": "Text for the later button in the update dialog."
+    },
+    "updateDialogMessage": {
+        "message": "Версия $VERSION$ доступна. Хотите обновить сейчас?",
+        "description": "Message shown in the update dialog.",
+        "placeholders": {
+            "VERSION": {
+                "content": "$1"
+            }
+        }
+    },
+    "checkUpdateButton": {
+        "message": "Проверить обновления"
+    },
+    "alreadyLatestVersion": {
+        "message": "Вы используете последнюю версию."
+    },
+    "updateCheckError": {
+        "message": "Не удалось проверить наличие обновлений."
     }
 }
