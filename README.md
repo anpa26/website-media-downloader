@@ -70,6 +70,26 @@ The interface is built using Material Design 3 (MDUI) components, now featuring:
 - DASH (MPD): Parses XML-based manifests to extract video and audio adaptation sets.
 - Parallel Acquisition: Implements a multi-threaded fetching mechanism to optimize throughput and reduce download duration.
 
+### Speed Boost Technology
+Website Media Downloader features an advanced **Speed Boost** mechanism designed to saturate your bandwidth and significantly reduce download times.
+
+#### How it Works
+- **Single File Downloads**: For standard files (MP4, MP3, etc.), the extension attempts to split the file into multiple chunks. It uses HTTP **Range Requests** to download these chunks simultaneously across multiple parallel connections.
+- **Stream Downloads (HLS/DASH)**: Instead of fetching segments one by one, the extension initiates a pool of concurrent requests. This allows it to fetch multiple `.ts` or `.m4s` segments at the same time, overcoming the latency of sequential requests.
+
+#### Key Differences
+| Feature | Standard Download | Speed Boost |
+| :--- | :--- | :--- |
+| **Connections** | Single (1) | Multi-threaded (up to 16) |
+| **Strategy** | Sequential fetching | Parallel acquisition |
+| **Efficiency** | Limited by single-thread speed | Maximizes available bandwidth |
+| **Resources** | Low CPU/RAM usage | Higher resource utilization |
+
+#### Support & Requirements
+- **Server Support**: For single files, the host server must support **Partial Content (HTTP 206)** and provide the `Accept-Ranges: bytes` header. If not supported, the extension automatically falls back to standard sequential downloading.
+- **File Size**: Speed Boost is automatically triggered for files larger than **2MB** to ensure efficiency gains outweigh the overhead of managing multiple connections.
+- **Visual Indicator**: When Speed Boost is supported and active, the download status text will turn **bold and use your themed/accent color**. If not supported (or for sequential downloads), the status text and progress bar will use the default standard appearance. You can configure the number of parallel connections (up to 16) in the extension settings.
+
 ### Request Simulation
 The extension utilizes header management (Referer, Origin, and Cookies) to replicate the original request context, ensuring compatibility with servers that implement access restrictions based on request origins.
 
