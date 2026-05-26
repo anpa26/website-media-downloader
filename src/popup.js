@@ -775,7 +775,9 @@ function showQRCode(url) {
   qr.addData(url);
   qr.make();
 
+  const uniqueId = 'qr-img-' + Date.now();
   const qrImageTag = qr.createImgTag(5);
+  const modifiedQrImageTag = qrImageTag.replace('<img', `<img id="${uniqueId}" style="max-width: 100%; height: auto; cursor: zoom-in;" title="Click to enlarge"`);
   const container = document.createElement('div');
   container.style.display = 'flex';
   container.style.flexDirection = 'column';
@@ -783,8 +785,8 @@ function showQRCode(url) {
   container.style.gap = '16px';
   container.style.padding = '16px 0';
   container.innerHTML = `
-    <div style="background: white; padding: 12px; border-radius: 8px;">
-      ${qrImageTag}
+    <div style="background: white; padding: 12px; border-radius: 8px; max-width: 250px; display: flex; justify-content: center;">
+      ${modifiedQrImageTag}
     </div>
     <div style="word-break: break-all; font-size: 12px; opacity: 0.7; text-align: center; max-width: 250px;">
       ${url}
@@ -792,6 +794,37 @@ function showQRCode(url) {
   `;
 
   showDialog(container.outerHTML, browser.i18n.getMessage("qrCodeDialogTitle") || "Scan QR Code");
+
+  setTimeout(() => {
+    const imgEl = document.getElementById(uniqueId);
+    if (imgEl) {
+      imgEl.addEventListener('click', () => {
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100vw';
+        overlay.style.height = '100vh';
+        overlay.style.backgroundColor = 'white';
+        overlay.style.zIndex = '999999';
+        overlay.style.display = 'flex';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.style.cursor = 'zoom-out';
+        
+        const fullImg = document.createElement('img');
+        fullImg.src = imgEl.src;
+        fullImg.style.width = '95vmin';
+        fullImg.style.height = '95vmin';
+        fullImg.style.imageRendering = 'pixelated';
+        
+        overlay.appendChild(fullImg);
+        document.body.appendChild(overlay);
+        
+        overlay.addEventListener('click', () => overlay.remove());
+      });
+    }
+  }, 100);
 }
 
 function updateSelectedCount() {
@@ -1167,32 +1200,62 @@ function getMediaType(url, responseHeaders) {
     const imageExtensions = [".webp", ".png", ".jpg", ".jpeg", ".gif"];
     const downloadExtensions = [".zip", ".rar", ".7z", ".tar", ".gz", ".exe", ".msi", ".apk", ".dmg", ".iso", ".bin", ".pdf", ".epub", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"];
 
-    if (contentType.startsWith('video/') || videoExtensions.some(ext => urlLower.includes(ext))) return 'video';
-    if (contentType.startsWith('audio/') || audioExtensions.some(ext => urlLower.includes(ext))) return 'audio';
+    const urlPath = urlLower.split('?')[0].split('#')[0];
+    const hasExt = (ext) => urlPath.endsWith(ext) || urlLower.includes(ext + '&') || urlLower.includes(ext + '?') || urlLower.endsWith(ext);
 
-    if (contentType === 'image/svg+xml' || urlLower.includes('.svg')) return null;
-    if (contentType.startsWith('image/') || imageExtensions.some(ext => urlLower.includes(ext))) return 'image';
+    if (contentType.startsWith('video/') || videoExtensions.some(hasExt)) return 'video';
+    if (contentType.startsWith('audio/') || audioExtensions.some(hasExt)) return 'audio';
 
-    if (streamExtensions.some(ext => urlLower.includes(ext)) || contentType.includes('mpegurl') || contentType.includes('dash+xml')) return 'stream';
-    if (subtitleExtensions.some(ext => urlLower.includes(ext)) || contentType.includes('vtt') || contentType.includes('subrip') || contentType.includes('ass') || contentType.includes('ttml') || contentType.includes('dfxp')) return 'subtitle';
+    if (contentType === 'image/svg+xml' || hasExt('.svg')) return null;
+    if (contentType.startsWith('image/') || imageExtensions.some(hasExt)) return 'image';
 
-    if (downloadExtensions.some(ext => urlLower.includes(ext))) return 'file';
+    if (streamExtensions.some(hasExt) || contentType.includes('mpegurl') || contentType.includes('dash+xml')) return 'stream';
+    if (subtitleExtensions.some(hasExt) || contentType.includes('vtt') || contentType.includes('subrip') || contentType.includes('ass') || contentType.includes('ttml') || contentType.includes('dfxp')) return 'subtitle';
+
+    if (downloadExtensions.some(hasExt)) return 'file';
 
     return null;
 }
 
-function checkIsSegment(url, responseHeaders) {
+function checkIsSegment(url, responseHeaders, settings) {
     if (!url) return false;
     const urlLower = url.toLowerCase();
     const contentType = responseHeaders?.find(h => h.name.toLowerCase() === "content-type")?.value?.toLowerCase() || "";
     const contentLength = responseHeaders?.find(h => h.name.toLowerCase() === "content-length")?.value || "0";
     const size = parseInt(contentLength) || 0;
 
+    const isHideSegments = settings ? isFlagEnabled(settings['hide-segments']) : true;
+    const isHidePageComponents = settings ? isFlagEnabled(settings['hide-page-components']) : true;
+
+    // Page components extensions - more precise check
+    const path = urlLower.split('?')[0].split('#')[0];
+    if (isHidePageComponents && (
+        path.endsWith('.html') || path.endsWith('.htm') ||
+        path.endsWith('.css') ||
+        path.endsWith('.js') ||
+        path.endsWith('.txt') ||
+        path.endsWith('.ico') ||
+        path.endsWith('.webmanifest') || path.endsWith('manifest.json') ||
+        path.endsWith('.jpg') || path.endsWith('.jpeg') ||
+        path.endsWith('.webp') ||
+        path.endsWith('.png'))) {
+        
+        // If 'only-image' is enabled, don't hide images
+        if (settings && settings['only-image'] === '1' && (path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.webp') || path.endsWith('.png'))) {
+            return false;
+        }
+        return true;
+    }
+
+    if (!isHideSegments) return false;
+
     // Common segment extensions
-    if (urlLower.includes('.ts') || 
-        urlLower.includes('.m4s') || 
-        urlLower.includes('.m4v') || 
-        urlLower.includes('.m4a')) {
+    if (path.endsWith('.ts') || 
+        path.endsWith('.m4s') || 
+        path.endsWith('.m4v') || 
+        path.endsWith('.m4a') ||
+        path.endsWith('.m2ts') ||
+        path.endsWith('.mts')) {
         return true;
     }
 
@@ -1259,7 +1322,7 @@ async function loadMediaList() {
         return;
     }
 
-    const settings = await browser.storage.local.get(['only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'hide-segments']);
+    const settings = await browser.storage.local.get(['only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'hide-segments', 'hide-page-components']);
 
     const mediaGroups = new Map();
     for (const rawUrl in mediaRequests) {
@@ -1269,7 +1332,7 @@ async function loadMediaList() {
       if (!Array.isArray(requests) || requests.length === 0) continue;
 
       const lastResponseHeaders = requests[requests.length - 1].responseHeaders;
-      if (isFlagEnabled(settings['hide-segments']) && checkIsSegment(rawUrl, lastResponseHeaders)) continue;
+      if (checkIsSegment(rawUrl, lastResponseHeaders, settings)) continue;
 
       const type = getMediaType(rawUrl, lastResponseHeaders);
       if (!type) continue;
@@ -1926,6 +1989,9 @@ async function extractAudioFromBlob(blob, filename, downloadMethod, loadingBar) 
       }
       URL.revokeObjectURL(wavUrl);
   } catch (e) {
+      if (e.message && e.message.toLowerCase().includes("unknown content type")) {
+          throw new Error(browser.i18n.getMessage("audioExtractionFormatNotSupported") || "Your browser does not support audio extraction from this media format (typically .ts streams). Please download the full video and extract the audio manually.");
+      }
       throw new Error("Failed to extract audio. " + e.message);
   } finally {
       try { audioCtx.close(); } catch(e) {}

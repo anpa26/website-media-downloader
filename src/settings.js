@@ -69,7 +69,7 @@ function showApplyBar() {
 
 async function initializeSettings() {
     const settings = [
-        'url-detection', 'mime-detection', 'detect-download-links', 'hide-segments',
+        'url-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components',
         'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file',
         'media-notification', 'download-method', 'media-cache', 'speed-boost', 'connections', 'stream-download',
         'stream-quality', 'mpd-fix', 'background-download', 'open-preference',
@@ -82,7 +82,7 @@ async function initializeSettings() {
 
         if (value === undefined) {
             const defaultsEnabled = [
-                'url-detection', 'mime-detection',
+                'url-detection', 'mime-detection', 'hide-page-components',
                 'media-notification', 'only-video', 'only-audio', 'only-stream',
                 'background-download', 'only-file'
             ];
@@ -211,9 +211,14 @@ async function initializeSettings() {
     if (hexInput) {
         hexInput.oninput = (e) => {
             let val = e.target.value;
+            // Always mark as change if the value is different from original, or just on input
+            pendingChanges['theme-color'] = val;
+            showApplyBar();
+
             if (!val.startsWith('#')) val = '#' + val;
             if (/^#[0-9A-F]{6}$/i.test(val)) {
-                stageColor(val);
+                mdui.setColorScheme(val);
+                updateActivePreset(val);
             }
         };
     }

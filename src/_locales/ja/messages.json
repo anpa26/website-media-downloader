@@ -316,6 +316,14 @@
         "message": "ウェブサイトでメディアが検出されたときに通知を表示します。",
         "description": "The explanation of the media detection notification setting."
     },
+    "hidePageComponentsTitle": {
+        "message": "ページコンポーネントを非表示にする",
+        "description": "Title for the setting to hide html, css, js, and txt files."
+    },
+    "hidePageComponentsExplain": {
+        "message": "一部のウェブサイトでは、HTML、CSS、JS、またはTXTファイルをビデオ/オーディオとして扱う場合があります。これらを非表示にするには、この設定を有効にします。",
+        "description": "Explanation for the hide page components setting."
+    },
     "mediaNotificationDownloadAction": {
         "message": "ダウンロード",
         "description": "The action label to download media from the notification."
@@ -1075,7 +1083,7 @@
         "description": "Updated/Added during UI string localization audit."
     },
     "extensionDescriptionAbout": {
-        "message": "ウェブのための究極のメディアコンパニオン。ほぼすべてのウェブサイトからビデオ、音楽、ライブストリームを簡単に検出してダウンロードできます。リアルタイムのネットワークリクエストキャプチャ、バックグラウンドダウンロード、高度なHLS / Dashストリーム変換をすべて1つの強力なオープンソースツールで提供します。",
+        "message": "Website Media Downloader は、ウェブ上のメディアを簡単にキャプチャしてダウンロードできる不可欠なツールです。ブラウザ内で完全に動作し、ブラウジング中に隠れた動画、音楽トラック、ライブストリームを検出します。バックグラウンドダウンロードのサポートと、HLSやDASHなどの複雑なフォーマットの自動変換機能により、外部サーバーに依存することなく、お気に入りのコンテンツをデバイスに直接保存できます。",
         "description": "Updated/Added during UI string localization audit."
     },
     "confirmTitle": {
@@ -1371,23 +1379,23 @@
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Speed Boost用のカスタムピルドロップダウンと視覚インジケーターを導入しました。",
+        "message": "HTML、CSS、JS、TXTファイルをフィルタリングするための新しい「ページコンポーネントを隠す」設定を追加しました。",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "設定確認UIを実装し、インストール完了ページを完全にローカライズしました。",
+        "message": "過度なフィルタリングを防ぐための、正確な拡張子マッチングを備えたセグメント検出ロジックを強化しました。",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "ストリームセグメントの検出とフィルタリングを強化し、潜在的なクラッシュを修正しました。",
+        "message": "ページコンポーネントの非表示対象を、さまざまな画像タイプ（.ico、.jpg、.webp、.png）に拡張しました。",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "並列ダウンロードを刷新し、さまざまなポップアップUIのバグを解決しました。",
+        "message": "9言語にわたる新しい設定への完全な翻訳サポートを追加しました。",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "初期の読み込みパフォーマンスを向上させるため、履歴ページをデフォルトで無効にしました。",
+        "message": "全幅設定コンテナと即時の色変更検出を備えた、改善されたUIレイアウト。",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
@@ -1488,5 +1496,9 @@
     },
     "updateCheckError": {
         "message": "アップデートの確認に失敗しました。"
+    },
+    "audioExtractionFormatNotSupported": {
+        "message": "お使いのブラウザは、このメディア形式（通常は .ts ストリーム）からの音声抽出をサポートしていません。動画をダウンロードして、手動で音声を抽出してください。",
+        "description": "Error message when the browser cannot decode the audio format, typical for TS streams."
     }
 }

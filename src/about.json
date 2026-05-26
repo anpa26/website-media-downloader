@@ -1,8 +1,8 @@
 {
     "extension": {
         "name": "Website Media Downloader",
-        "version": "1.7.7",
-        "description": "Your ultimate media companion for the web. Effortlessly detect and download videos, music, and live streams from virtually any website. Featuring real-time network request capturing, background downloads, and advanced HLS/Dash stream conversion—all in one powerful, open-source tool.",
+        "version": "1.7.8",
+        "description": "Website Media Downloader is an essential tool that helps you easily capture and download media from across the web. It works completely in your browser to detect hidden videos, music tracks, and live streams as you browse. With built in support for background downloads and automatic conversion of complex formats like HLS and DASH, you can save your favorite content directly to your device without relying on external servers.",
         "license": "GPL-3.0"
     },
     "authors": [

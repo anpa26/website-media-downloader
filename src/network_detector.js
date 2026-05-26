@@ -367,7 +367,7 @@ browser.webRequest.onBeforeSendHeaders.addListener(
 
 function getSettings(callback) {
     browser.storage.local.get([
-        'mime-detection', 'url-detection', 'media-notification', 'hide-segments',
+        'mime-detection', 'url-detection', 'media-notification', 'hide-segments', 'hide-page-components',
         'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle',
         'filename-template'
     ], function (result) {
@@ -376,6 +376,7 @@ function getSettings(callback) {
             urlDetection: isFlagEnabled(result['url-detection']),
             mediaNotification: isFlagEnabled(result['media-notification']),
             hideSegments: isFlagEnabled(result['hide-segments']),
+            hidePageComponents: isFlagEnabled(result['hide-page-components']),
             onlyVideo: isFlagEnabled(result['only-video']),
             onlyAudio: isFlagEnabled(result['only-audio']),
             onlyStream: isFlagEnabled(result['only-stream']),
@@ -476,31 +477,61 @@ function getMediaType(url, contentType) {
     const imageExtensions = [".webp", ".png", ".jpg", ".jpeg", ".gif"];
     const downloadExtensions = [".zip", ".rar", ".7z", ".tar", ".gz", ".exe", ".msi", ".apk", ".dmg", ".iso", ".bin", ".pdf", ".epub", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"];
 
-    if (mimeLower.startsWith('video/') || videoExtensions.some(ext => urlLower.includes(ext))) return 'video';
-    if (mimeLower.startsWith('audio/') || audioExtensions.some(ext => urlLower.includes(ext))) return 'audio';
+    const urlPath = urlLower.split('?')[0].split('#')[0];
+    const hasExt = (ext) => urlPath.endsWith(ext) || urlLower.includes(ext + '&') || urlLower.includes(ext + '?') || urlLower.endsWith(ext);
 
-    if (mimeLower === 'image/svg+xml' || urlLower.includes('.svg')) return null;
-    if (mimeLower.startsWith('image/') || imageExtensions.some(ext => urlLower.includes(ext))) return 'image';
+    if (mimeLower.startsWith('video/') || videoExtensions.some(hasExt)) return 'video';
+    if (mimeLower.startsWith('audio/') || audioExtensions.some(hasExt)) return 'audio';
 
-    if (streamExtensions.some(ext => urlLower.includes(ext)) || mimeLower.includes('mpegurl') || mimeLower.includes('dash+xml')) return 'stream';
-    if (subtitleExtensions.some(ext => urlLower.includes(ext)) || mimeLower.includes('vtt') || mimeLower.includes('subrip') || mimeLower.includes('ass') || mimeLower.includes('ttml') || mimeLower.includes('dfxp')) return 'subtitle';
+    if (mimeLower === 'image/svg+xml' || hasExt('.svg')) return null;
+    if (mimeLower.startsWith('image/') || imageExtensions.some(hasExt)) return 'image';
 
-    if (downloadExtensions.some(ext => urlLower.includes(ext))) return 'file';
+    if (streamExtensions.some(hasExt) || mimeLower.includes('mpegurl') || mimeLower.includes('dash+xml')) return 'stream';
+    if (subtitleExtensions.some(hasExt) || mimeLower.includes('vtt') || mimeLower.includes('subrip') || mimeLower.includes('ass') || mimeLower.includes('ttml') || mimeLower.includes('dfxp')) return 'subtitle';
+
+    if (downloadExtensions.some(hasExt)) return 'file';
 
     return null;
 }
 
-function checkIsSegment(url, contentType, contentLength) {
+function checkIsSegment(url, contentType, contentLength, currentSettings) {
     if (!url) return false;
     const urlLower = url.toLowerCase();
     const mimeLower = (contentType || '').toLowerCase();
     const size = parseInt(contentLength) || 0;
 
+    const isHideSegments = currentSettings?.hideSegments ?? true;
+    const isHidePageComponents = currentSettings?.hidePageComponents ?? true;
+
+    // Page components extensions - more precise check
+    const path = urlLower.split('?')[0].split('#')[0];
+    if (isHidePageComponents && (
+        path.endsWith('.html') || path.endsWith('.htm') ||
+        path.endsWith('.css') ||
+        path.endsWith('.js') ||
+        path.endsWith('.txt') ||
+        path.endsWith('.ico') ||
+        path.endsWith('.webmanifest') || path.endsWith('manifest.json') ||
+        path.endsWith('.jpg') || path.endsWith('.jpeg') ||
+        path.endsWith('.webp') ||
+        path.endsWith('.png'))) {
+        
+        // If 'only-image' is enabled, don't hide images
+        if (currentSettings && currentSettings.onlyImage && (path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.webp') || path.endsWith('.png'))) {
+            return false;
+        }
+        return true;
+    }
+
+    if (!isHideSegments) return false;
+
     // Common segment extensions
-    if (urlLower.includes('.ts') || 
-        urlLower.includes('.m4s') || 
-        urlLower.includes('.m4v') || 
-        urlLower.includes('.m4a')) {
+    if (path.endsWith('.ts') || 
+        path.endsWith('.m4s') || 
+        path.endsWith('.m4v') || 
+        path.endsWith('.m4a') ||
+        path.endsWith('.m2ts') ||
+        path.endsWith('.mts')) {
         return true;
     }
 
@@ -671,7 +702,7 @@ async function showMediaNotification(details, settings) {
 
     if (!mediaType) return;
 
-    if (settings.hideSegments && checkIsSegment(url, contentType, contentLength)) return;
+    if (checkIsSegment(url, contentType, contentLength, settings)) return;
 
     const now = Date.now();
 
@@ -1013,7 +1044,7 @@ function initListener() {
                         const urlEnabledNow = !!currentSettings.urlDetection;
 
                         const shouldSaveNow = (() => {
-                            if (currentSettings.hideSegments && checkIsSegment(details.url, contentType, size)) return false;
+                            if (checkIsSegment(details.url, contentType, size, currentSettings)) return false;
                             if (!mimeEnabledNow && !urlEnabledNow) return true;
                             if (mimeEnabledNow && mimeMatches) return true;
                             if (urlEnabledNow && urlMatches) return true;

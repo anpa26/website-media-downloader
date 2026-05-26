@@ -316,6 +316,14 @@
         "message": "Show a notification when media is detected on a website.",
         "description": "The explanation of the media detection notification setting."
     },
+    "hidePageComponentsTitle": {
+        "message": "Seitenkomponenten ausblenden",
+        "description": "Title for the setting to hide html, css, js, and txt files."
+    },
+    "hidePageComponentsExplain": {
+        "message": "Einige Websites behandeln HTML-, CSS-, JS- oder TXT-Dateien möglicherweise als Video/Audio. Aktivieren Sie dies, um sie auszublenden.",
+        "description": "Explanation for the hide page components setting."
+    },
     "mediaNotificationDownloadAction": {
         "message": "Download",
         "description": "The action label to download media from the notification."
@@ -1075,7 +1083,7 @@
         "description": "Updated/Added during UI string localization audit."
     },
     "extensionDescriptionAbout": {
-        "message": "Ihr ultimativer Medienbegleiter für das Web. Erkennen und laden Sie mühelos Videos, Musik und Live-Streams von fast jeder Website herunter. Mit Echtzeit-Erfassung von Netzwerkanfragen, Hintergrund-Downloads und fortschrittlicher HLS/Dash-Stream-Konvertierung – alles in einem leistungsstarken Open-Source-Tool.",
+        "message": "Website Media Downloader ist ein unverzichtbares Tool, mit dem Sie Medien aus dem gesamten Web ganz einfach erfassen und herunterladen können. Es arbeitet vollständig in Ihrem Browser, um versteckte Videos, Musiktitel und Live-Streams beim Surfen zu erkennen. Dank der integrierten Unterstützung für Hintergrund-Downloads und der automatischen Konvertierung komplexer Formate wie HLS und DASH können Sie Ihre Lieblingsinhalte direkt auf Ihrem Gerät speichern, ohne auf externe Server angewiesen zu sein.",
         "description": "Updated/Added during UI string localization audit."
     },
     "confirmTitle": {
@@ -1371,23 +1379,23 @@
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Benutzerdefinierte Pillen-Dropdowns und visuelle Indikatoren für Speed Boost eingeführt.",
+        "message": "Neue Einstellung „Seitenelemente ausblenden“ hinzugefügt, um HTML-, CSS-, JS- und TXT-Dateien zu filtern.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "Einstellungsbestätigungs-UI implementiert und die Installationsseite vollständig lokalisiert.",
+        "message": "Optimierte Segmenterkennungslogik mit präzisem Erweiterungsabgleich, um eine Überfilterung zu verhindern.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "Stream-Segment-Erkennung und -Filterung verbessert sowie mögliche Abstürze behoben.",
+        "message": "Erweitertes Ausblenden von Seitenelementen um verschiedene Bildformate (.ico, .jpg, .webp, .png).",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "Parallele Downloads überarbeitet und verschiedene Popup-UI-Fehler behoben.",
+        "message": "Vollständige Übersetzungsunterstützung für neue Einstellungen in 9 Sprachen hinzugefügt.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "Verlaufsseite standardmäßig deaktiviert, um die anfängliche Ladeleistung zu verbessern.",
+        "message": "Verbessertes UI-Layout mit einem Seiteneinstellungen-Container in voller Breite und sofortiger Farberkennung.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
@@ -1488,5 +1496,9 @@
     },
     "updateCheckError": {
         "message": "Fehler beim Überprüfen auf Updates."
+    },
+    "audioExtractionFormatNotSupported": {
+        "message": "Ihr Browser unterstützt die Audioextraktion aus diesem Medienformat nicht (normalerweise .ts-Streams). Bitte laden Sie das Video herunter und extrahieren Sie den Ton manuell.",
+        "description": "Error message when the browser cannot decode the audio format, typical for TS streams."
     }
 }

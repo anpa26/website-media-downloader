@@ -316,6 +316,14 @@
         "message": "عرض إشعار عند اكتشاف وسائط في موقع ويب.",
         "description": "The explanation of the media detection notification setting."
     },
+    "hidePageComponentsTitle": {
+        "message": "إخفاء مكونات الصفحة",
+        "description": "Title for the setting to hide html, css, js, and txt files."
+    },
+    "hidePageComponentsExplain": {
+        "message": "قد تعامل بعض المواقع ملفات HTML أو CSS أو JS أو TXT كفيديو/صوت. قم بتمكين هذا لإخفائها.",
+        "description": "Explanation for the hide page components setting."
+    },
     "mediaNotificationDownloadAction": {
         "message": "تنزيل",
         "description": "The action label to download media from the notification."
@@ -1075,7 +1083,7 @@
         "description": "Updated/Added during UI string localization audit."
     },
     "extensionDescriptionAbout": {
-        "message": "رفيقك المثالي للوسائط على الويب. اكتشف ونزل مقاطع الفيديو والموسيقى والبث المباشر بسهولة من أي موقع ويب تقريباً. يتميز بالتقاط طلبات الشبكة في الوقت الفعلي، والتنزيلات في الخلفية، وتحويل بث HLS/Dash المتقدم - كل ذلك في أداة واحدة قوية ومفتوحة المصدر.",
+        "message": "أداة أساسية تساعدك على التقاط وتنزيل الوسائط بسهولة من جميع أنحاء الويب. تعمل بالكامل في متصفحك لاكتشاف مقاطع الفيديو والموسيقى والبث المباشر المخفية أثناء التصفح. بفضل دعم التنزيلات في الخلفية والتحويل التلقائي للتنسيقات المعقدة مثل HLS و DASH، يمكنك حفظ محتواك المفضل مباشرة على جهازك دون الاعتماد على خوادم خارجية.",
         "description": "Updated/Added during UI string localization audit."
     },
     "confirmTitle": {
@@ -1371,23 +1379,23 @@
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "تقديم قوائم منسدلة مخصصة ومؤشرات مرئية لتعزيز السرعة.",
+        "message": "إضافة إعداد جديد \"إخفاء مكونات الصفحة\" لتصفية ملفات HTML و CSS و JS و TXT.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "تنفيذ واجهة مستخدم لتأكيد الإعدادات وتوطين صفحة التثبيت بالكامل.",
+        "message": "تحسين منطق اكتشاف الأجزاء مع مطابقة دقيقة للامتدادات لمنع التصفية الزائدة.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "تحسين اكتشاف مقاطع البث وتصفيتها وإصلاح الأعطال المحتملة.",
+        "message": "توسيع نطاق إخفاء مكونات الصفحة ليشمل أنواعاً مختلفة من الصور (.ico، .jpg، .webp، .png).",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "إصلاح شامل للتنزيلات المتوازية وحل العديد من أخطاء واجهة المستخدم المنبثقة.",
+        "message": "إضافة دعم كامل للترجمة للإعدادات الجديدة عبر 9 لغات.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "تعطيل صفحة السجل افتراضيًا لتحسين أداء التحميل الأولي.",
+        "message": "تحسين تخطيط واجهة المستخدم مع حاوية إعدادات كاملة العرض واكتشاف فوري لتغير اللون.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
@@ -1488,5 +1496,9 @@
     },
     "updateCheckError": {
         "message": "فشل التحقق من التحديثات."
+    },
+    "audioExtractionFormatNotSupported": {
+        "message": "متصفحك لا يدعم استخراج الصوت من تنسيق الوسائط هذا (عادةً بث .ts). يرجى تنزيل الفيديو واستخراج الصوت يدويًا.",
+        "description": "Error message when the browser cannot decode the audio format, typical for TS streams."
     }
 }

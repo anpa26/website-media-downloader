@@ -316,6 +316,14 @@
         "message": "웹사이트에서 미디어가 감지되면 알림을 표시합니다.",
         "description": "The explanation of the media detection notification setting."
     },
+    "hidePageComponentsTitle": {
+        "message": "페이지 구성 요소 숨기기",
+        "description": "Title for the setting to hide html, css, js, and txt files."
+    },
+    "hidePageComponentsExplain": {
+        "message": "일부 웹사이트에서는 HTML, CSS, JS 또는 TXT 파일을 비디오/오디오로 처리할 수 있습니다. 이를 숨기려면 이 옵션을 활성화하십시오.",
+        "description": "Explanation for the hide page components setting."
+    },
     "mediaNotificationDownloadAction": {
         "message": "다운로드",
         "description": "The action label to download media from the notification."
@@ -1075,7 +1083,7 @@
         "description": "Updated/Added during UI string localization audit."
     },
     "extensionDescriptionAbout": {
-        "message": "웹을 위한 궁극의 미디어 동반자입니다. 사실상 모든 웹사이트에서 동영상, 음악 및 라이브 스트림을 손쉽게 감지하고 다운로드하세요. 실시간 네트워크 요청 캡처, 백그라운드 다운로드, 고급 HLS/Dash 스트림 변환 기능을 모두 하나의 강력한 오픈 소스 도구에서 제공합니다.",
+        "message": "Website Media Downloader는 웹에서 미디어를 쉽게 캡처하고 다운로드할 수 있도록 도와주는 필수 도구입니다. 브라우저 내에서 완벽하게 작동하여 검색하는 동안 숨겨진 비디오, 음악 트랙 및 라이브 스트림을 감지합니다. 백그라운드 다운로드 지원과 HLS 및 DASH와 같은 복잡한 형식의 자동 변환 기능을 통해 외부 서버에 의존하지 않고 즐겨 찾는 콘텐츠를 기기에 직접 저장할 수 있습니다.",
         "description": "Updated/Added during UI string localization audit."
     },
     "confirmTitle": {
@@ -1371,23 +1379,23 @@
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "스피드 부스트를 위한 맞춤형 필 드롭다운 및 시각적 표시기를 도입했습니다.",
+        "message": "HTML, CSS, JS 및 TXT 파일을 필터링하는 새로운 \"페이지 구성 요소 숨기기\" 설정을 추가했습니다.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "설정 확인 UI를 구현하고 설치된 페이지를 완전히 현지화했습니다.",
+        "message": "과도한 필터링을 방지하기 위한 정밀한 확장자 일치 기능을 갖춘 세그먼트 감지 로직을 강화했습니다.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "스트림 세그먼트 감지 및 필터링을 강화하고 잠재적인 충돌을 수정했습니다.",
+        "message": "페이지 구성 요소 숨기기 기능을 다양한 이미지 형식(.ico, .jpg, .webp, .png)으로 확장했습니다.",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "병렬 다운로드를 개편하고 다양한 팝업 UI 버그를 해결했습니다.",
+        "message": "9개 언어에 걸쳐 새로운 설정에 대한 완벽한 번역 지원을 추가했습니다.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "초기 로딩 성능을 향상시키기 위해 기본적으로 기록 페이지를 비활성화했습니다.",
+        "message": "전체 너비 설정 컨테이너와 즉각적인 색상 변경 감지 기능을 갖춘 UI 레이아웃을 개선했습니다.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
@@ -1488,5 +1496,9 @@
     },
     "updateCheckError": {
         "message": "업데이트 확인에 실패했습니다."
+    },
+    "audioExtractionFormatNotSupported": {
+        "message": "브라우저가 이 미디어 형식(일반적으로 .ts 스트림)에서 오디오 추출을 지원하지 않습니다. 동영상을 다운로드한 후 수동으로 오디오를 추출하세요.",
+        "description": "Error message when the browser cannot decode the audio format, typical for TS streams."
     }
 }

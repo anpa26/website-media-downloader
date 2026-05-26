@@ -316,6 +316,14 @@
         "message": "Afficher une notification lorsqu'un média est détecté sur un site web.",
         "description": "The explanation of the media detection notification setting."
     },
+    "hidePageComponentsTitle": {
+        "message": "Masquer les composants de la page",
+        "description": "Title for the setting to hide html, css, js, and txt files."
+    },
+    "hidePageComponentsExplain": {
+        "message": "Certains sites Web peuvent traiter les fichiers HTML, CSS, JS ou TXT comme de la vidéo/audio. Activez cette option pour les masquer.",
+        "description": "Explanation for the hide page components setting."
+    },
     "mediaNotificationDownloadAction": {
         "message": "Télécharger",
         "description": "The action label to download media from the notification."
@@ -1075,7 +1083,7 @@
         "description": "Updated/Added during UI string localization audit."
     },
     "extensionDescriptionAbout": {
-        "message": "Votre compagnon média ultime pour le web. Détectez et téléchargez sans effort des vidéos, de la musique et des flux en direct depuis pratiquement n importe quel site web. Capture de requêtes réseau en temps réel, téléchargements en arrière-plan et conversion de flux HLS/Dash avancée, le tout dans un outil open-source puissant.",
+        "message": "Website Media Downloader est un outil essentiel qui vous aide à capturer et télécharger facilement des médias sur le Web. Il fonctionne entièrement dans votre navigateur pour détecter les vidéos cachées, les pistes musicales et les flux en direct pendant votre navigation. Grâce à la prise en charge intégrée des téléchargements en arrière-plan et à la conversion automatique de formats complexes tels que HLS et DASH, vous pouvez enregistrer votre contenu préféré directement sur votre appareil sans dépendre de serveurs externes.",
         "description": "Updated/Added during UI string localization audit."
     },
     "confirmTitle": {
@@ -1371,23 +1379,23 @@
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Introduction de menus déroulants personnalisés et d'indicateurs visuels pour le Boost de Vitesse.",
+        "message": "Ajout du nouveau paramètre « Masquer les composants de page » pour filtrer les fichiers HTML, CSS, JS et TXT.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "Implémentation de l'interface de confirmation des paramètres et localisation complète de la page d'installation.",
+        "message": "Amélioration de la logique de détection des segments avec une correspondance précise des extensions pour éviter le sur-filtrage.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "Amélioration de la détection et du filtrage des segments de flux, et correction de plantages potentiels.",
+        "message": "Extension du masquage des composants de page pour inclure divers types d'images (.ico, .jpg, .webp, .png).",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "Refonte des téléchargements parallèles et résolution de divers bugs de l'interface du popup.",
+        "message": "Ajout du support complet de traduction pour les nouveaux paramètres dans 9 langues.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "Désactivation de la page d'historique par défaut pour améliorer les performances de chargement initial.",
+        "message": "Amélioration de la mise en page de l'interface utilisateur avec un conteneur de paramètres pleine largeur et une détection instantanée du changement de couleur.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
@@ -1488,5 +1496,9 @@
     },
     "updateCheckError": {
         "message": "Échec de la vérification des mises à jour."
+    },
+    "audioExtractionFormatNotSupported": {
+        "message": "Votre navigateur ne prend pas en charge l'extraction audio à partir de ce format multimédia (généralement des flux .ts). Veuillez télécharger la vidéo complète et extraire l'audio manuellement.",
+        "description": "Error message when the browser cannot decode the audio format, typical for TS streams."
     }
 }
