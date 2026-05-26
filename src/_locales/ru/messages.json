@@ -316,6 +316,14 @@
         "message": "Отображать уведомление при обнаружении медиа на веб-сайте.",
         "description": "The explanation of the media detection notification setting."
     },
+    "hidePageComponentsTitle": {
+        "message": "Скрыть компоненты страницы",
+        "description": "Title for the setting to hide html, css, js, and txt files."
+    },
+    "hidePageComponentsExplain": {
+        "message": "Некоторые веб-сайты могут рассматривать файлы HTML, CSS, JS или TXT как видео или аудио. Включите это, чтобы скрыть их.",
+        "description": "Explanation for the hide page components setting."
+    },
     "mediaNotificationDownloadAction": {
         "message": "Скачать",
         "description": "The action label to download media from the notification."
@@ -1075,7 +1083,7 @@
         "description": "Updated/Added during UI string localization audit."
     },
     "extensionDescriptionAbout": {
-        "message": "Ваш идеальный медиа-спутник в Интернете. Без труда обнаруживайте и скачивайте видео, музыку и прямые трансляции практически с любого веб-сайта. Захват сетевых запросов в реальном времени, фоновые загрузки и продвинутая конвертация потоков HLS/Dash — все это в одном мощном инструменте с открытым исходным кодом.",
+        "message": "Ваш незаменимый инструмент для скачивания медиа. Легко обнаруживает видео, музыку и прямые трансляции во время просмотра страниц. Поддерживает фоновые загрузки и автоматическую конвертацию потоков HLS/DASH для сохранения контента прямо на ваше устройство.",
         "description": "Updated/Added during UI string localization audit."
     },
     "confirmTitle": {
@@ -1371,23 +1379,23 @@
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Внедрены настраиваемые выпадающие списки и визуальные индикаторы для ускорения загрузки.",
+        "message": "Добавлена новая настройка «Скрыть компоненты страницы» для фильтрации файлов HTML, CSS, JS и TXT.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "Реализован пользовательский интерфейс подтверждения настроек и полностью локализована страница установки.",
+        "message": "Улучшена логика обнаружения сегментов с точным сопоставлением расширений для предотвращения избыточной фильтрации.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "Улучшено обнаружение и фильтрация сегментов потока, а также исправлены потенциальные сбои.",
+        "message": "Расширено скрытие компонентов страницы, включая различные типы изображений (.ico, .jpg, .webp, .png).",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "Переработаны параллельные загрузки и устранены различные ошибки всплывающего интерфейса.",
+        "message": "Добавлена полная поддержка перевода для новых настроек на 9 языков.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "Страница истории отключена по умолчанию для улучшения начальной производительности загрузки.",
+        "message": "Улучшен макет пользовательского интерфейса с полноэкранным контейнером настроек и мгновенным обнаружением изменения цвета.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
@@ -1488,5 +1496,9 @@
     },
     "updateCheckError": {
         "message": "Не удалось проверить наличие обновлений."
+    },
+    "audioExtractionFormatNotSupported": {
+        "message": "Ваш браузер не поддерживает извлечение звука из этого медиаформата (обычно это потоки .ts). Пожалуйста, скачайте видео целиком и извлеките звук вручную.",
+        "description": "Error message when the browser cannot decode the audio format, typical for TS streams."
     }
 }

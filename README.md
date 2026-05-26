@@ -1,6 +1,6 @@
 # Website Media Downloader
 
-[![Version](https://img.shields.io/badge/version-1.7.7-blue.svg)](src/manifest.json)
+[![Version](https://img.shields.io/badge/version-1.7.8-blue.svg)](src/manifest.json)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE.md)
 [![Platform](https://img.shields.io/badge/platform-Firefox%20%7C%20Android-orange.svg)](#installation)
 
@@ -26,6 +26,7 @@ Designed with a focus on privacy and technical transparency, all operations—in
 - **Background Downloading**: Supports background processes, allowing downloads to continue even after closing the extension popup.
 - **Speed Boost**: Utilizes multi-threaded fetching and parallel acquisition to maximize download speeds and efficiency.
 - **Intelligent Deduplication**: Automatically hides redundant entries based on filename and metadata.
+- **Update Detection**: Automatically checks and notifies you when a new release is available on GitHub, ensuring you have the latest features and fixes.
 - **Multi-language Support**: Fully localized for English, Indonesian, German, French, Portuguese, Japanese, Korean, Arabic, and Russian.
 
 ## How to Use
@@ -46,7 +47,7 @@ Designed with a focus on privacy and technical transparency, all operations—in
 
 ---
 
-## Technical Features (v1.7.7)
+## Technical Features (v1.7.8)
 
 ### Core Detection Engine
 The detection engine has been optimized to handle complex web environments more efficiently. This version introduces:
@@ -92,6 +93,21 @@ Website Media Downloader features an advanced **Speed Boost** mechanism designed
 
 ### Request Simulation
 The extension utilizes header management (Referer, Origin, and Cookies) to replicate the original request context, ensuring compatibility with servers that implement access restrictions based on request origins.
+
+### Update Mechanism
+The extension features a built-in update checker that automatically runs when the popup is opened. It queries the GitHub repository's manifest file to compare versions and notifies users via an in-app dialog if a newer release is available. You can also manually check for updates via the "About" page within the extension.
+
+**Note on Store Updates vs. GitHub Releases:**
+This update detection specifically monitors new releases on our GitHub repository. Frequently, a new version is available on GitHub before it passes the review process and becomes available on the Mozilla Add-ons (AMO) store. If you are notified of an update but AMO still serves the older version, you can choose to wait for the store update or manually install the latest release.
+
+**Manual Installation (.xpi) for Firefox:**
+To manually install the `.xpi` file from GitHub Releases, you **must use Firefox Developer Edition or Firefox Nightly**. Standard Firefox versions restrict the installation of unlisted or manually downloaded extensions for security reasons.
+1. Open Firefox Developer Edition or Firefox Nightly and navigate to `about:config`.
+2. Accept the risk warning, then search for `xpinstall.signatures.required` and double-click it to set it to **false**.
+3. Download the latest `.xpi` file from the [GitHub Releases](https://github.com/anpa26/website-media-downloader/releases) page.
+4. Navigate to the Add-ons manager (`about:addons`).
+5. Click the gear icon and select **"Install Add-on From File..."**.
+6. Select the downloaded `.xpi` file and confirm the installation.
 
 ---
 

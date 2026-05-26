@@ -316,6 +316,14 @@
         "message": "Display a notification when media is detected on a website.",
         "description": "The explanation of the media detection notification setting."
     },
+    "hidePageComponentsTitle": {
+        "message": "Hide page components",
+        "description": "Title for the setting to hide html, css, js, and txt files."
+    },
+    "hidePageComponentsExplain": {
+        "message": "Some websites might treat HTML, CSS, JS, or TXT files as video/audio. Enable this to hide them.",
+        "description": "Explanation for the hide page components setting."
+    },
     "mediaNotificationDownloadAction": {
         "message": "Download",
         "description": "The action label to download media from the notification."
@@ -1075,7 +1083,7 @@
         "description": "Updated/Added during UI string localization audit."
     },
     "extensionDescriptionAbout": {
-        "message": "Your ultimate media companion for the web. Effortlessly detect and download videos, music, and live streams from virtually any website. Featuring real-time network request capturing, background downloads, and advanced HLS/Dash stream conversion—all in one powerful, open-source tool.",
+        "message": "Your essential tool for media downloads. Effortlessly detects videos, music, and live streams while you browse. Supports background downloads and automatic HLS/DASH stream conversion to save content directly to your device.",
         "description": "Updated/Added during UI string localization audit."
     },
     "confirmTitle": {
@@ -1379,23 +1387,23 @@
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Introduced custom pill dropdowns and visual indicators for Speed Boost.",
+        "message": "Added new \"Hide page components\" setting to filter HTML, CSS, JS, and TXT files.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "Implemented settings confirmation UI and fully localized the installed page.",
+        "message": "Enhanced segment detection logic with precise extension matching to prevent over-filtering.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "Enhanced stream segment detection, filtering, and fixed potential crashes.",
+        "message": "Expanded page component hiding to include various image types (.ico, .jpg, .webp, .png).",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "Overhauled parallel downloads and resolved various popup UI bugs.",
+        "message": "Added full translation support for new settings across 9 languages.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "Disabled history page by default to improve initial loading performance.",
+        "message": "Improved UI layout with full-width settings container and instant color change detection.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
@@ -1493,5 +1501,9 @@
     "updateCheckError": {
         "message": "Failed to check for updates.",
         "description": "Snackbar message when update check fails."
+    },
+    "audioExtractionFormatNotSupported": {
+        "message": "Your browser does not support audio extraction from this media format (typically .ts streams). Please download the full video and extract the audio manually.",
+        "description": "Error message when the browser cannot decode the audio format, typical for TS streams."
     }
 }

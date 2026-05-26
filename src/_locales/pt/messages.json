@@ -316,6 +316,14 @@
         "message": "Mostrar uma notificação quando a mídia for detectada em um site.",
         "description": "The explanation of the media detection notification setting."
     },
+    "hidePageComponentsTitle": {
+        "message": "Ocultar componentes da página",
+        "description": "Title for the setting to hide html, css, js, and txt files."
+    },
+    "hidePageComponentsExplain": {
+        "message": "Alguns sites podem tratar arquivos HTML, CSS, JS ou TXT como vídeo/áudio. Ative isso para ocultá-los.",
+        "description": "Explanation for the hide page components setting."
+    },
     "mediaNotificationDownloadAction": {
         "message": "Baixar",
         "description": "The action label to download media from the notification."
@@ -1075,7 +1083,7 @@
         "description": "Updated/Added during UI string localization audit."
     },
     "extensionDescriptionAbout": {
-        "message": "Seu companheiro de mídia definitivo para a web. Detecte e baixe vídeos, músicas e transmissões ao vivo sem esforço de praticamente qualquer site. Com captura de solicitações de rede em tempo real, downloads em segundo plano e conversão avançada de fluxo HLS/Dash — tudo em uma ferramenta poderosa de código aberto.",
+        "message": "Sua ferramenta essencial para downloads de mídia. Detecta facilmente vídeos, músicas e transmissões ao vivo enquanto você navega. Suporta downloads em segundo plano e conversão automática de transmissões HLS/DASH para salvar o conteúdo diretamente em seu dispositivo.",
         "description": "Updated/Added during UI string localization audit."
     },
     "confirmTitle": {
@@ -1371,23 +1379,23 @@
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Introdução de menus suspensos personalizados e indicadores visuais para o Speed Boost.",
+        "message": "Adicionada nova configuração \"Ocultar componentes da página\" para filtrar arquivos HTML, CSS, JS e TXT.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "Implementação da interface de confirmação de configurações e localização completa da página de instalação.",
+        "message": "Lógica de detecção de segmento aprimorada com correspondência precisa de extensão para evitar filtragem excessiva.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "Melhoria na detecção e filtragem de segmentos de transmissão, e correção de possíveis falhas.",
+        "message": "Expansão da ocultação de componentes da página para incluir vários tipos de imagem (.ico, .jpg, .webp, .png).",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "Reformulação dos downloads paralelos e resolução de vários bugs na interface do popup.",
+        "message": "Adicionado suporte completo de tradução para novas configurações em 9 idiomas.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "Página de histórico desativada por padrão para melhorar o desempenho do carregamento inicial.",
+        "message": "Layout de interface aprimorado com contêiner de configurações em largura total e detecção instantânea de mudança de cor.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
@@ -1488,5 +1496,9 @@
     },
     "updateCheckError": {
         "message": "Falha ao verificar atualizações."
+    },
+    "audioExtractionFormatNotSupported": {
+        "message": "Seu navegador não suporta extração de áudio deste formato de mídia (geralmente transmissões .ts). Baixe o vídeo e extraia o áudio manualmente.",
+        "description": "Error message when the browser cannot decode the audio format, typical for TS streams."
     }
 }

@@ -45,9 +45,10 @@
         }
 
         .container {
-            max-width: var(--app-max-width);
+            width: 100%;
             margin: 0 auto;
             padding: 32px 24px 60px;
+            box-sizing: border-box;
         }
 
         /* Top Header */
@@ -248,13 +249,13 @@
             <div class="brand" data-translate="installedBrand">
                 WMD
             </div>
-            <div class="version-tag"><span data-translate="installedVersion">Version</span> <span id="extension-version">1.7.7</span></div>
+            <div class="version-tag"><span data-translate="installedVersion">Version</span> <span id="extension-version">1.7.8</span></div>
         </nav>
 
         <header class="hero">
             <h1 data-translate="installedHeroTitle">Installation Complete</h1>
             <p data-translate="installedHeroDescription">The ultimate media companion is ready. Start detecting and downloading your favorite content with a single click.</p>
-            <a href="popup.html" class="cta-button" id="get-started-btn">
+            <a href="popup.html?mode=tab" class="cta-button" id="get-started-btn">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z"/></svg>
                 <span data-translate="getStarted">Get Started Now</span>
             </a>

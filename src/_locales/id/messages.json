@@ -316,6 +316,14 @@
         "message": "Tampilkan notifikasi saat media terdeteksi di situs web.",
         "description": "The explanation of the media detection notification setting."
     },
+    "hidePageComponentsTitle": {
+        "message": "Sembunyikan komponen halaman",
+        "description": "Title for the setting to hide html, css, js, and txt files."
+    },
+    "hidePageComponentsExplain": {
+        "message": "Beberapa website mungkin membuat HTML, CSS, JS, atau TXT sebagai video. Aktifkan ini untuk menyembunyikan.",
+        "description": "Explanation for the hide page components setting."
+    },
     "mediaNotificationDownloadAction": {
         "message": "Unduh",
         "description": "The action label to download media from the notification."
@@ -1075,7 +1083,7 @@
         "description": "Updated/Added during UI string localization audit."
     },
     "extensionDescriptionAbout": {
-        "message": "Pendamping media utama Anda untuk web. Deteksi dan unduh video, musik, dan siaran langsung dengan mudah dari hampir semua situs web. Menampilkan pengambilan permintaan jaringan waktu nyata, pengunduhan latar belakang, dan konversi aliran HLS/Dash tingkat lanjut—semuanya dalam satu alat sumber terbuka yang kuat.",
+        "message": "Alat penting untuk mengunduh media. Mendeteksi video, musik, dan siaran langsung dengan mudah saat Anda menjelajah. Mendukung unduhan di latar belakang dan konversi otomatis siaran HLS/DASH untuk menyimpan konten langsung ke perangkat Anda.",
         "description": "Updated/Added during UI string localization audit."
     },
     "confirmTitle": {
@@ -1379,23 +1387,23 @@
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Memperkenalkan dropdown pil kustom dan indikator visual untuk Peningkatan Kecepatan.",
+        "message": "Menambahkan pengaturan baru \"Sembunyikan komponen halaman\" untuk memfilter file HTML, CSS, JS, dan TXT.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "Mengimplementasikan UI konfirmasi pengaturan dan melokalkan halaman terinstal sepenuhnya.",
+        "message": "Meningkatkan logika deteksi segmen dengan pencocokan ekstensi yang tepat untuk mencegah penyaringan berlebihan.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "Meningkatkan deteksi segmen siaran, pemfilteran, dan memperbaiki potensi kerusakan.",
+        "message": "Memperluas penyembunyian komponen halaman untuk mencakup berbagai jenis gambar (.ico, .jpg, .webp, .png).",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "Merombak unduhan paralel dan mengatasi berbagai bug UI popup.",
+        "message": "Menambahkan dukungan terjemahan penuh untuk pengaturan baru dalam 9 bahasa.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "Menonaktifkan halaman riwayat secara default untuk meningkatkan performa pemuatan awal.",
+        "message": "Meningkatkan tata letak UI dengan wadah pengaturan lebar penuh dan deteksi perubahan warna instan.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
@@ -1488,5 +1496,9 @@
     },
     "updateCheckError": {
         "message": "Gagal memeriksa pembaruan."
+    },
+    "audioExtractionFormatNotSupported": {
+        "message": "Peramban Anda tidak mendukung ekstraksi audio dari format media ini (biasanya siaran .ts). Silakan unduh videonya secara utuh dan ekstrak audio secara manual.",
+        "description": "Error message when the browser cannot decode the audio format, typical for TS streams."
     }
 }
