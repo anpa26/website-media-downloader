@@ -1,6 +1,6 @@
 # Website Media Downloader
 
-[![Version](https://img.shields.io/badge/version-1.9.4-blue.svg)](src/manifest.json)
+[![Version](https://img.shields.io/badge/version-1.9.5-blue.svg)](src/manifest.json)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE.md)
 [![Platform](https://img.shields.io/badge/platform-Firefox%20%7C%20Android-orange.svg)](#installation)
 
@@ -47,7 +47,7 @@ Designed with a focus on privacy and technical transparency, all operations—in
 
 ---
 
-## What's New in v1.9.4
+## What's New in v1.9.5
 
 - **Comprehensive Engine Overhaul**:
     - **Memory Efficiency**: Implemented IndexedDB-based streaming to handle multi-gigabyte files without crashing due to RAM limits.
@@ -67,7 +67,7 @@ Designed with a focus on privacy and technical transparency, all operations—in
 
 ---
 
-## Technical Features (v1.9.4)
+## Technical Features (v1.9.5)
 
 ### Core Detection Engine
 The detection engine has been optimized to handle complex web environments more efficiently. This version introduces:

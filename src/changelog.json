@@ -1,6 +1,6 @@
 {
   "en": {
-    "headline": "What's New (v1.9.4)",
+    "headline": "What's New (v1.9.5)",
     "changes": [
       "Comprehensive engine overhaul: Implemented IndexedDB-based streaming for RAM efficiency, supporting multi-gigabyte files",
       "Advanced Detection: Added WebSocket interception, Shadow DOM deep scanning, and DRM detection with retroactive filtering",
@@ -13,7 +13,7 @@
     ]
   },
   "id": {
-    "headline": "Yang Baru (v1.9.4)",
+    "headline": "Yang Baru (v1.9.5)",
     "changes": [
       "Perombakan engine menyeluruh: Implementasi streaming berbasis IndexedDB untuk efisiensi RAM, mendukung file berukuran multi-gigabyte",
       "Deteksi Lanjutan: Menambahkan intersepsi WebSocket, pemindaian mendalam Shadow DOM, dan deteksi DRM dengan pemfilteran retrospektif",
@@ -26,7 +26,7 @@
     ]
   },
   "ja": {
-    "headline": "新機能 (v1.9.4)",
+    "headline": "新機能 (v1.9.5)",
     "changes": [
       "包括的なエンジンオーバーホール：IndexedDBベースのストリーミングを実装し、RAM効率を最適化、ギガバイト単位のファイルのダウンロードをサポート",
       "高度な検出：WebSocketインターセプション、Shadow DOMディープスキャン、DRM検出と遡及的フィルタリングを追加",
@@ -39,7 +39,7 @@
     ]
   },
   "de": {
-    "headline": "Was gibt's Neues (v1.9.4)",
+    "headline": "Was gibt's Neues (v1.9.5)",
     "changes": [
       "Umfassende Engine-Überarbeitung: IndexedDB-basiertes Streaming für RAM-Effizienz bei Multi-Gigabyte-Dateien",
       "Erweiterte Erkennung: WebSocket-Interception, Shadow-DOM-Deep-Scanning und DRM-Erkennung mit retrospektiver Filterung",
@@ -52,7 +52,7 @@
     ]
   },
   "fr": {
-    "headline": "Nouveautés (v1.9.4)",
+    "headline": "Nouveautés (v1.9.5)",
     "changes": [
       "Refonte complète du moteur : Streaming basé sur IndexedDB pour l'efficacité RAM, supportant les fichiers de plusieurs gigaoctets",
       "Détection avancée : Interception WebSocket, scan profond du Shadow DOM, et détection DRM avec filtrage rétrospectif",

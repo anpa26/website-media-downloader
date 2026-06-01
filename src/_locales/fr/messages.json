@@ -1411,7 +1411,7 @@
         "description": "Label for version number"
     },
     "installedChangelogTitle": {
-        "message": "Améliorations et mises à jour (v1.9.4)",
+        "message": "Améliorations et mises à jour (v1.9.5)",
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {

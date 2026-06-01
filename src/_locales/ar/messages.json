@@ -1411,7 +1411,7 @@
         "description": "Label for version number"
     },
     "installedChangelogTitle": {
-        "message": "التحسينات والتحديثات (v1.9.4)",
+        "message": "التحسينات والتحديثات (v1.9.5)",
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
