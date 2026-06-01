@@ -169,7 +169,7 @@
         "description": "The title of the interface settings section in the settings tab."
     },
     "settingsDisplaySectionTitle": {
-        "message": "表示リスト",
+        "message": "表示設定",
         "description": "The title of the display settings section in the settings tab."
     },
     "detectionMethodTitle": {
@@ -327,6 +327,10 @@
     "mediaNotificationDownloadAction": {
         "message": "ダウンロード",
         "description": "The action label to download media from the notification."
+    },
+    "mediaNotificationDrmMessage": {
+        "message": "このコンテンツはDRMで保護されており、ダウンロードできません。",
+        "description": "Message shown in notification when media is DRM protected."
     },
     "streamDownloadTitle": {
         "message": "ストリームダウンロード設定",
@@ -688,17 +692,33 @@
         "message": "キャンセル",
         "description": "The text of the cancel button during an active download."
     },
+    "pauseButton": {
+        "message": "一時停止",
+        "description": "The text of the pause button for active downloads."
+    },
+    "resumeActiveButton": {
+        "message": "再開",
+        "description": "The text of the resume button for paused downloads."
+    },
     "downloadCancelled": {
         "message": "ダウンロードがキャンセルされました",
         "description": "The message shown when a download is manually cancelled."
     },
     "speedBoostTitle": {
-        "message": "スピードブースト（並列ダウンロード）",
+        "message": "ダウンロード加速（並列ダウンロード）",
         "description": "The title of the speed boost setting."
     },
     "speedBoostExplain": {
         "message": "ファイルの複数の部分を同時にダウンロードします。サーバーがレンジリクエストをサポートしている場合のみ動作します。",
         "description": "The explanation of the speed boost setting."
+    },
+    "speedBoostResumeTitle": {
+        "message": "再開時にダウンロード加速を強制",
+        "description": "Title for the setting to enable speed boost when resuming."
+    },
+    "speedBoostResumeExplain": {
+        "message": "再開時に並列接続を維持します。ホストサーバーが部分的な範囲リクエストを一貫してサポートしていない場合、ファイルが破損する可能性があります。",
+        "description": "Explanation for speed boost resume."
     },
     "connectionsTitle": {
         "message": "並列接続数",
@@ -802,8 +822,16 @@
         "message": "バックグラウンドでのダウンロードを許可します。無効にすると、ダウンロードはポップアップ内で実行され、ポップアップを閉じると停止します（モバイルでは新しいタブは開きません）。",
         "description": "The explanation of the background download setting."
     },
+    "autoResumeTitle": {
+        "message": "ダウンロードの自動再開",
+        "description": "Title for the automatic resume setting."
+    },
+    "autoResumeExplain": {
+        "message": "ブラウザの起動時に、保留中のダウンロードを自動的に再開します。",
+        "description": "Explanation for the automatic resume setting."
+    },
     "disableRenameDialogExplain": {
-        "message": "Skip the filename confirmation dialog and start downloads immediately using the default name.",
+        "message": "ファイル名の確認ダイアログをスキップし、デフォルト名を使用してすぐにダウンロードを開始します。",
         "description": "The explanation of the disable rename dialog setting."
     },
     "aboutChangelogDescription": {
@@ -836,7 +864,7 @@
     },
     "audioExtractionError": {
         "message": "オーディオ抽出エラー: $ERROR$",
-        "description": "Error message shown when audio extraction fails.",
+        "description": "Error message when audio extraction fails.",
         "placeholders": {
             "ERROR": {
                 "content": "$1",
@@ -891,19 +919,19 @@
         "description": "Added to eliminate inline text."
     },
     "downloadWaiting": {
-        "message": "Waiting for other tabs...",
+        "message": "他のタブを待機しています...",
         "description": "Status text while waiting for other tabs."
     },
     "downloadConnectingDB": {
-        "message": "Connecting to database...",
+        "message": "データベースに接続しています...",
         "description": "Status text while connecting to database."
     },
     "downloadFetchingMetadata": {
-        "message": "Fetching file metadata...",
+        "message": "ファイルのメタデータを取得しています...",
         "description": "Status text while fetching metadata."
     },
     "downloadProcessing": {
-        "message": "Processing...",
+        "message": "処理中...",
         "description": "Status title during reconstruction."
     },
     "downloadReconstructing": {
@@ -911,43 +939,43 @@
         "description": "Added to eliminate inline text."
     },
     "downloadReadyTitle": {
-        "message": "Download Ready!",
+        "message": "ダウンロードの準備ができました！",
         "description": "Status title when file is ready."
     },
     "downloadReadyText": {
-        "message": "Your file is ready to be saved.",
+        "message": "ファイルを保存する準備ができました。",
         "description": "Status text when file is ready."
     },
     "downloadStartedTitle": {
-        "message": "Download Started!",
+        "message": "ダウンロードが開始されました！",
         "description": "Status title when download starts."
     },
     "downloadStartedText": {
-        "message": "Your file is being saved to your device. You can close this tab now.",
+        "message": "ファイルがデバイスに保存されています。このタブは閉じてもかまいません。",
         "description": "Status text when download starts."
     },
     "downloadErrorTitle": {
-        "message": "Error",
+        "message": "エラー",
         "description": "Generic error title."
     },
     "downloadMetadataNotFound": {
-        "message": "File metadata not found in cache. It might have been cleared or the ID is incorrect.",
+        "message": "ファイルのメタデータがキャッシュに見つかりません。クリアされたか、IDが間違っている可能性があります。",
         "description": "Error text when metadata is missing."
     },
     "downloadProcessingError": {
-        "message": "Processing Error",
+        "message": "処理エラー",
         "description": "Title when processing fails."
     },
     "downloadDatabaseError": {
-        "message": "Database Error",
+        "message": "データベースエラー",
         "description": "Title when database connection fails."
     },
     "downloadDatabaseErrorText": {
-        "message": "Could not retrieve the file info from database.",
+        "message": "データベースからファイル情報を取得できませんでした。",
         "description": "Error text for database failure."
     },
     "downloadUnexpectedError": {
-        "message": "Unexpected Error",
+        "message": "予期しないエラー",
         "description": "Title for unexpected errors."
     },
     "saveToDevice": {
@@ -963,23 +991,23 @@
         "description": "Added to eliminate inline text."
     },
     "streamDownloadingTitle": {
-        "message": "Downloading Stream",
+        "message": "ストリームをダウンロード中",
         "description": "Status header during stream download."
     },
     "streamDownloadCompleteTitle": {
-        "message": "Download Complete!",
+        "message": "ダウンロード完了！",
         "description": "Status header when stream download finishes."
     },
     "streamDownloadSaved": {
-        "message": "Your file has been saved.",
+        "message": "ファイルが保存されました。",
         "description": "Status text when stream is saved."
     },
     "streamNoUrlError": {
-        "message": "No URL provided.",
+        "message": "URLが提供されていません。",
         "description": "Error when stream URL is missing."
     },
     "searchLabel": {
-        "message": "Search by name or format",
+        "message": "名前または形式で検索",
         "description": "Label for search bar."
     },
     "downloadStartedSnackbar": {
@@ -987,7 +1015,7 @@
         "description": "Updated/Added during UI string localization audit."
     },
     "downloadReconstructingSegments": {
-        "message": "Reconstructing file: gathered $COUNT$ segments...",
+        "message": "ファイルを再構築中: $COUNT$ 個のセグメントを収集しました...",
         "description": "Progress message while gathering segments.",
         "placeholders": {
             "COUNT": {
@@ -997,7 +1025,7 @@
         }
     },
     "downloadAssembling": {
-        "message": "Assembling $COUNT$ segments...",
+        "message": "$COUNT$ 個のセグメントを組み立てています...",
         "description": "Progress message while assembling segments.",
         "placeholders": {
             "COUNT": {
@@ -1007,7 +1035,7 @@
         }
     },
     "saveFileLabel": {
-        "message": "Save $FILENAME$",
+        "message": "$FILENAME$ を保存",
         "description": "Label for the save button with filename.",
         "placeholders": {
             "FILENAME": {
@@ -1362,60 +1390,88 @@
         "message": "Website Media Downloader へようこそ",
         "description": "Title of the installed page"
     },
+    "installedBrand": {
+        "message": "WMD",
+        "description": "Short brand name for the installed page"
+    },
     "installedHeroTitle": {
-        "message": "Installation Complete",
+        "message": "インストール完了",
         "description": "Hero title of the installed page"
     },
     "installedHeroDescription": {
-        "message": "The ultimate media companion is ready. Start detecting and downloading your favorite content with a single click.",
+        "message": "究極のメディアコンパニオンの準備が整いました。ワンクリックでお気に入りのコンテンツの検出とダウンロードを開始できます。",
         "description": "Hero description of the installed page"
+    },
+    "getStarted": {
+        "message": "今すぐ始める",
+        "description": "Label for the get started button"
     },
     "installedVersion": {
         "message": "バージョン",
         "description": "Label for version number"
     },
     "installedChangelogTitle": {
-        "message": "Improvements & Updates",
+        "message": "改善とアップデート (v1.9.4)",
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "HTML、CSS、JS、TXTファイルをフィルタリングするための新しい「ページコンポーネントを隠す」設定を追加しました。",
+        "message": "包括的なエンジンオーバーホール：IndexedDBベースのストリーミングを実装し、RAM効率を最適化、ギガバイト単位のファイルのダウンロードをサポート",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "過度なフィルタリングを防ぐための、正確な拡張子マッチングを備えたセグメント検出ロジックを強化しました。",
+        "message": "新規：自動MP3変換およびTSからMP4への変換機能を追加",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "ページコンポーネントの非表示対象を、さまざまな画像タイプ（.ico、.jpg、.webp、.png）に拡張しました。",
+        "message": "Instagram、TikTok、Twitter向けの精密なメディア抽出機能を追加",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "9言語にわたる新しい設定への完全な翻訳サポートを追加しました。",
+        "message": "新しいグラスモーフィックなデザインと改善されたコントロールを備えたUI/UXの現代化",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "全幅設定コンテナと即時の色変更検出を備えた、改善されたUIレイアウト。",
+        "message": "Googleドライブ統合を追加し、ダウンロードの安定性を向上",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
-        "message": "Developer",
+        "message": "開発者",
         "description": "Label for developer card"
     },
+    "installedCommunity": {
+        "message": "コミュニティ",
+        "description": "Label for community card"
+    },
+    "installedGitHubProject": {
+        "message": "GitHub プロジェクト",
+        "description": "Value for GitHub project link"
+    },
+    "installedSupport": {
+        "message": "サポート",
+        "description": "Label for support card"
+    },
+    "installedAddonsStore": {
+        "message": "アドオンストア",
+        "description": "Value for add-ons store link"
+    },
     "installedFooterQuote": {
-        "message": "Thank you for being part of our journey.",
+        "message": "私たちの旅の一部になっていただきありがとうございます。",
         "description": "Footer quote on the installed page"
     },
+    "installedCopyright": {
+        "message": "Website Media Downloader © 2026",
+        "description": "Copyright notice"
+    },
     "installedFeedbackTitle": {
-        "message": "Feedback & Issues",
+        "message": "フィードバックと問題",
         "description": "Title for the feedback section"
     },
     "installedFeedbackDesc": {
-        "message": "Found a bug or have a suggestion? Help us improve by opening an issue on GitHub!",
+        "message": "バグを見つけたり、提案がありますか？ GitHubでIssueを開いて改善に協力してください！",
         "description": "Description for the feedback section"
     },
     "installedFeedbackButton": {
-        "message": "Report an Issue",
+        "message": "問題を報告する",
         "description": "Label for the feedback button"
     },
     "applyChangesPrompt": {
@@ -1434,40 +1490,21 @@
         "message": "削除の確認",
         "description": "The title of the confirmation dialog when deleting all detected media."
     },
-    "installedBrand": {
-        "message": "WMD",
-        "description": "Short brand name for the installed page"
+    "audioToMp3Setting": {
+        "message": "音声抽出をMP3に変換する",
+        "description": "Label for the setting to convert audio downloads to MP3 format."
     },
-    "getStarted": {
-        "message": "Get Started Now",
-        "description": "Label for the get started button"
-    },
-    "installedCommunity": {
-        "message": "Community",
-        "description": "Label for community card"
-    },
-    "installedGitHubProject": {
-        "message": "GitHub Project",
-        "description": "Value for GitHub project link"
-    },
-    "installedSupport": {
-        "message": "Support",
-        "description": "Label for support card"
-    },
-    "installedAddonsStore": {
-        "message": "Add-ons Store",
-        "description": "Value for add-ons store link"
-    },
-    "installedCopyright": {
-        "message": "Website Media Downloader © 2026",
-        "description": "Copyright notice"
+    "audioToMp3SettingDesc": {
+        "message": "「音声のみ」機能（WAV）の結果を自動的にMP3形式に変換し、ファイルサイズを小さくします。",
+        "description": "Description for the audio to MP3 conversion setting."
     },
     "updateAvailable": {
         "message": "新しいバージョン v$VERSION$ が利用可能です。",
         "description": "Message shown in the update notification bar.",
         "placeholders": {
             "VERSION": {
-                "content": "$1"
+                "content": "$1",
+                "example": "1.7.9"
             }
         }
     },
@@ -1484,21 +1521,143 @@
         "description": "Message shown in the update dialog.",
         "placeholders": {
             "VERSION": {
-                "content": "$1"
+                "content": "$1",
+                "example": "1.7.9"
             }
         }
     },
     "checkUpdateButton": {
-        "message": "アップデートを確認"
+        "message": "アップデートを確認",
+        "description": "Text for the manual update check button in the about page."
     },
     "alreadyLatestVersion": {
-        "message": "最新バージョンを使用しています。"
+        "message": "最新バージョンを使用しています。",
+        "description": "Snackbar message when no update is found."
     },
     "updateCheckError": {
-        "message": "アップデートの確認に失敗しました。"
+        "message": "アップデートの確認に失敗しました。",
+        "description": "Snackbar message when update check fails."
     },
     "audioExtractionFormatNotSupported": {
         "message": "お使いのブラウザは、このメディア形式（通常は .ts ストリーム）からの音声抽出をサポートしていません。動画をダウンロードして、手動で音声を抽出してください。",
         "description": "Error message when the browser cannot decode the audio format, typical for TS streams."
+    },
+    "settingsAdvancedSectionTitle": {
+        "message": "詳細設定",
+        "description": "The title of the advanced settings section in the settings tab."
+    },
+    "cleanViewTitle": {
+        "message": "設定画面をスッキリさせる",
+        "description": "The title of the clean settings view switch in the settings tab."
+    },
+    "cleanViewExplain": {
+        "message": "設定をドロップダウンにグループ化して、見た目をスッキリさせます。",
+        "description": "The explanation of the clean settings view option."
+    },
+    "downloadTransmuxing": {
+        "message": "MP4に変換中...",
+        "description": "Message shown when muxing TS to MP4."
+    },
+    "streamToMp4Title": {
+        "message": "ストリームをMP4として保存",
+        "description": "Title for the stream to MP4 conversion setting."
+    },
+    "streamToMp4Explain": {
+        "message": "ダウンロードしたビデオが、スマートフォン、テレビ、およびほとんどのメディアプレーヤーで簡単に再生できるようにします。",
+        "description": "Explanation for the stream to MP4 conversion setting."
+    },
+    "settingsCloudSectionTitle": {
+        "message": "クラウド設定",
+        "description": "Title for the cloud integration settings section."
+    },
+    "saveToGDriveTitle": {
+        "message": "Google ドライブに保存",
+        "description": "Title for the setting to save downloads to Google Drive."
+    },
+    "saveToGDriveExplain": {
+        "message": "ダウンロードしたファイルを Google ドライブに直接アップロードします。",
+        "description": "Explanation for the Google Drive saving setting."
+    },
+    "gdriveStreamTitle": {
+        "message": "直接アップロード",
+        "description": "Title for the stream upload setting."
+    },
+    "gdriveStreamExplain": {
+        "message": "ダウンロード中にチャンクをすぐにクラウドにアップロードします。大きなファイルにお勧めです。",
+        "description": "Explanation for the stream upload setting."
+    },
+    "streamUploadMethodWarning": {
+        "message": "注：ストリームアップロードは「Fetch」ダウンロード方式で最もよく機能します。",
+        "description": "Warning shown when stream upload is enabled but native download method is selected."
+    },
+    "gdriveAccountTitle": {
+        "message": "Google ドライブ アカウント",
+        "description": "Title for the Google Drive account management section."
+    },
+    "gdriveLoginButton": {
+        "message": "ログイン",
+        "description": "Label for the Google Drive login button."
+    },
+    "gdriveLogoutButton": {
+        "message": "ログアウト",
+        "description": "Label for the Google Drive logout button."
+    },
+    "uploadingToGDrive": {
+        "message": "$1 を Google ドライブにアップロード中...",
+        "description": "Status message when uploading a file to Google Drive.",
+        "placeholders": {
+            "1": {
+                "content": "$1"
+            }
+        }
+    },
+    "uploadSuccessGDrive": {
+        "message": "$1 を Google ドライブに保存しました！",
+        "description": "Status message when a file is successfully uploaded to Google Drive.",
+        "placeholders": {
+            "1": {
+                "content": "$1"
+            }
+        }
+    },
+    "uploadFailedGDrive": {
+        "message": "クラウドへのアップロードに失敗しました",
+        "description": "Status message when a Google Drive upload fails."
+    },
+    "gdriveLoginRequired": {
+        "message": "Google ドライブへのログインが必要です。設定を確認してください。",
+        "description": "Error message when Google Drive login is missing."
+    },
+    "gdriveSessionExpired": {
+        "message": "Google ドライブのセッションが切れました。設定から再ログインしてください。",
+        "description": "Error message when Google Drive session expires."
+    },
+    "uploadingToGDriveShort": {
+        "message": "クラウドにアップロード中...",
+        "description": "Short status message for cloud upload."
+    },
+    "uploadSuccessGDriveTitle": {
+        "message": "アップロード完了！",
+        "description": "Title message for successful cloud upload."
+    },
+    "uploadPausedTitle": {
+        "message": "アップロード一時停止",
+        "description": "Title shown when cloud upload is paused."
+    },
+    "uploadCancelledTitle": {
+        "message": "アップロード取り消し",
+        "description": "Title shown when cloud upload is cancelled."
+    },
+    "uploadCancelledText": {
+        "message": "クラウドへのアップロードが取り消されました。",
+        "description": "Message shown when cloud upload is cancelled."
+    },
+    "pausedStatus": {
+        "message": "一時停止中",
+        "description": "Status text for paused items."
+    },
+    "resumeButton": {
+        "message": "再開",
+        "description": "Generic resume button text."
     }
 }

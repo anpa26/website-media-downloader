@@ -22,9 +22,146 @@
         return;
     }
 
+    try {
+        const script = document.createElement('script');
+        script.textContent = `
+            (function() {
+                try {
+                    const originalRequestMediaKeySystemAccess = navigator.requestMediaKeySystemAccess;
+                    if (originalRequestMediaKeySystemAccess && !navigator.mdu_hooked) {
+                        navigator.requestMediaKeySystemAccess = function() {
+                            window.postMessage({ type: 'MDU_DRM_DETECTED' }, '*');
+                            return originalRequestMediaKeySystemAccess.apply(this, arguments);
+                        };
+                        navigator.mdu_hooked = true;
+                    }
+
+                    const originalAttachShadow = Element.prototype.attachShadow;
+                    if (originalAttachShadow && !Element.prototype.mdu_hooked) {
+                        Element.prototype.attachShadow = function(init) {
+                            const shadowRoot = originalAttachShadow.apply(this, arguments);
+                            window.postMessage({ type: 'MDU_DOM_CHANGED' }, '*');
+                            try {
+                                const observer = new MutationObserver(() => {
+                                    window.postMessage({ type: 'MDU_DOM_CHANGED' }, '*');
+                                });
+                                observer.observe(shadowRoot, { childList: true, subtree: true });
+                            } catch (e) {}
+                            return shadowRoot;
+                        };
+                        Element.prototype.mdu_hooked = true;
+                    }
+
+                    const OriginalWebSocket = window.WebSocket;
+                    const detectedWs = new Set();
+                    window.WebSocket = function(url, protocols) {
+                        const ws = new OriginalWebSocket(url, protocols);
+                        
+                        const checkMedia = async (data) => {
+                            if (detectedWs.has(url)) return;
+                            
+                            try {
+                                let buffer;
+                                if (data instanceof ArrayBuffer) {
+                                    buffer = data;
+                                } else if (window.Blob && data instanceof Blob) {
+                                    buffer = await data.slice(0, 10).arrayBuffer();
+                                }
+
+                                if (buffer && buffer.byteLength >= 3) {
+                                    const view = new Uint8Array(buffer);
+                                    
+                                    const isNAL = (view[0] === 0 && view[1] === 0 && view[2] === 1) || 
+                                                 (view.byteLength >= 4 && view[0] === 0 && view[1] === 0 && view[2] === 0 && view[3] === 1);
+                                    
+                                    if (isNAL) {
+                                        detectedWs.add(url);
+                                        window.postMessage({ type: 'MDU_WS_STREAM_DETECTED', url: url }, '*');
+                                    }
+                                }
+                            } catch (e) {}
+                        };
+
+                        ws.addEventListener('message', (event) => {
+                            checkMedia(event.data);
+                        });
+
+                        return ws;
+                    };
+                    window.WebSocket.prototype = OriginalWebSocket.prototype;
+                    Object.assign(window.WebSocket, OriginalWebSocket);
+
+                    window.mdu_deep_scan = function() {
+                        const urls = [];
+                        try {
+                            if (window.__additionalData) {
+                                const findInObj = (obj, d = 0) => {
+                                    if (d > 10 || !obj || typeof obj !== 'object') return;
+                                    for (let k in obj) {
+                                        if (typeof obj[k] === 'string' && (obj[k].includes('.mp4') || obj[k].includes('.cdninstagram.com')) && obj[k].startsWith('http')) {
+                                            urls.push(obj[k]);
+                                        } else if (typeof obj[k] === 'object') findInObj(obj[k], d + 1);
+                                    }
+                                };
+                                findInObj(window.__additionalData);
+                            }
+                            if (window.SIGI_STATE) {
+                                if (window.SIGI_STATE.ItemModule) {
+                                    Object.values(window.SIGI_STATE.ItemModule).forEach(item => {
+                                        if (item.video) {
+                                            if (item.video.downloadAddr) urls.push(item.video.downloadAddr);
+                                            if (item.video.playAddr) urls.push(item.video.playAddr);
+                                        }
+                                    });
+                                }
+                            }
+                        } catch (e) {}
+                        if (urls.length > 0) {
+                            window.postMessage({ type: 'MDU_DEEP_URLS_DETECTED', urls: urls }, '*');
+                        }
+                    };
+                } catch (e) {}
+            })();
+        `;
+        (document.head || document.documentElement).appendChild(script);
+        script.remove();
+    } catch (e) {}
+
     if (typeof browser === 'undefined') {
         var browser = chrome;
     }
+
+    window.addEventListener('message', (event) => {
+        if (event.data) {
+            if (event.data.type === 'MDU_DRM_DETECTED') {
+                try {
+                    browser.runtime.sendMessage({ action: 'drmDetected' });
+                } catch (e) {}
+            } else if (event.data.type === 'MDU_DOM_CHANGED') {
+                if (window.mdu_scan) window.mdu_scan();
+            } else if (event.data.type === 'MDU_WS_STREAM_DETECTED') {
+                if (event.data.url) {
+                    const absolute = getAbsoluteUrl(event.data.url);
+                    if (absolute && !detected.has(absolute)) {
+                        detected.add(absolute);
+                        if (reportTimeout) clearTimeout(reportTimeout);
+                        reportTimeout = setTimeout(report, 500);
+                    }
+                }
+            } else if (event.data.type === 'MDU_DEEP_URLS_DETECTED') {
+                if (event.data.urls && Array.isArray(event.data.urls)) {
+                    event.data.urls.forEach(url => {
+                        const absolute = getAbsoluteUrl(url);
+                        if (absolute && !detected.has(absolute)) {
+                            detected.add(absolute);
+                            if (reportTimeout) clearTimeout(reportTimeout);
+                            reportTimeout = setTimeout(report, 500);
+                        }
+                    });
+                }
+            }
+        }
+    });
 
     const videoExtensions = [".3g2", ".3gp", ".asx", ".avi", ".divx", ".4v", ".flv", ".ismv", ".m2t", ".m2ts", ".m2v", ".m4s", ".m4v", ".mk3d", ".mkv", ".mng", ".mov", ".mp2v", ".mp4", ".mp4v", ".mpe", ".mpeg", ".mpeg1", ".mpeg2", ".mpeg4", ".mpg", ".mxf", ".ogm", ".ogv", ".qt", ".rm", ".swf", ".ts", ".vob", ".vp9", ".webm", ".wmv"];
     const audioExtensions = [".3ga", ".aac", ".ac3", ".adts", ".aif", ".aiff", ".alac", ".ape", ".asf", ".au", ".dts", ".f4a", ".f4b", ".flac", ".isma", ".it", ".m4a", ".m4b", ".m4r", ".mid", ".mka", ".mod", ".mp1", ".mp2", ".mp3", ".mp4a", ".mpa", ".mpga", ".oga", ".ogg", ".ogx", ".opus", ".ra", ".shn", ".spx", ".vorbis", ".wav", ".weba", ".wma", ".xm"];
@@ -42,7 +179,6 @@
         const isHidePageComponents = settings?.['hide-page-components'] === '1';
         const isOnlyImage = settings?.['only-image'] === '1';
 
-        // Page components extensions - more precise check
         const path = urlLower.split('?')[0].split('#')[0];
         if (isHidePageComponents && (
             path.endsWith('.html') || path.endsWith('.htm') ||
@@ -54,8 +190,7 @@
             path.endsWith('.jpg') || path.endsWith('.jpeg') ||
             path.endsWith('.webp') ||
             path.endsWith('.png'))) {
-            
-            // If 'only-image' is enabled, don't hide images
+
             if (isOnlyImage && (path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.webp') || path.endsWith('.png'))) {
                 return false;
             }
@@ -64,7 +199,6 @@
 
         if (!isHideSegments) return false;
 
-        // Without headers, we can only check extensions
         return path.endsWith('.ts') || 
                path.endsWith('.m4s') || 
                path.endsWith('.m4v') || 
@@ -77,7 +211,6 @@
         if (!url || typeof url !== 'string') return false;
         const urlLower = url.toLowerCase();
 
-        // Check if it's a segment/component first
         if (await checkIsSegment(url, settings)) return false;
 
         if (urlLower.startsWith('chrome-extension://') ||
@@ -104,33 +237,50 @@
         }
     }
 
+    function getPageTitle() {
+        let title = "";
+        try {
+            const ogTitle = document.querySelector('meta[property="og:title"]');
+            if (ogTitle && ogTitle.content) {
+                title = ogTitle.content;
+            } else {
+                const h1 = document.querySelector('h1');
+                if (h1 && h1.innerText) {
+                    title = h1.innerText.trim();
+                } else {
+                    title = document.title;
+                }
+            }
+        } catch (e) {}
+        return title || document.title;
+    }
+
     const detected = new Set();
     let reportTimeout = null;
 
     function report() {
         if (detected.size === 0) return;
-        chrome.runtime.sendMessage({
-            action: 'reportDetectedMedia',
-            urls: Array.from(detected)
-        });
+        try {
+            chrome.runtime.sendMessage({
+                action: 'reportDetectedMedia',
+                urls: Array.from(detected),
+                pageTitle: getPageTitle(),
+                pageUrl: window.location.href
+            });
+        } catch (e) {}
     }
 
-    window.mdu_scan = async function() {
-        const result = await browser.storage.local.get(['detect-download-links', 'hide-segments', 'hide-page-components', 'only-image']);
-        const detectDownloads = result['detect-download-links'] === '1' || result['detect-download-links'] === true;
-        const initialSize = detected.size;
-        const extraExts = detectDownloads ? downloadExtensions : [];
+    async function processElement(el, result, detectDownloads, extraExts) {
+        if (!el || el.nodeType !== Node.ELEMENT_NODE) return;
 
-        const elements = document.querySelectorAll('video, audio, source, img, track, a, area, embed, iframe');
-        for (const el of elements) {
-            let url = el.src || el.href || el.getAttribute('data-src') || el.getAttribute('data-url') || el.getAttribute('data-href') || el.getAttribute('data-original');
-            if (el.tagName === 'SOURCE' || el.tagName === 'TRACK') {
-                url = el.src || el.srcset;
-            }
-            if (url) {
-                const absolute = getAbsoluteUrl(url);
-                if (absolute) {
-                    if (await checkIsSegment(absolute, result)) continue;
+        let url = el.src || el.href || el.getAttribute('data-src') || el.getAttribute('data-url') || el.getAttribute('data-href') || el.getAttribute('data-original');
+        if (el.tagName === 'SOURCE' || el.tagName === 'TRACK') {
+            url = el.src || el.srcset;
+        }
+        if (url && typeof url === 'string') {
+            const absolute = getAbsoluteUrl(url);
+            if (absolute) {
+                if (!(await checkIsSegment(absolute, result))) {
                     const isDownloadAttr = detectDownloads && el.tagName === 'A' && el.hasAttribute('download');
                     if (await isMediaUrl(absolute, extraExts, result) || el.tagName === 'VIDEO' || el.tagName === 'AUDIO' || isDownloadAttr) {
                         detected.add(absolute);
@@ -139,8 +289,7 @@
             }
         }
 
-        const allElements = document.querySelectorAll('*');
-        for (const el of allElements) {
+        try {
             const bg = window.getComputedStyle(el).backgroundImage;
             if (bg && bg !== 'none') {
                 const match = bg.match(/url\(['"]?([^'"]+)['"]?\)/);
@@ -153,25 +302,68 @@
                     }
                 }
             }
+        } catch (e) {}
 
-            for (let i = 0; i < el.attributes.length; i++) {
-                const attr = el.attributes[i];
-                const attrName = attr.name.toLowerCase();
-                if ((attrName.startsWith('data-') || attrName === 'value' || attrName === 'action' || attrName === 'formaction') && await isMediaUrl(attr.value, extraExts, result)) {
-                    const absolute = getAbsoluteUrl(attr.value);
-                    if (absolute) {
-                        if (!(await checkIsSegment(absolute, result))) {
-                            detected.add(absolute);
-                        }
+        const attrs = el.attributes;
+        for (let i = 0; i < attrs.length; i++) {
+            const attr = attrs[i];
+            const attrName = attr.name.toLowerCase();
+            if (attrName === 'src' || attrName === 'href' || attrName === 'style') continue;
+            if ((attrName.startsWith('data-') || attrName === 'value' || attrName === 'action' || attrName === 'formaction') && await isMediaUrl(attr.value, extraExts, result)) {
+                const absolute = getAbsoluteUrl(attr.value);
+                if (absolute) {
+                    if (!(await checkIsSegment(absolute, result))) {
+                        detected.add(absolute);
                     }
                 }
             }
         }
 
+        if (el.shadowRoot) {
+            await scanContainer(el.shadowRoot, result, detectDownloads, extraExts);
+        }
+    }
+
+    async function scanContainer(container, result, detectDownloads, extraExts) {
+        const elements = container.querySelectorAll('*');
+        for (const el of elements) {
+            await processElement(el, result, detectDownloads, extraExts);
+        }
+    }
+
+    let scanPending = false;
+    window.mdu_scan = async function() {
+        if (scanPending) return;
+        scanPending = true;
+
+        const result = await browser.storage.local.get(['detect-download-links', 'hide-segments', 'hide-page-components', 'only-image']);
+        const detectDownloads = result['detect-download-links'] === '1' || result['detect-download-links'] === true;
+        const initialSize = detected.size;
+        const extraExts = detectDownloads ? downloadExtensions : [];
+
+        await scanContainer(document, result, detectDownloads, extraExts);
+
+        if (window.mdu_run_surgical_scrapers) {
+            const surgicalUrls = window.mdu_run_surgical_scrapers();
+            surgicalUrls.forEach(url => {
+                const absolute = getAbsoluteUrl(url);
+                if (absolute) detected.add(absolute);
+            });
+        }
+
+        try {
+            const script = document.createElement('script');
+            script.textContent = 'if(window.mdu_deep_scan) window.mdu_deep_scan();';
+            (document.head || document.documentElement).appendChild(script);
+            script.remove();
+        } catch (e) {}
+
         if (detected.size > initialSize || initialSize === 0) {
             if (reportTimeout) clearTimeout(reportTimeout);
             reportTimeout = setTimeout(report, 500);
         }
+
+        scanPending = false;
     };
 
     window.mdu_scan();

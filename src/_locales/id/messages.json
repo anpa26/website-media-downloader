@@ -157,19 +157,19 @@
         "description": "The label of the button to refresh the media list."
     },
     "settingsDetectionSectionTitle": {
-        "message": "Pengaturan deteksi",
+        "message": "Pengaturan Deteksi",
         "description": "The title of the detection settings section in the settings tab."
     },
     "settingsDownloadSectionTitle": {
-        "message": "Pengaturan unduhan",
+        "message": "Pengaturan Unduhan",
         "description": "The title of the download settings section in the settings tab."
     },
     "settingsInterfaceSectionTitle": {
-        "message": "Pengaturan antarmuka",
+        "message": "Pengaturan Antarmuka",
         "description": "The title of the interface settings section in the settings tab."
     },
     "settingsDisplaySectionTitle": {
-        "message": "Daftar Tampilan",
+        "message": "Pengaturan Tampilan",
         "description": "The title of the display settings section in the settings tab."
     },
     "detectionMethodTitle": {
@@ -327,6 +327,10 @@
     "mediaNotificationDownloadAction": {
         "message": "Unduh",
         "description": "The action label to download media from the notification."
+    },
+    "mediaNotificationDrmMessage": {
+        "message": "Konten ini terlindungi DRM dan tidak dapat diunduh.",
+        "description": "Message shown in notification when media is DRM protected."
     },
     "streamDownloadTitle": {
         "message": "Preferensi unduhan siaran",
@@ -637,7 +641,7 @@
         "description": "The label of the filename input field in the rename dialog."
     },
     "renameDialogDownloadButton": {
-        "message": "Download",
+        "message": "Unduh",
         "description": "The text of the download button in the rename dialog."
     },
     "dontShowRenameDialogCheckbox": {
@@ -688,6 +692,14 @@
         "message": "Batal",
         "description": "The text of the cancel button during an active download."
     },
+    "pauseButton": {
+        "message": "Jeda",
+        "description": "The text of the pause button for active downloads."
+    },
+    "resumeActiveButton": {
+        "message": "Lanjut",
+        "description": "The text of the resume button for paused downloads."
+    },
     "downloadCancelled": {
         "message": "Unduhan dibatalkan",
         "description": "The message shown when a download is manually cancelled."
@@ -697,8 +709,16 @@
         "description": "The title of the speed boost setting."
     },
     "speedBoostExplain": {
-        "message": "Unduh beberapa bagian file secara bersamaan. Hanya berfungsi jika server mendukung permintaan jangkauan.",
+        "message": "Unduh beberapa bagian file secara bersamaan. Hanya berfungsi jika server mendukung permintaan jangkauan (range requests).",
         "description": "The explanation of the speed boost setting."
+    },
+    "speedBoostResumeTitle": {
+        "message": "Paksa Peningkatan Kecepatan saat Melanjutkan",
+        "description": "Title for the setting to enable speed boost when resuming."
+    },
+    "speedBoostResumeExplain": {
+        "message": "Tetap gunakan koneksi paralel saat melanjutkan unduhan. File mungkin mengalami korup jika server tidak mendukung permintaan jangkauan data parsial dengan stabil.",
+        "description": "Explanation for speed boost resume."
     },
     "connectionsTitle": {
         "message": "Koneksi paralel",
@@ -801,6 +821,14 @@
     "backgroundDownloadExplain": {
         "message": "Memungkinkan unduhan berlanjut di latar belakang. Jika dimatikan, unduhan akan berjalan di popup dan berhenti otomatis jika popup ditutup (tanpa buka tab baru di seluler).",
         "description": "The explanation of the background download setting."
+    },
+    "autoResumeTitle": {
+        "message": "Lanjutkan unduhan otomatis",
+        "description": "Title for the automatic resume setting."
+    },
+    "autoResumeExplain": {
+        "message": "Melanjutkan unduhan yang tertunda secara otomatis saat browser dimulai.",
+        "description": "Explanation for the automatic resume setting."
     },
     "disableRenameDialogExplain": {
         "message": "Lewati dialog konfirmasi nama file dan mulai unduhan segera menggunakan nama bawaan.",
@@ -1165,7 +1193,7 @@
         "description": "About page footer/error message."
     },
     "zipDownloadError": {
-        "message": "Gagal mengunduh \"$FILENAME$\". $ERROR$\n\nApakah Anda ingin melanjutkan dengan file yang tersisa?",
+        "message": "Gagal mengunduh \"$FILENAME\". $ERROR$\n\nApakah Anda ingin melanjutkan dengan file yang tersisa?",
         "description": "Error message when a file in ZIP batch fails.",
         "placeholders": {
             "FILENAME": {
@@ -1333,7 +1361,7 @@
         }
     },
     "mpdDownloadCompleteSuccess": {
-        "message": "Berhasil mengunduh ZIP (“$FILENAME$”).",
+        "message": "Berhasil mengunduh ZIP (\"$FILENAME$\").",
         "description": "Success message when MPD ZIP is downloaded.",
         "placeholders": {
             "FILENAME": {
@@ -1383,27 +1411,27 @@
         "description": "Label for version number"
     },
     "installedChangelogTitle": {
-        "message": "Peningkatan & Pembaruan",
+        "message": "Peningkatan & Pembaruan (v1.9.4)",
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Menambahkan pengaturan baru \"Sembunyikan komponen halaman\" untuk memfilter file HTML, CSS, JS, dan TXT.",
+        "message": "Perombakan engine menyeluruh: Implementasi streaming berbasis IndexedDB untuk efisiensi RAM, mendukung file berukuran multi-gigabyte.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "Meningkatkan logika deteksi segmen dengan pencocokan ekstensi yang tepat untuk mencegah penyaringan berlebihan.",
+        "message": "Baru: Konversi otomatis MP3 dan TS ke MP4.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "Memperluas penyembunyian komponen halaman untuk mencakup berbagai jenis gambar (.ico, .jpg, .webp, .png).",
+        "message": "Ekstraksi media presisi tinggi untuk Instagram, TikTok, dan Twitter.",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "Menambahkan dukungan terjemahan penuh untuk pengaturan baru dalam 9 bahasa.",
+        "message": "Modernisasi UI/UX dengan desain glassmorphic dan kontrol yang ditingkatkan.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "Meningkatkan tata letak UI dengan wadah pengaturan lebar penuh dan deteksi perubahan warna instan.",
+        "message": "Menambahkan integrasi Google Drive dan peningkatan stabilitas unduhan.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
@@ -1462,6 +1490,14 @@
         "message": "Konfirmasi Penghapusan",
         "description": "The title of the confirmation dialog when deleting all detected media."
     },
+    "audioToMp3Setting": {
+        "message": "Ubah ekstraksi audio ke MP3",
+        "description": "Label for the setting to convert audio downloads to MP3 format."
+    },
+    "audioToMp3SettingDesc": {
+        "message": "Secara otomatis mengubah hasil dari fitur 'Hanya Audio' (WAV) ke format MP3 untuk ukuran file yang lebih kecil.",
+        "description": "Description for the audio to MP3 conversion setting."
+    },
     "updateAvailable": {
         "message": "Versi baru v$VERSION$ tersedia.",
         "description": "Message shown in the update notification bar.",
@@ -1477,10 +1513,12 @@
         "description": "Text for the update button in the notification bar."
     },
     "updateLaterButton": {
-        "message": "Nanti"
+        "message": "Nanti",
+        "description": "Text for the later button in the update dialog."
     },
     "updateDialogMessage": {
         "message": "Versi $VERSION$ tersedia. Apakah Anda ingin memperbarui sekarang?",
+        "description": "Message shown in the update dialog.",
         "placeholders": {
             "VERSION": {
                 "content": "$1",
@@ -1489,16 +1527,137 @@
         }
     },
     "checkUpdateButton": {
-        "message": "Cek Pembaruan"
+        "message": "Cek Pembaruan",
+        "description": "Text for the manual update check button in the about page."
     },
     "alreadyLatestVersion": {
-        "message": "Anda sudah menggunakan versi terbaru."
+        "message": "Anda sudah menggunakan versi terbaru.",
+        "description": "Snackbar message when no update is found."
     },
     "updateCheckError": {
-        "message": "Gagal memeriksa pembaruan."
+        "message": "Gagal memeriksa pembaruan.",
+        "description": "Snackbar message when update check fails."
     },
     "audioExtractionFormatNotSupported": {
         "message": "Peramban Anda tidak mendukung ekstraksi audio dari format media ini (biasanya siaran .ts). Silakan unduh videonya secara utuh dan ekstrak audio secara manual.",
         "description": "Error message when the browser cannot decode the audio format, typical for TS streams."
+    },
+    "settingsAdvancedSectionTitle": {
+        "message": "Pengaturan Lanjutan",
+        "description": "The title of the advanced settings section in the settings tab."
+    },
+    "cleanViewTitle": {
+        "message": "Tampilan pengaturan lebih bersih",
+        "description": "The title of the clean settings view switch in the settings tab."
+    },
+    "cleanViewExplain": {
+        "message": "Mengelompokkan pengaturan lanjutan dan antarmuka ke dalam dropdown agar terlihat lebih rapi.",
+        "description": "The explanation of the clean settings view option."
+    },
+    "downloadTransmuxing": {
+        "message": "Mengonversi ke MP4...",
+        "description": "Message shown when muxing TS to MP4."
+    },
+    "streamToMp4Title": {
+        "message": "Simpan siaran sebagai MP4",
+        "description": "Title for the stream to MP4 conversion setting."
+    },
+    "streamToMp4Explain": {
+        "message": "Memastikan video yang diunduh bisa diputar dengan lancar di HP, TV, dan hampir semua pemutar video.",
+        "description": "Explanation for the stream to MP4 conversion setting."
+    },
+    "settingsCloudSectionTitle": {
+        "message": "Pengaturan Cloud",
+        "description": "Title for the cloud integration settings section."
+    },
+    "saveToGDriveTitle": {
+        "message": "Simpan ke Google Drive",
+        "description": "Title for the setting to save downloads to Google Drive."
+    },
+    "saveToGDriveExplain": {
+        "message": "Unggah file yang diunduh langsung ke Google Drive Anda.",
+        "description": "Explanation for the Google Drive saving setting."
+    },
+    "gdriveStreamTitle": {
+        "message": "Upload secara langsung",
+        "description": "Title for the stream upload setting."
+    },
+    "gdriveStreamExplain": {
+        "message": "Unggah potongan file ke Cloud langsung saat mengunduh. Disarankan untuk file besar.",
+        "description": "Explanation for the stream upload setting."
+    },
+    "streamUploadMethodWarning": {
+        "message": "Catatan: Stream Upload bekerja paling baik dengan metode unduhan 'Fetch API'.",
+        "description": "Warning shown when stream upload is enabled but native download method is selected."
+    },
+    "gdriveAccountTitle": {
+        "message": "Akun Google Drive",
+        "description": "Title for the Google Drive account management section."
+    },
+    "gdriveLoginButton": {
+        "message": "Masuk",
+        "description": "Label for the Google Drive login button."
+    },
+    "gdriveLogoutButton": {
+        "message": "Keluar",
+        "description": "Label for the Google Drive logout button."
+    },
+    "uploadingToGDrive": {
+        "message": "Mengunggah $1 ke Google Drive...",
+        "description": "Status message when uploading a file to Google Drive.",
+        "placeholders": {
+            "1": {
+                "content": "$1"
+            }
+        }
+    },
+    "uploadSuccessGDrive": {
+        "message": "Berhasil menyimpan $1 ke Google Drive!",
+        "description": "Status message when a file is successfully uploaded to Google Drive.",
+        "placeholders": {
+            "1": {
+                "content": "$1"
+            }
+        }
+    },
+    "uploadFailedGDrive": {
+        "message": "Unggahan cloud gagal",
+        "description": "Status message when a Google Drive upload fails."
+    },
+    "gdriveLoginRequired": {
+        "message": "Login Google Drive diperlukan. Silakan periksa pengaturan.",
+        "description": "Error message when Google Drive login is missing."
+    },
+    "gdriveSessionExpired": {
+        "message": "Sesi Google Drive telah berakhir. Silakan login kembali di pengaturan.",
+        "description": "Error message when Google Drive session expires."
+    },
+    "uploadingToGDriveShort": {
+        "message": "Mengunggah ke Cloud...",
+        "description": "Short status message for cloud upload."
+    },
+    "uploadSuccessGDriveTitle": {
+        "message": "Unggahan Selesai!",
+        "description": "Title message for successful cloud upload."
+    },
+    "uploadPausedTitle": {
+        "message": "Unggahan Dijeda",
+        "description": "Title shown when cloud upload is paused."
+    },
+    "uploadCancelledTitle": {
+        "message": "Unggahan Dibatalkan",
+        "description": "Title shown when cloud upload is cancelled."
+    },
+    "uploadCancelledText": {
+        "message": "Unggahan cloud telah dibatalkan.",
+        "description": "Message shown when cloud upload is cancelled."
+    },
+    "pausedStatus": {
+        "message": "Dijeda",
+        "description": "Status text for paused items."
+    },
+    "resumeButton": {
+        "message": "Lanjutkan",
+        "description": "Generic resume button text."
     }
 }

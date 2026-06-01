@@ -1,6 +1,6 @@
 # Website Media Downloader
 
-[![Version](https://img.shields.io/badge/version-1.7.8-blue.svg)](src/manifest.json)
+[![Version](https://img.shields.io/badge/version-1.9.4-blue.svg)](src/manifest.json)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE.md)
 [![Platform](https://img.shields.io/badge/platform-Firefox%20%7C%20Android-orange.svg)](#installation)
 
@@ -47,7 +47,27 @@ Designed with a focus on privacy and technical transparency, all operations—in
 
 ---
 
-## Technical Features (v1.7.8)
+## What's New in v1.9.4
+
+- **Comprehensive Engine Overhaul**:
+    - **Memory Efficiency**: Implemented IndexedDB-based streaming to handle multi-gigabyte files without crashing due to RAM limits.
+    - **Speed Boost**: Refactored multi-threaded fetching with byte-offset chunk indexing for faster, more stable downloads.
+- **Advanced Detection & Interception**:
+    - **WebSocket & Shadow DOM**: Added WebSocket traffic monitoring and recursive Shadow DOM scanning to capture media hidden from standard DOM inspection.
+    - **DRM Detection**: Real-time detection of DRM-protected content with descriptive user notifications.
+    - **Surgical Scrapers**: Integrated high-precision extraction modules for Instagram, TikTok, and Twitter.
+- **Media Processing & Conversion**:
+    - **Automatic MP3 Conversion**: Integrated `lamejs` with a dedicated Web Worker to encode audio to MP3 without blocking the UI.
+    - **TS to MP4 Conversion**: Implemented `mux.js` for seamless client-side transmuxing of MPEG-TS streams into MP4 format.
+- **UI/UX Modernization**:
+    - **Glassmorphic Design**: Updated settings interface with accordion sections and smooth animations.
+    - **Contextual Controls**: Replaced static buttons with context-aware controls (Pause/Resume/Cancel) for active downloads.
+- **Google Drive Integration**: Native support for handling media links directly from Google Drive.
+- **Localization & Stability**: Extensive i18n updates across 9 languages and resolved race conditions in download state management.
+
+---
+
+## Technical Features (v1.9.4)
 
 ### Core Detection Engine
 The detection engine has been optimized to handle complex web environments more efficiently. This version introduces:
@@ -173,6 +193,8 @@ If you want to develop this project further, please don't forget to include me i
 - HLS Engine: [HLS.js](https://github.com/video-dev/hls.js/)
 - ZIP Management: [client-zip](https://github.com/Touffy/client-zip)
 - QR Generation: [QRCode.js](https://github.com/davidshimjs/qrcodejs)
+- Stream Transmuxing: [mux.js](https://github.com/videojs/mux.js)
+- MP3 Encoding: [lamejs](https://github.com/zhuker/lamejs)
 
 ### Iconography
 - Extension Iconography: Icons are derived from the Google Material Symbols and Icons library, utilized under the Apache License 2.0. Specific SVG implementations have been customized for the user interface.

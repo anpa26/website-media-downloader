@@ -157,19 +157,19 @@
         "description": "The label of the button to refresh the media list."
     },
     "settingsDetectionSectionTitle": {
-        "message": "Detection settings",
+        "message": "Detection Settings",
         "description": "The title of the detection settings section in the settings tab."
     },
     "settingsDownloadSectionTitle": {
-        "message": "Download settings",
+        "message": "Download Settings",
         "description": "The title of the download settings section in the settings tab."
     },
     "settingsInterfaceSectionTitle": {
-        "message": "Interface settings",
+        "message": "Interface Settings",
         "description": "The title of the interface settings section in the settings tab."
     },
     "settingsDisplaySectionTitle": {
-        "message": "Display List",
+        "message": "Display Settings",
         "description": "The title of the display settings section in the settings tab."
     },
     "detectionMethodTitle": {
@@ -327,6 +327,10 @@
     "mediaNotificationDownloadAction": {
         "message": "Download",
         "description": "The action label to download media from the notification."
+    },
+    "mediaNotificationDrmMessage": {
+        "message": "This content is DRM protected and cannot be downloaded.",
+        "description": "Message shown in notification when media is DRM protected."
     },
     "streamDownloadTitle": {
         "message": "Stream download preference",
@@ -688,6 +692,14 @@
         "message": "Cancel",
         "description": "The text of the cancel button during an active download."
     },
+    "pauseButton": {
+        "message": "Pause",
+        "description": "The text of the pause button for active downloads."
+    },
+    "resumeActiveButton": {
+        "message": "Resume",
+        "description": "The text of the resume button for paused downloads."
+    },
     "downloadCancelled": {
         "message": "Download cancelled",
         "description": "The message shown when a download is manually cancelled."
@@ -699,6 +711,14 @@
     "speedBoostExplain": {
         "message": "Download multiple parts of a file simultaneously. Only works if the server supports range requests.",
         "description": "The explanation of the speed boost setting."
+    },
+    "speedBoostResumeTitle": {
+        "message": "Force Speed Boost on Resume",
+        "description": "Title for the setting to enable speed boost when resuming."
+    },
+    "speedBoostResumeExplain": {
+        "message": "Maintain parallel connections when resuming. Files may become corrupted if the host server does not consistently support partial range requests.",
+        "description": "Explanation for speed boost resume."
     },
     "connectionsTitle": {
         "message": "Parallel connections",
@@ -801,6 +821,14 @@
     "backgroundDownloadExplain": {
         "message": "Allows downloads to continue in the background. If disabled, downloads will run in the popup and stop if it's closed (no new tabs on mobile).",
         "description": "The explanation of the background download setting."
+    },
+    "autoResumeTitle": {
+        "message": "Automatic resume download",
+        "description": "Title for the automatic resume setting."
+    },
+    "autoResumeExplain": {
+        "message": "Automatically resume pending downloads when the browser starts.",
+        "description": "Explanation for the automatic resume setting."
     },
     "disableRenameDialogExplain": {
         "message": "Skip the filename confirmation dialog and start downloads immediately using the default name.",
@@ -1333,7 +1361,7 @@
         }
     },
     "mpdDownloadCompleteSuccess": {
-        "message": "Downloaded ZIP (“$FILENAME$”).",
+        "message": "Downloaded ZIP (\"$FILENAME$\").",
         "description": "Success message when MPD ZIP is downloaded.",
         "placeholders": {
             "FILENAME": {
@@ -1383,27 +1411,27 @@
         "description": "Label for version number"
     },
     "installedChangelogTitle": {
-        "message": "Improvements & Updates",
+        "message": "Improvements & Updates (v1.9.4)",
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Added new \"Hide page components\" setting to filter HTML, CSS, JS, and TXT files.",
+        "message": "Comprehensive engine overhaul with IndexedDB-based streaming for RAM efficiency.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "Enhanced segment detection logic with precise extension matching to prevent over-filtering.",
+        "message": "New: Automatic MP3 and TS to MP4 conversion.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "Expanded page component hiding to include various image types (.ico, .jpg, .webp, .png).",
+        "message": "High-precision media extraction for Instagram, TikTok, and Twitter.",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "Added full translation support for new settings across 9 languages.",
+        "message": "Modernized UI/UX with glassmorphic design and improved controls.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "Improved UI layout with full-width settings container and instant color change detection.",
+        "message": "Added Google Drive integration and improved download stability.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
@@ -1462,6 +1490,14 @@
         "message": "Confirm Deletion",
         "description": "The title of the confirmation dialog when deleting all detected media."
     },
+    "audioToMp3Setting": {
+        "message": "Convert audio extractions to MP3",
+        "description": "Label for the setting to convert audio downloads to MP3 format."
+    },
+    "audioToMp3SettingDesc": {
+        "message": "Automatically convert results from the 'Audio Only' feature (WAV) to MP3 format for smaller file sizes.",
+        "description": "Description for the audio to MP3 conversion setting."
+    },
     "updateAvailable": {
         "message": "New version v$VERSION$ is available.",
         "description": "Message shown in the update notification bar.",
@@ -1505,5 +1541,123 @@
     "audioExtractionFormatNotSupported": {
         "message": "Your browser does not support audio extraction from this media format (typically .ts streams). Please download the full video and extract the audio manually.",
         "description": "Error message when the browser cannot decode the audio format, typical for TS streams."
+    },
+    "settingsAdvancedSectionTitle": {
+        "message": "Advanced Settings",
+        "description": "The title of the advanced settings section in the settings tab."
+    },
+    "cleanViewTitle": {
+        "message": "Clean settings view",
+        "description": "The title of the clean settings view switch in the settings tab."
+    },
+    "cleanViewExplain": {
+        "message": "Groups advanced and interface settings into dropdowns for a cleaner look.",
+        "description": "The explanation of the clean settings view option."
+    },
+    "downloadTransmuxing": {
+        "message": "Converting to MP4...",
+        "description": "Message shown when muxing TS to MP4."
+    },
+    "streamToMp4Title": {
+        "message": "Save stream as MP4",
+        "description": "Title for the stream to MP4 conversion setting."
+    },
+    "streamToMp4Explain": {
+        "message": "Ensures downloaded videos can be played easily on phones, TVs, and most media players.",
+        "description": "Explanation for the stream to MP4 conversion setting."
+    },
+    "settingsCloudSectionTitle": {
+        "message": "Cloud Settings",
+        "description": "Title for the cloud integration settings section."
+    },
+    "saveToGDriveTitle": {
+        "message": "Save to Google Drive",
+        "description": "Title for the setting to save downloads to Google Drive."
+    },
+    "saveToGDriveExplain": {
+        "message": "Upload downloaded files directly to your Google Drive.",
+        "description": "Explanation for the Google Drive saving setting."
+    },
+    "gdriveStreamTitle": {
+        "message": "Direct upload",
+        "description": "Title for the stream upload setting."
+    },
+    "gdriveStreamExplain": {
+        "message": "Upload chunks to Cloud immediately while downloading. Recommended for large files.",
+        "description": "Explanation for the stream upload setting."
+    },
+    "streamUploadMethodWarning": {
+        "message": "Note: Stream Upload works best with 'Fetch' download method.",
+        "description": "Warning shown when stream upload is enabled but native download method is selected."
+    },
+    "gdriveAccountTitle": {
+        "message": "Google Drive Account",
+        "description": "Title for the Google Drive account management section."
+    },
+    "gdriveLoginButton": {
+        "message": "Login",
+        "description": "Label for the Google Drive login button."
+    },
+    "gdriveLogoutButton": {
+        "message": "Logout",
+        "description": "Label for the Google Drive logout button."
+    },
+    "uploadingToGDrive": {
+        "message": "Uploading $1 to Google Drive...",
+        "description": "Status message when uploading a file to Google Drive.",
+        "placeholders": {
+            "1": {
+                "content": "$1"
+            }
+        }
+    },
+    "uploadSuccessGDrive": {
+        "message": "Successfully saved $1 to Google Drive!",
+        "description": "Status message when a file is successfully uploaded to Google Drive.",
+        "placeholders": {
+            "1": {
+                "content": "$1"
+            }
+        }
+    },
+    "uploadFailedGDrive": {
+        "message": "Cloud upload failed",
+        "description": "Status message when a Google Drive upload fails."
+    },
+    "gdriveLoginRequired": {
+        "message": "Google Drive login required. Please check settings.",
+        "description": "Error message when Google Drive login is missing."
+    },
+    "gdriveSessionExpired": {
+        "message": "Google Drive session expired. Please re-login in settings.",
+        "description": "Error message when Google Drive session expires."
+    },
+    "uploadingToGDriveShort": {
+        "message": "Uploading to Cloud...",
+        "description": "Short status message for cloud upload."
+    },
+    "uploadSuccessGDriveTitle": {
+        "message": "Upload Complete!",
+        "description": "Title message for successful cloud upload."
+    },
+    "uploadPausedTitle": {
+        "message": "Upload Paused",
+        "description": "Title shown when cloud upload is paused."
+    },
+    "uploadCancelledTitle": {
+        "message": "Upload Cancelled",
+        "description": "Title shown when cloud upload is cancelled."
+    },
+    "uploadCancelledText": {
+        "message": "Cloud upload was cancelled.",
+        "description": "Message shown when cloud upload is cancelled."
+    },
+    "pausedStatus": {
+        "message": "Paused",
+        "description": "Status text for paused items."
+    },
+    "resumeButton": {
+        "message": "Resume",
+        "description": "Generic resume button text."
     }
 }

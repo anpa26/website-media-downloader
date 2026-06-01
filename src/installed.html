@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="styles/style.css">
     <script src="libraries/mdui.global.js"></script>
     <script>
-        // Set extension default blue theme immediately
+        
         if (typeof mdui !== 'undefined') {
             mdui.setColorScheme('#bbdefb');
         }
@@ -51,7 +51,6 @@
             box-sizing: border-box;
         }
 
-        /* Top Header */
         .top-nav {
             display: flex;
             justify-content: space-between;
@@ -77,7 +76,6 @@
             color: rgb(var(--mdui-color-primary));
         }
 
-        /* Hero Content */
         .hero {
             text-align: center;
             margin-bottom: 48px;
@@ -113,7 +111,6 @@
             box-shadow: 0 4px 10px rgba(var(--mdui-color-primary), 0.15);
         }
 
-        /* Sections Grid */
         .section-header {
             display: flex;
             align-items: center;
@@ -125,7 +122,6 @@
             color: rgb(var(--mdui-color-primary));
         }
 
-        /* Numbered Changelog */
         .step-list {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -171,7 +167,6 @@
             line-height: 1.4;
         }
 
-        /* Refined Bottom Grid */
         .bottom-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -238,7 +233,6 @@
             color: rgb(var(--mdui-color-primary));
         }
 
-        /* RTL Handling */
         [dir="rtl"] .step-list .step-item { gap: 16px; }
     </style>
 </head>
@@ -249,7 +243,7 @@
             <div class="brand" data-translate="installedBrand">
                 WMD
             </div>
-            <div class="version-tag"><span data-translate="installedVersion">Version</span> <span id="extension-version">1.7.8</span></div>
+            <div class="version-tag"><span data-translate="installedVersion">Version</span> <span id="extension-version">1.9.4</span></div>
         </nav>
 
         <header class="hero">
@@ -261,27 +255,27 @@
             </a>
         </header>
 
-        <div class="section-header" data-translate="installedChangelogTitle">Improvements & Updates</div>
+        <div class="section-header" data-translate="installedChangelogTitle">Improvements & Updates (v1.9.4)</div>
         <ul class="step-list" style="margin-bottom: 48px;">
             <li class="step-item">
                 <div class="step-number">01</div>
-                <div class="step-content" data-translate="installedChangelogItem1">Enhanced header spoofing for strict protections.</div>
+                <div class="step-content">Comprehensive engine overhaul with IndexedDB-based streaming for RAM efficiency.</div>
             </li>
             <li class="step-item">
                 <div class="step-number">02</div>
-                <div class="step-content" data-translate="installedChangelogItem2">Optimized real-time network monitoring.</div>
+                <div class="step-content">New: Automatic MP3 and TS to MP4 conversion.</div>
             </li>
             <li class="step-item">
                 <div class="step-number">03</div>
-                <div class="step-content" data-translate="installedChangelogItem3">Refined deep DOM scanning for complex sites.</div>
+                <div class="step-content">High-precision media extraction for Instagram, TikTok, and Twitter.</div>
             </li>
             <li class="step-item">
                 <div class="step-number">04</div>
-                <div class="step-content" data-translate="installedChangelogItem4">Improved system stability and interface.</div>
+                <div class="step-content">Modernized UI/UX with glassmorphic design and improved controls.</div>
             </li>
             <li class="step-item">
                 <div class="step-number">05</div>
-                <div class="step-content" data-translate="installedChangelogItem5">Expanded supported file formats in documentation.</div>
+                <div class="step-content">Added Google Drive integration and improved download stability.</div>
             </li>
         </ul>
 
@@ -323,7 +317,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // Language & Direction
+            
             const lang = browser.i18n.getUILanguage();
             document.documentElement.lang = lang;
             const rtlLangs = ['ar', 'he', 'fa', 'ur'];

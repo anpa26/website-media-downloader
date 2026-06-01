@@ -120,7 +120,7 @@ function showTopBarUpdateNotification(url, latestVersion) {
   
   const updateLink = document.getElementById('update-link');
   if (updateLink) {
-    // Remove existing listeners to avoid multiple tabs opening
+    
     const newUpdateLink = updateLink.cloneNode(true);
     updateLink.parentNode.replaceChild(newUpdateLink, updateLink);
     newUpdateLink.addEventListener('click', () => {
@@ -191,7 +191,9 @@ function showUpdateNotification(url, latestVersion) {
 document.addEventListener('DOMContentLoaded', async () => {
   checkForUpdates();
   const colorResult = await browser.storage.local.get('theme-color');
-  mdui.setColorScheme(colorResult['theme-color'] || '#bbdefb');
+  if (typeof mdui !== 'undefined' && mdui.setColorScheme) {
+    mdui.setColorScheme(colorResult['theme-color'] || '#bbdefb');
+  }
 
   const historyPageResult = await browser.storage.local.get('history-page');
   if (historyPageResult['history-page'] === '1') {
@@ -323,7 +325,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const mediaContainer = document.getElementById('media-list');
     if (allFilteredRequests.length === 0 && mediaContainer.querySelectorAll('.media-item').length === 0) {
-      mediaContainer.innerHTML = `<div id="no-media-detected" style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
+      mediaContainer.innerHTML = getNoMediaDetectedHTML();
     }
   });
 
@@ -335,7 +337,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (itemElement.querySelector('mdui-linear-progress')) {
         const url = itemElement.dataset.url;
         const dlId = itemElement.dataset.downloadId;
-        browser.runtime.sendMessage({ action: 'cancelDownload', url: url });
+        browser.runtime.sendMessage({ action: 'cancelDownload', url: url, id: dlId });
         
         finishDownloadUI(dlId || url, false);
       }
@@ -348,8 +350,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const itemElement = progress.closest('.media-item');
       const url = itemElement.dataset.url;
       const dlId = itemElement.dataset.downloadId;
-      browser.runtime.sendMessage({ action: 'cancelDownload', url: url });
-
+      browser.runtime.sendMessage({ action: 'cancelDownload', url: url, id: dlId });
       finishDownloadUI(dlId || url, false);
     });
   });
@@ -366,8 +367,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   browser.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local') return;
-    
-    // Settings that require re-filtering and re-rendering the media list
+
     const mediaFilterSettings = [
       'only-video', 'only-audio', 'only-stream', 'only-image', 
       'only-subtitle', 'only-file', 'hide-segments'
@@ -468,34 +468,61 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 browser.runtime.onMessage.addListener((message) => {
   if (message.action === 'downloadProgress') {
-    updateProgressUI(message.id || message.url, message.loaded, message.total, message.isParallel);
+    updateProgressUI(message.id || message.url, message.loaded, message.total, message.isParallel, message.isPaused, message.status, message.percent);
+  } else if (message.action === 'downloadPaused') {
+    updateProgressUI(message.id, message.loaded, message.total, false, true); 
   } else if (message.action === 'zipProgress') {
     const progressContainer = document.getElementById('global-progress-container');
     const progressBar = document.getElementById('global-progress-bar');
     const progressText = document.getElementById('global-progress-text');
+    const cancelGlobalBtn = document.getElementById('cancel-global-operation');
 
     progressContainer.style.display = 'flex';
-    progressBar.value = (message.loaded / message.total);
+    progressBar.value = (message.loaded / message.total) * 100;
+    if (cancelGlobalBtn) {
+      cancelGlobalBtn.style.display = 'inline-block';
+      cancelGlobalBtn.onclick = () => {
+        browser.runtime.sendMessage({ action: 'cancelDownload', id: message.id }).catch(() => {});
+        progressContainer.style.display = 'none';
+      };
+    }
 
     if (message.status === 'downloading') {
-      progressText.textContent = browser.i18n.getMessage("zipDownloading", [(message.loaded + 1).toString(), message.total.toString(), message.currentFile]);
+      progressText.textContent = (message.isPaused ? `[${browser.i18n.getMessage("pausedStatus") || "Paused"}] ` : "") + browser.i18n.getMessage("zipDownloading", [(message.loaded + 1).toString(), message.total.toString(), message.currentFile]);
     } else if (message.status === 'generating') {
-      progressBar.value = 0.95;
-      progressText.textContent = browser.i18n.getMessage("zipGenerating");
+      progressBar.value = 95;
+      progressText.textContent = (message.isPaused ? `[${browser.i18n.getMessage("pausedStatus") || "Paused"}] ` : "") + (browser.i18n.getMessage("zipGenerating") || "Generating ZIP archive...");
+    } else if (message.status === 'uploading') {
+      progressBar.indeterminate = message.percent === undefined;
+      if (message.percent !== undefined) progressBar.value = message.percent;
+      const statusText = (browser.i18n.getMessage("uploadingToGDriveShort") || "Uploading to Cloud...");
+      progressText.textContent = (message.isPaused ? `[${browser.i18n.getMessage("pausedStatus") || "Paused"}] ` : "") + statusText + (message.percent !== undefined ? ` (${message.percent}%)` : "");
     }
   } else if (message.action === 'zipComplete') {
     const progressContainer = document.getElementById('global-progress-container');
     const progressBar = document.getElementById('global-progress-bar');
     const progressText = document.getElementById('global-progress-text');
+    const cancelGlobalBtn = document.getElementById('cancel-global-operation');
 
+    if (cancelGlobalBtn) cancelGlobalBtn.style.display = 'none';
     progressBar.value = 1;
-    progressText.textContent = browser.i18n.getMessage("zipComplete");
+    progressBar.indeterminate = false;
+    
+    if (message.cloud) {
+       progressText.textContent = browser.i18n.getMessage("uploadSuccessGDrive", [message.filename]) || `Successfully saved ${message.filename} to Google Drive!`;
+    } else {
+       progressText.textContent = browser.i18n.getMessage("zipComplete");
+    }
+
     setTimeout(() => {
       progressContainer.style.display = 'none';
     }, 3000);
   } else if (message.action === 'zipError') {
     const progressContainer = document.getElementById('global-progress-container');
     const progressText = document.getElementById('global-progress-text');
+    const cancelGlobalBtn = document.getElementById('cancel-global-operation');
+
+    if (cancelGlobalBtn) cancelGlobalBtn.style.display = 'none';
     progressText.textContent = browser.i18n.getMessage("zipError", [message.error]);
     setTimeout(() => {
       progressContainer.style.display = 'none';
@@ -528,6 +555,7 @@ browser.runtime.onMessage.addListener((message) => {
           placement: "top"
         });
       }
+      finishDownloadUI(id, false);
       return;
     }
 
@@ -542,7 +570,7 @@ browser.runtime.onMessage.addListener((message) => {
   }
 });
 
-function updateProgressUI(id, loaded, total, isParallel = false) {
+function updateProgressUI(id, loaded, total, isParallel = false, isPaused = false, status = 'downloading', percent = null) {
   let item = uiCache.get(id);
 
   if (!item) {
@@ -569,7 +597,12 @@ function updateProgressUI(id, loaded, total, isParallel = false) {
           progressContainer.appendChild(statusInfo);
         }
 
-        item = { loadingBar, statusInfo, element: el, progressContainer };
+        const dlBtn = el.querySelector('#download-button');
+        const audioBtn = el.querySelector('#audio-only-button');
+        const prvBtn = el.querySelector('mdui-segmented-button:not(#download-button):not(#audio-only-button):not(#cancel-button)');
+        const cancelBtn = el.querySelector('#cancel-button');
+
+        item = { loadingBar, statusInfo, element: el, progressContainer, dlBtn, audioBtn, prvBtn, cancelBtn };
         uiCache.set(id, item);
         if (el.dataset.downloadId) uiCache.set(el.dataset.downloadId, item);
         if (el.dataset.url) uiCache.set(el.dataset.url, item);
@@ -579,8 +612,17 @@ function updateProgressUI(id, loaded, total, isParallel = false) {
   }
 
   if (item) {
-    const { loadingBar, statusInfo } = item;
-    
+    const { loadingBar, statusInfo, dlBtn, cancelBtn, audioBtn } = item;
+
+    if (dlBtn) {
+        updatePausePlayUI(dlBtn, isPaused);
+        if (cancelBtn) {
+          cancelBtn.style.display = 'inline-flex';
+          dlBtn.style.borderRadius = ''; 
+        }
+        if (audioBtn) audioBtn.style.display = 'none';
+    }
+
     if (isParallel) {
         statusInfo.style.color = 'rgb(var(--mdui-color-primary))';
         statusInfo.style.fontWeight = 'bold';
@@ -589,17 +631,36 @@ function updateProgressUI(id, loaded, total, isParallel = false) {
         statusInfo.style.fontWeight = '';
     }
 
+    if (isPaused) {
+        statusInfo.style.opacity = '0.7';
+    } else {
+        statusInfo.style.opacity = '1';
+    }
+
+    if (status === 'uploading') {
+        const pct = percent || (total > 0 ? Math.round((loaded / total) * 100) : 0);
+        loadingBar.value = pct;
+        loadingBar.indeterminate = false;
+        const statusText = (browser.i18n.getMessage("uploadingToGDriveShort") || "Uploading to Cloud...");
+        statusInfo.textContent = (isPaused ? `[${browser.i18n.getMessage("pausedStatus") || "Paused"}] ` : "") + statusText + ` (${pct}%)`;
+        return;
+    }
+
     const loadedMB = (loaded / (1024 * 1024)).toFixed(2);
     if (total > 0) {
       const totalMB = (total / (1024 * 1024)).toFixed(2);
       const percent = Math.round((loaded / total) * 100);
       const remainingMB = ((total - loaded) / (1024 * 1024)).toFixed(2);
-      statusInfo.textContent = browser.i18n.getMessage("streamProgressWithSize", [loadedMB, totalMB, percent.toString(), remainingMB]) || `${loadedMB} MB / ${totalMB} MB (${percent}%) • ${remainingMB} MB remaining`;
+      let text = browser.i18n.getMessage("streamProgressWithSize", [loadedMB, totalMB, percent.toString(), remainingMB]) || `${loadedMB} MB / ${totalMB} MB (${percent}%) • ${remainingMB} MB remaining`;
+      if (isPaused) text = `[Paused] ${text}`;
+      statusInfo.textContent = text;
       loadingBar.indeterminate = false;
-      loadingBar.max = total;
-      loadingBar.value = loaded;
+      loadingBar.max = 100;
+      loadingBar.value = percent;
     } else {
-      statusInfo.textContent = browser.i18n.getMessage("streamProgressNoSize", [loadedMB]) || `${loadedMB} MB downloaded`;
+      let text = browser.i18n.getMessage("streamProgressNoSize", [loadedMB]) || `${loadedMB} MB downloaded`;
+      if (isPaused) text = `[Paused] ${text}`;
+      statusInfo.textContent = text;
       if (loadingBar.indeterminate !== true && !loadingBar.value) {
           loadingBar.indeterminate = true;
       }
@@ -612,32 +673,36 @@ function finishDownloadUI(id, isSuccess = false) {
   if (itemData) {
       const { element, progressContainer } = itemData;
 
-      const isPreviewing = element.classList.contains('expanded') ||
-                          element.querySelector('.media-preview-container.playing');
-
-      if (isSuccess && !isPreviewing) {
+      if (isSuccess) {
           element.remove();
-
+          
           const mediaContainer = document.getElementById('media-list');
-          if (mediaContainer.querySelectorAll('.media-item').length === 0) {
-            mediaContainer.innerHTML = `<div id="no-media-detected" style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
+          if (mediaContainer && mediaContainer.querySelectorAll('.media-item').length === 0) {
+            mediaContainer.innerHTML = getNoMediaDetectedHTML();
           }
       } else {
           if (progressContainer) progressContainer.remove();
 
-          // Restore any buttons that were in cancel state
-          const cancelButtons = element.querySelectorAll('.cancel-active');
-          cancelButtons.forEach(btn => {
-            if (btn.id === 'download-button') {
-              btn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>${browser.i18n.getMessage("downloadButton") || "Download"}`;
-            } else if (btn.id === 'audio-only-button') {
-               // Audio only button restoration is often handled by its own restoreButton/finally block,
-               // but we can at least clear the cancel-active class if it wasn't cloned.
+          const dlBtn = element.querySelector('#download-button');
+          if (dlBtn) {
+            dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>${browser.i18n.getMessage("downloadButton") || "Download"}`;
+            dlBtn.classList.remove('is-playing', 'is-paused');
+            dlBtn.disabled = false;
+            
+            const type = element.dataset.type;
+            if (type === 'subtitle' || type === 'file') {
+              dlBtn.style.borderRadius = '100px';
+            } else {
+              dlBtn.style.borderRadius = '';
             }
-            btn.classList.remove('cancel-active');
-            btn.disabled = false;
-          });
+          }
+
+          const cancelBtn = element.querySelector('#cancel-button');
+          const audioBtn = element.querySelector('#audio-only-button');
+          if (cancelBtn) cancelBtn.style.display = 'none';
+          if (audioBtn && (element.dataset.type === 'video' || element.dataset.type === 'stream')) audioBtn.style.display = 'inline-flex';
       }
+
       uiCache.delete(id);
       updateDownloadingCount(-1);
       return;
@@ -646,28 +711,35 @@ function finishDownloadUI(id, isSuccess = false) {
   const mediaItems = document.querySelectorAll('.media-item');
   mediaItems.forEach(item => {
     if (item.dataset.downloadId === id || item.dataset.url === id) {
-      const isPreviewing = item.classList.contains('expanded') ||
-                          item.querySelector('.media-preview-container.playing');
-
-      if (isSuccess && !isPreviewing) {
+      if (isSuccess) {
         item.remove();
-
+        
         const mediaContainer = document.getElementById('media-list');
-        if (mediaContainer.querySelectorAll('.media-item').length === 0) {
-          mediaContainer.innerHTML = `<div id="no-media-detected" style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
+        if (mediaContainer && mediaContainer.querySelectorAll('.media-item').length === 0) {
+          mediaContainer.innerHTML = getNoMediaDetectedHTML();
         }
       } else {
         const progressContainer = item.querySelector('.download-progress-container');
         if (progressContainer) progressContainer.remove();
 
-        const cancelButtons = item.querySelectorAll('.cancel-active');
-        cancelButtons.forEach(btn => {
-          if (btn.id === 'download-button') {
-            btn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>${browser.i18n.getMessage("downloadButton") || "Download"}`;
+        const dlBtn = item.querySelector('#download-button');
+        if (dlBtn) {
+          dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>${browser.i18n.getMessage("downloadButton") || "Download"}`;
+          dlBtn.classList.remove('is-playing', 'is-paused');
+          dlBtn.disabled = false;
+          
+          const type = item.dataset.type;
+          if (type === 'subtitle' || type === 'file') {
+            dlBtn.style.borderRadius = '100px';
+          } else {
+            dlBtn.style.borderRadius = '';
           }
-          btn.classList.remove('cancel-active');
-          btn.disabled = false;
-        });
+        }
+
+        const cancelBtn = item.querySelector('#cancel-button');
+        const audioBtn = item.querySelector('#audio-only-button');
+        if (cancelBtn) cancelBtn.style.display = 'none';
+        if (audioBtn && (item.dataset.type === 'video' || item.dataset.type === 'stream')) audioBtn.style.display = 'inline-flex';
       }
 
       updateDownloadingCount(-1);
@@ -827,6 +899,15 @@ function showQRCode(url) {
   }, 100);
 }
 
+function getNoMediaDetectedHTML() {
+  return `
+    <div class="end-of-list-container no-media-container">
+      <div class="end-of-list-title">${browser.i18n.getMessage("errorTitle4") || 'Info'}</div>
+      <div class="end-of-list-text">${browser.i18n.getMessage("noMediaDetected")}</div>
+    </div>
+  `;
+}
+
 function updateSelectedCount() {
   const selectAllCheckbox = document.getElementById('select-all-checkbox');
   const allCheckboxes = document.querySelectorAll('.media-item .media-checkbox');
@@ -843,8 +924,7 @@ function updateSelectedCount() {
 
   if (selectAllCheckbox && selectAllCheckbox.checked) {
     selectedCount = allFilteredRequests.length;
-    // For active downloads, we still only know about rendered ones or background ones
-    // but this is mostly for the UI labels.
+
   }
 
   document.getElementById('selected-count').textContent = browser.i18n.getMessage("selectedCount", [selectedCount.toString()]);
@@ -900,7 +980,7 @@ function renderInitialList() {
     if (query) {
       mediaContainer.innerHTML = `<div id="no-matches-msg" style="padding: 60px 20px; text-align: center; opacity: 0.8;">No matches found for "${query}"</div>`;
     } else {
-      mediaContainer.innerHTML = `<div id="no-media-detected" style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
+      mediaContainer.innerHTML = getNoMediaDetectedHTML();
       if (mediaControls) mediaControls.style.display = 'none';
     }
     return;
@@ -917,6 +997,16 @@ function renderNextChunk() {
   const selectAllChecked = document.getElementById('select-all-checkbox').checked;
 
   nextChunk.forEach(item => {
+    
+    const itemUrl = item.bestRequest.originalUrl;
+    const itemUrlBase = itemUrl.split('?')[0];
+    const exists = Array.from(mediaContainer.querySelectorAll('.media-item')).some(el => {
+       const elUrl = el.dataset.url;
+       return elUrl === itemUrl || elUrl?.split('?')[0] === itemUrlBase;
+    });
+    
+    if (exists) return;
+
     const mediaDiv = createMediaItem(item);
     if (selectAllChecked) {
       const cb = mediaDiv.querySelector('.media-checkbox');
@@ -949,12 +1039,20 @@ function renderNextChunk() {
     }
     intersectionObserver.observe(sentinel);
   } else if (allFilteredRequests.length > 0) {
-    const endMsg = document.createElement('div');
-    endMsg.id = "end-of-media-list";
-    endMsg.style.textAlign = 'center';
-    endMsg.style.padding = '20px 0 100px';
-    endMsg.innerHTML = browser.i18n.getMessage("endOfMediaList");
-    mediaContainer.appendChild(endMsg);
+   const endMsg = document.createElement('div');
+   endMsg.id = "end-of-media-list";
+   endMsg.className = "end-of-list-container";
+
+   const fullText = browser.i18n.getMessage("endOfMediaList");
+   const firstDotIndex = fullText.indexOf('!');
+   const titleText = firstDotIndex !== -1 ? fullText.substring(0, firstDotIndex + 1) : fullText;
+   const bodyText = firstDotIndex !== -1 ? fullText.substring(firstDotIndex + 1).trim() : '';
+
+   endMsg.innerHTML = `
+     <div class="end-of-list-title">${titleText}</div>
+     <div class="end-of-list-text">${bodyText}</div>
+   `;
+   mediaContainer.appendChild(endMsg);
   }
 
   updateSelectedCount();
@@ -968,6 +1066,7 @@ function createMediaItem(item) {
   mediaDiv.classList.add('media-item');
   mediaDiv.dataset.url = bestRequest.originalUrl;
   mediaDiv.dataset.size = bestRequest.size;
+  mediaDiv.dataset.type = isVideo ? 'video' : isAudio ? 'audio' : isStream ? 'stream' : isImage ? 'image' : isSubtitle ? 'subtitle' : 'file';
 
   const header = document.createElement('div');
   header.classList.add('media-item-header');
@@ -1057,7 +1156,8 @@ function createMediaItem(item) {
 
   const headline = document.createElement('div');
   headline.classList.add('media-headline');
-  headline.textContent = getFileName(bestRequest.originalUrl);
+  const displayTitle = (bestRequest && bestRequest.pageTitle) ? bestRequest.pageTitle : getFileName((bestRequest && bestRequest.originalUrl) ? bestRequest.originalUrl : "");
+  headline.textContent = displayTitle;
   info.appendChild(headline);
 
   const description = document.createElement('div');
@@ -1098,10 +1198,18 @@ function createMediaItem(item) {
   dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></mdui-icon>${browser.i18n.getMessage("downloadButton") || "Download"}`;
   if (isSubtitle || isFile) dlBtn.style.borderRadius = '100px';
   dlBtn.addEventListener('click', () => {
-    if (dlBtn.classList.contains('cancel-active')) {
-      browser.runtime.sendMessage({ action: 'cancelDownload', url: bestRequest.originalUrl });
+    if (dlBtn.classList.contains('is-paused')) {
       const dlId = mediaDiv.dataset.downloadId;
-      finishDownloadUI(dlId || bestRequest.originalUrl, false);
+      if (dlId) {
+        browser.runtime.sendMessage({ action: 'resumeActiveDownload', id: dlId });
+        updatePausePlayUI(dlBtn, false);
+      }
+    } else if (dlBtn.classList.contains('is-playing')) {
+      const dlId = mediaDiv.dataset.downloadId;
+      if (dlId) {
+        browser.runtime.sendMessage({ action: 'pauseDownload', id: dlId });
+        updatePausePlayUI(dlBtn, true);
+      }
     } else {
       downloadFile(bestRequest.originalUrl, mediaDiv, bestRequest.size);
     }
@@ -1169,22 +1277,62 @@ function createMediaItem(item) {
   });
   if (!isVideo && !isStream) audioBtn.style.display = 'none';
 
+  const cancelBtn = document.createElement('mdui-segmented-button');
+  cancelBtn.id = 'cancel-button';
+  cancelBtn.style.display = 'none'; 
+  cancelBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></mdui-icon>${browser.i18n.getMessage("cancelButton") || "Cancel"}`;
+  
+  cancelBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const dlId = mediaDiv.dataset.downloadId;
+    window.activeCancellations.add(bestRequest.originalUrl);
+    browser.runtime.sendMessage({ action: 'cancelDownload', url: bestRequest.originalUrl, id: dlId });
+    finishDownloadUI(dlId || bestRequest.originalUrl, false);
+  });
   buttonGroup.appendChild(dlBtn);
-  buttonGroup.appendChild(audioBtn);
-  buttonGroup.appendChild(prvBtn);
+  
+  if (isVideo || isStream) {
+    buttonGroup.appendChild(audioBtn);
+  }
+
+  buttonGroup.appendChild(cancelBtn);
+
+  if (!(isSubtitle || isFile)) {
+    buttonGroup.appendChild(prvBtn);
+  }
+
   actions.appendChild(buttonGroup);
   actionsWrapper.appendChild(actions);
   mediaDiv.appendChild(actionsWrapper);
 
-  uiCache.set(bestRequest.originalUrl, { element: mediaDiv });
+  uiCache.set(bestRequest.originalUrl, { element: mediaDiv, dlBtn, audioBtn, prvBtn, cancelBtn });
 
   return mediaDiv;
+}
+
+function updatePausePlayUI(btn, isPaused) {
+  if (isPaused) {
+    btn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></mdui-icon>${browser.i18n.getMessage("resumeActiveButton") || "Resume"}`;
+    btn.classList.add('is-paused');
+    btn.classList.remove('is-playing');
+  } else {
+    btn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></mdui-icon>${browser.i18n.getMessage("pauseButton") || "Pause"}`;
+    btn.classList.add('is-playing');
+    btn.classList.remove('is-paused');
+  }
 }
 
 function getMediaType(url, responseHeaders) {
     if (!url) return null;
     const urlLower = url.toLowerCase();
-    const contentType = responseHeaders?.find(h => h.name.toLowerCase() === "content-type")?.value?.toLowerCase() || "";
+    
+    let contentType = "";
+    if (responseHeaders && Array.isArray(responseHeaders)) {
+        const found = responseHeaders.find(h => h.name && h.name.toLowerCase() === "content-type");
+        if (found && found.value) {
+            contentType = found.value.toLowerCase();
+        }
+    }
 
     if (urlLower.startsWith('chrome-extension://') ||
         urlLower.startsWith('moz-extension://') ||
@@ -1227,7 +1375,6 @@ function checkIsSegment(url, responseHeaders, settings) {
     const isHideSegments = settings ? isFlagEnabled(settings['hide-segments']) : true;
     const isHidePageComponents = settings ? isFlagEnabled(settings['hide-page-components']) : true;
 
-    // Page components extensions - more precise check
     const path = urlLower.split('?')[0].split('#')[0];
     if (isHidePageComponents && (
         path.endsWith('.html') || path.endsWith('.htm') ||
@@ -1239,8 +1386,7 @@ function checkIsSegment(url, responseHeaders, settings) {
         path.endsWith('.jpg') || path.endsWith('.jpeg') ||
         path.endsWith('.webp') ||
         path.endsWith('.png'))) {
-        
-        // If 'only-image' is enabled, don't hide images
+
         if (settings && settings['only-image'] === '1' && (path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.webp') || path.endsWith('.png'))) {
             return false;
         }
@@ -1249,7 +1395,6 @@ function checkIsSegment(url, responseHeaders, settings) {
 
     if (!isHideSegments) return false;
 
-    // Common segment extensions
     if (path.endsWith('.ts') || 
         path.endsWith('.m4s') || 
         path.endsWith('.m4v') || 
@@ -1259,15 +1404,13 @@ function checkIsSegment(url, responseHeaders, settings) {
         return true;
     }
 
-    // Common segment MIME types
     if (contentType === 'video/mp2t' || 
         contentType === 'video/iso.segment' || 
         contentType === 'audio/iso.segment') {
         return true;
     }
 
-    // Heuristics for segments without clear extensions or special MIME types
-    if (size > 0 && size < 5242880) { // < 5MB
+    if (size > 0 && size < 5242880) { 
         if (urlLower.includes('chunk') || 
             urlLower.includes('fragment') || 
             urlLower.includes('segment') || 
@@ -1312,7 +1455,7 @@ async function loadMediaList() {
     if (!mediaRequests || Object.keys(mediaRequests).length === 0) {
         if (loadingSpinner) loadingSpinner.style.display = 'none';
         if (activeItems.size === 0) {
-          mediaContainer.innerHTML = `<div id="no-media-detected" style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noMediaDetected")}</div>`;
+          mediaContainer.innerHTML = getNoMediaDetectedHTML();
           if (mediaControls) mediaControls.style.display = 'none';
         } else {
           if (mediaControls) mediaControls.style.display = 'flex';
@@ -1393,37 +1536,54 @@ async function loadMediaList() {
     allFilteredRequests = [...allMediaRequests];
 
     if (loadingSpinner) loadingSpinner.style.display = 'none';
-    renderInitialList();
 
     const activeDownloads = await browser.runtime.sendMessage({ action: 'getActiveDownloads' });
     if (activeDownloads) {
-      Object.keys(activeDownloads).forEach(id => {
+      const activeIds = Object.keys(activeDownloads);
+      downloadingCount = 0; 
+
+      activeIds.forEach(id => {
         const downloadData = activeDownloads[id];
         const url = downloadData.url;
+        updateDownloadingCount(1);
 
-        const item = Array.from(document.querySelectorAll('.media-item')).find(el =>
-          el.dataset.downloadId === id || el.dataset.url === url || url.startsWith(el.dataset.url.split('?')[0])
-        );
+        let item = Array.from(document.querySelectorAll('.media-item')).find(el => {
+          if (el.dataset.downloadId === id) return true;
+          const elUrl = el.dataset.url;
+          if (!elUrl) return false;
+          return elUrl === url || url.split('?')[0] === elUrl.split('?')[0];
+        });
+
+        if (!item) {
+          const type = downloadData.mediaType || 'file';
+          const mockItem = {
+            bestRequest: { originalUrl: url, size: downloadData.total, timeStamp: Date.now() },
+            type: type,
+            isVideo: type === 'video', isAudio: type === 'audio', isStream: type === 'stream',
+            isSubtitle: type === 'subtitle', isImage: type === 'image', isFile: type === 'file'
+          };
+
+          const mediaContainer = document.getElementById('media-list');
+          item = createMediaItem(mockItem);
+          mediaContainer.appendChild(item); 
+        }
 
         if (item) {
           item.dataset.downloadId = id;
           if (!item.dataset.url) item.dataset.url = url;
-
           const dlBtn = item.querySelector('#download-button');
-          if (dlBtn && !dlBtn.classList.contains('cancel-active')) {
-            dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></mdui-icon>${browser.i18n.getMessage("cancelButton") || "Cancel"}`;
-            dlBtn.classList.add('cancel-active');
-          }
-
-          if (item.querySelector('.download-progress-container')) {
-            updateDownloadingCount(1);
-          }
-          updateProgressUI(id, downloadData.loaded, downloadData.total, downloadData.isParallel);
-          }
-          });
-
+          if (dlBtn) updatePausePlayUI(dlBtn, downloadData.isPaused);
+          const cancelBtn = item.querySelector('#cancel-button');
+          if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+          const audioBtn = item.querySelector('#audio-only-button');
+          if (audioBtn) audioBtn.style.display = 'none';
+          updateProgressUI(id, downloadData.loaded, downloadData.total, downloadData.isParallel, downloadData.isPaused, downloadData.status, downloadData.percent);
+        }
+      });
     }
-  } catch (err) {
+
+    renderInitialList();
+    } catch (err) {
     console.error("Error loading media list:", err);
     if (globalLoading) globalLoading.style.display = 'none';
     if (mainContent) mainContent.style.display = 'block';
@@ -1527,13 +1687,18 @@ async function loadHistoryList() {
     downloadBtn.title = browser.i18n.getMessage("downloadMedia") || "Download";
     downloadBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      browser.storage.local.get(['download-method'], (res) => {
-        const method = res['download-method'] || 'browser';
+      browser.storage.local.get(['download-method', 'gdrive-stream', 'save-to-gdrive', 'gdrive_token'], (res) => {
+        let method = res['download-method'] || 'browser';
+        const isGdriveStream = res['save-to-gdrive'] === '1' && res['gdrive-stream'] === '1' && res['gdrive_token'];
+        
+        if (isGdriveStream) method = 'fetch';
+
         if (method === 'fetch') {
           browser.runtime.sendMessage({
             action: 'startFetchDownload',
             url: item.url,
-            filename: item.filename
+            filename: item.filename,
+            mediaType: item.mediaType || getMediaType(item.url, [])
           });
           if (typeof mdui !== 'undefined' && mdui.snackbar) {
             mdui.snackbar({ message: browser.i18n.getMessage("downloadStartedSnackbar") || "Download started...", placement: "top" });
@@ -1602,34 +1767,37 @@ async function loadAboutPage() {
           <p style="font-size: 0.9rem; line-height: 1.6; margin: 16px 0 0; color: var(--on-surface-variant);">${browser.i18n.getMessage("extensionDescriptionAbout") || data.extension.description}</p>
         </div>
 
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--surface-low); border-radius: var(--app-border-radius); border: 1px solid rgb(var(--mdui-color-outline-variant));">
-          <div style="font-size: 0.85rem; font-weight: 600; color: var(--on-surface-variant); padding-left: 4px;">
-            ${browser.i18n.getMessage("installedVersion") || "Version"} ${browser.runtime.getManifest().version}
+        <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; background: var(--surface-low); border-radius: var(--app-border-radius); border: 1px solid rgb(var(--mdui-color-outline-variant));">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--on-surface-variant); padding-left: 4px;">
+              ${browser.i18n.getMessage("installedVersion") || "Version"} ${browser.runtime.getManifest().version}
+            </div>
+            <mdui-button id="manual-check-update" style="--mdui-shape-corner-extra-small: 16px; height: 32px; font-size: 12px; background: linear-gradient(135deg, rgba(var(--mdui-color-primary), 0.15), rgba(var(--mdui-color-on-surface), 0.08)); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1), inset -2px -2px 4px rgba(255, 255, 255, 0.05); border: 1px solid rgba(var(--mdui-color-primary), 0.15); color: var(--primary);">
+              <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></mdui-icon>
+              ${browser.i18n.getMessage("checkUpdateButton") || "Check for Updates"}
+            </mdui-button>
           </div>
-          <mdui-button variant="tonal" id="manual-check-update" style="--mdui-shape-corner-extra-small: 16px; height: 32px; font-size: 12px;">
-            <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></mdui-icon>
-            ${browser.i18n.getMessage("checkUpdateButton") || "Check for Updates"}
-          </mdui-button>
+          <div id="update-status-text" style="font-size: 0.75rem; font-weight: 500; text-align: center; display: none; color: var(--on-surface-variant); border-top: 1px solid rgba(var(--mdui-color-outline-variant), 0.5); margin-top: 4px; padding-top: 8px;"></div>
         </div>
     `;
 
     html += `
         <div style="display: flex; flex-direction: column; gap: 12px;">
-          <h2 style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary); margin: 0 8px;">${browser.i18n.getMessage("maintainedByTitle") || "Maintained By"}</h2>
+          <h2 style="font-size: 0.9rem; font-weight: 700; text-transform: none; letter-spacing: 0.02em; color: var(--primary); margin: 0 8px;">${browser.i18n.getMessage("maintainedByTitle") || "Maintained By"}</h2>
     `;
 
     const lead = data.authors[0];
     html += `
-        <mdui-card variant="filled" style="padding: 20px !important; background-color: rgb(var(--mdui-color-primary-container)); border: none; overflow: visible;">
+        <mdui-card variant="filled" style="padding: 20px !important; background: linear-gradient(135deg, rgba(var(--mdui-color-primary), 0.1), rgba(var(--mdui-color-on-surface), 0.05)); backdrop-filter: blur(30px) saturate(160%); -webkit-backdrop-filter: blur(30px) saturate(160%); box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.1), inset -4px -4px 8px rgba(255, 255, 255, 0.03); border: 1px solid rgba(var(--mdui-color-primary), 0.12); overflow: visible; border-radius: 24px;">
           <div style="display: flex; gap: 16px; align-items: center; position: relative;">
-            <mdui-avatar src="${lead.avatar}" style="width: 56px; height: 56px; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></mdui-avatar>
+            <mdui-avatar src="${lead.avatar}" style="width: 56px; height: 56px; border: 2px solid rgba(255,255,255,0.1); box-shadow: 0 4px 12px rgba(0,0,0,0.15);"></mdui-avatar>
             <div style="flex-grow: 1;">
-              <b style="font-size: 1.1rem; color: rgb(var(--mdui-color-on-primary-container));">${lead.name}</b>
-              <p style="margin: 8px 0 0; font-size: 0.85rem; line-height: 1.5; color: rgb(var(--mdui-color-on-primary-container)); opacity: 0.9;">${browser.i18n.getMessage("leadDeveloperDescription") || lead.description}</p>
+              <b style="font-size: 1.1rem; color: var(--primary);">${lead.name}</b>
+              <p style="margin: 8px 0 0; font-size: 0.85rem; line-height: 1.5; color: var(--on-surface-variant);">${browser.i18n.getMessage("leadDeveloperDescription") || lead.description}</p>
             </div>
             <div style="display: flex; flex-direction: column; align-items: flex-end; align-self: stretch; justify-content: center; min-width: 80px;">
-              <span style="font-size: 0.65rem; color: rgb(var(--mdui-color-on-primary-container)); opacity: 0.7; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; position: absolute; top: -4px; right: 0;">${browser.i18n.getMessage("leadDeveloperRole") || lead.role}</span>
-              <mdui-button-icon variant="filled" style="--mdui-color-primary: var(--mdui-color-on-primary-container); --mdui-color-on-primary: var(--mdui-color-primary-container); flex-shrink: 0;" href="${lead.github}" target="_blank">
+              <span style="font-size: 0.65rem; color: var(--primary); opacity: 0.8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; position: absolute; top: -4px; right: 0;">${browser.i18n.getMessage("leadDeveloperRole") || lead.role}</span>
+              <mdui-button-icon variant="filled" style="--mdui-color-primary: var(--primary); --mdui-color-on-primary: var(--surface-low); flex-shrink: 0;" href="${lead.github}" target="_blank">
                 <svg viewBox="0 0 24 24" style="fill: currentColor;"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
               </mdui-button-icon>
             </div>
@@ -1701,12 +1869,20 @@ async function loadAboutPage() {
 
     container.innerHTML = html;
 
-    // Add listener for the manual check button
     const checkBtn = document.getElementById('manual-check-update');
+    const statusText = document.getElementById('update-status-text');
+    let statusTimeout = null;
+
     if (checkBtn) {
       checkBtn.addEventListener('click', async () => {
         checkBtn.loading = true;
         checkBtn.disabled = true;
+
+        if (statusTimeout) clearTimeout(statusTimeout);
+        if (statusText) {
+          statusText.style.display = 'none';
+          statusText.textContent = '';
+        }
 
         const MANIFEST_URL = 'https://raw.githubusercontent.com/anpa26/website-media-downloader/wmd-1/src/manifest.json';
         try {
@@ -1720,14 +1896,24 @@ async function loadAboutPage() {
           if (compareVersions(latestVersion, currentVersion) > 0) {
             showUpdateDialog('https://github.com/anpa26/website-media-downloader/releases', latestVersion);
           } else {
-            if (typeof mdui !== 'undefined' && mdui.snackbar) {
-              mdui.snackbar({ message: browser.i18n.getMessage("alreadyLatestVersion") || "You are using the latest version.", placement: "top" });
+            if (statusText) {
+              statusText.textContent = browser.i18n.getMessage("alreadyLatestVersion") || "You are using the latest version.";
+              statusText.style.display = 'block';
+              statusText.style.color = 'var(--on-surface-variant)';
+              statusTimeout = setTimeout(() => {
+                statusText.style.display = 'none';
+              }, 3000);
             }
           }
         } catch (error) {
           console.error('Manual check failed:', error);
-          if (typeof mdui !== 'undefined' && mdui.snackbar) {
-            mdui.snackbar({ message: browser.i18n.getMessage("updateCheckError") || "Failed to check for updates.", placement: "top" });
+          if (statusText) {
+            statusText.textContent = browser.i18n.getMessage("updateCheckError") || "Failed to check for updates.";
+            statusText.style.display = 'block';
+            statusText.style.color = 'rgb(var(--mdui-color-error))';
+            statusTimeout = setTimeout(() => {
+              statusText.style.display = 'none';
+            }, 3000);
           }
         } finally {
           checkBtn.loading = false;
@@ -1763,7 +1949,7 @@ async function downloadAllAsZip(items) {
         const requestData = allFilteredRequests.find(r => r.bestRequest.originalUrl === url || r.bestRequest.url === url);
         targetRequest = requestData ? requestData.bestRequest : null;
       } else {
-        // Assume it's an object from allFilteredRequests
+        
         url = item.bestRequest.originalUrl;
         targetRequest = item.bestRequest;
       }
@@ -1790,50 +1976,50 @@ async function downloadAllAsZip(items) {
     if (!bgDownloadEnabled) {
 
       try {
-        const zipEntries = [];
         let skipAllErrors = false;
         progressBar.max = downloadItems.length;
 
-        for (let i = 0; i < downloadItems.length; i++) {
-          const item = downloadItems[i];
+        const zipEntriesGenerator = async function* () {
+          for (let i = 0; i < downloadItems.length; i++) {
+            const item = downloadItems[i];
 
-          if (window.activeCancellations && window.activeCancellations.has('global_zip')) {
-            throw new Error("Cancelled");
-          }
-
-          progressText.textContent = browser.i18n.getMessage("zipDownloading", [i + 1, downloadItems.length, item.filename]);
-          progressBar.value = i;
-
-          try {
-            const response = await spoofedFetch(item.url, item.request);
-            if (!response.ok) throw new Error(`Server returned ${response.status}`);
-
-            const blob = await response.blob();
-            zipEntries.push({ name: item.filename, input: blob });
-          } catch (err) {
-            console.warn(`Local ZIP fetch error for ${item.url}:`, err);
-            if (skipAllErrors) continue;
-
-            const result = await showConfirmDialog(
-              browser.i18n.getMessage("zipDownloadError", [item.filename, err.message]),
-              browser.i18n.getMessage("downloadErrorTitle") || "Download Error"
-            );
-
-            if (result === 'continue-all') {
-              skipAllErrors = true;
-              continue;
+            if (window.activeCancellations && window.activeCancellations.has('global_zip')) {
+              throw new Error("Cancelled");
             }
-            if (result !== 'continue') {
-              throw new Error("Cancelled by user after error");
+
+            progressText.textContent = browser.i18n.getMessage("zipDownloading", [i + 1, downloadItems.length, item.filename]);
+            progressBar.value = i;
+
+            try {
+              const response = await spoofedFetch(item.url, item.request);
+              if (!response.ok) throw new Error(`Server returned ${response.status}`);
+
+              const blob = await response.blob();
+              yield { name: item.filename, input: blob };
+            } catch (err) {
+              console.warn(`Local ZIP fetch error for ${item.url}:`, err);
+              if (skipAllErrors) continue;
+
+              const result = await showConfirmDialog(
+                browser.i18n.getMessage("zipDownloadError", [item.filename, err.message]),
+                browser.i18n.getMessage("downloadErrorTitle") || "Download Error"
+              );
+
+              if (result === 'continue-all') {
+                skipAllErrors = true;
+                continue;
+              }
+              if (result !== 'continue') {
+                throw new Error("Cancelled by user after error");
+              }
             }
-            // Otherwise, just continue to next item (skip this one)
           }
-        }
+        };
 
         progressText.textContent = browser.i18n.getMessage("zipGenerating") || "Generating ZIP archive...";
         progressBar.indeterminate = true;
 
-        const zipBlob = await downloadZip(zipEntries).blob();
+        const zipBlob = await downloadZip(zipEntriesGenerator()).blob();
         const zipName = `downloads_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`;
 
         const blobUrl = URL.createObjectURL(zipBlob);
@@ -1905,7 +2091,7 @@ function getHumanReadableSize(size) {
   return `${sizeInBytes.toFixed(2)} ${units[i]}`;
 }
 
-async function audioBufferToWav(buffer, onProgress) {
+async function audioBufferToWav(buffer, onProgress, checkCancel = null) {
   let numOfChan = buffer.numberOfChannels,
       length = buffer.length * numOfChan * 2 + 44,
       buffer_out = new ArrayBuffer(length),
@@ -1929,6 +2115,7 @@ async function audioBufferToWav(buffer, onProgress) {
   const batchSize = 100000;
 
   while(offset < totalSamples) {
+    if (checkCancel && checkCancel()) throw new Error("Cancelled");
     let end = Math.min(offset + batchSize, totalSamples);
     for(; offset < end; offset++) {
       for(i = 0; i < numOfChan; i++) {
@@ -1946,7 +2133,7 @@ async function audioBufferToWav(buffer, onProgress) {
   return new Blob([buffer_out], {type: "audio/wav"});
 }
 
-async function extractAudioFromBlob(blob, filename, downloadMethod, loadingBar) {
+async function extractAudioFromBlob(blob, filename, downloadMethod, loadingBar, checkCancel = null) {
   let statusInfo = null;
   if (loadingBar) {
       loadingBar.setAttribute('indeterminate', 'true');
@@ -1954,7 +2141,6 @@ async function extractAudioFromBlob(blob, filename, downloadMethod, loadingBar) 
       if (statusInfo) statusInfo.textContent = browser.i18n.getMessage("decodingAudio");
   }
 
-  // Force a small pause so the browser has time to paint the status above
   await new Promise(r => setTimeout(r, 200));
 
   const arrayBuffer = await blob.arrayBuffer();
@@ -1968,26 +2154,41 @@ async function extractAudioFromBlob(blob, filename, downloadMethod, loadingBar) 
       }
 
       const wavBlob = await audioBufferToWav(audioBuffer, (progress) => {
+          if (checkCancel && checkCancel()) throw new Error("Cancelled");
           if (loadingBar) {
               const percent = Math.round(progress * 100);
               loadingBar.value = percent;
               if (statusInfo) statusInfo.textContent = browser.i18n.getMessage("encodingProgress", [percent.toString()]) || `Encoding: ${percent}%`;
           }
-      });
+      }, checkCancel);
 
-      const wavUrl = URL.createObjectURL(wavBlob);
+      let finalBlob = wavBlob;
+      let finalFilename = filename;
 
-      if (downloadMethod === "browser") {
-        await browser.downloads.download({ url: wavUrl, filename: filename });
-      } else {
-        const a = document.createElement("a");
-        a.href = wavUrl;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
+      if (typeof convertAudioToMp3IfEnabled !== 'undefined') {
+          const mp3Result = await convertAudioToMp3IfEnabled(wavBlob, filename, loadingBar, checkCancel);
+          if (mp3Result) {
+              finalBlob = mp3Result.blob;
+              finalFilename = mp3Result.filename;
+          }
       }
-      URL.revokeObjectURL(wavUrl);
+
+      if (typeof finalizeDownload !== 'undefined') {
+          await finalizeDownload(finalBlob, finalFilename, downloadMethod, loadingBar);
+      } else {
+          const finalUrl = URL.createObjectURL(finalBlob);
+          if (downloadMethod === "browser") {
+            await browser.downloads.download({ url: finalUrl, filename: finalFilename });
+          } else {
+            const a = document.createElement("a");
+            a.href = finalUrl;
+            a.download = finalFilename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          }
+          setTimeout(() => URL.revokeObjectURL(finalUrl), 10000);
+      }
   } catch (e) {
       if (e.message && e.message.toLowerCase().includes("unknown content type")) {
           throw new Error(browser.i18n.getMessage("audioExtractionFormatNotSupported") || "Your browser does not support audio extraction from this media format (typically .ts streams). Please download the full video and extract the audio manually.");
@@ -2007,14 +2208,14 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
    const targetRequest = requests[url]?.find(r => r.size === specificSize) || requests[url]?.[0];
    if(!targetRequest) throw new Error("Data lost");
 
-   const defaultName = getFileName(url, 100);
+   const defaultName = targetRequest.pageTitle || getFileName(url, 100);
    const settings = await browser.storage.local.get(['filename-template', 'disable-rename-dialog']);
    const template = settings['filename-template'];
    const disableRename = settings['disable-rename-dialog'] === '1';
    let finalName = defaultName;
 
    if (template) {
-       finalName = await generateTemplateName(template, url, defaultName);
+       finalName = await generateTemplateName(template, url, defaultName, targetRequest.pageTitle);
    }
 
    const lastDotIdx = finalName.lastIndexOf('.');
@@ -2027,48 +2228,22 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
        finalName += audioExt;
    }
 
-   // Show Rename Dialog (skip if disableRename is true)
    let newName = finalName;
    if (!disableRename) {
        newName = await showRenameDialog(finalName);
        if (newName === null) return;
    }
 
-    // Update button to Cancel
-    const dlBtn = mediaDiv.querySelector('#audio-only-button');
-    if (dlBtn) {
-      const originalText = dlBtn.innerHTML;
-      dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></mdui-icon>${browser.i18n.getMessage("cancelButton") || "Cancel"}`;
-      dlBtn.classList.add('cancel-active');
-
-      // Store the original listener to restore it later if needed,
-      // but for now we replace the click behavior entirely for the duration of download
-      const cancelHandler = (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        window.activeCancellations.add(url);
-        finishDownloadUI(url, false);
-      };
-
-      // Use a fresh listener to avoid conflicts
-      const newDlBtn = dlBtn.cloneNode(true);
-      dlBtn.parentNode.replaceChild(newDlBtn, dlBtn);
-      newDlBtn.addEventListener('click', cancelHandler);
-
-      // Helper to restore the button
-      const restoreButton = () => {
-        const resetBtn = newDlBtn.cloneNode(true);
-        resetBtn.innerHTML = originalText;
-        resetBtn.classList.remove('cancel-active');
-        resetBtn.disabled = false;
-        resetBtn.onclick = null; // Clear any inline handlers
-        resetBtn.addEventListener('click', () => {
-          downloadAudioOnly(url, mediaDiv, specificSize);
-        });
-        newDlBtn.parentNode.replaceChild(resetBtn, newDlBtn);
-      };
-
-      window.activeCancellations.setRestoreCallback?.(url, restoreButton);
+    if (mediaDiv) {
+      const audioBtn = mediaDiv.querySelector('#audio-only-button');
+      const dlBtn = mediaDiv.querySelector('#download-button');
+      const cancelBtn = mediaDiv.querySelector('#cancel-button');
+      if (audioBtn) audioBtn.style.display = 'none';
+      if (dlBtn) {
+        dlBtn.disabled = true;
+        dlBtn.style.borderRadius = '';
+      }
+      if (cancelBtn) cancelBtn.style.display = 'inline-flex';
     }
 
     updateDownloadingCount(1);
@@ -2086,13 +2261,12 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
     loadingBar.style.width = '100%';
     loadingBar.setAttribute('indeterminate', 'true');
 
-    // Manually populate UI cache to ensure finishDownloadUI works
     uiCache.set(url, { element: mediaDiv, loadingBar, statusInfo, progressContainer });
 
     const dlSettings = await browser.storage.local.get(['download-method', 'stream-download', 'background-download']);
     let downloadMethod = dlSettings['download-method'] || 'browser';
     let streamPref = dlSettings['stream-download'] || 'offline';
-    const bgDownloadEnabled = dlSettings['background-download'] !== '0'; // Default ON
+    const bgDownloadEnabled = dlSettings['background-download'] !== '0'; 
 
     if (!bgDownloadEnabled) {
         if (streamPref === 'offline') streamPref = 'stream';
@@ -2110,9 +2284,9 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
           }
           const result = await downloadM3U8Offline(url, targetRequest.responseHeaders, downloadMethod, loadingBar, targetRequest, newName, true);
           if (window.activeCancellations.has(url)) throw new Error("Cancelled");
-          if (result && result.blob) {
-              await extractAudioFromBlob(result.blob, newName, downloadMethod, loadingBar);
-          }
+          // downloadM3U8Offline with audioOnly=true already handles extraction and finalizeDownload
+          finishDownloadUI(url, true);
+          return;
       } else {
           showDialog(browser.i18n.getMessage("audioExtractionNotSupported"), browser.i18n.getMessage("notSupportedTitle"));
           finishDownloadUI(url);
@@ -2154,9 +2328,10 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
 
           const blob = new Blob(chunks);
           statusInfo.textContent = browser.i18n.getMessage("downloadCompletePreparingExtraction");
-          await new Promise(r => setTimeout(r, 500)); // Small pause to let user see it's done
+          await new Promise(r => setTimeout(r, 500)); 
           if (window.activeCancellations.has(url)) throw new Error("Cancelled");
-          await extractAudioFromBlob(blob, newName, downloadMethod, loadingBar);
+          const checkCancel = () => window.activeCancellations && window.activeCancellations.has(url);
+          await extractAudioFromBlob(blob, newName, downloadMethod, loadingBar, checkCancel);
       } catch (e) {
           throw new Error(e.message === "Cancelled" ? "Cancelled" : browser.i18n.getMessage("downloadError", [e.message]));
       }
@@ -2188,20 +2363,24 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false) {
    if (mediaDiv) {
      const dlBtn = mediaDiv.querySelector('#download-button');
      if (dlBtn) {
-       dlBtn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></mdui-icon>${browser.i18n.getMessage("cancelButton") || "Cancel"}`;
-       dlBtn.classList.add('cancel-active');
+       updatePausePlayUI(dlBtn, false);
+       dlBtn.style.borderRadius = '';
      }
+     const cancelBtn = mediaDiv.querySelector('#cancel-button');
+     if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+     const audioBtn = mediaDiv.querySelector('#audio-only-button');
+     if (audioBtn) audioBtn.style.display = 'none';
      mediaDiv.dataset.downloadId = downloadId;
    }
 
-   const defaultName = getFileName(url, 100);
+   const defaultName = targetRequest.pageTitle || getFileName(url, 100);
     const settings = await browser.storage.local.get(['filename-template', 'disable-rename-dialog']);
     const template = settings['filename-template'];
     const disableRename = settings['disable-rename-dialog'] === '1';
     let finalName = defaultName;
 
     if (template) {
-        finalName = await generateTemplateName(template, url, defaultName);
+        finalName = await generateTemplateName(template, url, defaultName, targetRequest.pageTitle);
     }
 
     let newName = finalName;
@@ -2265,7 +2444,7 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false) {
         url: browser.runtime.getURL(`stream_downloader.html?url=${encodeURIComponent(url)}&size=${encodeURIComponent(specificSize || '')}&filename=${encodeURIComponent(newName)}`),
         active: true
       });
-      finishDownloadUI(downloadId || url);
+      finishDownloadUI(downloadId);
     } else if (downloadMethod === 'browser' || (!bgDownloadEnabled && isStream)) {
 
       let downloadUrl = url;
@@ -2298,7 +2477,7 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false) {
         a.click();
         setTimeout(() => {
           document.body.removeChild(a);
-          finishDownloadUI(url, true);
+          finishDownloadUI(downloadId, true);
         }, 1000);
       }
     } else {
@@ -2342,53 +2521,53 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false) {
           }
 
           const blob = new Blob(chunks);
-          const blobUrl = URL.createObjectURL(blob);
-
-          const a = document.createElement("a");
-          a.href = blobUrl;
-          a.download = newName;
-          document.body.appendChild(a);
-          a.click();
-
+          
+          const downloadMethod = await browser.storage.local.get('download-method').then(res => res['download-method'] || 'browser');
+          await finalizeDownload(blob, newName, downloadMethod, loadingBar);
+          
+          
           setTimeout(() => {
-            document.body.removeChild(a);
-            URL.revokeObjectURL(blobUrl);
-            finishDownloadUI(url, true);
-          }, 1000);
+            finishDownloadUI(downloadId, true);
+          }, 2000);
         } catch (e) {
           console.error("Popup fetch error:", e);
           if (e.message !== "Cancelled") showDialog(browser.i18n.getMessage("downloadError", [e.message]));
-          finishDownloadUI(url);
+          finishDownloadUI(downloadId);
         }
       } else {
-        // Send message to background to start download (Background Persistence)
+        
         browser.runtime.sendMessage({
           action: 'startFetchDownload',
           url: url,
           downloadId: mediaDiv.dataset.downloadId,
           filename: newName,
-          request: targetRequest
+          request: targetRequest,
+          mediaType: mediaDiv.dataset.type
         });
       }
     }  } catch (error) {
     showDialog(browser.i18n.getMessage("downloadError", [error.message]));
-    finishDownloadUI(url);
+    finishDownloadUI(downloadId);
   } finally {
     if (wakeLock) wakeLock.release();
   }
 }
 
-async function generateTemplateName(template, url, originalName) {
+async function generateTemplateName(template, url, originalName, suggestedTitle) {
     let result = template || "{name}";
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-    const activeTab = tabs[0];
-    const pageTitle = activeTab ? activeTab.title : "Media";
+    let pageTitle = suggestedTitle;
+    
+    if (!pageTitle) {
+        const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+        const activeTab = tabs[0];
+        pageTitle = activeTab ? activeTab.title : "Media";
+    }
+    
     const host = new URL(url).hostname;
     const now = new Date();
     const dateStr = now.toISOString().split('T')[0];
     const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
 
-    // Extract name without extension for {name}
     const lastDotIdx = originalName.lastIndexOf('.');
     const nameWithoutExt = lastDotIdx !== -1 ? originalName.substring(0, lastDotIdx) : originalName;
     const ext = lastDotIdx !== -1 ? originalName.substring(lastDotIdx) : '';
@@ -2400,12 +2579,10 @@ async function generateTemplateName(template, url, originalName) {
         .replace(/{time}/g, timeStr)
         .replace(/{name}/g, nameWithoutExt);
 
-    // Ensure extension is kept if not in template and not already present
     if (ext && !result.toLowerCase().endsWith(ext.toLowerCase())) {
         result += ext;
     }
 
-    // Basic filename sanitization
     return result.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_');
 }
 

@@ -1,7 +1,7 @@
 {
     "name": "Website Media Downloader",
     "manifest_version": 3,
-    "version": "1.7.8",
+    "version": "1.9.4",
     "description": "__MSG_extensionDescription__",
     "author": "anpa26",
     "developer": {
@@ -23,13 +23,21 @@
         "unlimitedStorage",
         "downloads",
         "notifications",
+        "tabs",
         "activeTab",
         "webRequest",
         "webRequestBlocking",
         "webRequestFilterResponse",
         "scripting",
-        "offscreen"
+        "offscreen",
+        "identity"
     ],
+    "oauth2": {
+        "client_id": "1042907477337-c8h27qniercjia05jqqafgvjao514n28.apps.googleusercontent.com",
+        "scopes": [
+            "https://www.googleapis.com/auth/drive.file"
+        ]
+    },
     "optional_permissions": [],
     "host_permissions": [
         "<all_urls>"
@@ -48,6 +56,7 @@
                 "<all_urls>"
             ],
             "js": [
+                "surgical_scrapers.js",
                 "content_detector.js"
             ],
             "run_at": "document_end"

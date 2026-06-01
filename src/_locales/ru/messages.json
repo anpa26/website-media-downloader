@@ -157,19 +157,19 @@
         "description": "The label of the button to refresh the media list."
     },
     "settingsDetectionSectionTitle": {
-        "message": "Настройки обнаружения",
+        "message": "Настройки Обнаружения",
         "description": "The title of the detection settings section in the settings tab."
     },
     "settingsDownloadSectionTitle": {
-        "message": "Настройки скачивания",
+        "message": "Настройки Скачивания",
         "description": "The title of the download settings section in the settings tab."
     },
     "settingsInterfaceSectionTitle": {
-        "message": "Настройки интерфейса",
+        "message": "Настройки Интерфейса",
         "description": "The title of the interface settings section in the settings tab."
     },
     "settingsDisplaySectionTitle": {
-        "message": "Список отображения",
+        "message": "Настройки отображения",
         "description": "The title of the display settings section in the settings tab."
     },
     "detectionMethodTitle": {
@@ -327,6 +327,10 @@
     "mediaNotificationDownloadAction": {
         "message": "Скачать",
         "description": "The action label to download media from the notification."
+    },
+    "mediaNotificationDrmMessage": {
+        "message": "Этот контент защищен DRM и не может быть загружен.",
+        "description": "Message shown in notification when media is DRM protected."
     },
     "streamDownloadTitle": {
         "message": "Предпочтения скачивания потока",
@@ -688,6 +692,14 @@
         "message": "Отмена",
         "description": "The text of the cancel button during an active download."
     },
+    "pauseButton": {
+        "message": "Пауза",
+        "description": "The text of the pause button for active downloads."
+    },
+    "resumeActiveButton": {
+        "message": "Продолжить",
+        "description": "The text of the resume button for paused downloads."
+    },
     "downloadCancelled": {
         "message": "Загрузка отменена",
         "description": "The message shown when a download is manually cancelled."
@@ -699,6 +711,14 @@
     "speedBoostExplain": {
         "message": "Скачивать несколько частей файла одновременно. Работает только в том случае, если сервер поддерживает диапазонные запросы (range requests).",
         "description": "The explanation of the speed boost setting."
+    },
+    "speedBoostResumeTitle": {
+        "message": "Принудительное ускорение при возобновлении",
+        "description": "Title for the setting to enable speed boost when resuming."
+    },
+    "speedBoostResumeExplain": {
+        "message": "Поддерживает параллельные соединения при возобновлении. Файлы могут быть повреждены, если хост-сервер не обеспечивает стабильную поддержку запросов частичного диапазона.",
+        "description": "Explanation for speed boost resume."
     },
     "connectionsTitle": {
         "message": "Параллельные соединения",
@@ -801,6 +821,14 @@
     "backgroundDownloadExplain": {
         "message": "Позволяет загрузкам продолжаться в фоновом режиме. Если отключено, загрузки будут выполняться во всплывающем окне и остановятся, если оно будет закрыто (на мобильных устройствах не открываются новые вкладки).",
         "description": "The explanation of the background download setting."
+    },
+    "autoResumeTitle": {
+        "message": "Автоматическое возобновление загрузки",
+        "description": "Title for the automatic resume setting."
+    },
+    "autoResumeExplain": {
+        "message": "Автоматически возобновлять отложенные загрузки при запуске браузера.",
+        "description": "Explanation for the automatic resume setting."
     },
     "disableRenameDialogExplain": {
         "message": "Пропускать диалог подтверждения имени файла и начинать загрузку немедленно, используя имя по умолчанию.",
@@ -1165,7 +1193,7 @@
         "description": "About page footer/error message."
     },
     "zipDownloadError": {
-        "message": "Не удалось скачать «$FILENAME$». $ERROR$\n\nХотите продолжить работу с остальными файлами?",
+        "message": "Не удалось скачать «$FILENAME$». $ERROR$\\n\\nХотите продолжить работу с остальными файлами?",
         "description": "Error message when a file in ZIP batch fails.",
         "placeholders": {
             "FILENAME": {
@@ -1362,20 +1390,28 @@
         "message": "Добро пожаловать в Website Media Downloader",
         "description": "Title of the installed page"
     },
+    "installedBrand": {
+        "message": "WMD",
+        "description": "Short brand name for the installed page"
+    },
     "installedHeroTitle": {
-        "message": "Installation Complete",
+        "message": "Установка завершена",
         "description": "Hero title of the installed page"
     },
     "installedHeroDescription": {
-        "message": "The ultimate media companion is ready. Start detecting and downloading your favorite content with a single click.",
+        "message": "Ваш идеальный помощник для медиа готов. Начните находить и скачивать любимый контент в один клик.",
         "description": "Hero description of the installed page"
+    },
+    "getStarted": {
+        "message": "Начать",
+        "description": "Label for the get started button"
     },
     "installedVersion": {
         "message": "Версия",
         "description": "Label for version number"
     },
     "installedChangelogTitle": {
-        "message": "Improvements & Updates",
+        "message": "Улучшения и обновления",
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
@@ -1399,23 +1435,43 @@
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
-        "message": "Developer",
+        "message": "Разработчик",
         "description": "Label for developer card"
     },
+    "installedCommunity": {
+        "message": "Сообщество",
+        "description": "Label for community card"
+    },
+    "installedGitHubProject": {
+        "message": "Проект на GitHub",
+        "description": "Value for GitHub project link"
+    },
+    "installedSupport": {
+        "message": "Поддержка",
+        "description": "Label for support card"
+    },
+    "installedAddonsStore": {
+        "message": "Магазин дополнений",
+        "description": "Value for add-ons store link"
+    },
     "installedFooterQuote": {
-        "message": "Thank you for being part of our journey.",
+        "message": "Спасибо, что вы с нами.",
         "description": "Footer quote on the installed page"
     },
+    "installedCopyright": {
+        "message": "Website Media Downloader © 2026",
+        "description": "Copyright notice"
+    },
     "installedFeedbackTitle": {
-        "message": "Feedback & Issues",
+        "message": "Отзывы и проблемы",
         "description": "Title for the feedback section"
     },
     "installedFeedbackDesc": {
-        "message": "Found a bug or have a suggestion? Help us improve by opening an issue on GitHub!",
+        "message": "Нашли ошибку или есть предложение? Помогите нам стать лучше, открыв проблему на GitHub!",
         "description": "Description for the feedback section"
     },
     "installedFeedbackButton": {
-        "message": "Report an Issue",
+        "message": "Сообщить о проблеме",
         "description": "Label for the feedback button"
     },
     "applyChangesPrompt": {
@@ -1434,40 +1490,21 @@
         "message": "Подтверждение удаления",
         "description": "The title of the confirmation dialog when deleting all detected media."
     },
-    "installedBrand": {
-        "message": "WMD",
-        "description": "Short brand name for the installed page"
+    "audioToMp3Setting": {
+        "message": "Конвертировать извлеченное аудио в MP3",
+        "description": "Label for the setting to convert audio downloads to MP3 format."
     },
-    "getStarted": {
-        "message": "Get Started Now",
-        "description": "Label for the get started button"
-    },
-    "installedCommunity": {
-        "message": "Community",
-        "description": "Label for community card"
-    },
-    "installedGitHubProject": {
-        "message": "GitHub Project",
-        "description": "Value for GitHub project link"
-    },
-    "installedSupport": {
-        "message": "Support",
-        "description": "Label for support card"
-    },
-    "installedAddonsStore": {
-        "message": "Add-ons Store",
-        "description": "Value for add-ons store link"
-    },
-    "installedCopyright": {
-        "message": "Website Media Downloader © 2026",
-        "description": "Copyright notice"
+    "audioToMp3SettingDesc": {
+        "message": "Автоматически конвертировать результаты функции «Только аудио» (WAV) в формат MP3 для уменьшения размера файлов.",
+        "description": "Description for the audio to MP3 conversion setting."
     },
     "updateAvailable": {
         "message": "Доступна новая версия v$VERSION$.",
         "description": "Message shown in the update notification bar.",
         "placeholders": {
             "VERSION": {
-                "content": "$1"
+                "content": "$1",
+                "example": "1.7.9"
             }
         }
     },
@@ -1484,21 +1521,143 @@
         "description": "Message shown in the update dialog.",
         "placeholders": {
             "VERSION": {
-                "content": "$1"
+                "content": "$1",
+                "example": "1.7.9"
             }
         }
     },
     "checkUpdateButton": {
-        "message": "Проверить обновления"
+        "message": "Проверить обновления",
+        "description": "Text for the manual update check button in the about page."
     },
     "alreadyLatestVersion": {
-        "message": "Вы используете последнюю версию."
+        "message": "Вы используете последнюю версию.",
+        "description": "Snackbar message when no update is found."
     },
     "updateCheckError": {
-        "message": "Не удалось проверить наличие обновлений."
+        "message": "Не удалось проверить наличие обновлений.",
+        "description": "Snackbar message when update check fails."
     },
     "audioExtractionFormatNotSupported": {
         "message": "Ваш браузер не поддерживает извлечение звука из этого медиаформата (обычно это потоки .ts). Пожалуйста, скачайте видео целиком и извлеките звук вручную.",
         "description": "Error message when the browser cannot decode the audio format, typical for TS streams."
+    },
+    "settingsAdvancedSectionTitle": {
+        "message": "Расширенные Настройки",
+        "description": "The title of the advanced settings section in the settings tab."
+    },
+    "cleanViewTitle": {
+        "message": "Чистый вид настроек",
+        "description": "The title of the clean settings view switch in the settings tab."
+    },
+    "cleanViewExplain": {
+        "message": "Группирует настройки в выпадающие списки для более аккуратного вида.",
+        "description": "The explanation of the clean settings view option."
+    },
+    "downloadTransmuxing": {
+        "message": "Конвертация в MP4...",
+        "description": "Message shown when muxing TS to MP4."
+    },
+    "streamToMp4Title": {
+        "message": "Сохранять поток как MP4",
+        "description": "Title for the stream to MP4 conversion setting."
+    },
+    "streamToMp4Explain": {
+        "message": "Гарантирует, что загруженные видео можно будет легко воспроизводить на телефонах, телевизорах и в большинстве медиаплееров.",
+        "description": "Explanation for the stream to MP4 conversion setting."
+    },
+    "settingsCloudSectionTitle": {
+        "message": "Настройки облака",
+        "description": "Title for the cloud integration settings section."
+    },
+    "saveToGDriveTitle": {
+        "message": "Сохранить на Google Диск",
+        "description": "Title for the setting to save downloads to Google Drive."
+    },
+    "saveToGDriveExplain": {
+        "message": "Загружайте скачанные файлы прямо на свой Google Диск.",
+        "description": "Explanation for the Google Drive saving setting."
+    },
+    "gdriveStreamTitle": {
+        "message": "Прямая загрузка",
+        "description": "Title for the stream upload setting."
+    },
+    "gdriveStreamExplain": {
+        "message": "Загружать фрагменты в облако сразу во время скачивания. Рекомендуется для больших файлов.",
+        "description": "Explanation for the stream upload setting."
+    },
+    "streamUploadMethodWarning": {
+        "message": "Примечание: потоковая загрузка лучше всего работает с методом скачивания 'Fetch'.",
+        "description": "Warning shown when stream upload is enabled but native download method is selected."
+    },
+    "gdriveAccountTitle": {
+        "message": "Аккаунт Google Диска",
+        "description": "Title for the Google Drive account management section."
+    },
+    "gdriveLoginButton": {
+        "message": "Войти",
+        "description": "Label for the Google Drive login button."
+    },
+    "gdriveLogoutButton": {
+        "message": "Выйти",
+        "description": "Label for the Google Drive logout button."
+    },
+    "uploadingToGDrive": {
+        "message": "Загрузка $1 на Google Диск...",
+        "description": "Status message when uploading a file to Google Drive.",
+        "placeholders": {
+            "1": {
+                "content": "$1"
+            }
+        }
+    },
+    "uploadSuccessGDrive": {
+        "message": "$1 успешно сохранено на Google Диск!",
+        "description": "Status message when a file is successfully uploaded to Google Drive.",
+        "placeholders": {
+            "1": {
+                "content": "$1"
+            }
+        }
+    },
+    "uploadFailedGDrive": {
+        "message": "Ошибка облачной загрузки",
+        "description": "Status message when a Google Drive upload fails."
+    },
+    "gdriveLoginRequired": {
+        "message": "Требуется вход в Google Диск. Пожалуйста, проверьте настройки.",
+        "description": "Error message when Google Drive login is missing."
+    },
+    "gdriveSessionExpired": {
+        "message": "Сессия Google Диска истекла. Пожалуйста, войдите снова в настройках.",
+        "description": "Error message when Google Drive session expires."
+    },
+    "uploadingToGDriveShort": {
+        "message": "Загрузка в облако...",
+        "description": "Short status message for cloud upload."
+    },
+    "uploadSuccessGDriveTitle": {
+        "message": "Загрузка завершена!",
+        "description": "Title message for successful cloud upload."
+    },
+    "uploadPausedTitle": {
+        "message": "Загрузка приостановлена",
+        "description": "Title shown when cloud upload is paused."
+    },
+    "uploadCancelledTitle": {
+        "message": "Загрузка отменена",
+        "description": "Title shown when cloud upload is cancelled."
+    },
+    "uploadCancelledText": {
+        "message": "Облачная загрузка была отменена.",
+        "description": "Message shown when cloud upload is cancelled."
+    },
+    "pausedStatus": {
+        "message": "Приостановлено",
+        "description": "Status text for paused items."
+    },
+    "resumeButton": {
+        "message": "Возобновить",
+        "description": "Generic resume button text."
     }
 }

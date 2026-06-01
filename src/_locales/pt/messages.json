@@ -16,7 +16,7 @@
         "description": "The 2nd title of the error popup."
     },
     "errorTitle3": {
-        "message": "Uh oh!",
+        "message": "Ops!",
         "description": "The 3rd title of the error popup."
     },
     "errorTitle4": {
@@ -157,19 +157,19 @@
         "description": "The label of the button to refresh the media list."
     },
     "settingsDetectionSectionTitle": {
-        "message": "Configurações de detecção",
+        "message": "Configurações de Detecção",
         "description": "The title of the detection settings section in the settings tab."
     },
     "settingsDownloadSectionTitle": {
-        "message": "Configurações de download",
+        "message": "Configurações de Download",
         "description": "The title of the download settings section in the settings tab."
     },
     "settingsInterfaceSectionTitle": {
-        "message": "Configurações de interface",
+        "message": "Configurações de Interface",
         "description": "The title of the interface settings section in the settings tab."
     },
     "settingsDisplaySectionTitle": {
-        "message": "Lista de Exibição",
+        "message": "Configurações de Exibição",
         "description": "The title of the display settings section in the settings tab."
     },
     "detectionMethodTitle": {
@@ -177,7 +177,7 @@
         "description": "The title of the detection method section in the settings tab."
     },
     "needToRefreshListWarning": {
-        "message": "Após alterar isso, clique em \"Atualizar lista\" para ver as alterações!",
+        "message": "Após alterar isso, clique em \\\"Atualizar lista\\\" para ver as alterações!",
         "description": "The warning under the detection method title."
     },
     "detectionDisabledExplain": {
@@ -327,6 +327,10 @@
     "mediaNotificationDownloadAction": {
         "message": "Baixar",
         "description": "The action label to download media from the notification."
+    },
+    "mediaNotificationDrmMessage": {
+        "message": "Este conteúdo está protegido por DRM e não pode ser baixado.",
+        "description": "Message shown in notification when media is DRM protected."
     },
     "streamDownloadTitle": {
         "message": "Preferência de download da stream",
@@ -688,6 +692,14 @@
         "message": "Cancelar",
         "description": "The text of the cancel button during an active download."
     },
+    "pauseButton": {
+        "message": "Pausar",
+        "description": "The text of the pause button for active downloads."
+    },
+    "resumeActiveButton": {
+        "message": "Retomar",
+        "description": "The text of the resume button for paused downloads."
+    },
     "downloadCancelled": {
         "message": "Download cancelado",
         "description": "The message shown when a download is manually cancelled."
@@ -700,16 +712,24 @@
         "message": "Baixar várias partes do arquivo ao mesmo tempo. Só funciona se o servidor suportar solicitações de intervalo (Range requests).",
         "description": "The explanation of the speed boost setting."
     },
+    "speedBoostResumeTitle": {
+        "message": "Forçar aceleração ao retomar",
+        "description": "Title for the setting to enable speed boost when resuming."
+    },
+    "speedBoostResumeExplain": {
+        "message": "Mantém conexões paralelas ao retomar. Os arquivos podem ser corrompidos se o servidor host não suportar solicitações de intervalo parcial de forma consistente.",
+        "description": "Explanation for speed boost resume."
+    },
     "connectionsTitle": {
         "message": "Conexões paralelas",
         "description": "The title of the connections setting."
     },
     "qrCodeButton": {
-        "message": "QR Code",
+        "message": "Código QR",
         "description": "The text of the QR code button in the media list."
     },
     "qrCodeDialogTitle": {
-        "message": "Scan QR Code",
+        "message": "Escanear Código QR",
         "description": "The headline of the QR code dialog."
     },
     "qrCodeDialogDescription": {
@@ -717,27 +737,27 @@
         "description": "The description in the QR code dialog."
     },
     "downloadSelectedButton": {
-        "message": "Download Selected",
+        "message": "Baixar Selecionados",
         "description": "The label of the button to download all selected media items."
     },
     "deleteSelectedButton": {
-        "message": "Delete",
+        "message": "Excluir",
         "description": "The label of the button to delete selected media items from the list."
     },
     "downloadAllButton": {
-        "message": "Download All",
+        "message": "Baixar Tudo",
         "description": "The label of the button to download all media items in the list."
     },
     "cancelSelectedButton": {
-        "message": "Cancel Selected",
+        "message": "Cancelar Selecionados",
         "description": "The label of the button to cancel selected active downloads."
     },
     "cancelAllButton": {
-        "message": "Cancel All",
+        "message": "Cancelar Tudo",
         "description": "The label of the button to cancel all active downloads."
     },
     "zipPreparing": {
-        "message": "Preparing $COUNT$ files...",
+        "message": "Preparando $COUNT$ arquivos...",
         "description": "The message when starting to prepare files for a ZIP archive.",
         "placeholders": {
             "COUNT": {
@@ -747,7 +767,7 @@
         }
     },
     "zipDownloading": {
-        "message": "Downloading $INDEX$/$TOTAL$: $FILENAME$",
+        "message": "Baixando $INDEX$/$TOTAL$: $FILENAME$",
         "description": "The progress message during ZIP download.",
         "placeholders": {
             "INDEX": {
@@ -765,11 +785,11 @@
         }
     },
     "zipGenerating": {
-        "message": "Generating ZIP archive...",
+        "message": "Gerando arquivo ZIP...",
         "description": "The message when creating the ZIP file from downloaded blobs."
     },
     "zipComplete": {
-        "message": "Download complete!",
+        "message": "Download concluído!",
         "description": "The message when the ZIP download is finished."
     },
     "zipError": {
@@ -783,7 +803,7 @@
         }
     },
     "zipStartedInBackground": {
-        "message": "ZIP download started in background",
+        "message": "Download do ZIP iniciado em segundo plano",
         "description": "The notification message when the ZIP download process is moved to the background script."
     },
     "backgroundDownloadTitle": {
@@ -801,6 +821,14 @@
     "backgroundDownloadExplain": {
         "message": "Permite que os downloads continuem em segundo plano. Se desativado, os downloads pararão se o popup for fechado.",
         "description": "The explanation of the background download setting."
+    },
+    "autoResumeTitle": {
+        "message": "Retomada automática de download",
+        "description": "Title for the automatic resume setting."
+    },
+    "autoResumeExplain": {
+        "message": "Retomar automaticamente downloads pendentes quando o navegador iniciar.",
+        "description": "Explanation for the automatic resume setting."
     },
     "disableRenameDialogExplain": {
         "message": "Ignorar a caixa de diálogo de confirmação de nome de arquivo e iniciar os downloads imediatamente.",
@@ -873,7 +901,7 @@
         "description": "Explanation shown in a snackbar when starting an MPD download."
     },
     "splitAudioVideoDownloadCompleteSuccess": {
-        "message": "Arquivos de áudio e vídeo separados baixados para \"$BASENAME$\".",
+        "message": "Arquivos de áudio e vídeo separados baixados para \\\"$BASENAME$\\\".",
         "description": "Success message when separate audio and video files are downloaded.",
         "placeholders": {
             "BASENAME": {
@@ -891,19 +919,19 @@
         "description": "Added to eliminate inline text."
     },
     "downloadWaiting": {
-        "message": "Waiting for other tabs...",
+        "message": "Aguardando outras guias...",
         "description": "Status text while waiting for other tabs."
     },
     "downloadConnectingDB": {
-        "message": "Connecting to database...",
+        "message": "Conectando ao banco de dados...",
         "description": "Status text while connecting to database."
     },
     "downloadFetchingMetadata": {
-        "message": "Fetching file metadata...",
+        "message": "Buscando metadados do arquivo...",
         "description": "Status text while fetching metadata."
     },
     "downloadProcessing": {
-        "message": "Processing...",
+        "message": "Processando...",
         "description": "Status title during reconstruction."
     },
     "downloadReconstructing": {
@@ -911,43 +939,43 @@
         "description": "Added to eliminate inline text."
     },
     "downloadReadyTitle": {
-        "message": "Download Ready!",
+        "message": "Download Pronto!",
         "description": "Status title when file is ready."
     },
     "downloadReadyText": {
-        "message": "Your file is ready to be saved.",
+        "message": "Seu arquivo está pronto para ser salvo.",
         "description": "Status text when file is ready."
     },
     "downloadStartedTitle": {
-        "message": "Download Started!",
+        "message": "Download Iniciado!",
         "description": "Status title when download starts."
     },
     "downloadStartedText": {
-        "message": "Your file is being saved to your device. You can close this tab now.",
+        "message": "Seu arquivo está sendo salvo no seu dispositivo. Você pode fechar esta guia agora.",
         "description": "Status text when download starts."
     },
     "downloadErrorTitle": {
-        "message": "Error",
+        "message": "Erro",
         "description": "Generic error title."
     },
     "downloadMetadataNotFound": {
-        "message": "File metadata not found in cache. It might have been cleared or the ID is incorrect.",
+        "message": "Metadados do arquivo não encontrados no cache. Podem ter sido limpos ou o ID está incorreto.",
         "description": "Error text when metadata is missing."
     },
     "downloadProcessingError": {
-        "message": "Processing Error",
+        "message": "Erro de Processamento",
         "description": "Title when processing fails."
     },
     "downloadDatabaseError": {
-        "message": "Database Error",
+        "message": "Erro no Banco de Dados",
         "description": "Title when database connection fails."
     },
     "downloadDatabaseErrorText": {
-        "message": "Could not retrieve the file info from database.",
+        "message": "Não foi possível recuperar as informações do arquivo do banco de dados.",
         "description": "Error text for database failure."
     },
     "downloadUnexpectedError": {
-        "message": "Unexpected Error",
+        "message": "Erro Inesperado",
         "description": "Title for unexpected errors."
     },
     "saveToDevice": {
@@ -963,23 +991,23 @@
         "description": "Added to eliminate inline text."
     },
     "streamDownloadingTitle": {
-        "message": "Downloading Stream",
+        "message": "Baixando Stream",
         "description": "Status header during stream download."
     },
     "streamDownloadCompleteTitle": {
-        "message": "Download Complete!",
+        "message": "Download Concluído!",
         "description": "Status header when stream download finishes."
     },
     "streamDownloadSaved": {
-        "message": "Your file has been saved.",
+        "message": "Seu arquivo foi salvo.",
         "description": "Status text when stream is saved."
     },
     "streamNoUrlError": {
-        "message": "No URL provided.",
+        "message": "Nenhuma URL fornecida.",
         "description": "Error when stream URL is missing."
     },
     "searchLabel": {
-        "message": "Search by name or format",
+        "message": "Pesquisar por nome ou formato",
         "description": "Label for search bar."
     },
     "downloadStartedSnackbar": {
@@ -987,7 +1015,7 @@
         "description": "Updated/Added during UI string localization audit."
     },
     "downloadReconstructingSegments": {
-        "message": "Reconstructing file: gathered $COUNT$ segments...",
+        "message": "Reconstruindo arquivo: $COUNT$ segmentos reunidos...",
         "description": "Progress message while gathering segments.",
         "placeholders": {
             "COUNT": {
@@ -997,7 +1025,7 @@
         }
     },
     "downloadAssembling": {
-        "message": "Assembling $COUNT$ segments...",
+        "message": "Montando $COUNT$ segmentos...",
         "description": "Progress message while assembling segments.",
         "placeholders": {
             "COUNT": {
@@ -1007,7 +1035,7 @@
         }
     },
     "saveFileLabel": {
-        "message": "Save $FILENAME$",
+        "message": "Salvar $FILENAME$",
         "description": "Label for the save button with filename.",
         "placeholders": {
             "FILENAME": {
@@ -1165,7 +1193,7 @@
         "description": "About page footer/error message."
     },
     "zipDownloadError": {
-        "message": "Falha ao baixar \"$FILENAME$\". $ERROR$\n\nDeseja continuar com os arquivos restantes?",
+        "message": "Falha ao baixar \\\"$FILENAME$\\\". $ERROR$\\n\\nDeseja continuar com os arquivos restantes?",
         "description": "Error message when a file in ZIP batch fails.",
         "placeholders": {
             "FILENAME": {
@@ -1177,7 +1205,7 @@
         }
     },
     "noMatchesFound": {
-        "message": "Nenhum resultado encontrado para \"$QUERY$\"",
+        "message": "Nenhum resultado encontrado para \\\"$QUERY$\\\"",
         "description": "Message shown when search returns no results.",
         "placeholders": {
             "QUERY": {
@@ -1362,24 +1390,32 @@
         "message": "Bem-vindo ao Website Media Downloader",
         "description": "Title of the installed page"
     },
+    "installedBrand": {
+        "message": "WMD",
+        "description": "Short brand name for the installed page"
+    },
     "installedHeroTitle": {
-        "message": "Installation Complete",
+        "message": "Instalação Concluída",
         "description": "Hero title of the installed page"
     },
     "installedHeroDescription": {
-        "message": "The ultimate media companion is ready. Start detecting and downloading your favorite content with a single click.",
+        "message": "O melhor companheiro de mídia está pronto. Comece a detectar e baixar seu conteúdo favorito com um único clique.",
         "description": "Hero description of the installed page"
+    },
+    "getStarted": {
+        "message": "Começar Agora",
+        "description": "Label for the get started button"
     },
     "installedVersion": {
         "message": "Versão",
         "description": "Label for version number"
     },
     "installedChangelogTitle": {
-        "message": "Improvements & Updates",
+        "message": "Melhorias e Atualizações",
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "Adicionada nova configuração \"Ocultar componentes da página\" para filtrar arquivos HTML, CSS, JS e TXT.",
+        "message": "Adicionada nova configuração \\\"Ocultar componentes da página\\\" para filtrar arquivos HTML, CSS, JS e TXT.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
@@ -1399,23 +1435,43 @@
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
-        "message": "Developer",
+        "message": "Desenvolvedor",
         "description": "Label for developer card"
     },
+    "installedCommunity": {
+        "message": "Comunidade",
+        "description": "Label for community card"
+    },
+    "installedGitHubProject": {
+        "message": "Projeto no GitHub",
+        "description": "Value for GitHub project link"
+    },
+    "installedSupport": {
+        "message": "Suporte",
+        "description": "Label for support card"
+    },
+    "installedAddonsStore": {
+        "message": "Loja de Extensões",
+        "description": "Value for add-ons store link"
+    },
     "installedFooterQuote": {
-        "message": "Thank you for being part of our journey.",
+        "message": "Obrigado por fazer parte da nossa jornada.",
         "description": "Footer quote on the installed page"
     },
+    "installedCopyright": {
+        "message": "Website Media Downloader © 2026",
+        "description": "Copyright notice"
+    },
     "installedFeedbackTitle": {
-        "message": "Feedback & Issues",
+        "message": "Comentários e Problemas",
         "description": "Title for the feedback section"
     },
     "installedFeedbackDesc": {
-        "message": "Found a bug or have a suggestion? Help us improve by opening an issue on GitHub!",
+        "message": "Encontrou um bug ou tem uma sugestão? Ajude-nos a melhorar abrindo uma issue no GitHub!",
         "description": "Description for the feedback section"
     },
     "installedFeedbackButton": {
-        "message": "Report an Issue",
+        "message": "Relatar um Problema",
         "description": "Label for the feedback button"
     },
     "applyChangesPrompt": {
@@ -1434,40 +1490,21 @@
         "message": "Confirmar exclusão",
         "description": "The title of the confirmation dialog when deleting all detected media."
     },
-    "installedBrand": {
-        "message": "WMD",
-        "description": "Short brand name for the installed page"
+    "audioToMp3Setting": {
+        "message": "Converter extrações de áudio para MP3",
+        "description": "Label for the setting to convert audio downloads to MP3 format."
     },
-    "getStarted": {
-        "message": "Get Started Now",
-        "description": "Label for the get started button"
-    },
-    "installedCommunity": {
-        "message": "Community",
-        "description": "Label for community card"
-    },
-    "installedGitHubProject": {
-        "message": "GitHub Project",
-        "description": "Value for GitHub project link"
-    },
-    "installedSupport": {
-        "message": "Support",
-        "description": "Label for support card"
-    },
-    "installedAddonsStore": {
-        "message": "Add-ons Store",
-        "description": "Value for add-ons store link"
-    },
-    "installedCopyright": {
-        "message": "Website Media Downloader © 2026",
-        "description": "Copyright notice"
+    "audioToMp3SettingDesc": {
+        "message": "Converter automaticamente os resultados do recurso 'Somente Áudio' (WAV) para o formato MP3 para tamanhos de arquivo menores.",
+        "description": "Description for the audio to MP3 conversion setting."
     },
     "updateAvailable": {
         "message": "Nova versão v$VERSION$ disponível.",
         "description": "Message shown in the update notification bar.",
         "placeholders": {
             "VERSION": {
-                "content": "$1"
+                "content": "$1",
+                "example": "1.7.9"
             }
         }
     },
@@ -1484,21 +1521,143 @@
         "description": "Message shown in the update dialog.",
         "placeholders": {
             "VERSION": {
-                "content": "$1"
+                "content": "$1",
+                "example": "1.7.9"
             }
         }
     },
     "checkUpdateButton": {
-        "message": "Verificar atualizações"
+        "message": "Verificar atualizações",
+        "description": "Text for the manual update check button in the about page."
     },
     "alreadyLatestVersion": {
-        "message": "Você está usando a versão mais recente."
+        "message": "Você está usando a versão mais recente.",
+        "description": "Snackbar message when no update is found."
     },
     "updateCheckError": {
-        "message": "Falha ao verificar atualizações."
+        "message": "Falha ao verificar atualizações.",
+        "description": "Snackbar message when update check fails."
     },
     "audioExtractionFormatNotSupported": {
         "message": "Seu navegador não suporta extração de áudio deste formato de mídia (geralmente transmissões .ts). Baixe o vídeo e extraia o áudio manualmente.",
         "description": "Error message when the browser cannot decode the audio format, typical for TS streams."
+    },
+    "settingsAdvancedSectionTitle": {
+        "message": "Configurações Avançadas",
+        "description": "The title of the advanced settings section in the settings tab."
+    },
+    "cleanViewTitle": {
+        "message": "Visualização de configurações limpa",
+        "description": "The title of the clean settings view switch in the settings tab."
+    },
+    "cleanViewExplain": {
+        "message": "Agrupa as configurações em menus suspensos para um visual mais organizado.",
+        "description": "The explanation of the clean settings view option."
+    },
+    "downloadTransmuxing": {
+        "message": "Convertendo para MP4...",
+        "description": "Message shown when muxing TS to MP4."
+    },
+    "streamToMp4Title": {
+        "message": "Salvar stream como MP4",
+        "description": "Title for the stream to MP4 conversion setting."
+    },
+    "streamToMp4Explain": {
+        "message": "Garante que os vídeos baixados possam ser reproduzidos facilmente em celulares, TVs e na maioria dos reprodutores de mídia.",
+        "description": "Explanation for the stream to MP4 conversion setting."
+    },
+    "settingsCloudSectionTitle": {
+        "message": "Configurações de Nuvem",
+        "description": "Title for the cloud integration settings section."
+    },
+    "saveToGDriveTitle": {
+        "message": "Salvar no Google Drive",
+        "description": "Title for the setting to save downloads to Google Drive."
+    },
+    "saveToGDriveExplain": {
+        "message": "Carregue os arquivos baixados diretamente para o seu Google Drive.",
+        "description": "Explanation for the Google Drive saving setting."
+    },
+    "gdriveStreamTitle": {
+        "message": "Upload direto",
+        "description": "Title for the stream upload setting."
+    },
+    "gdriveStreamExplain": {
+        "message": "Fazer upload de fragmentos para a Nuvem imediatamente durante o download. Recomendado para arquivos grandes.",
+        "description": "Explanation for the stream upload setting."
+    },
+    "streamUploadMethodWarning": {
+        "message": "Nota: O upload em fluxo funciona melhor com o método de download 'Fetch'.",
+        "description": "Warning shown when stream upload is enabled but native download method is selected."
+    },
+    "gdriveAccountTitle": {
+        "message": "Conta do Google Drive",
+        "description": "Title for the Google Drive account management section."
+    },
+    "gdriveLoginButton": {
+        "message": "Entrar",
+        "description": "Label for the Google Drive login button."
+    },
+    "gdriveLogoutButton": {
+        "message": "Sair",
+        "description": "Label for the Google Drive logout button."
+    },
+    "uploadingToGDrive": {
+        "message": "Enviando $1 para o Google Drive...",
+        "description": "Status message when uploading a file to Google Drive.",
+        "placeholders": {
+            "1": {
+                "content": "$1"
+            }
+        }
+    },
+    "uploadSuccessGDrive": {
+        "message": "$1 salvo com sucesso no Google Drive!",
+        "description": "Status message when a file is successfully uploaded to Google Drive.",
+        "placeholders": {
+            "1": {
+                "content": "$1"
+            }
+        }
+    },
+    "uploadFailedGDrive": {
+        "message": "Falha no envio para a nuvem",
+        "description": "Status message when a Google Drive upload fails."
+    },
+    "gdriveLoginRequired": {
+        "message": "Login no Google Drive necessário. Verifique as configurações.",
+        "description": "Error message when Google Drive login is missing."
+    },
+    "gdriveSessionExpired": {
+        "message": "Sessão do Google Drive expirada. Faça login novamente nas configurações.",
+        "description": "Error message when Google Drive session expires."
+    },
+    "uploadingToGDriveShort": {
+        "message": "Enviando para a Nuvem...",
+        "description": "Short status message for cloud upload."
+    },
+    "uploadSuccessGDriveTitle": {
+        "message": "Envio Concluído!",
+        "description": "Title message for successful cloud upload."
+    },
+    "uploadPausedTitle": {
+        "message": "Upload pausado",
+        "description": "Title shown when cloud upload is paused."
+    },
+    "uploadCancelledTitle": {
+        "message": "Upload cancelado",
+        "description": "Title shown when cloud upload is cancelled."
+    },
+    "uploadCancelledText": {
+        "message": "O upload para a nuvem foi cancelado.",
+        "description": "Message shown when cloud upload is cancelled."
+    },
+    "pausedStatus": {
+        "message": "Pausado",
+        "description": "Status text for paused items."
+    },
+    "resumeButton": {
+        "message": "Retomar",
+        "description": "Generic resume button text."
     }
 }

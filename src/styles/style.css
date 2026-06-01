@@ -117,16 +117,16 @@ mdui-tab-panel[value="settings"] {
 }
 
 .settings-section-title {
-    font-size: 0.75rem;
+    font-size: 0.9rem;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    text-transform: none;
+    letter-spacing: 0.02em;
     color: var(--primary);
     margin: 16px 8px 4px;
     display: flex;
     align-items: center;
     gap: 8px;
-    opacity: 0.8;
+    opacity: 0.9;
     padding-left: 4px;
 }
 
@@ -139,18 +139,36 @@ mdui-card {
     padding: 0 !important;
 }
 
+.settings-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0;
+}
+
+.settings-group mdui-divider {
+    display: none;
+}
+
 .setting-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 16px;
+    padding: 16px 20px;
     gap: 12px;
+    transition: var(--transition);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.setting-item:last-child {
+    border-bottom: none;
 }
 
 .setting-item.vertical {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: 10px;
+    padding: 14px 16px;
 }
 
 .setting-item h3 {
@@ -329,10 +347,25 @@ mdui-bottom-app-bar {
     text-align: center;
 }
 
-#no-media-detected mdui-icon {
-    font-size: 48px;
-    margin-bottom: 16px;
-    opacity: 0.3;
+.no-media-card {
+    margin: 60px 24px;
+    padding: 32px 24px;
+    background: transparent;
+    border: none;
+}
+
+.no-media-icon {
+    font-size: 56px;
+    margin-bottom: 20px;
+    opacity: 0.2;
+    color: var(--on-surface-variant);
+}
+
+.no-media-text {
+    font-size: 0.95rem;
+    color: var(--on-surface-variant);
+    line-height: 1.6;
+    max-width: 320px;
 }
 
 #color-picker-input {
@@ -376,7 +409,6 @@ mdui-segmented-button[selected]::part(button) {
     font-weight: 600;
 }
 
-/* Custom Pill Select */
 .pill-select-wrapper {
     position: relative;
     width: auto;
@@ -389,8 +421,11 @@ mdui-segmented-button[selected]::part(button) {
     field-sizing: content;
     appearance: none;
     -webkit-appearance: none;
-    background-color: var(--surface-lowest);
-    border: 1px solid rgb(var(--mdui-color-outline-variant));
+    background: rgba(var(--mdui-color-on-surface), 0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(var(--mdui-color-on-surface), 0.12);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
     border-radius: 9999px;
     padding: 6px 32px 6px 16px;
     font-size: 0.85rem;
@@ -402,23 +437,27 @@ mdui-segmented-button[selected]::part(button) {
 }
 
 .pill-select:hover {
-    background-color: rgba(var(--mdui-color-primary), 0.04);
-    border-color: rgb(var(--mdui-color-outline));
+    background: rgba(var(--mdui-color-primary), 0.08);
+    border-color: rgba(var(--mdui-color-primary), 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .pill-select:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(var(--mdui-color-primary), 0.15);
+    box-shadow: 0 0 0 3px rgba(var(--mdui-color-primary), 0.25);
+    background: rgba(var(--mdui-color-primary), 0.05);
 }
 
-/* Custom Pill Input */
 .pill-input {
     width: auto;
     min-width: 100px;
     max-width: 100%;
     field-sizing: content;
-    background-color: var(--surface-lowest);
-    border: 1px solid rgb(var(--mdui-color-outline-variant));
+    background: rgba(var(--mdui-color-on-surface), 0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(var(--mdui-color-on-surface), 0.12);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
     border-radius: 9999px;
     padding: 10px 20px;
     font-size: 0.9rem;
@@ -429,13 +468,15 @@ mdui-segmented-button[selected]::part(button) {
 }
 
 .pill-input:hover {
-    background-color: rgba(var(--mdui-color-primary), 0.04);
-    border-color: rgb(var(--mdui-color-outline));
+    background: rgba(var(--mdui-color-primary), 0.08);
+    border-color: rgba(var(--mdui-color-primary), 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .pill-input:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(var(--mdui-color-primary), 0.15);
+    box-shadow: 0 0 0 3px rgba(var(--mdui-color-primary), 0.25);
+    background: rgba(var(--mdui-color-primary), 0.05);
 }
 
 .pill-helper-text {
@@ -463,4 +504,106 @@ mdui-segmented-button[selected]::part(button) {
     background-color: rgb(var(--mdui-color-surface-container-high));
     color: rgb(var(--mdui-color-on-surface));
     padding: 12px;
+}
+
+.clean-view-enabled .settings-group {
+    margin-bottom: 8px;
+}
+
+.collapsible-header {
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.3s ease, background-color 0.3s ease, padding 0.3s ease;
+}
+
+.clean-view-enabled .collapsible-header {
+    padding: 12px 16px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    border: 1px solid transparent;
+    background: rgba(var(--mdui-color-surface-container-low), 0.5);
+    border-color: rgba(var(--mdui-color-outline-variant), 0.2);
+}
+
+.clean-view-enabled .settings-group:not(.collapsed) .collapsible-header {
+    background: rgba(var(--mdui-color-primary), 0.08);
+    border-color: rgba(var(--mdui-color-primary), 0.2);
+    color: var(--primary);
+}
+
+.settings-items-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease-out, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 2000px;
+    opacity: 1;
+    transform: translateY(0);
+    
+    background: linear-gradient(135deg, rgba(var(--mdui-color-primary), 0.05), rgba(var(--mdui-color-on-surface), 0.03));
+    backdrop-filter: blur(40px) saturate(140%);
+    -webkit-backdrop-filter: blur(40px) saturate(140%);
+    box-shadow: inset 6px 6px 12px rgba(0, 0, 0, 0.12), 
+                inset -6px -6px 12px rgba(255, 255, 255, 0.01);
+    border-radius: 24px;
+    border: 1px solid rgba(var(--mdui-color-primary), 0.05);
+}
+
+.clean-view-enabled .settings-items-container {
+    margin-top: 8px;
+}
+
+.settings-group.collapsed .settings-items-container {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+    margin-top: 0;
+}
+
+.collapse-icon {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.6;
+}
+
+.settings-group:not(.collapsed) .collapse-icon {
+    transform: rotate(180deg);
+    opacity: 1;
+    color: var(--primary);
+}
+
+.end-of-list-container {
+    margin: 12px 16px 120px;
+    padding: 16px 20px;
+    background-color: var(--surface-low);
+    border: 1px solid rgb(var(--mdui-color-outline-variant));
+    border-radius: var(--app-border-radius);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 4px;
+    animation: fadeIn 0.5s ease;
+}
+
+.end-of-list-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.end-of-list-text {
+    font-size: 0.8rem;
+    color: var(--on-surface-variant);
+    line-height: 1.5;
+    opacity: 0.9;
+}
+
+.no-media-container {
+    margin: 40px 16px;
+    padding: 20px;
 }

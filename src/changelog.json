@@ -1,1 +1,67 @@
-{"en":{"headline":"What's New (v1.7.8)","changes":["Added new \"Hide page components\" setting to filter HTML, CSS, JS, and TXT files","Enhanced segment detection logic with precise extension matching to prevent over-filtering","Expanded page component hiding to include various image types (.ico, .jpg, .webp, .png)","Added full translation support for new settings across 9 languages","Improved UI layout with full-width settings container and instant color change detection"]},"id":{"headline":"Yang Baru (v1.7.8)","changes":["Menambahkan pengaturan baru \"Sembunyikan komponen halaman\" untuk memfilter file HTML, CSS, JS, dan TXT","Meningkatkan logika deteksi segmen dengan pencocokan ekstensi yang tepat untuk mencegah pemfilteran berlebih","Memperluas penyembunyian komponen halaman dengan menyertakan berbagai jenis gambar (.ico, .jpg, .webp, .png)","Menambahkan dukungan terjemahan penuh untuk pengaturan baru di 9 bahasa","Memperbaiki tata letak UI dengan wadah pengaturan lebar penuh dan deteksi perubahan warna instan"]},"ja":{"headline":"新機能 (v1.7.8)","changes":["HTML、CSS、JS、およびTXTファイルをフィルタリングする新しい「ページコンポーネントを隠す」設定を追加しました","過剰なフィルタリングを防ぐために、正確な拡張子マッチングによるセグメント検出ロジックを強化しました","ページコンポーネントの非表示対象を拡大し、さまざまな画像タイプ（.ico、.jpg、.webp、.png）を含めました","9つの言語全体で新しい設定の完全な翻訳サポートを追加しました","全幅の設定コンテナと瞬時の色変更検出により、UIレイアウトを改善しました"]},"de":{"headline":"Was gibt's Neues (v1.7.8)","changes":["Neue Einstellung \"Seitenkomponenten ausblenden\" zum Filtern von HTML-, CSS-, JS- und TXT-Dateien hinzugefügt","Segmenterkennungslogik durch präzisen Abgleich der Dateiendungen verbessert, um Überfilterung zu vermeiden","Ausblenden von Seitenkomponenten auf verschiedene Bildformate erweitert (.ico, .jpg, .webp, .png)","Vollständige Übersetzungsunterstützung für neue Einstellungen in 9 Sprachen hinzugefügt","UI-Layout mit einem Einstellungs-Container in voller Breite und sofortiger Farberkennung verbessert"]},"fr":{"headline":"Nouveautés (v1.7.8)","changes":["Ajout d'un nouveau paramètre \"Masquer les composants de la page\" pour filtrer les fichiers HTML, CSS, JS et TXT","Amélioration de la logique de détection des segments avec une correspondance précise des extensions pour éviter un filtrage excessif","Extension du masquage des composants de page pour inclure divers types d'images (.ico, .jpg, .webp, .png)","Ajout d'une prise en charge complète de la traduction pour les nouveaux paramètres dans 9 langues","Amélioration de la mise en page de l'interface utilisateur avec un conteneur de paramètres pleine largeur et détection instantanée du changement de couleur"]},"pt":{"headline":"Novidades (v1.7.8)","changes":["Adicionada a nova configuração \"Ocultar componentes da página\" para filtrar arquivos HTML, CSS, JS e TXT","Lógica de detecção de segmentos aprimorada com correspondência precisa de extensão para evitar filtragem excessiva","Ocultação de componentes da página expandida para incluir vários tipos de imagem (.ico, .jpg, .webp, .png)","Adicionado suporte completo à tradução para as novas configurações em 9 idiomas","Layout de IU aprimorado com contêiner de configurações de largura total e detecção instantânea de mudança de cor"]},"ko":{"headline":"새로운 기능 (v1.7.8)","changes":["HTML, CSS, JS 및 TXT 파일을 필터링하는 새로운 \"페이지 구성 요소 숨기기\" 설정을 추가했습니다","과도한 필터링을 방지하기 위해 정확한 확장자 일치 기능으로 세그먼트 감지 로직을 강화했습니다","페이지 구성 요소 숨기기 기능을 확장하여 다양한 이미지 유형(.ico, .jpg, .webp, .png)을 포함했습니다","9개 언어에 걸쳐 새로운 설정에 대한 완벽한 번역 지원을 추가했습니다","전체 너비 설정 컨테이너 및 즉각적인 색상 변경 감지를 통해 UI 레이아웃을 개선했습니다"]},"ar":{"headline":"ما الجديد (v1.7.8)","changes":["إضافة إعداد جديد \"إخفاء مكونات الصفحة\" لتصفية ملفات HTML و CSS و JS و TXT","تحسين منطق اكتشاف المقاطع مع مطابقة دقيقة للامتداد لمنع التصفية المفرطة","توسيع إخفاء مكونات الصفحة ليشمل أنواعًا مختلفة من الصور (.ico، .jpg، .webp، .png)","إضافة دعم كامل للترجمة للإعدادات الجديدة عبر 9 لغات","تحسين تخطيط واجهة المستخدم مع حاوية إعدادات بعرض كامل واكتشاف فوري لتغيير اللون"]},"ru":{"headline":"Что нового (v1.7.8)","changes":["Добавлена новая настройка \"Скрыть компоненты страницы\" для фильтрации файлов HTML, CSS, JS и TXT","Улучшена логика обнаружения сегментов с точным сопоставлением расширений для предотвращения чрезмерной фильтрации","Расширено скрытие компонентов страницы для включения различных типов изображений (.ico, .jpg, .webp, .png)","Добавлена полная поддержка перевода новых настроек на 9 языков","Улучшен макет пользовательского интерфейса благодаря контейнеру настроек на всю ширину и мгновенному обнаружению изменения цвета"]}}
+{
+  "en": {
+    "headline": "What's New (v1.9.4)",
+    "changes": [
+      "Comprehensive engine overhaul: Implemented IndexedDB-based streaming for RAM efficiency, supporting multi-gigabyte files",
+      "Advanced Detection: Added WebSocket interception, Shadow DOM deep scanning, and DRM detection with retroactive filtering",
+      "Automatic MP3 Conversion: Integrated lamejs with dedicated Web Worker for efficient client-side audio encoding",
+      "Automatic TS to MP4 Conversion: Implemented mux.js for seamless MPEG-TS to MP4 transmuxing",
+      "Surgical Scrapers: Introduced high-precision extraction for platforms like Instagram, TikTok, and Twitter",
+      "Speed Boost Overhaul: Multi-threaded fetching with byte-offset chunk indexing",
+      "UI/UX Modernization: New glassmorphic settings view, context-aware download controls, and improved About page",
+      "Improved pause and resume functionality and Google Drive support"
+    ]
+  },
+  "id": {
+    "headline": "Yang Baru (v1.9.4)",
+    "changes": [
+      "Perombakan engine menyeluruh: Implementasi streaming berbasis IndexedDB untuk efisiensi RAM, mendukung file berukuran multi-gigabyte",
+      "Deteksi Lanjutan: Menambahkan intersepsi WebSocket, pemindaian mendalam Shadow DOM, dan deteksi DRM dengan pemfilteran retrospektif",
+      "Konversi MP3 Otomatis: Integrasi lamejs dengan Web Worker khusus untuk encoding audio sisi klien yang efisien",
+      "Konversi TS ke MP4 Otomatis: Implementasi mux.js untuk transmuxing MPEG-TS ke MP4 yang mulus",
+      "Surgical Scrapers: Introduksi ekstraksi presisi tinggi untuk platform seperti Instagram, TikTok, dan Twitter",
+      "Perombakan Speed Boost: Pengunduhan multi-thread dengan pengindeksan chunk byte-offset",
+      "Modernisasi UI/UX: Tampilan pengaturan glassmorphic baru, kontrol unduhan sadar-konteks, dan halaman About yang ditingkatkan",
+      "Peningkatan fungsionalitas pause/resume dan dukungan Google Drive"
+    ]
+  },
+  "ja": {
+    "headline": "新機能 (v1.9.4)",
+    "changes": [
+      "包括的なエンジンオーバーホール：IndexedDBベースのストリーミングを実装し、RAM効率を最適化、ギガバイト単位のファイルのダウンロードをサポート",
+      "高度な検出：WebSocketインターセプション、Shadow DOMディープスキャン、DRM検出と遡及的フィルタリングを追加",
+      "自動MP3変換：lamejsと専用Web Workerを統合し、効率的なクライアントサイドオーディオエンコーディングを実現",
+      "自動TSからMP4への変換：mux.jsを実装し、スムーズなMPEG-TSからMP4へのトランスマルチプレクシングを実現",
+      "サージカルスクレイパー：Instagram、TikTok、Twitterなどのプラットフォーム向けの精密な抽出機能を追加",
+      "Speed Boostのオーバーホール：バイトオフセットチャンクインデックスを用いたマルチスレッドフェッチ",
+      "UI/UXの現代化：新しいグラスモーフィックな設定ビュー、コンテキスト対応のダウンロードコントロール、Aboutページの改善",
+      "一時停止・再開機能の向上およびGoogleドライブのサポート追加"
+    ]
+  },
+  "de": {
+    "headline": "Was gibt's Neues (v1.9.4)",
+    "changes": [
+      "Umfassende Engine-Überarbeitung: IndexedDB-basiertes Streaming für RAM-Effizienz bei Multi-Gigabyte-Dateien",
+      "Erweiterte Erkennung: WebSocket-Interception, Shadow-DOM-Deep-Scanning und DRM-Erkennung mit retrospektiver Filterung",
+      "Automatische MP3-Konvertierung: Integration von lamejs mit dediziertem Web Worker für effizientes clientseitiges Audio-Encoding",
+      "Automatische TS-zu-MP4-Konvertierung: Implementierung von mux.js für nahtloses MPEG-TS-zu-MP4-Transmuxing",
+      "Surgical Scrapers: Hochpräzise Extraktion für Plattformen wie Instagram, TikTok und Twitter",
+      "Überarbeitung des Speed Boosts: Multi-threaded Fetching mit Byte-Offset-Chunk-Indizierung",
+      "UI/UX-Modernisierung: Neue glassmorphe Einstellungsansicht, kontextabhängige Download-Steuerelemente und verbesserte About-Seite",
+      "Verbesserte Pause- und Fortsetzen-Funktionalität sowie Google Drive-Unterstützung"
+    ]
+  },
+  "fr": {
+    "headline": "Nouveautés (v1.9.4)",
+    "changes": [
+      "Refonte complète du moteur : Streaming basé sur IndexedDB pour l'efficacité RAM, supportant les fichiers de plusieurs gigaoctets",
+      "Détection avancée : Interception WebSocket, scan profond du Shadow DOM, et détection DRM avec filtrage rétrospectif",
+      "Conversion MP3 automatique : Intégration de lamejs avec un Web Worker dédié pour un encodage audio efficace côté client",
+      "Conversion TS vers MP4 automatique : Implémentation de mux.js pour un transmuxing MPEG-TS vers MP4 fluide",
+      "Surgical Scrapers : Extraction de haute précision pour des plateformes comme Instagram, TikTok et Twitter",
+      "Refonte du Speed Boost : Récupération multi-thread avec indexation de chunks par offset d'octets",
+      "Modernisation de l'UI/UX : Nouvelle vue des paramètres en glassmorphism, contrôles de téléchargement contextuels, et page About améliorée",
+      "Amélioration de la fonctionnalité de pause/reprise et support de Google Drive"
+    ]
+  }
+}

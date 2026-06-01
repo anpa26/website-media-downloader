@@ -47,6 +47,106 @@ function openCacheDB() {
   });
 }
 
+async function storeConversionChunk(sessionId, index, data) {
+  const db = await openCacheDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction([CHUNK_STORE_NAME], "readwrite");
+    const store = tx.objectStore(CHUNK_STORE_NAME);
+    const req = store.put({
+      downloadId: sessionId,
+      chunkIndex: index,
+      data: data,
+      timestamp: Date.now()
+    });
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function getConversionChunks(sessionId) {
+  const db = await openCacheDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction([CHUNK_STORE_NAME], "readonly");
+    const store = tx.objectStore(CHUNK_STORE_NAME);
+    const range = IDBKeyRange.bound([sessionId, 0], [sessionId, Infinity]);
+    const cursorReq = store.openCursor(range);
+    const chunks = [];
+    cursorReq.onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) {
+        chunks.push(cursor.value.data);
+        cursor.continue();
+      } else {
+        resolve(chunks);
+      }
+    };
+    cursorReq.onerror = () => reject(cursorReq.error);
+  });
+}
+
+async function clearConversionChunks(sessionId) {
+  try {
+    const db = await openCacheDB();
+    const tx = db.transaction([CHUNK_STORE_NAME], "readwrite");
+    const store = tx.objectStore(CHUNK_STORE_NAME);
+    const range = IDBKeyRange.bound([sessionId, 0], [sessionId, Infinity]);
+    store.delete(range);
+  } catch (e) {
+    console.warn("Failed to clear conversion chunks:", e);
+  }
+}
+
+async function transmuxToMp4(tsBlobs) {
+  console.log("Starting transmuxing with mux.js. Segments count:", tsBlobs.length);
+  
+  if (typeof muxjs === 'undefined') {
+    console.error("muxjs is NOT defined! Integration check failed.");
+    return { blob: new Blob(tsBlobs, { type: "video/mp2t" }), ext: '.ts' };
+  }
+
+  return new Promise(async (resolve) => {
+    try {
+      const transmuxer = new muxjs.mp4.Transmuxer();
+      const mp4Chunks = [];
+      let initSegment = null;
+
+      transmuxer.on('data', (event) => {
+        
+        if (event.initSegment) {
+          if (!initSegment) {
+            initSegment = event.initSegment;
+            mp4Chunks.push(initSegment);
+            console.log("Init segment collected, size:", initSegment.byteLength);
+          }
+        }
+        
+        if (event.data) {
+          mp4Chunks.push(event.data);
+        }
+      });
+
+      for (let i = 0; i < tsBlobs.length; i++) {
+        const arrayBuffer = await tsBlobs[i].arrayBuffer();
+        transmuxer.push(new Uint8Array(arrayBuffer));
+        transmuxer.flush();
+      }
+
+      transmuxer.flush();
+
+      if (mp4Chunks.length === 0) {
+        console.warn("Transmuxing produced no data. Returning original TS.");
+        resolve({ blob: new Blob(tsBlobs, { type: "video/mp2t" }), ext: '.ts' });
+      } else {
+        console.log("Transmuxing complete. Total chunks:", mp4Chunks.length);
+        resolve({ blob: new Blob(mp4Chunks, { type: 'video/mp4' }), ext: '.mp4' });
+      }
+    } catch (err) {
+      console.error("Transmuxing error:", err);
+      resolve({ blob: new Blob(tsBlobs, { type: "video/mp2t" }), ext: '.ts' });
+    }
+  });
+}
+
 async function spoofedFetch(url, options = {}) {
   try {
     const headers = await chrome.runtime.sendMessage({ action: 'getSpoofedHeaders', url: url });
@@ -99,7 +199,7 @@ async function fetchWithCache(url, options = {}) {
               cursorRequest.onsuccess = (e) => {
                   const cursor = e.target.result;
                   if (cursor) {
-                      chunks.push(cursor.value.data);
+                      chunks.push(new Blob([cursor.value.data]));
 
                       if (chunks.length % 50 === 0) {
                           console.debug(`Reconstructing cached segments: ${chunks.length}...`);
@@ -184,8 +284,12 @@ function updateProgressStatus(loadingBar, loaded, total) {
     const percent = Math.round((loaded / total) * 100);
     const remainingMB = ((total - loaded) / (1024 * 1024)).toFixed(2);
     statusInfo.textContent = browser.i18n.getMessage("streamProgressWithSize", [loadedMB, totalMB, percent.toString(), remainingMB]) || `${loadedMB} MB / ${totalMB} MB (${percent}%) • ${remainingMB} MB remaining`;
+    
+    loadingBar.value = (loaded / total) * 100;
+    loadingBar.removeAttribute('indeterminate');
   } else {
     statusInfo.textContent = browser.i18n.getMessage("streamProgressNoSize", [loadedMB]) || `${loadedMB} MB downloaded`;
+    if (!loadingBar.value) loadingBar.setAttribute('indeterminate', '');
   }
 }
 
@@ -199,9 +303,517 @@ function updateSegmentProgressStatus(loadingBar, processed, total) {
   }
   const percent = Math.round((processed / total) * 100);
   statusInfo.textContent = browser.i18n.getMessage("segmentProgress", [processed.toString(), total.toString(), percent.toString()]);
+  
+  loadingBar.value = (processed / total) * 100;
+  loadingBar.removeAttribute('indeterminate');
 }
 
+class CloudUploadController {
+    constructor() {
+        this.paused = false;
+        this.cancelled = false;
+        this.onResume = null;
+        this.xhr = null;
+    }
+
+    pause() {
+        this.paused = true;
+        if (this.xhr) {
+            this.xhr.abort();
+        }
+    }
+
+    resume() {
+        this.paused = false;
+        if (this.onResume) {
+            this.onResume();
+        }
+    }
+
+    cancel() {
+        this.cancelled = true;
+        if (this.xhr) {
+            this.xhr.abort();
+        }
+    }
+}
+
+async function startGDriveStreamUpload(filename, totalSize, contentType) {
+    const res = await browser.storage.local.get('gdrive_token');
+    if (!res.gdrive_token) throw new Error("Google Drive token not found");
+    const token = res.gdrive_token;
+
+    const metadata = {
+        name: filename,
+        mimeType: contentType || 'application/octet-stream'
+    };
+
+    const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json; charset=UTF-8',
+            'X-Upload-Content-Type': contentType || 'application/octet-stream',
+            'X-Upload-Content-Length': totalSize || '*'
+        },
+        body: JSON.stringify(metadata)
+    });
+
+    if (response.status !== 200 && response.status !== 201) {
+        throw new Error("GDrive Session Init Error: " + response.statusText);
+    }
+
+    return response.headers.get('Location');
+}
+
+async function uploadStreamChunk(sessionUri, chunk, offset, totalSize) {
+    const end = offset + chunk.length;
+    const total = totalSize || '*';
+    const contentRange = `bytes ${offset}-${end - 1}/${total}`;
+
+    const response = await fetch(sessionUri, {
+        method: 'PUT',
+        headers: {
+            'Content-Range': contentRange
+        },
+        body: chunk
+    });
+
+    if (response.status !== 308 && response.status !== 200 && response.status !== 201) {
+        throw new Error("GDrive Chunk Upload Error: " + response.status);
+    }
+    
+    return response;
+}
+
+function uploadToGDrive(blob, filename, onProgress, controller) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const res = await browser.storage.local.get('gdrive_token');
+            if (!res.gdrive_token) {
+                return reject(new Error(browser.i18n.getMessage("gdriveLoginRequired") || "Google Drive token not found. Please login in settings."));
+            }
+            const token = res.gdrive_token;
+
+            const metadata = {
+                name: filename,
+                mimeType: blob.type || 'application/octet-stream'
+            };
+
+            const initXhr = new XMLHttpRequest();
+            if (controller) controller.xhr = initXhr;
+            initXhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable');
+            initXhr.setRequestHeader('Authorization', `Bearer ${token}`);
+            initXhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+            initXhr.setRequestHeader('X-Upload-Content-Type', blob.type || 'application/octet-stream');
+            initXhr.setRequestHeader('X-Upload-Content-Length', blob.size);
+
+            initXhr.onload = () => {
+                if (initXhr.status === 200 || initXhr.status === 201) {
+                    const sessionUri = initXhr.getResponseHeader('Location');
+                    if (sessionUri) {
+                        uploadChunks(sessionUri, blob, onProgress, controller).then(resolve).catch(reject);
+                    } else {
+                        reject(new Error("Failed to get session URI for resumable upload"));
+                    }
+                } else if (initXhr.status === 401) {
+                    reject(new Error("Google Drive session expired. Please re-login in settings."));
+                } else {
+                    reject(new Error("GDrive Init Error: " + initXhr.statusText));
+                }
+            };
+
+            initXhr.onabort = () => {
+                if (controller && controller.paused) {
+                    controller.onResume = () => {
+                        controller.onResume = null;
+                        uploadToGDrive(blob, filename, onProgress, controller).then(resolve).catch(reject);
+                    };
+                }
+            };
+
+            initXhr.onerror = () => {
+                if (controller && controller.cancelled) {
+                    reject(new Error("Upload cancelled"));
+                } else if (controller && controller.paused) {
+                    controller.onResume = () => {
+                        controller.onResume = null;
+                        uploadToGDrive(blob, filename, onProgress, controller).then(resolve).catch(reject);
+                    };
+                } else {
+                    reject(new Error("Network error during GDrive init"));
+                }
+            };
+            initXhr.send(JSON.stringify(metadata));
+
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
+function uploadChunks(sessionUri, blob, onProgress, controller) {
+    return new Promise((resolve, reject) => {
+        const chunkSize = 1024 * 1024; // 1MB chunks
+        let offset = 0;
+
+        const uploadNextChunk = () => {
+            if (controller && controller.cancelled) {
+                reject(new Error("Upload cancelled"));
+                return;
+            }
+
+            if (controller && controller.paused) {
+                controller.onResume = () => {
+                    controller.onResume = null;
+                    uploadNextChunk();
+                };
+                return;
+            }
+
+            const end = Math.min(offset + chunkSize, blob.size);
+            const chunk = blob.slice(offset, end);
+            const contentRange = `bytes ${offset}-${end - 1}/${blob.size}`;
+
+            const xhr = new XMLHttpRequest();
+            if (controller) controller.xhr = xhr;
+            xhr.open('PUT', sessionUri);
+            xhr.setRequestHeader('Content-Range', contentRange);
+
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable && onProgress) {
+                    const totalUploaded = offset + e.loaded;
+                    const percent = Math.round((totalUploaded / blob.size) * 100);
+                    onProgress(percent, totalUploaded, blob.size);
+                }
+            };
+
+            xhr.onload = () => {
+                if (xhr.status === 308) {
+                    offset = end;
+                    uploadNextChunk();
+                } else if (xhr.status === 200 || xhr.status === 201) {
+                    try {
+                        resolve(JSON.parse(xhr.responseText));
+                    } catch (e) {
+                        resolve(xhr.responseText);
+                    }
+                } else {
+                    reject(new Error("GDrive Chunk Error: " + xhr.status + " " + xhr.statusText));
+                }
+            };
+
+            xhr.onabort = () => {
+                if (controller && controller.paused) {
+                    controller.onResume = () => {
+                        controller.onResume = null;
+                        uploadNextChunk();
+                    };
+                }
+            };
+
+            xhr.onerror = () => {
+                if (controller && controller.cancelled) {
+                    reject(new Error("Upload cancelled"));
+                } else if (controller && controller.paused) {
+                    // If we paused during an active chunk, set the resume hook to retry this chunk
+                    controller.onResume = () => {
+                        controller.onResume = null;
+                        uploadNextChunk();
+                    };
+                } else {
+                    reject(new Error("Network error during GDrive chunk upload"));
+                }
+            };
+            xhr.send(chunk);
+        };
+
+        uploadNextChunk();
+    });
+}
+
+async function finalizeDownload(blob, filename, downloadMethod, loadingBar = null, streamedToGDrive = false) {
+    if (!blob) {
+        if (streamedToGDrive) {
+            if (loadingBar) {
+                loadingBar.value = 100;
+                loadingBar.removeAttribute('indeterminate');
+                const statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
+                if (statusInfo) {
+                    statusInfo.textContent = browser.i18n.getMessage("uploadSuccessGDriveTitle") || `Upload Complete!`;
+                }
+            }
+        }
+        return;
+    }
+
+    const settings = await browser.storage.local.get(['save-to-gdrive', 'gdrive_token']);
+    const gdriveEnabled = settings['save-to-gdrive'] === '1' && settings['gdrive_token'];
+    
+    // Trigger local download first or early to preserve user gesture
+    const objectUrl = URL.createObjectURL(blob);
+    const triggerLocalDownload = async () => {
+        return new Promise((resolve) => {
+            const fallbackDownload = () => {
+                const a = document.createElement("a");
+                a.href = objectUrl;
+                a.download = filename;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    if (a.parentNode) document.body.removeChild(a);
+                    resolve(true);
+                }, 1000);
+            };
+
+            if (downloadMethod === "browser" && typeof browser !== 'undefined' && browser.downloads) {
+                try {
+                    browser.downloads.download({ url: objectUrl, filename: filename }, (downloadId) => {
+                        if (browser.runtime.lastError) {
+                            console.warn("browser.downloads.download failed:", browser.runtime.lastError.message);
+                            fallbackDownload();
+                        } else {
+                            resolve(true);
+                        }
+                    });
+                } catch (e) {
+                    console.warn("browser.downloads.download sync failed, falling back to <a> click:", e);
+                    fallbackDownload();
+                }
+            } else {
+                fallbackDownload();
+            }
+        });
+    };
+
+    if (gdriveEnabled && !streamedToGDrive) {
+        const controller = new CloudUploadController();
+        try {
+            if (typeof mdui !== 'undefined' && mdui.snackbar) {
+                mdui.snackbar({ 
+                    message: browser.i18n.getMessage("uploadingToGDrive", [filename]) || `Uploading ${filename} to Google Drive...`, 
+                    placement: "top",
+                    action: "Cancel",
+                    onActionClick: () => controller.cancel()
+                });
+            }
+            
+            if (loadingBar) {
+                loadingBar.max = 100;
+                loadingBar.removeAttribute('indeterminate');
+            }
+
+            await uploadToGDrive(blob, filename, (percent) => {
+                if (loadingBar) {
+                    loadingBar.value = percent;
+                    const statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
+                    if (statusInfo) {
+                        statusInfo.textContent = (browser.i18n.getMessage("uploadingToGDriveShort") || "Uploading to Cloud...") + ` (${percent}%)`;
+                    }
+                }
+            }, controller);
+
+            if (loadingBar) {
+                loadingBar.value = 100;
+                const statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
+                if (statusInfo) {
+                    statusInfo.textContent = browser.i18n.getMessage("uploadSuccessGDrive", [filename]) || `Successfully saved to Google Drive!`;
+                }
+            }
+
+            if (typeof mdui !== 'undefined' && mdui.snackbar) {
+                mdui.snackbar({ message: browser.i18n.getMessage("uploadSuccessGDrive", [filename]) || `Successfully saved ${filename} to Google Drive!`, placement: "top" });
+            }
+        } catch (error) {
+            if (error.message === "Upload cancelled") {
+                if (typeof mdui !== 'undefined' && mdui.snackbar) {
+                    mdui.snackbar({ message: browser.i18n.getMessage("uploadCancelledTitle") || "Upload Cancelled", placement: "top" });
+                }
+            } else {
+                console.error("GDrive upload failed, falling back to local download:", error);
+                if (typeof mdui !== 'undefined' && mdui.snackbar) {
+                    mdui.snackbar({ message: (browser.i18n.getMessage("uploadFailedGDrive") || "Cloud upload failed") + `: ${error.message}. Downloading locally instead.`, placement: "top" });
+                }
+                await triggerLocalDownload();
+                if (loadingBar) {
+                    loadingBar.value = 100;
+                    const statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
+                    if (statusInfo) {
+                        statusInfo.textContent = browser.i18n.getMessage("downloadComplete") || "Download Complete!";
+                    }
+                }
+            }
+        }
+    } else {
+        await triggerLocalDownload();
+        if (loadingBar) {
+            loadingBar.value = 100;
+            const statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
+            if (statusInfo) {
+                statusInfo.textContent = browser.i18n.getMessage("downloadComplete") || "Download Complete!";
+            }
+        }
+    }
+
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 30000);
+}
+
+async function offlineAudioBufferToWav(buffer, onProgress, checkCancel = null) {
+  let numOfChan = buffer.numberOfChannels,
+      length = buffer.length * numOfChan * 2 + 44,
+      buffer_out = new ArrayBuffer(length),
+      view = new DataView(buffer_out),
+      channels = [], i, sample,
+      offset = 0,
+      pos = 0;
+
+  function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
+  function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
+
+  setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157);
+  setUint32(0x20746d66); setUint32(16); setUint16(1); setUint16(numOfChan);
+  setUint32(buffer.sampleRate); setUint32(buffer.sampleRate * 2 * numOfChan);
+  setUint16(numOfChan * 2); setUint16(16); setUint32(0x61746164);
+  setUint32(length - pos - 4);
+
+  for(i = 0; i < buffer.numberOfChannels; i++) channels.push(buffer.getChannelData(i));
+
+  const totalSamples = buffer.length;
+  const batchSize = 100000;
+
+  while(offset < totalSamples) {
+    if (checkCancel && checkCancel()) throw new Error("Cancelled");
+    let end = Math.min(offset + batchSize, totalSamples);
+    for(; offset < end; offset++) {
+      for(i = 0; i < numOfChan; i++) {
+        sample = Math.max(-1, Math.min(1, channels[i][offset]));
+        sample = (sample < 0 ? sample * 0x8000 : sample * 0x7FFF);
+        view.setInt16(pos, sample, true);
+        pos += 2;
+      }
+    }
+
+    if (onProgress) onProgress(offset / totalSamples);
+    await new Promise(resolve => setTimeout(resolve, 0));
+  }
+
+  return new Blob([buffer_out], {type: "audio/wav"});
+}
+
+async function offlineExtractAudioToWav(blob, loadingBar, checkCancel = null) {
+    let statusInfo = null;
+    if (loadingBar) {
+        loadingBar.setAttribute('indeterminate', 'true');
+        statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
+        if (statusInfo) statusInfo.textContent = browser.i18n.getMessage("decodingAudio") || "Decoding Audio...";
+    }
+
+    await new Promise(r => setTimeout(r, 200));
+
+    const arrayBuffer = await blob.arrayBuffer();
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    try {
+        const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        if (loadingBar) {
+            loadingBar.removeAttribute('indeterminate');
+            loadingBar.max = 100;
+        }
+
+        const wavBlob = await offlineAudioBufferToWav(audioBuffer, (progress) => {
+            if (checkCancel && checkCancel()) throw new Error("Cancelled");
+            if (loadingBar) {
+                const percent = Math.round(progress * 100);
+                loadingBar.value = percent;
+                if (statusInfo) statusInfo.textContent = (browser.i18n.getMessage("encodingProgress", [percent.toString()]) || `Encoding: ${percent}%`);
+            }
+        }, checkCancel);
+        return wavBlob;
+    } catch (e) {
+        if (e.message === "Cancelled") throw e;
+        if (e.message && e.message.toLowerCase().includes("unknown content type")) {
+            throw new Error(browser.i18n.getMessage("audioExtractionFormatNotSupported") || "Your browser does not support audio extraction from this media format (typically .ts streams). Please download the full video and extract the audio manually.");
+        }
+        throw new Error("Failed to extract audio. " + e.message);
+    } finally {
+        try { audioCtx.close(); } catch(e) {}
+    }
+}
+
+async function convertAudioToMp3IfEnabled(blob, filename, loadingBar = null, checkCancel = null) {
+    const settings = await browser.storage.local.get('audio-to-mp3');
+    if (settings['audio-to-mp3'] !== '1') return { blob, filename };
+
+    const isWav = blob.type.includes('wav') || /\.wav$/i.test(filename);
+
+    if (!isWav) return { blob, filename };
+
+    let statusInfo = null;
+    if (loadingBar) {
+        statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
+        if (statusInfo) statusInfo.textContent = "Converting to MP3...";
+        loadingBar.setAttribute('indeterminate', 'true');
+    }
+
+    return new Promise((resolve, reject) => {
+        const worker = new Worker('mp3_worker.js');
+        let cancelInterval = null;
+
+        if (checkCancel) {
+            cancelInterval = setInterval(() => {
+                if (checkCancel()) {
+                    if (cancelInterval) clearInterval(cancelInterval);
+                    worker.terminate();
+                    reject(new Error("Cancelled"));
+                }
+            }, 500);
+        }
+
+        worker.onmessage = (e) => {
+            if (e.data.type === 'progress') {
+                if (loadingBar) {
+                    loadingBar.removeAttribute('indeterminate');
+                    const percent = Math.round(e.data.progress * 100);
+                    loadingBar.value = percent;
+                    if (statusInfo) statusInfo.textContent = browser.i18n.getMessage("convertingToMp3Progress", [percent.toString()]) || `Converting to MP3: ${percent}%`;
+                }
+            } else if (e.data.success) {
+                resolve({ blob: e.data.blob, filename: e.data.filename });
+            } else {
+                console.warn("MP3 Conversion failed, using original:", e.data.error);
+                resolve({ blob, filename });
+            }
+            if (e.data.success !== undefined) {
+                if (cancelInterval) clearInterval(cancelInterval);
+                worker.terminate();
+            }
+        };
+        worker.onerror = (err) => {
+            console.warn("MP3 Worker error, using original:", err);
+            resolve({ blob, filename });
+            if (cancelInterval) clearInterval(cancelInterval);
+            worker.terminate();
+        };
+
+        blob.arrayBuffer().then(buffer => {
+            if (checkCancel && checkCancel()) {
+                if (cancelInterval) clearInterval(cancelInterval);
+                worker.terminate();
+                return reject(new Error("Cancelled"));
+            }
+            worker.postMessage({ id: Date.now(), data: buffer, filename });
+        }).catch(err => {
+            console.error("Failed to read blob for MP3 conversion:", err);
+            resolve({ blob, filename });
+            if (cancelInterval) clearInterval(cancelInterval);
+            worker.terminate();
+        });
+    });
+}
 async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar, request, customFilename = null, audioOnly = false) {
+  const checkCancel = () => window.activeCancellations && window.activeCancellations.has(m3u8Url);
+
   const getText = async (url) => {
     const fetchOptions = {
       headers: Object.fromEntries(headers.map(h => [h.name, h.value])),
@@ -255,7 +867,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
     }
   }
   if (audioUrl) {
-    // Display a snackbar message informing the user about the separate audio stream
+    
     const snackbar = document.createElement('mdui-snackbar');
     snackbar.setAttribute('open', true);
     snackbar.setAttribute('timeout', 10000);
@@ -266,18 +878,21 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
     });
   }
 
-  async function downloadSegments(playlistUrl) {
+  async function downloadSegments(playlistUrl, isAudio = false, customFilename = null) {
+    if (loadingBar) {
+        loadingBar.max = 100;
+        loadingBar.value = 0;
+    }
     const playlistText = await getText(playlistUrl);
     const rawLines = playlistText.split(/\r?\n/);
 
-    // helpers for fetch options
+    const sessionId = "m3u8_conv_" + Date.now() + "_" + Math.floor(Math.random() * 1000000);
     const fetchOpts = {
       headers: Object.fromEntries(headers.map(h => [h.name, h.value])),
       referrer: request.requestHeaders?.find(h => h.name.toLowerCase() === "referer")?.value,
       method: request.method
     };
 
-    // parse media-sequence if present
     let mediaSeq = 0;
     let hasDRM, drmAbort = false;
     for (const l of rawLines) {
@@ -306,43 +921,39 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
       throw new Error(browser.i18n.getMessage("drmAbortedError") || "Download aborted by user due to DRM protection.");
     }
 
-    // Build ordered list of playlist "items" so we can process sequentially
-    const items = []; // {type: 'key'|'map'|'segment', ...}
+    const items = []; 
     for (let i = 0; i < rawLines.length; i++) {
       const line = rawLines[i].trim();
       if (!line) continue;
 
       if (line.startsWith('#EXT-X-KEY')) {
-        // capture the full line for attribute parsing later
+        
         items.push({ type: 'key', raw: line });
       } else if (line.startsWith('#EXT-X-MAP')) {
         items.push({ type: 'map', raw: line });
       } else if (line.startsWith('#')) {
-        // other tags ignored here
+        
         continue;
       } else {
-        // segment URI line
+        
         items.push({ type: 'segment', uri: new URL(line, playlistUrl).href, rawUri: line });
       }
     }
 
     const segCount = items.filter(it => it.type === 'segment').length;
 
-    let container = null; // 'fmp4' | 'ts' | 'unknown'
+    let container = null; 
 
-    // encryption state
-    let currentKeyBuffer = null;   // ArrayBuffer containing 16 raw bytes
-    let currentKeyUri = null;      // string
-    let currentKeyIV = null;       // Uint8Array(16) or null
+    let currentKeyBuffer = null;   
+    let currentKeyUri = null;      
+    let currentKeyIV = null;       
 
-    // segment-based sequence for IV when not provided in EXT-X-KEY
-    let processedSegmentIndex = 0; // counts only segments (for IV calc)
+    let processedSegmentIndex = 0; 
 
-    // utility: build 16-byte IV where last 8 bytes are the sequence number (big-endian)
     function makeSequenceIV(seq) {
       const iv = new Uint8Array(16);
       const dv = new DataView(iv.buffer);
-      // prefer setBigUint64 if available for clarity/precision
+      
       if (typeof dv.setBigUint64 === 'function') {
         try {
           dv.setBigUint64(8, BigInt(seq), false);
@@ -409,10 +1020,129 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
       }
     }
 
-    const settings = await browser.storage.local.get(['speed-boost', 'connections']);
+    const settings = await browser.storage.local.get(['speed-boost', 'connections', 'gdrive-stream', 'gdrive_token', 'stream-to-mp4']);
     const isParallel = settings['speed-boost'] === '1';
     const concurrency = isParallel ? parseInt(settings['connections'] || '4', 10) : 1;
     const queue = new ParallelQueue(concurrency);
+
+    const gdriveStreamSettings = await browser.storage.local.get('save-to-gdrive');
+    const isGdriveStream = gdriveStreamSettings['save-to-gdrive'] === '1' && settings['gdrive-stream'] === '1' && settings['gdrive_token'];
+    let gdriveSessionUri = null;
+    let currentUploadOffset = 0;
+
+    if (isGdriveStream) {
+        try {
+            const baseFileName = customFilename ? (customFilename.substring(0, customFilename.lastIndexOf('.')) || customFilename) : getFileName(m3u8Url);
+            const streamExt = settings['stream-to-mp4'] !== '0' ? '.mp4' : '.ts';
+            const uploadFilename = isAudio ? `${baseFileName}_audio.mp4` : `${baseFileName}${streamExt}`;
+            const mimeType = isAudio ? 'audio/mp4' : (streamExt === '.mp4' ? 'video/mp4' : 'video/mp2t');
+            
+            gdriveSessionUri = await startGDriveStreamUpload(uploadFilename, null, mimeType);
+            if (typeof mdui !== 'undefined' && mdui.snackbar) {
+                mdui.snackbar({ 
+                    message: browser.i18n.getMessage("uploadingToGDrive", [uploadFilename]) || `Uploading ${uploadFilename} to Google Drive...`, 
+                    placement: "top"
+                });
+            }
+        } catch (e) {
+            console.error("Failed to start GDrive stream upload for M3U8:", e);
+        }
+    }
+
+    let transmuxer = null;
+    const transmuxedOutputQueue = [];
+    if (gdriveSessionUri && settings['stream-to-mp4'] !== '0' && typeof muxjs !== 'undefined') {
+        transmuxer = new muxjs.mp4.Transmuxer();
+        transmuxer.on('data', (event) => {
+            if (event.initSegment) transmuxedOutputQueue.push(event.initSegment);
+            if (event.data) transmuxedOutputQueue.push(event.data);
+        });
+    }
+
+    let nextUploadIndex = 0;
+    const pendingUploads = new Map();
+    let isUploadingInProgress = false;
+    let uploadBuffer = [];
+    let uploadBufferSize = 0;
+    const GDRIVE_CHUNK_UNIT = 256 * 1024;
+
+    async function tryUploadNext(isFinal = false) {
+        if (isUploadingInProgress || !gdriveSessionUri) return;
+        isUploadingInProgress = true;
+        
+        while (pendingUploads.has(nextUploadIndex) || (isFinal && uploadBufferSize > 0)) {
+            if (pendingUploads.has(nextUploadIndex)) {
+                const data = pendingUploads.get(nextUploadIndex);
+                pendingUploads.delete(nextUploadIndex);
+                
+                if (transmuxer) {
+                    transmuxer.push(data);
+                    transmuxer.flush();
+                    while (transmuxedOutputQueue.length > 0) {
+                        const chunk = transmuxedOutputQueue.shift();
+                        uploadBuffer.push(chunk);
+                        uploadBufferSize += chunk.byteLength;
+                    }
+                } else {
+                    uploadBuffer.push(data);
+                    uploadBufferSize += data.byteLength;
+                }
+                nextUploadIndex++;
+            }
+
+            // Flush logic
+            if (uploadBufferSize >= GDRIVE_CHUNK_UNIT || (isFinal && uploadBufferSize > 0)) {
+                let dataToUpload;
+                let uploadSize;
+
+                const fullData = new Uint8Array(uploadBufferSize);
+                let pos = 0;
+                for (const b of uploadBuffer) {
+                    fullData.set(b, pos);
+                    pos += b.byteLength;
+                }
+
+                if (isFinal) {
+                    dataToUpload = fullData;
+                    uploadSize = uploadBufferSize;
+                    uploadBuffer = [];
+                    uploadBufferSize = 0;
+                } else {
+                    uploadSize = Math.floor(uploadBufferSize / GDRIVE_CHUNK_UNIT) * GDRIVE_CHUNK_UNIT;
+                    if (uploadSize === 0) {
+                        if (!pendingUploads.has(nextUploadIndex)) break;
+                        continue;
+                    }
+                    dataToUpload = fullData.slice(0, uploadSize);
+                    const remainder = fullData.slice(uploadSize);
+                    uploadBuffer = [remainder];
+                    uploadBufferSize = remainder.byteLength;
+                }
+
+                let retries = 3;
+                let success = false;
+                while (retries > 0 && !success) {
+                    try {
+                        await uploadStreamChunk(gdriveSessionUri, dataToUpload, currentUploadOffset);
+                        currentUploadOffset += uploadSize;
+                        success = true;
+                    } catch (e) {
+                        retries--;
+                        console.warn(`GDrive HLS chunk upload retry (${3-retries}):`, e);
+                        if (retries === 0) {
+                            gdriveSessionUri = null;
+                            isUploadingInProgress = false;
+                            return;
+                        }
+                        await new Promise(r => setTimeout(r, 2000));
+                    }
+                }
+            } else {
+                break;
+            }
+        }
+        isUploadingInProgress = false;
+    }
 
     let currentMap = null;
 
@@ -480,9 +1210,6 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
       }
     }
 
-    const parts = new Array(segmentsToDownload.length);
-    const firstPartMap = segmentsToDownload[0]?.map;
-
     const downloadTask = async (seg) => {
       if (window.activeCancellations && window.activeCancellations.has(m3u8Url)) {
         throw new Error("Cancelled");
@@ -498,19 +1225,33 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
         }
 
         if (seg.map) {
-           const combined = new Uint8Array(seg.map.byteLength + arr.byteLength);
-           combined.set(seg.map, 0);
-           combined.set(arr, seg.map.byteLength);
-           arr = combined;
+          const combined = new Uint8Array(seg.map.byteLength + arr.byteLength);
+          combined.set(seg.map, 0);
+          combined.set(arr, seg.map.byteLength);
+          arr = combined;
         }
 
-        parts[seg.index] = arr;
+        if (gdriveSessionUri) {
+            pendingUploads.set(seg.index, arr);
+            await tryUploadNext();
+        }
+
+        await storeConversionChunk(sessionId, seg.index, new Blob([arr]));
 
         if (loadingBar) {
           globalProcessedSegments++;
           loadingBar.removeAttribute('indeterminate');
-          loadingBar.setAttribute('value', Math.min(1, globalProcessedSegments / globalTotalSegments));
+          const progressPercent = (globalProcessedSegments / globalTotalSegments) * 100;
+          loadingBar.value = progressPercent;
           updateSegmentProgressStatus(loadingBar, globalProcessedSegments, globalTotalSegments);
+          
+          if (gdriveSessionUri) {
+             const statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
+             if (statusInfo) {
+               const percent = Math.round(progressPercent);
+               statusInfo.textContent = (browser.i18n.getMessage("uploadingToGDriveShort") || "Uploading to Cloud...") + ` (${percent}%)`;
+             }
+          }
         }
       } catch (e) {
         console.error(`Segment download failed: ${seg.uri}`, e);
@@ -519,27 +1260,73 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
     };
 
     const tasks = segmentsToDownload.map(seg => queue.add(() => downloadTask(seg)));
-    await Promise.all(tasks);
+    try {
+      await Promise.all(tasks);
+      
+      // Flush any remaining data in the buffer and finalize
+      if (gdriveSessionUri) {
+          await tryUploadNext(true);
+      }
 
-    // Filter out any undefined parts just in case
-    const filteredParts = parts.filter(p => p !== undefined);
+      // Finalize GDrive upload if active
+      if (gdriveSessionUri) {
+          try {
+              // Send an empty chunk with the final total size to close the session
+              await uploadStreamChunk(gdriveSessionUri, new Uint8Array(0), currentUploadOffset, currentUploadOffset);
+              const baseFileName = customFilename ? (customFilename.substring(0, customFilename.lastIndexOf('.')) || customFilename) : getFileName(m3u8Url);
+              const streamExt = settings['stream-to-mp4'] !== '0' ? '.mp4' : '.ts';
+              const uploadFilename = isAudio ? `${baseFileName}_audio.mp4` : `${baseFileName}${streamExt}`;
+              if (typeof mdui !== 'undefined' && mdui.snackbar) {
+                  mdui.snackbar({ message: browser.i18n.getMessage("uploadSuccessGDrive", [uploadFilename]) || `Successfully saved ${uploadFilename} to Google Drive!`, placement: "top" });
+              }
+          } catch (e) {
+              console.error("Failed to finalize GDrive stream upload:", e);
+          }
+      }
 
-    // Container detection
-    if (filteredParts.length > 0) {
-       const firstArr = filteredParts[0];
-       if (firstArr[0] === 0x47) container = 'ts';
-       else {
-          // Check for ftyp/styp in first few bytes (could be shifted by map)
-          const searchArea = firstArr.slice(0, 32);
-          const hex = Array.from(searchArea).map(b => b.toString(16).padStart(2, '0')).join('');
+      const filteredChunks = await getConversionChunks(sessionId);
+
+      if (filteredChunks.length > 0) {
+        const firstChunk = filteredChunks[0];
+        const firstArr = new Uint8Array(await firstChunk.slice(0, 32).arrayBuffer());
+        if (firstArr[0] === 0x47) container = 'ts';
+        else {
+          
+          const hex = Array.from(firstArr).map(b => b.toString(16).padStart(2, '0')).join('');
           if (hex.includes('66747970') || hex.includes('73747970')) container = 'fmp4';
-       }
-    }
+        }
+      }
 
-    if (container === 'fmp4') {
-      return { blob: new Blob(filteredParts, { type: "video/mp4" }), ext: '.mp4' };
-    } else {
-      return { blob: new Blob(filteredParts, { type: "video/mp2t" }), ext: '.ts' };
+      let finalResult;
+      if (container === 'fmp4') {
+        finalResult = { blob: new Blob(filteredChunks, { type: "video/mp4" }), ext: '.mp4' };
+      } else {
+        const convertPref = await browser.storage.local.get('stream-to-mp4');
+        if (typeof muxjs !== 'undefined' && convertPref['stream-to-mp4'] !== '0') {
+          if (loadingBar) {
+            const statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
+            if (statusInfo && !gdriveSessionUri) {
+              statusInfo.textContent = browser.i18n.getMessage("downloadTransmuxing") || "Converting to MP4...";
+            }
+          }
+          const result = await transmuxToMp4(filteredChunks);
+          finalResult = { blob: result.blob, ext: result.ext };
+        } else {
+          finalResult = { blob: new Blob(filteredChunks, { type: "video/mp2t" }), ext: '.ts' };
+        }
+      }
+      if (loadingBar) {
+        loadingBar.value = 100;
+        const statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
+        if (statusInfo) {
+          statusInfo.textContent = gdriveSessionUri 
+            ? (browser.i18n.getMessage("uploadSuccessGDriveTitle") || "Upload Complete!")
+            : (browser.i18n.getMessage("downloadComplete") || "Download Complete!");
+        }
+      }
+      return { ...finalResult, streamed: !!gdriveSessionUri };
+    } finally {
+      await clearConversionChunks(sessionId);
     }
   };
 
@@ -555,8 +1342,28 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
     if (!audioUrl) {
 
        globalTotalSegments = await countSegments(videoUrl);
-       const { blob } = await downloadSegments(videoUrl);
-       return { blob };
+       const { blob, streamed } = await downloadSegments(videoUrl, true, customFilename);
+
+       const baseFileName = customFilename ? (customFilename.substring(0, customFilename.lastIndexOf('.')) || customFilename) : getFileName(videoUrl);
+       let finalAudioBlob = blob;
+       let finalAudioFileName = customFilename || `${baseFileName}.mp3`;
+
+       let wavBlob;
+       try {
+           wavBlob = await offlineExtractAudioToWav(blob, loadingBar, checkCancel);
+       } catch (e) {
+           console.error("Failed to decode to wav:", e);
+           throw e;
+       }
+
+       const converted = await convertAudioToMp3IfEnabled(wavBlob, finalAudioFileName, loadingBar, checkCancel);
+       finalAudioBlob = converted.blob;
+       finalAudioFileName = converted.filename;
+
+       // Extracted audio is a new file (WAV/MP3), so we must upload it if GDrive is enabled.
+       await finalizeDownload(finalAudioBlob, finalAudioFileName, downloadMethod, loadingBar, false);
+
+       return { blob: finalAudioBlob, streamed: false };
     }
     globalTotalSegments = await countSegments(audioUrl);
   } else {
@@ -567,28 +1374,17 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
     }
   }
 
-  let videoBlob, ext;
+  let videoBlob, ext, videoStreamed;
   if (!audioOnly) {
-    const videoResult = await downloadSegments(videoUrl);
+    const videoResult = await downloadSegments(videoUrl, false, customFilename);
     videoBlob = videoResult.blob;
     ext = videoResult.ext;
+    videoStreamed = videoResult.streamed;
 
     const baseFileName = customFilename ? (customFilename.substring(0, customFilename.lastIndexOf('.')) || customFilename) : getFileName(m3u8Url);
     const videoBlobUrl = URL.createObjectURL(videoBlob);
 
-    if (downloadMethod === "browser") {
-      await browser.downloads.download({
-        url: videoBlobUrl,
-        filename: audioUrl ? `${baseFileName}_video${ext}` : `${baseFileName}${ext}`
-      });
-    } else {
-      const videoAnchor = document.createElement("a");
-      videoAnchor.href = videoBlobUrl;
-      videoAnchor.download = audioUrl ? `${baseFileName}_video${ext}` : `${baseFileName}${ext}`;
-      document.body.appendChild(videoAnchor);
-      videoAnchor.click();
-      document.body.removeChild(videoAnchor);
-    }
+    await finalizeDownload(videoBlob, audioUrl ? `${baseFileName}_video${ext}` : `${baseFileName}${ext}`, downloadMethod, loadingBar, videoStreamed);
 
     URL.revokeObjectURL(videoBlobUrl);
   }
@@ -604,32 +1400,35 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
     snackbar.addEventListener('close', () => {
       snackbar.remove();
     });
-    const { blob: audioBlob } = await downloadSegments(audioUrl, true);
+    const { blob: audioBlob, streamed: audioStreamed } = await downloadSegments(audioUrl, true, customFilename);
 
-    const audioBlobUrl = URL.createObjectURL(audioBlob);
-    const audioExt = audioOnly ? ".mp3" : "_audio.mp4";
-    const audioFullFileName = audioOnly ? (customFilename || `${baseFileName}${audioExt}`) : `${baseFileName}${audioExt}`;
-
-    if (downloadMethod === "browser") {
-      await browser.downloads.download({
-        url: audioBlobUrl,
-        filename: audioFullFileName
-      });
-    } else {
-      const audioAnchor = document.createElement("a");
-      audioAnchor.href = audioBlobUrl;
-      audioAnchor.download = audioFullFileName;
-      document.body.appendChild(audioAnchor);
-      audioAnchor.click();
-      document.body.removeChild(audioAnchor);
-    }
+    let finalAudioBlob = audioBlob;
+    let finalAudioFileName = audioOnly ? (customFilename || `${baseFileName}.mp3`) : `${baseFileName}_audio.mp4`;
+    let audioConverted = false;
 
     if (audioOnly) {
-        showDialog(browser.i18n.getMessage("audioExtractionSuccess", [audioFullFileName]), browser.i18n.getMessage("successTitle"));
+        let wavBlob;
+        try {
+            wavBlob = await offlineExtractAudioToWav(audioBlob, loadingBar, checkCancel);
+            audioConverted = true;
+        } catch (e) {
+            console.error("Failed to decode to wav:", e);
+            throw e;
+        }
+
+        const converted = await convertAudioToMp3IfEnabled(wavBlob, finalAudioFileName, loadingBar, checkCancel);
+        finalAudioBlob = converted.blob;        finalAudioFileName = converted.filename;
+    }
+
+    await finalizeDownload(finalAudioBlob, finalAudioFileName, downloadMethod, loadingBar, audioConverted ? false : audioStreamed);
+
+    if (audioOnly) {
+        showDialog(browser.i18n.getMessage("audioExtractionSuccess", [finalAudioFileName]), browser.i18n.getMessage("successTitle"));
+        return { blob: finalAudioBlob, streamed: audioConverted ? false : audioStreamed };
     } else {
+        const audioBlobUrl = URL.createObjectURL(audioBlob);
         showDialog(browser.i18n.getMessage("splitAudioVideoDownloadCompleteDescription", [new Option(baseFileName).innerHTML, ext]), browser.i18n.getMessage("splitAudioVideoDownloadCompleteTitle"), { error: browser.i18n.getMessage("splitAudioVideoDownloadCompleteSuccess", [baseFileName]), urls: { video: URL.createObjectURL(videoBlob), audio: audioBlobUrl, m3u8: m3u8Url }, request: request, downloadMethod: downloadMethod });
     }
-    URL.revokeObjectURL(audioBlobUrl);
     return;
   }
 }
@@ -958,7 +1757,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
 
     if (!r.body) {
       if (onChunk) onChunk(0, contentLength);
-      return new ArrayBuffer(0);
+      return new Blob([]);
     }
 
     const reader = r.body.getReader();
@@ -968,7 +1767,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        chunks.push(value);
+        chunks.push(new Blob([value]));
         received += value.byteLength;
         if (onChunk) onChunk(received, contentLength);
       }
@@ -977,13 +1776,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
       throw new Error(`Error reading response stream: ${err?.message || err}`);
     }
 
-    const buffer = new Uint8Array(received);
-    let offset = 0;
-    for (const c of chunks) {
-      buffer.set(c, offset);
-      offset += c.byteLength;
-    }
-    return buffer.buffer;
+    return new Blob(chunks);
   }
 
   if (isSegmentBaseOnly) {
@@ -999,15 +1792,13 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     if (chosenVideoRep) downloads.push({ rep: chosenVideoRep, label: "video" });
     if (chosenAudioRep) downloads.push({ rep: chosenAudioRep, label: "audio" });
 
-    loadingBar.removeAttribute("indeterminate");
-    loadingBar.setAttribute("value", 0);
-    loadingBar.setAttribute("max", 0);
+    loadingBar.value = 0;
     let downloadedBytes = 0;
     let sawUnknownLength = false;
 
     function addToMax(n) {
-      const prev = Number(loadingBar.getAttribute("max")) || 0;
-      loadingBar.setAttribute("max", prev + n);
+      if (!loadingBar._max) loadingBar._max = 0;
+      loadingBar._max += n;
     }
 
     const settings = await browser.storage.local.get(['speed-boost', 'connections']);
@@ -1026,9 +1817,8 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
       }
       const filename = candidate;
 
-
       let lastReceivedForFile = 0;
-      const buffer = await fetchWithProgress(url, {
+      const blob = await fetchWithProgress(url, {
         onStart: (contentLength) => {
           if (contentLength && contentLength > 0) {
             addToMax(contentLength);
@@ -1043,38 +1833,18 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
           lastReceivedForFile = received;
           downloadedBytes += delta;
 
-          const max = Number(loadingBar.getAttribute("max")) || 0;
-          if (max > 0) {
-            loadingBar.setAttribute("value", downloadedBytes);
-            updateProgressStatus(loadingBar, downloadedBytes, max);
-          } else {
-            updateProgressStatus(loadingBar, downloadedBytes, 0);
-          }
+          const max = loadingBar._max || 0;
+          updateProgressStatus(loadingBar, downloadedBytes, max);
         }
       });
 
-      const blob = new Blob([buffer]);
-      const objectUrl = URL.createObjectURL(blob);
-      if (downloadMethod === "browser") {
-        await browser.downloads.download({ url: objectUrl, filename: filename });
-      } else {
-        const a = document.createElement("a");
-        a.href = objectUrl;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      }
-      URL.revokeObjectURL(objectUrl);
+      await finalizeDownload(blob, filename, downloadMethod, loadingBar);
     };
 
     const directTasks = downloads.map(d => queue.add(() => downloadDirectTask(d)));
     await Promise.all(directTasks);
 
-    const finalMax = Number(loadingBar.getAttribute("max")) || downloadedBytes || 1;
-    loadingBar.setAttribute("max", finalMax);
-    loadingBar.setAttribute("value", downloadedBytes);
-    loadingBar.removeAttribute("indeterminate");
+    const finalMax = loadingBar._max || downloadedBytes || 1;
     updateProgressStatus(loadingBar, downloadedBytes, finalMax);
 
     showDialog(browser.i18n.getMessage("splitAudioVideoDownloadCompleteDescription", [baseName, ".mp4"]), browser.i18n.getMessage("splitAudioVideoDownloadCompleteTitle"), { error: browser.i18n.getMessage("splitAudioVideoDownloadCompleteSuccess", [baseName]), url: mpdUrl, request: request, downloadMethod: downloadMethod });
@@ -1226,6 +1996,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     };
   }
 
+  const sessionId = "mpd_conv_" + Date.now() + "_" + Math.floor(Math.random() * 1000000);
   const zipEntries = [];
   zipEntries.push({ name: mpdFilename, input: new TextEncoder().encode(mpdXmlText) });
 
@@ -1290,16 +2061,16 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
 
   if (useByteTracking) {
     loadingBar.removeAttribute("indeterminate");
-    loadingBar.setAttribute("max", 0);
-    loadingBar.setAttribute("value", 0);
+    loadingBar._max = 0;
+    loadingBar.value = 0;
   } else {
-    loadingBar.setAttribute("max", globalTotalSegments);
-    loadingBar.setAttribute("value", 0);
+    loadingBar._max = globalTotalSegments;
+    loadingBar.value = 0;
   }
 
   function addToMax(n) {
-    const prev = Number(loadingBar.getAttribute("max")) || 0;
-    loadingBar.setAttribute("max", prev + n);
+    if (!loadingBar._max) loadingBar._max = 0;
+    loadingBar._max += n;
   }
 
   const mpdFixEnabled = (await browser.storage.local.get("mpd-fix").then((result) => result["mpd-fix"])) === "1";
@@ -1310,20 +2081,25 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
   const concurrency = isParallel ? parseInt(parallelSettings['connections'] || '4', 10) : 1;
   const queue = new ParallelQueue(concurrency);
 
+  let currentChunkGlobalIndex = 1; 
+
   const processTask = async (t) => {
     if (t.type === "template") {
 
       const initBuf = await fetchWithProgress(t.info.initUrl);
-      zipEntries.push({ name: prefixedName(t.info.initZipPath), input: initBuf });
+      const initIdx = currentChunkGlobalIndex++;
+      await storeConversionChunk(sessionId, initIdx, new Blob([initBuf]));
+      zipEntries.push({ name: prefixedName(t.info.initZipPath), inputIdx: initIdx });
 
       const segTasks = t.info.segmentUrls.map((segUrl, i) => {
         return queue.add(async () => {
           const segZipPath = t.info.mediaZipPaths[i];
           const buf = await fetchWithProgress(segUrl);
-          zipEntries.push({ name: prefixedName(segZipPath), input: buf });
+          const segIdx = currentChunkGlobalIndex++;
+          await storeConversionChunk(sessionId, segIdx, new Blob([buf]));
+          zipEntries.push({ name: prefixedName(segZipPath), inputIdx: segIdx });
 
           globalProcessedSegments++;
-          loadingBar.setAttribute("value", globalProcessedSegments);
           updateSegmentProgressStatus(loadingBar, globalProcessedSegments, globalTotalSegments);
         });
       });
@@ -1341,32 +2117,32 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
               const delta = received - lastReceivedForFile;
               lastReceivedForFile = received;
               downloadedBytes += delta;
-              const max = Number(loadingBar.getAttribute("max")) || 0;
-              if (max > 0) {
-                loadingBar.setAttribute("value", downloadedBytes);
-                updateProgressStatus(loadingBar, downloadedBytes, max);
-              } else {
-                updateProgressStatus(loadingBar, downloadedBytes, 0);
-              }
+              const max = loadingBar._max || 0;
+              updateProgressStatus(loadingBar, downloadedBytes, max);
             }
           });
 
           const finalZipName = prefixedName(t.zipName);
-          zipEntries.push({ name: finalZipName, input: arrayBuffer });
+          const baseIdx = currentChunkGlobalIndex++;
+          await storeConversionChunk(sessionId, baseIdx, new Blob([arrayBuffer]));
+          zipEntries.push({ name: finalZipName, inputIdx: baseIdx });
           if (mpdFixEnabled) repIdToLocalName[t.rep.id] = t.zipName;
       });
     } else if (t.type === "list") {
       const initBuf = await fetchWithProgress(t.info.initUrl);
-      zipEntries.push({ name: prefixedName(t.info.initZipPath), input: initBuf });
+      const initIdx = currentChunkGlobalIndex++;
+      await storeConversionChunk(sessionId, initIdx, new Blob([initBuf]));
+      zipEntries.push({ name: prefixedName(t.info.initZipPath), inputIdx: initIdx });
 
       const segTasks = t.info.segmentUrls.map((segUrl, i) => {
         return queue.add(async () => {
             const segZipPath = t.info.segmentZipPaths[i];
             const buf = await fetchWithProgress(segUrl);
-            zipEntries.push({ name: prefixedName(segZipPath), input: buf });
+            const segIdx = currentChunkGlobalIndex++;
+            await storeConversionChunk(sessionId, segIdx, new Blob([buf]));
+            zipEntries.push({ name: prefixedName(segZipPath), inputIdx: segIdx });
 
             globalProcessedSegments++;
-            loadingBar.setAttribute("value", globalProcessedSegments);
             updateSegmentProgressStatus(loadingBar, globalProcessedSegments, globalTotalSegments);
         });
       });
@@ -1376,103 +2152,190 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     }
   };
 
-  for (const t of tasks) {
-    await processTask(t);
-  }
-
-  function pruneToSelectedRepresentations(xmlDoc, NS, selectedRepIds) {
-    const adaptationSets = Array.from(xmlDoc.getElementsByTagNameNS(NS, "AdaptationSet"));
-
-    for (const asNode of adaptationSets) {
-      const reps = Array.from(asNode.getElementsByTagNameNS(NS, "Representation"));
-
-      for (const rep of reps) {
-        const repId = rep.getAttribute("id");
-        if (!selectedRepIds.has(repId)) {
-          rep.parentElement?.removeChild(rep);
-        }
-      }
-
-      if (!asNode.getElementsByTagNameNS(NS, "Representation").length) {
-        asNode.parentElement?.removeChild(asNode);
-      }
-    }
-  }
-  if (mpdFixEnabled) {
-
-    const selectedRepIds = new Set();
-    if (chosenVideoRep) selectedRepIds.add(chosenVideoRep.id);
-    if (chosenAudioRep) selectedRepIds.add(chosenAudioRep.id);
-
-    pruneToSelectedRepresentations(xmlDoc, NS, selectedRepIds);
-    for (const repId in repIdToLocalName) {
-      const repNode = Array.from(xmlDoc.getElementsByTagNameNS(NS, "Representation"))
-        .find(r => r.getAttribute("id") === repId);
-      if (!repNode) continue;
-
-      const meta = repIdToLocalName[repId];
-
-      if (typeof meta === "string") {
-
-        const segBases = Array.from(repNode.getElementsByTagNameNS(NS, "SegmentBase"));
-        segBases.forEach(n => n.parentElement && n.parentElement.removeChild(n));
-        let baseNode = repNode.getElementsByTagNameNS(NS, "BaseURL")[0];
-        if (!baseNode) {
-          baseNode = xmlDoc.createElementNS(NS, "BaseURL");
-          if (repNode.firstChild) repNode.insertBefore(baseNode, repNode.firstChild);
-          else repNode.appendChild(baseNode);
-        }
-        baseNode.textContent = meta;
-      } else if (meta?.type === "list") {
-        const initNode = repNode.getElementsByTagNameNS(NS, "Initialization")[0];
-        if (initNode) {
-          initNode.setAttribute("sourceURL", meta.init);
-        }
-
-        const segNodes = Array.from(repNode.getElementsByTagNameNS(NS, "SegmentURL"));
-        segNodes.forEach((node, idx) => {
-          if (meta.segments[idx]) {
-            node.setAttribute("media", meta.segments[idx]);
-          }
-        });
-      }
-    }
-
-    const serializer = new XMLSerializer();
-    mpdXmlText = serializer.serializeToString(xmlDoc);
-    zipEntries[0] = { name: mpdFilename, input: new TextEncoder().encode(mpdXmlText) };
-  }
-
   try {
-    const finalMax = Number(loadingBar.getAttribute("max")) || downloadedBytes || 1;
-    loadingBar.setAttribute("max", finalMax);
-    loadingBar.setAttribute("value", downloadedBytes);
-    loadingBar.removeAttribute("indeterminate");
-    updateProgressStatus(loadingBar, downloadedBytes, finalMax);
-  } catch (e) { }
+    for (const t of tasks) {
+      await processTask(t);
+    }
 
-  const zipBlob = await downloadZip(zipEntries).blob();
-  const zipName = `${baseName}.zip`;
+    if (mpdFixEnabled) {
+      const selectedRepIds = new Set();
+      if (chosenVideoRep) selectedRepIds.add(chosenVideoRep.id);
+      if (chosenAudioRep) selectedRepIds.add(chosenAudioRep.id);
 
-  if (downloadMethod === "browser") {
-    await browser.downloads.download({ url: URL.createObjectURL(zipBlob), filename: zipName });
-  } else {
+      pruneToSelectedRepresentations(xmlDoc, NS, selectedRepIds);
+      for (const repId in repIdToLocalName) {
+        const repNode = Array.from(xmlDoc.getElementsByTagNameNS(NS, "Representation"))
+          .find(r => r.getAttribute("id") === repId);
+        if (!repNode) continue;
 
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(zipBlob);
-    a.download = zipName;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(a.href);
+        const meta = repIdToLocalName[repId];
+
+        if (typeof meta === "string") {
+          const segBases = Array.from(repNode.getElementsByTagNameNS(NS, "SegmentBase"));
+          segBases.forEach(n => n.parentElement && n.parentElement.removeChild(n));
+          let baseNode = repNode.getElementsByTagNameNS(NS, "BaseURL")[0];
+          if (!baseNode) {
+            baseNode = xmlDoc.createElementNS(NS, "BaseURL");
+            if (repNode.firstChild) repNode.insertBefore(baseNode, repNode.firstChild);
+            else repNode.appendChild(baseNode);
+          }
+          baseNode.textContent = meta;
+        } else if (meta?.type === "list") {
+          const initNode = repNode.getElementsByTagNameNS(NS, "Initialization")[0];
+          if (initNode) {
+            initNode.setAttribute("sourceURL", meta.init);
+          }
+
+          const segNodes = Array.from(repNode.getElementsByTagNameNS(NS, "SegmentURL"));
+          segNodes.forEach((node, idx) => {
+            if (meta.segments[idx]) {
+              node.setAttribute("media", meta.segments[idx]);
+            }
+          });
+        }
+      }
+
+      const serializer = new XMLSerializer();
+      mpdXmlText = serializer.serializeToString(xmlDoc);
+      zipEntries[0].input = new TextEncoder().encode(mpdXmlText);
+    }
+
+    try {
+      const finalMax = loadingBar._max || downloadedBytes || 1;
+      updateProgressStatus(loadingBar, downloadedBytes, finalMax);
+    } catch (e) { }
+
+    const db = await openCacheDB();
+    const zipEntriesGenerator = async function* () {
+      for (const entry of zipEntries) {
+        if (entry.inputIdx !== undefined) {
+          const chunk = await new Promise((resolve, reject) => {
+            const tx = db.transaction([CHUNK_STORE_NAME], "readonly");
+            const store = tx.objectStore(CHUNK_STORE_NAME);
+            const req = store.get([sessionId, entry.inputIdx]);
+            req.onsuccess = () => resolve(req.result?.data);
+            req.onerror = () => reject(req.error);
+          });
+          yield { name: entry.name, input: chunk || new Blob([]) };
+        } else {
+          yield entry;
+        }
+      }
+    };
+
+    const gdriveStreamSettings = await browser.storage.local.get(['gdrive-stream', 'gdrive_token']);
+    const isGdriveStream = gdriveStreamSettings['gdrive-stream'] === '1' && gdriveStreamSettings['gdrive_token'];
+    let gdriveSessionUri = null;
+    const zipName = `${baseName}.zip`;
+
+    if (isGdriveStream) {
+        try {
+            gdriveSessionUri = await startGDriveStreamUpload(zipName, null, 'application/zip');
+            if (typeof mdui !== 'undefined' && mdui.snackbar) {
+                mdui.snackbar({ 
+                    message: browser.i18n.getMessage("uploadingToGDrive", [zipName]) || `Uploading ${zipName} to Google Drive...`, 
+                    placement: "top"
+                });
+            }
+            if (loadingBar) {
+              const statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
+              if (statusInfo) {
+                statusInfo.textContent = browser.i18n.getMessage("uploadingToGDriveShort") || "Uploading to Cloud...";
+              }
+            }
+        } catch (e) {
+            console.error("Failed to start GDrive stream upload for MPD ZIP:", e);
+        }
+    }
+
+    if (gdriveSessionUri) {
+        const response = downloadZip(zipEntriesGenerator());
+        const reader = response.body.getReader();
+        let offset = 0;
+        let dashBuffer = [];
+        let dashBufferSize = 0;
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                dashBuffer.push(value);
+                dashBufferSize += value.byteLength;
+
+                if (dashBufferSize >= GDRIVE_CHUNK_UNIT) {
+                    const fullData = new Uint8Array(dashBufferSize);
+                    let pos = 0;
+                    for (const b of dashBuffer) {
+                        fullData.set(b, pos);
+                        pos += b.byteLength;
+                    }
+
+                    const uploadSize = Math.floor(dashBufferSize / GDRIVE_CHUNK_UNIT) * GDRIVE_CHUNK_UNIT;
+                    const dataToUpload = fullData.slice(0, uploadSize);
+                    const remainder = fullData.slice(uploadSize);
+                    
+                    let retries = 3;
+                    let success = false;
+                    while (retries > 0 && !success) {
+                        try {
+                            await uploadStreamChunk(gdriveSessionUri, dataToUpload, offset);
+                            offset += uploadSize;
+                            success = true;
+                        } catch (e) {
+                            retries--;
+                            if (retries === 0) throw e;
+                            await new Promise(r => setTimeout(r, 2000));
+                        }
+                    }
+
+                    dashBuffer = [remainder];
+                    dashBufferSize = remainder.byteLength;
+                }
+                
+                if (loadingBar) {
+                    const statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
+                    if (statusInfo) {
+                        statusInfo.textContent = (browser.i18n.getMessage("uploadingToGDriveShort") || "Uploading to Cloud...") + ` (${getHumanReadableSize(offset)})`;
+                    }
+                }
+            }
+
+            // Final flush for DASH
+            if (dashBufferSize > 0) {
+                const finalData = new Uint8Array(dashBufferSize);
+                let pos = 0;
+                for (const b of dashBuffer) {
+                    finalData.set(b, pos);
+                    pos += b.byteLength;
+                }
+                await uploadStreamChunk(gdriveSessionUri, finalData, offset);
+                offset += dashBufferSize;
+            }
+
+            await uploadStreamChunk(gdriveSessionUri, new Uint8Array(0), offset, offset);
+            if (typeof mdui !== 'undefined' && mdui.snackbar) {
+                mdui.snackbar({ message: browser.i18n.getMessage("uploadSuccessGDrive", [zipName]) || `Successfully saved ${zipName} to Google Drive!`, placement: "top" });
+            }
+            await finalizeDownload(null, zipName, downloadMethod, loadingBar, true);
+        } catch (e) {
+            console.error("GDrive stream ZIP upload failed, falling back to local:", e);
+            const zipBlob = await downloadZip(zipEntriesGenerator()).blob();
+            await finalizeDownload(zipBlob, zipName, downloadMethod, loadingBar);
+        }
+    } else {
+        const zipBlob = await downloadZip(zipEntriesGenerator()).blob();
+        await finalizeDownload(zipBlob, zipName, downloadMethod, loadingBar);
+    }
+
+    showDialog(browser.i18n.getMessage("mpdDownloadCompleteMessage", [baseName]), browser.i18n.getMessage("mpdDownloadCompleteTitle"), {
+      error: browser.i18n.getMessage("mpdDownloadCompleteSuccess", [zipName]),
+      urls: { zip: isGdriveStream ? null : URL.createObjectURL(await downloadZip(zipEntriesGenerator()).blob()), mpd: mpdUrl },
+      request,
+      downloadMethod
+    });
+  } finally {
+    await clearConversionChunks(sessionId);
   }
-
-  showDialog(browser.i18n.getMessage("mpdDownloadCompleteMessage", [baseName]), browser.i18n.getMessage("mpdDownloadCompleteTitle"), {
-    error: browser.i18n.getMessage("mpdDownloadCompleteSuccess", [zipName]),
-    urls: { zip: URL.createObjectURL(zipBlob), mpd: mpdUrl },
-    request,
-    downloadMethod
-  });
 
   function prefixedName(path) {
     if (!baseURLForZip) return path;

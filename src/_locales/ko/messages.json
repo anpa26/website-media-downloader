@@ -169,7 +169,7 @@
         "description": "The title of the interface settings section in the settings tab."
     },
     "settingsDisplaySectionTitle": {
-        "message": "표시 목록",
+        "message": "디스플레이 설정",
         "description": "The title of the display settings section in the settings tab."
     },
     "detectionMethodTitle": {
@@ -327,6 +327,10 @@
     "mediaNotificationDownloadAction": {
         "message": "다운로드",
         "description": "The action label to download media from the notification."
+    },
+    "mediaNotificationDrmMessage": {
+        "message": "이 콘텐츠는 DRM으로 보호되어 있으며 다운로드할 수 없습니다.",
+        "description": "Message shown in notification when media is DRM protected."
     },
     "streamDownloadTitle": {
         "message": "스트림 다운로드 기본 설정",
@@ -688,6 +692,14 @@
         "message": "취소",
         "description": "The text of the cancel button during an active download."
     },
+    "pauseButton": {
+        "message": "일시 중지",
+        "description": "The text of the pause button for active downloads."
+    },
+    "resumeActiveButton": {
+        "message": "재개",
+        "description": "The text of the resume button for paused downloads."
+    },
     "downloadCancelled": {
         "message": "다운로드 취소됨",
         "description": "The message shown when a download is manually cancelled."
@@ -699,6 +711,14 @@
     "speedBoostExplain": {
         "message": "파일의 여러 부분을 동시에 다운로드합니다. 서버가 범위 요청(range request)을 지원하는 경우에만 작동합니다.",
         "description": "The explanation of the speed boost setting."
+    },
+    "speedBoostResumeTitle": {
+        "message": "재개 시 속도 향상 강제",
+        "description": "Title for the setting to enable speed boost when resuming."
+    },
+    "speedBoostResumeExplain": {
+        "message": "재개 시 병렬 연결을 유지합니다. 호스트 서버가 부분 범위 요청을 일관되게 지원하지 않으면 파일이 손상될 수 있습니다.",
+        "description": "Explanation for speed boost resume."
     },
     "connectionsTitle": {
         "message": "병렬 연결",
@@ -802,6 +822,14 @@
         "message": "다운로드가 백그라운드에서 계속되도록 허용합니다. 비활성화하면 다운로드가 팝업에서 실행되며 팝업을 닫으면 중단됩니다(모바일에서는 새 탭 없음).",
         "description": "The explanation of the background download setting."
     },
+    "autoResumeTitle": {
+        "message": "다운로드 자동 재개",
+        "description": "Title for the automatic resume setting."
+    },
+    "autoResumeExplain": {
+        "message": "브라우저가 시작될 때 대기 중인 다운로드를 자동으로 재개합니다.",
+        "description": "Explanation for the automatic resume setting."
+    },
     "disableRenameDialogExplain": {
         "message": "파일 이름 확인 대화상자를 건너뛰고 기본 이름을 사용하여 즉시 다운로드를 시작합니다.",
         "description": "The explanation of the disable rename dialog setting."
@@ -836,7 +864,7 @@
     },
     "audioExtractionError": {
         "message": "오디오만 추출 오류: $ERROR$",
-        "description": "Error message shown when audio extraction fails.",
+        "description": "Error message when audio extraction fails.",
         "placeholders": {
             "ERROR": {
                 "content": "$1",
@@ -1165,7 +1193,7 @@
         "description": "About page footer/error message."
     },
     "zipDownloadError": {
-        "message": "\"$FILENAME$\" 다운로드 실패. $ERROR$\\n\\n남은 파일로 계속 진행하시겠습니까?",
+        "message": "\"$FILENAME$\" 다운로드 실패. $ERROR$\n\n남은 파일로 계속 진행하시겠습니까?",
         "description": "Error message when a file in ZIP batch fails.",
         "placeholders": {
             "FILENAME": {
@@ -1333,7 +1361,7 @@
         }
     },
     "mpdDownloadCompleteSuccess": {
-        "message": "ZIP 다운로드 완료 (“$FILENAME$”).",
+        "message": "ZIP 다운로드 완료 (\"$FILENAME$\").",
         "description": "Success message when MPD ZIP is downloaded.",
         "placeholders": {
             "FILENAME": {
@@ -1362,60 +1390,88 @@
         "message": "Website Media Downloader에 오신 것을 환영합니다",
         "description": "Title of the installed page"
     },
+    "installedBrand": {
+        "message": "WMD",
+        "description": "Short brand name for the installed page"
+    },
     "installedHeroTitle": {
-        "message": "Installation Complete",
+        "message": "설치 완료",
         "description": "Hero title of the installed page"
     },
     "installedHeroDescription": {
-        "message": "The ultimate media companion is ready. Start detecting and downloading your favorite content with a single click.",
+        "message": "최고의 미디어 도우미가 준비되었습니다. 클릭 한 번으로 좋아하는 콘텐츠를 감지하고 다운로드하세요.",
         "description": "Hero description of the installed page"
+    },
+    "getStarted": {
+        "message": "지금 시작하기",
+        "description": "Label for the get started button"
     },
     "installedVersion": {
         "message": "버전",
         "description": "Label for version number"
     },
     "installedChangelogTitle": {
-        "message": "Improvements & Updates",
+        "message": "개선 및 업데이트 (v1.9.4)",
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "HTML, CSS, JS 및 TXT 파일을 필터링하는 새로운 \"페이지 구성 요소 숨기기\" 설정을 추가했습니다.",
+        "message": "포괄적인 엔진 오버홀: RAM 효율성을 위해 IndexedDB 기반 스트리밍을 구현하여 기가바이트 단위 파일 지원",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "과도한 필터링을 방지하기 위한 정밀한 확장자 일치 기능을 갖춘 세그먼트 감지 로직을 강화했습니다.",
+        "message": "신규: 자동 MP3 변환 및 TS에서 MP4로의 변환 기능 추가",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "페이지 구성 요소 숨기기 기능을 다양한 이미지 형식(.ico, .jpg, .webp, .png)으로 확장했습니다.",
+        "message": "Instagram, TikTok, Twitter용 정밀 미디어 추출 기능 추가",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "9개 언어에 걸쳐 새로운 설정에 대한 완벽한 번역 지원을 추가했습니다.",
+        "message": "새로운 글래스모피즘 디자인과 개선된 컨트롤을 갖춘 UI/UX 현대화",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "전체 너비 설정 컨테이너와 즉각적인 색상 변경 감지 기능을 갖춘 UI 레이아웃을 개선했습니다.",
+        "message": "Google 드라이브 통합 추가 및 다운로드 안정성 향상",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
-        "message": "Developer",
+        "message": "개발자",
         "description": "Label for developer card"
     },
+    "installedCommunity": {
+        "message": "커뮤니티",
+        "description": "Label for community card"
+    },
+    "installedGitHubProject": {
+        "message": "GitHub 프로젝트",
+        "description": "Value for GitHub project link"
+    },
+    "installedSupport": {
+        "message": "지원",
+        "description": "Label for support card"
+    },
+    "installedAddonsStore": {
+        "message": "부가기능 스토어",
+        "description": "Value for add-ons store link"
+    },
     "installedFooterQuote": {
-        "message": "Thank you for being part of our journey.",
+        "message": "저희와 함께 해주셔서 감사합니다.",
         "description": "Footer quote on the installed page"
     },
+    "installedCopyright": {
+        "message": "Website Media Downloader © 2026",
+        "description": "Copyright notice"
+    },
     "installedFeedbackTitle": {
-        "message": "Feedback & Issues",
+        "message": "피드백 및 문제",
         "description": "Title for the feedback section"
     },
     "installedFeedbackDesc": {
-        "message": "Found a bug or have a suggestion? Help us improve by opening an issue on GitHub!",
+        "message": "버그를 발견하거나 제안 사항이 있으신가요? GitHub에 이슈를 등록하여 개선에 도움을 주세요!",
         "description": "Description for the feedback section"
     },
     "installedFeedbackButton": {
-        "message": "Report an Issue",
+        "message": "문제 신고하기",
         "description": "Label for the feedback button"
     },
     "applyChangesPrompt": {
@@ -1434,40 +1490,21 @@
         "message": "삭제 확인",
         "description": "The title of the confirmation dialog when deleting all detected media."
     },
-    "installedBrand": {
-        "message": "WMD",
-        "description": "Short brand name for the installed page"
+    "audioToMp3Setting": {
+        "message": "오디오 추출물을 MP3로 변환",
+        "description": "Label for the setting to convert audio downloads to MP3 format."
     },
-    "getStarted": {
-        "message": "Get Started Now",
-        "description": "Label for the get started button"
-    },
-    "installedCommunity": {
-        "message": "Community",
-        "description": "Label for community card"
-    },
-    "installedGitHubProject": {
-        "message": "GitHub Project",
-        "description": "Value for GitHub project link"
-    },
-    "installedSupport": {
-        "message": "Support",
-        "description": "Label for support card"
-    },
-    "installedAddonsStore": {
-        "message": "Add-ons Store",
-        "description": "Value for add-ons store link"
-    },
-    "installedCopyright": {
-        "message": "Website Media Downloader © 2026",
-        "description": "Copyright notice"
+    "audioToMp3SettingDesc": {
+        "message": "'오디오 전용' 기능(WAV)의 결과를 더 작은 파일 크기를 위해 자동으로 MP3 형식으로 변환합니다.",
+        "description": "Description for the audio to MP3 conversion setting."
     },
     "updateAvailable": {
         "message": "새 버전 v$VERSION$을(를) 사용할 수 있습니다.",
         "description": "Message shown in the update notification bar.",
         "placeholders": {
             "VERSION": {
-                "content": "$1"
+                "content": "$1",
+                "example": "1.7.9"
             }
         }
     },
@@ -1484,21 +1521,143 @@
         "description": "Message shown in the update dialog.",
         "placeholders": {
             "VERSION": {
-                "content": "$1"
+                "content": "$1",
+                "example": "1.7.9"
             }
         }
     },
     "checkUpdateButton": {
-        "message": "업데이트 확인"
+        "message": "업데이트 확인",
+        "description": "Text for the manual update check button in the about page."
     },
     "alreadyLatestVersion": {
-        "message": "최신 버전을 사용 중입니다."
+        "message": "최신 버전을 사용 중입니다.",
+        "description": "Snackbar message when no update is found."
     },
     "updateCheckError": {
-        "message": "업데이트 확인에 실패했습니다."
+        "message": "업데이트 확인에 실패했습니다.",
+        "description": "Snackbar message when update check fails."
     },
     "audioExtractionFormatNotSupported": {
         "message": "브라우저가 이 미디어 형식(일반적으로 .ts 스트림)에서 오디오 추출을 지원하지 않습니다. 동영상을 다운로드한 후 수동으로 오디오를 추출하세요.",
         "description": "Error message when the browser cannot decode the audio format, typical for TS streams."
+    },
+    "settingsAdvancedSectionTitle": {
+        "message": "고급 설정",
+        "description": "The title of the advanced settings section in the settings tab."
+    },
+    "cleanViewTitle": {
+        "message": "깔끔한 설정 보기",
+        "description": "The title of the clean settings view switch in the settings tab."
+    },
+    "cleanViewExplain": {
+        "message": "설정을 드롭다운으로 그룹화하여 더 깔끔하게 보여줍니다.",
+        "description": "The explanation of the clean settings view option."
+    },
+    "downloadTransmuxing": {
+        "message": "MP4로 변환 중...",
+        "description": "Message shown when muxing TS to MP4."
+    },
+    "streamToMp4Title": {
+        "message": "스트림을 MP4로 저장",
+        "description": "Title for the stream to MP4 conversion setting."
+    },
+    "streamToMp4Explain": {
+        "message": "다운로드한 비디오를 스마트폰, TV 및 대부분의 미디어 플레이어에서 쉽게 재생할 수 있도록 합니다.",
+        "description": "Explanation for the stream to MP4 conversion setting."
+    },
+    "settingsCloudSectionTitle": {
+        "message": "클라우드 설정",
+        "description": "Title for the cloud integration settings section."
+    },
+    "saveToGDriveTitle": {
+        "message": "Google 드라이브에 저장",
+        "description": "Title for the setting to save downloads to Google Drive."
+    },
+    "saveToGDriveExplain": {
+        "message": "다운로드한 파일을 Google 드라이브에 직접 업로드합니다.",
+        "description": "Explanation for the Google Drive saving setting."
+    },
+    "gdriveStreamTitle": {
+        "message": "직접 업로드",
+        "description": "Title for the stream upload setting."
+    },
+    "gdriveStreamExplain": {
+        "message": "다운로드하는 동안 청크를 즉시 클라우드에 업로드합니다. 대용량 파일에 권장됩니다.",
+        "description": "Explanation for the stream upload setting."
+    },
+    "streamUploadMethodWarning": {
+        "message": "참고: 스트림 업로드는 'Fetch' 다운로드 방식에서 가장 잘 작동합니다.",
+        "description": "Warning shown when stream upload is enabled but native download method is selected."
+    },
+    "gdriveAccountTitle": {
+        "message": "Google 드라이브 계정",
+        "description": "Title for the Google Drive account management section."
+    },
+    "gdriveLoginButton": {
+        "message": "로그인",
+        "description": "Label for the Google Drive login button."
+    },
+    "gdriveLogoutButton": {
+        "message": "로그아웃",
+        "description": "Label for the Google Drive logout button."
+    },
+    "uploadingToGDrive": {
+        "message": "$1을(를) Google 드라이브에 업로드 중...",
+        "description": "Status message when uploading a file to Google Drive.",
+        "placeholders": {
+            "1": {
+                "content": "$1"
+            }
+        }
+    },
+    "uploadSuccessGDrive": {
+        "message": "$1을(를) Google 드라이브에 성공적으로 저장했습니다!",
+        "description": "Status message when a file is successfully uploaded to Google Drive.",
+        "placeholders": {
+            "1": {
+                "content": "$1"
+            }
+        }
+    },
+    "uploadFailedGDrive": {
+        "message": "클라우드 업로드 실패",
+        "description": "Status message when a Google Drive upload fails."
+    },
+    "gdriveLoginRequired": {
+        "message": "Google 드라이브 로그인이 필요합니다. 설정을 확인해 주세요.",
+        "description": "Error message when Google Drive login is missing."
+    },
+    "gdriveSessionExpired": {
+        "message": "Google 드라이브 세션이 만료되었습니다. 설정에서 다시 로그인해 주세요.",
+        "description": "Error message when Google Drive session expires."
+    },
+    "uploadingToGDriveShort": {
+        "message": "클라우드에 업로드 중...",
+        "description": "Short status message for cloud upload."
+    },
+    "uploadSuccessGDriveTitle": {
+        "message": "업로드 완료!",
+        "description": "Title message for successful cloud upload."
+    },
+    "uploadPausedTitle": {
+        "message": "업로드 일시 중지됨",
+        "description": "Title shown when cloud upload is paused."
+    },
+    "uploadCancelledTitle": {
+        "message": "업로드 취소됨",
+        "description": "Title shown when cloud upload is cancelled."
+    },
+    "uploadCancelledText": {
+        "message": "클라우드 업로드가 취소되었습니다.",
+        "description": "Message shown when cloud upload is cancelled."
+    },
+    "pausedStatus": {
+        "message": "일시 중지됨",
+        "description": "Status text for paused items."
+    },
+    "resumeButton": {
+        "message": "재개",
+        "description": "Generic resume button text."
     }
 }

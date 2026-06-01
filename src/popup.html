@@ -27,6 +27,7 @@
   <script src="libraries/hls.js"></script>
   <script src="libraries/client-zip.js"></script>
   <script src="libraries/qrcode.min.js"></script>
+  <script src="libraries/mux.js"></script>
   <script src="offlineStreamConvert.js"></script>
   <link rel="stylesheet" href="styles/style.css">
 </head>
@@ -75,7 +76,12 @@
             </div>
           </div>
           <div id="global-progress-container" style="display: none; flex-direction: column; gap: 4px; padding: 8px 0;">
-            <div id="global-progress-text" style="font-size: 11px; font-weight: 500; opacity: 0.9; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+               <div id="global-progress-text" style="font-size: 11px; font-weight: 500; opacity: 0.9; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1;"></div>
+               <mdui-button-icon id="cancel-global-operation" style="width: 24px; height: 24px; min-width: 24px; --mdui-shape-corner-extra-small: 12px; display: none;">
+                  <mdui-icon style="font-size: 16px;"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></mdui-icon>
+               </mdui-button-icon>
+            </div>
             <mdui-linear-progress id="global-progress-bar"></mdui-linear-progress>
           </div>
         </div>
@@ -127,14 +133,15 @@
         <div id="settings-container">
 
           <div class="settings-group">
-            <h2 class="settings-section-title">
+            <h2 class="settings-section-title collapsible-header">
               <mdui-icon>
                 <svg viewBox="0 -960 960 960"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v160H520v-160H160v480h240v80H160Zm0-80v-360 40-160 480ZM864-80 756-188q-22 13-46 20.5t-50 7.5q-75 0-127.5-52.5T480-340q0-75 52.5-127.5T660-520q75 0 127.5 52.5T840-340q0 26-7.5 50T812-244l108 108-56 56ZM731-269q29-29 29-71t-29-71q-29-29-71-29t-71 29q-29 29-29 71t29 71q29 29 71 29t71-29Z"/></svg>
               </mdui-icon>
               <span data-translate="settingsDetectionSectionTitle">Detection settings</span>
+              <mdui-icon class="collapse-icon" style="margin-left: auto; display: none;"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></mdui-icon>
             </h2>
 
-            <mdui-card variant="filled">
+            <div class="settings-items-container">
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="urlDetectionCheckbox">Detection via URL</h3>
@@ -142,7 +149,7 @@
                 </div>
                 <mdui-switch id="url-detection"></mdui-switch>
               </div>
-              <mdui-divider></mdui-divider>
+              
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="mimeDetectionCheckbox">Detection via MIME</h3>
@@ -150,7 +157,7 @@
                 </div>
                 <mdui-switch id="mime-detection"></mdui-switch>
               </div>
-              <mdui-divider></mdui-divider>
+              
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="detectDownloadLinksCheckbox">Detect download links</h3>
@@ -158,7 +165,7 @@
                 </div>
                 <mdui-switch id="detect-download-links"></mdui-switch>
               </div>
-              <mdui-divider></mdui-divider>
+              
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="hideSegmentsTitle">Hide segments</h3>
@@ -166,7 +173,7 @@
                 </div>
                 <mdui-switch id="hide-segments"></mdui-switch>
               </div>
-              <mdui-divider></mdui-divider>
+              
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="hidePageComponentsTitle">Hide page components</h3>
@@ -174,7 +181,7 @@
                 </div>
                 <mdui-switch id="hide-page-components"></mdui-switch>
               </div>
-              <mdui-divider></mdui-divider>
+              
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="mediaNotificationCheckbox">Enable detection notification</h3>
@@ -182,18 +189,19 @@
                 </div>
                 <mdui-switch id="media-notification"></mdui-switch>
               </div>
-            </mdui-card>
+            </div>
           </div>
 
           <div class="settings-group">
-            <h2 class="settings-section-title">
+            <h2 class="settings-section-title collapsible-header">
               <mdui-icon>
                 <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
               </mdui-icon>
-              <span data-translate="settingsDisplaySectionTitle">Display List</span>
+              <span data-translate="settingsDisplaySectionTitle">Display Settings</span>
+              <mdui-icon class="collapse-icon" style="margin-left: auto; display: none;"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></mdui-icon>
             </h2>
 
-            <mdui-card variant="filled">
+            <div class="settings-items-container">
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="onlyVideoTitle">Show video</h3>
@@ -201,7 +209,7 @@
                 </div>
                 <mdui-switch id="only-video"></mdui-switch>
               </div>
-              <mdui-divider></mdui-divider>
+              
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="onlyAudioTitle">Show audio</h3>
@@ -209,7 +217,7 @@
                 </div>
                 <mdui-switch id="only-audio"></mdui-switch>
               </div>
-              <mdui-divider></mdui-divider>
+              
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="onlyStreamTitle">Show streams</h3>
@@ -217,7 +225,7 @@
                 </div>
                 <mdui-switch id="only-stream"></mdui-switch>
               </div>
-              <mdui-divider></mdui-divider>
+              
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="onlyImageTitle">Show images</h3>
@@ -225,7 +233,7 @@
                 </div>
                 <mdui-switch id="only-image"></mdui-switch>
               </div>
-              <mdui-divider></mdui-divider>
+              
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="onlySubtitleTitle">Show subtitles</h3>
@@ -233,7 +241,7 @@
                 </div>
                 <mdui-switch id="only-subtitle"></mdui-switch>
               </div>
-              <mdui-divider></mdui-divider>
+              
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="onlyFileTitle">Show download links</h3>
@@ -241,18 +249,19 @@
                 </div>
                 <mdui-switch id="only-file"></mdui-switch>
               </div>
-            </mdui-card>
+            </div>
           </div>
 
           <div class="settings-group">
-            <h2 class="settings-section-title">
+            <h2 class="settings-section-title collapsible-header">
               <mdui-icon>
                 <svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg>
               </mdui-icon>
               <span data-translate="settingsDownloadSectionTitle">Download settings</span>
+              <mdui-icon class="collapse-icon" style="margin-left: auto; display: none;"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></mdui-icon>
             </h2>
 
-            <mdui-card variant="filled">
+            <div class="settings-items-container">
               <div class="setting-item">
                  <h3 data-translate="downloadMethodTitle">Download method</h3>
                  <div class="pill-select-wrapper">
@@ -262,7 +271,7 @@
                    </select>
                  </div>
               </div>
-              <mdui-divider></mdui-divider>
+              
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="mediaCacheTitle">Media cache</h3>
@@ -270,7 +279,7 @@
                 </div>
                 <mdui-switch id="media-cache"></mdui-switch>
               </div>
-              <mdui-divider></mdui-divider>
+              
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="speedBoostTitle">Speed boost</h3>
@@ -278,7 +287,7 @@
                 </div>
                 <mdui-switch id="speed-boost"></mdui-switch>
               </div>
-              <mdui-divider></mdui-divider>
+              
               <div class="setting-item">
                  <h3 data-translate="connectionsTitle">Parallel connections</h3>
                  <div class="pill-select-wrapper">
@@ -290,7 +299,7 @@
                    </select>
                  </div>
               </div>
-              <mdui-divider></mdui-divider>
+              
               <div class="setting-item">
                  <h3 data-translate="streamDownloadTitle">Stream preference</h3>
                  <div class="pill-select-wrapper">
@@ -300,7 +309,7 @@
                    </select>
                  </div>
               </div>
-              <mdui-divider></mdui-divider>
+              
               <div class="setting-item">
                  <h3 data-translate="streamQualityTitle">Stream quality</h3>
                  <div class="pill-select-wrapper">
@@ -311,15 +320,7 @@
                    </select>
                  </div>
               </div>
-              <mdui-divider></mdui-divider>
-              <div class="setting-item">
-                <div class="setting-text">
-                  <h3 data-translate="backgroundDownloadTitle">Background download</h3>
-                  <p data-translate="backgroundDownloadExplain">Allows downloads to continue in the background.</p>
-                </div>
-                <mdui-switch id="background-download"></mdui-switch>
-              </div>
-              <mdui-divider></mdui-divider>
+              
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="mpdFixCheckbox">Fix MPD files (recommended)</h3>
@@ -327,8 +328,8 @@
                 </div>
                 <mdui-switch id="mpd-fix"></mdui-switch>
               </div>
-              <mdui-divider></mdui-divider>
-              <div class="setting-item vertical">
+              
+              <div class="setting-item vertical" style="padding-top: 4px; padding-bottom: 10px; gap: 6px;">
                  <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                     <h3 data-translate="filenameTemplateTitle" style="margin: 0;">Filename template</h3>
                     <mdui-button-icon id="auto-generate-template" style="margin-right: -8px;" data-title-translate="filenameTemplateAutoGenerateTitle">
@@ -342,7 +343,7 @@
                     <div class="pill-helper-text" data-translate="filenameTemplateHelper"></div>
                  </div>
               </div>
-              <mdui-divider></mdui-divider>
+              
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="disableRenameDialogTitle">Disable rename file dialog</h3>
@@ -350,18 +351,120 @@
                 </div>
                 <mdui-switch id="disable-rename-dialog"></mdui-switch>
               </div>
-            </mdui-card>
+            </div>
           </div>
 
           <div class="settings-group">
-            <h2 class="settings-section-title">
+            <h2 class="settings-section-title collapsible-header">
+              <mdui-icon>
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95A5.469 5.469 0 0 1 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.12 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/></svg>
+              </mdui-icon>
+              <span data-translate="settingsCloudSectionTitle">Cloud Settings</span>
+              <mdui-icon class="collapse-icon" style="margin-left: auto; display: none;"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></mdui-icon>
+            </h2>
+
+            <div class="settings-items-container">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="saveToGDriveTitle">Save to Google Drive</h3>
+                  <p data-translate="saveToGDriveExplain">Upload downloaded files directly to your Google Drive.</p>
+                </div>
+                <mdui-switch id="save-to-gdrive"></mdui-switch>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="gdriveStreamTitle">Stream upload</h3>
+                  <p data-translate="gdriveStreamExplain">Upload chunks while downloading.</p>
+                </div>
+                <mdui-switch id="gdrive-stream"></mdui-switch>
+              </div>
+
+              <div id="gdrive-login-container" class="setting-item" style="padding-top: 10px; padding-bottom: 10px;">
+                <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0;">
+                  <h3 data-translate="gdriveAccountTitle" style="margin: 0;">Google Drive Account</h3>
+                  <div id="gdrive-user-info" style="display: none; font-size: 11px; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <span id="gdrive-user-email"></span>
+                  </div>
+                </div>
+                <mdui-button variant="tonal" id="gdrive-login-btn" style="--mdui-shape-corner-extra-small: 16px; height: 32px; flex-shrink: 0; margin-left: 12px; align-self: center;">
+                  <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12.48 10.92v3.28h4.74c-.2 1.06-.9 1.95-2.04 2.71a6.49 6.49 0 0 1-10.36-4.59 6.49 6.49 0 0 1 10.36-4.59l2.56-2.56A10.003 10.003 0 0 0 2.48 12c0 5.52 4.48 10 10 10 5.52 0 10-4.48 10-10 0-.68-.08-1.34-.23-1.98h-9.77z"/></svg></mdui-icon>
+                  <span id="gdrive-login-text" data-translate="gdriveLoginButton">Login</span>
+                </mdui-button>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h2 class="settings-section-title collapsible-header">
+              <mdui-icon>
+                <svg viewBox="0 -960 960 960"><path d="m370-80-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-1 13.5l103 78-110 190-119-50q-11 8-23 15t-24 12L590-80H370Zm70-80h80l12-100q26-9 47-23.5t39-32.5l94 40 40-68-82-62q5-14 7-28.5t2-29.5q0-15-2-30t-7-29l82-62-40-68-94 40q-18-18-39-32.5T532-780l-12-100h-80l-12 100q-26 9-47 23.5T342-724l-94-40-40 68 82 62q-5 14-7 28.5t-2 29.5q0 15 2 30t7 29l-82 62 40 68 94 40q18 18 39 32.5t47 23.5l12 100Zm40-160q58 0 99-41t41-99q0-58-41-99t-99-41q-58 0-99 41t-41 99q0 58 41 99t99 41Zm0-140Z"/></svg>
+              </mdui-icon>
+              <span data-translate="settingsAdvancedSectionTitle">Advanced settings</span>
+              <mdui-icon class="collapse-icon" style="margin-left: auto; display: none;"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></mdui-icon>
+            </h2>
+
+            <div class="settings-items-container">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="speedBoostResumeTitle">Force Speed Boost on Resume</h3>
+                  <p data-translate="speedBoostResumeExplain">Enable parallel downloading even when resuming.</p>
+                </div>
+                <mdui-switch id="speed-boost-resume"></mdui-switch>
+              </div>
+              
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="backgroundDownloadTitle">Background download</h3>
+                  <p data-translate="backgroundDownloadExplain">Allows downloads to continue in the background.</p>
+                </div>
+                <mdui-switch id="background-download"></mdui-switch>
+              </div>
+              
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="autoResumeTitle">Automatic resume download</h3>
+                  <p data-translate="autoResumeExplain">Automatically resume pending downloads when the browser starts.</p>
+                </div>
+                <mdui-switch id="auto-resume"></mdui-switch>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="streamToMp4Title">Save stream as MP4</h3>
+                  <p data-translate="streamToMp4Explain">Automatically convert MPEG-TS streams to MP4 format. (Requires mux.js)</p>
+                </div>
+                <mdui-switch id="stream-to-mp4"></mdui-switch>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="audioToMp3Setting">Convert audio to MP3</h3>
+                  <p data-translate="audioToMp3SettingDesc">Automatically convert audio-only downloads from WAV/PCM to MP3 format.</p>
+                </div>
+                <mdui-switch id="audio-to-mp3"></mdui-switch>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h2 class="settings-section-title collapsible-header">
               <mdui-icon>
                 <svg viewBox="0 -960 960 960"><path d="M480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 32.5-156t88-127Q256-817 330-848.5T488-880q80 0 151 27.5t124.5 76q53.5 48.5 85 115T880-518q0 115-70 176.5T640-280h-74q-9 0-12.5 5t-3.5 11q0 12 15 34.5t15 51.5q0 50-27.5 74T480-80Zm0-400Zm-177 23q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm120-160q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm200 0q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm120 160q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17ZM480-160q9 0 14.5-5t5.5-13q0-14-15-33t-15-57q0-42 29-67t71-25h70q66 0 113-38.5T800-518q0-121-92.5-201.5T488-800q-136 0-232 93t-96 227q0 133 93.5 226.5T480-160Z"/></svg>
               </mdui-icon>
               <span data-translate="settingsInterfaceSectionTitle">Interface settings</span>
+              <mdui-icon class="collapse-icon" style="margin-left: auto; display: none;"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></mdui-icon>
             </h2>
 
-            <mdui-card variant="filled">
+            <div class="settings-items-container">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="cleanViewTitle">Clean settings view</h3>
+                  <p data-translate="cleanViewExplain">Groups settings into dropdowns for a cleaner look.</p>
+                </div>
+                <mdui-switch id="clean-view"></mdui-switch>
+              </div>
+
               <div class="setting-item">
                  <h3 data-translate="openPreference">Opening preference</h3>
                  <div class="pill-select-wrapper">
@@ -372,7 +475,7 @@
                    </select>
                  </div>
               </div>
-              <mdui-divider></mdui-divider>
+              
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="historyPageTitle">Enable history page</h3>
@@ -380,7 +483,7 @@
                 </div>
                 <mdui-switch id="history-page"></mdui-switch>
               </div>
-              <mdui-divider></mdui-divider>
+              
               <div class="setting-item vertical">
                 <h3 data-translate="colorPickerTitle">Theme color</h3>
                 <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
@@ -410,7 +513,7 @@
                   </mdui-button-icon>
                 </div>
               </div>
-            </mdui-card>
+            </div>
           </div>
         </div>
 

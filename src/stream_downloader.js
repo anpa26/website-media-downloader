@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         statusHeader.textContent = browser.i18n.getMessage("streamDownloadCompleteTitle");
         statusText.textContent = browser.i18n.getMessage("streamDownloadSaved");
-        loadingBar.setAttribute('value', 1);
+        loadingBar.value = 100;
         loadingBar.removeAttribute('indeterminate');
         actionArea.style.display = 'block';
 
@@ -97,7 +97,6 @@ function getFileName(url, maxLength = 30) {
     } catch (e) { return browser.i18n.getMessage("defaultMediaName") || "Media File"; }
 }
 
-// Ensure showDialog and other global helpers expected by offlineStreamConvert are present or shimmed
 function showDialog(message, title) {
     mdui.alert({
         headline: title,

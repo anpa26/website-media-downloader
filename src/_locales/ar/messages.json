@@ -169,7 +169,7 @@
         "description": "The title of the interface settings section in the settings tab."
     },
     "settingsDisplaySectionTitle": {
-        "message": "قائمة العرض",
+        "message": "إعدادات العرض",
         "description": "The title of the display settings section in the settings tab."
     },
     "detectionMethodTitle": {
@@ -225,7 +225,7 @@
         "description": "The explanation of the fetch download method."
     },
     "fetchDownloadCheckbox": {
-        "message": "Fetch API",
+        "message": "واجهة برمجة تطبيقات Fetch",
         "description": "The label of the checkbox to enable the fetch download method."
     },
     "mediaCacheTitle": {
@@ -327,6 +327,10 @@
     "mediaNotificationDownloadAction": {
         "message": "تنزيل",
         "description": "The action label to download media from the notification."
+    },
+    "mediaNotificationDrmMessage": {
+        "message": "هذا المحتوى محمي بموجب DRM ولا يمكن تحميله.",
+        "description": "Message shown in notification when media is DRM protected."
     },
     "streamDownloadTitle": {
         "message": "تفضيلات تنزيل البث",
@@ -688,6 +692,14 @@
         "message": "إلغاء",
         "description": "The text of the cancel button during an active download."
     },
+    "pauseButton": {
+        "message": "إيقاف مؤقت",
+        "description": "The text of the pause button for active downloads."
+    },
+    "resumeActiveButton": {
+        "message": "استئناف",
+        "description": "The text of the resume button for paused downloads."
+    },
     "downloadCancelled": {
         "message": "تم إلغاء التنزيل",
         "description": "The message shown when a download is manually cancelled."
@@ -699,6 +711,14 @@
     "speedBoostExplain": {
         "message": "تنزيل أجزاء متعددة من الملف في وقت واحد. يعمل فقط إذا كان الخادم يدعم طلبات النطاق (range requests).",
         "description": "The explanation of the speed boost setting."
+    },
+    "speedBoostResumeTitle": {
+        "message": "فرض تعزيز السرعة عند الاستئناف",
+        "description": "Title for the setting to enable speed boost when resuming."
+    },
+    "speedBoostResumeExplain": {
+        "message": "يحافظ على الاتصالات المتوازية عند الاستئناف. قد تتلف الملفات إذا كان الخادم المضيف لا يدعم طلبات النطاق الجزئي بشكل مستمر.",
+        "description": "Explanation for speed boost resume."
     },
     "connectionsTitle": {
         "message": "الاتصالات المتوازية",
@@ -801,6 +821,14 @@
     "backgroundDownloadExplain": {
         "message": "يسمح باستمرار التنزيلات في الخلفية. إذا تم تعطيله، فستعمل التنزيلات في النافذة المنبثقة وستتوقف إذا تم إغلاقها (لا توجد علامات تبويب جديدة على الهاتف).",
         "description": "The explanation of the background download setting."
+    },
+    "autoResumeTitle": {
+        "message": "استئناف التنزيل تلقائيًا",
+        "description": "Title for the automatic resume setting."
+    },
+    "autoResumeExplain": {
+        "message": "استئناف التنزيلات المعلقة تلقائيًا عند بدء تشغيل المتصفح.",
+        "description": "Explanation for the automatic resume setting."
     },
     "disableRenameDialogExplain": {
         "message": "تجاوز حوار تأكيد اسم الملف وبدء التنزيلات فوراً باستخدام الاسم الافتراضي.",
@@ -1362,60 +1390,88 @@
         "message": "مرحبًا بك في Website Media Downloader",
         "description": "Title of the installed page"
     },
+    "installedBrand": {
+        "message": "WMD",
+        "description": "Short brand name for the installed page"
+    },
     "installedHeroTitle": {
-        "message": "Installation Complete",
+        "message": "اكتمل التثبيت",
         "description": "Hero title of the installed page"
     },
     "installedHeroDescription": {
-        "message": "The ultimate media companion is ready. Start detecting and downloading your favorite content with a single click.",
+        "message": "الرفيق المثالي للوسائط جاهز. ابدأ باكتشاف وتنزيل محتواك المفضل بنقرة واحدة.",
         "description": "Hero description of the installed page"
+    },
+    "getStarted": {
+        "message": "ابدأ الآن",
+        "description": "Label for the get started button"
     },
     "installedVersion": {
         "message": "الإصدار",
         "description": "Label for version number"
     },
     "installedChangelogTitle": {
-        "message": "Improvements & Updates",
+        "message": "التحسينات والتحديثات (v1.9.4)",
         "description": "Title of the changelog section"
     },
     "installedChangelogItem1": {
-        "message": "إضافة إعداد جديد \"إخفاء مكونات الصفحة\" لتصفية ملفات HTML و CSS و JS و TXT.",
+        "message": "إعادة بناء شاملة للمحرك: تنفيذ البث القائم على IndexedDB لكفاءة الذاكرة، ودعم الملفات التي تصل إلى عدة جيجابايت.",
         "description": "Changelog item 1"
     },
     "installedChangelogItem2": {
-        "message": "تحسين منطق اكتشاف الأجزاء مع مطابقة دقيقة للامتدادات لمنع التصفية الزائدة.",
+        "message": "جديد: التحويل التلقائي لـ MP3 وتحويل TS إلى MP4.",
         "description": "Changelog item 2"
     },
     "installedChangelogItem3": {
-        "message": "توسيع نطاق إخفاء مكونات الصفحة ليشمل أنواعاً مختلفة من الصور (.ico، .jpg، .webp، .png).",
+        "message": "استخراج الوسائط عالي الدقة لـ Instagram و TikTok و Twitter.",
         "description": "Changelog item 3"
     },
     "installedChangelogItem4": {
-        "message": "إضافة دعم كامل للترجمة للإعدادات الجديدة عبر 9 لغات.",
+        "message": "تحديث واجهة المستخدم (UI/UX) بتصميم زجاجي (glassmorphic) وعناصر تحكم محسنة.",
         "description": "Changelog item 4"
     },
     "installedChangelogItem5": {
-        "message": "تحسين تخطيط واجهة المستخدم مع حاوية إعدادات كاملة العرض واكتشاف فوري لتغير اللون.",
+        "message": "إضافة تكامل مع Google Drive وتحسين استقرار التنزيل.",
         "description": "Changelog item 5"
     },
     "installedMeetDev": {
-        "message": "Developer",
+        "message": "المطور",
         "description": "Label for developer card"
     },
+    "installedCommunity": {
+        "message": "المجتمع",
+        "description": "Label for community card"
+    },
+    "installedGitHubProject": {
+        "message": "مشروع GitHub",
+        "description": "Value for GitHub project link"
+    },
+    "installedSupport": {
+        "message": "الدعم",
+        "description": "Label for support card"
+    },
+    "installedAddonsStore": {
+        "message": "متجر الإضافات",
+        "description": "Value for add-ons store link"
+    },
     "installedFooterQuote": {
-        "message": "Thank you for being part of our journey.",
+        "message": "شكراً لكونك جزءاً من رحلتنا.",
         "description": "Footer quote on the installed page"
     },
+    "installedCopyright": {
+        "message": "Website Media Downloader © 2026",
+        "description": "Copyright notice"
+    },
     "installedFeedbackTitle": {
-        "message": "Feedback & Issues",
+        "message": "الملاحظات والمشكلات",
         "description": "Title for the feedback section"
     },
     "installedFeedbackDesc": {
-        "message": "Found a bug or have a suggestion? Help us improve by opening an issue on GitHub!",
+        "message": "هل وجدت خطأ أو لديك اقتراح؟ ساعدنا على التحسين بفتح مشكلة على GitHub!",
         "description": "Description for the feedback section"
     },
     "installedFeedbackButton": {
-        "message": "Report an Issue",
+        "message": "الإبلاغ عن مشكلة",
         "description": "Label for the feedback button"
     },
     "applyChangesPrompt": {
@@ -1434,40 +1490,21 @@
         "message": "تأكيد الحذف",
         "description": "The title of the confirmation dialog when deleting all detected media."
     },
-    "installedBrand": {
-        "message": "WMD",
-        "description": "Short brand name for the installed page"
+    "audioToMp3Setting": {
+        "message": "تحويل استخراج الصوت إلى MP3",
+        "description": "Label for the setting to convert audio downloads to MP3 format."
     },
-    "getStarted": {
-        "message": "Get Started Now",
-        "description": "Label for the get started button"
-    },
-    "installedCommunity": {
-        "message": "Community",
-        "description": "Label for community card"
-    },
-    "installedGitHubProject": {
-        "message": "GitHub Project",
-        "description": "Value for GitHub project link"
-    },
-    "installedSupport": {
-        "message": "Support",
-        "description": "Label for support card"
-    },
-    "installedAddonsStore": {
-        "message": "Add-ons Store",
-        "description": "Value for add-ons store link"
-    },
-    "installedCopyright": {
-        "message": "Website Media Downloader © 2026",
-        "description": "Copyright notice"
+    "audioToMp3SettingDesc": {
+        "message": "تحويل النتائج تلقائيًا من ميزة 'الصوت فقط' (WAV) إلى تنسيق MP3 لأحجام ملفات أصغر.",
+        "description": "Description for the audio to MP3 conversion setting."
     },
     "updateAvailable": {
         "message": "إصدار جديد v$VERSION$ متوفر.",
         "description": "Message shown in the update notification bar.",
         "placeholders": {
             "VERSION": {
-                "content": "$1"
+                "content": "$1",
+                "example": "1.7.9"
             }
         }
     },
@@ -1484,21 +1521,143 @@
         "description": "Message shown in the update dialog.",
         "placeholders": {
             "VERSION": {
-                "content": "$1"
+                "content": "$1",
+                "example": "1.7.9"
             }
         }
     },
     "checkUpdateButton": {
-        "message": "التحقق من التحديثات"
+        "message": "التحقق من التحديثات",
+        "description": "Text for the manual update check button in the about page."
     },
     "alreadyLatestVersion": {
-        "message": "أنت تستخدم أحدث إصدار."
+        "message": "أنت تستخدم أحدث إصدار.",
+        "description": "Snackbar message when no update is found."
     },
     "updateCheckError": {
-        "message": "فشل التحقق من التحديثات."
+        "message": "فشل التحقق من التحديثات.",
+        "description": "Snackbar message when update check fails."
     },
     "audioExtractionFormatNotSupported": {
         "message": "متصفحك لا يدعم استخراج الصوت من تنسيق الوسائط هذا (عادةً بث .ts). يرجى تنزيل الفيديو واستخراج الصوت يدويًا.",
         "description": "Error message when the browser cannot decode the audio format, typical for TS streams."
+    },
+    "settingsAdvancedSectionTitle": {
+        "message": "الإعدادات المتقدمة",
+        "description": "The title of the advanced settings section in the settings tab."
+    },
+    "cleanViewTitle": {
+        "message": "عرض الإعدادات بشكل مبسط",
+        "description": "The title of the clean settings view switch in the settings tab."
+    },
+    "cleanViewExplain": {
+        "message": "تجميع الإعدادات في قوائم منسدلة للحصول على مظهر أكثر ترتيباً.",
+        "description": "The explanation of the clean settings view option."
+    },
+    "downloadTransmuxing": {
+        "message": "تحويل إلى MP4...",
+        "description": "Message shown when muxing TS to MP4."
+    },
+    "streamToMp4Title": {
+        "message": "حفظ البث كـ MP4",
+        "description": "Title for the stream to MP4 conversion setting."
+    },
+    "streamToMp4Explain": {
+        "message": "يضمن إمكانية تشغيل مقاطع الفيديو التي تم تنزيلها بسهولة على الهواتف وأجهزة التلفزيون ومعظم مشغلات الوسائط.",
+        "description": "Explanation for the stream to MP4 conversion setting."
+    },
+    "settingsCloudSectionTitle": {
+        "message": "إعدادات السحابة",
+        "description": "Title for the cloud integration settings section."
+    },
+    "saveToGDriveTitle": {
+        "message": "حفظ في جوجل درايف",
+        "description": "Title for the setting to save downloads to Google Drive."
+    },
+    "saveToGDriveExplain": {
+        "message": "رفع الملفات التي تم تنزيلها مباشرة إلى جوجل درايف الخاص بك.",
+        "description": "Explanation for the Google Drive saving setting."
+    },
+    "gdriveStreamTitle": {
+        "message": "رفع مباشر",
+        "description": "Title for the stream upload setting."
+    },
+    "gdriveStreamExplain": {
+        "message": "رفع الأجزاء إلى السحابة فوراً أثناء التنزيل. يوصى به للملفات الكبيرة.",
+        "description": "Explanation for the stream upload setting."
+    },
+    "streamUploadMethodWarning": {
+        "message": "ملاحظة: الرفع التدفقي يعمل بشكل أفضل مع طريقة التنزيل 'Fetch'.",
+        "description": "Warning shown when stream upload is enabled but native download method is selected."
+    },
+    "gdriveAccountTitle": {
+        "message": "حساب جوجل درايف",
+        "description": "Title for the Google Drive account management section."
+    },
+    "gdriveLoginButton": {
+        "message": "تسجيل الدخول",
+        "description": "Label for the Google Drive login button."
+    },
+    "gdriveLogoutButton": {
+        "message": "تسجيل الخروج",
+        "description": "Label for the Google Drive logout button."
+    },
+    "uploadingToGDrive": {
+        "message": "جاري رفع $1 إلى جوجل درايف...",
+        "description": "Status message when uploading a file to Google Drive.",
+        "placeholders": {
+            "1": {
+                "content": "$1"
+            }
+        }
+    },
+    "uploadSuccessGDrive": {
+        "message": "تم حفظ $1 بنجاح في جوجل درايف!",
+        "description": "Status message when a file is successfully uploaded to Google Drive.",
+        "placeholders": {
+            "1": {
+                "content": "$1"
+            }
+        }
+    },
+    "uploadFailedGDrive": {
+        "message": "فشل الرفع السحابي",
+        "description": "Status message when a Google Drive upload fails."
+    },
+    "gdriveLoginRequired": {
+        "message": "تسجيل الدخول إلى جوجل درايف مطلوب. يرجى التحقق من الإعدادات.",
+        "description": "Error message when Google Drive login is missing."
+    },
+    "gdriveSessionExpired": {
+        "message": "انتهت جلسة جوجل درايف. يرجى إعادة تسجيل الدخول في الإعدادات.",
+        "description": "Error message when Google Drive session expires."
+    },
+    "uploadingToGDriveShort": {
+        "message": "جاري الرفع إلى السحابة...",
+        "description": "Short status message for cloud upload."
+    },
+    "uploadSuccessGDriveTitle": {
+        "message": "اكتمل الرفع!",
+        "description": "Title message for successful cloud upload."
+    },
+    "uploadPausedTitle": {
+        "message": "تم إيقاف التحميل مؤقتاً",
+        "description": "Title shown when cloud upload is paused."
+    },
+    "uploadCancelledTitle": {
+        "message": "تم إلغاء التحميل",
+        "description": "Title shown when cloud upload is cancelled."
+    },
+    "uploadCancelledText": {
+        "message": "تم إلغاء التحميل السحابي.",
+        "description": "Message shown when cloud upload is cancelled."
+    },
+    "pausedStatus": {
+        "message": "موقوف مؤقتاً",
+        "description": "Status text for paused items."
+    },
+    "resumeButton": {
+        "message": "استئناف",
+        "description": "Generic resume button text."
     }
 }

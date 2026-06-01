@@ -52,6 +52,182 @@ function openCacheDB() {
     });
 }
 
+class CloudUploadController {
+    constructor() {
+        this.paused = false;
+        this.cancelled = false;
+        this.onResume = null;
+        this.xhr = null;
+    }
+
+    pause() {
+        this.paused = true;
+        if (this.xhr) {
+            this.xhr.abort();
+        }
+    }
+
+    resume() {
+        this.paused = false;
+        if (this.onResume) {
+            this.onResume();
+        }
+    }
+
+    cancel() {
+        this.cancelled = true;
+        if (this.xhr) {
+            this.xhr.abort();
+        }
+    }
+}
+
+function uploadToGDrive(blob, filename, onProgress, controller) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const res = await browser.storage.local.get('gdrive_token');
+            if (!res.gdrive_token) {
+                return reject(new Error(browser.i18n.getMessage("gdriveLoginRequired") || "Google Drive token not found. Please login in settings."));
+            }
+            const token = res.gdrive_token;
+
+            const metadata = {
+                name: filename,
+                mimeType: blob.type || 'application/octet-stream'
+            };
+
+            const initXhr = new XMLHttpRequest();
+            if (controller) controller.xhr = initXhr;
+            initXhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable');
+            initXhr.setRequestHeader('Authorization', `Bearer ${token}`);
+            initXhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+            initXhr.setRequestHeader('X-Upload-Content-Type', blob.type || 'application/octet-stream');
+            initXhr.setRequestHeader('X-Upload-Content-Length', blob.size);
+
+            initXhr.onload = () => {
+                if (initXhr.status === 200 || initXhr.status === 201) {
+                    const sessionUri = initXhr.getResponseHeader('Location');
+                    if (sessionUri) {
+                        uploadChunks(sessionUri, blob, onProgress, controller).then(resolve).catch(reject);
+                    } else {
+                        reject(new Error("Failed to get session URI for resumable upload"));
+                    }
+                } else if (initXhr.status === 401) {
+                    reject(new Error(browser.i18n.getMessage("gdriveSessionExpired") || "Google Drive session expired. Please re-login in settings."));
+                } else {
+                    reject(new Error("GDrive Init Error: " + initXhr.statusText));
+                }
+            };
+
+            initXhr.onabort = () => {
+                if (controller && controller.paused) {
+                    controller.onResume = () => {
+                        controller.onResume = null;
+                        uploadToGDrive(blob, filename, onProgress, controller).then(resolve).catch(reject);
+                    };
+                }
+            };
+
+            initXhr.onerror = () => {
+                if (controller && controller.cancelled) {
+                    reject(new Error("Upload cancelled"));
+                } else if (controller && controller.paused) {
+                    controller.onResume = () => {
+                        controller.onResume = null;
+                        uploadToGDrive(blob, filename, onProgress, controller).then(resolve).catch(reject);
+                    };
+                } else {
+                    reject(new Error("Network error during GDrive init"));
+                }
+            };
+            initXhr.send(JSON.stringify(metadata));
+
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
+function uploadChunks(sessionUri, blob, onProgress, controller) {
+    return new Promise((resolve, reject) => {
+        const chunkSize = 1024 * 1024; // 1MB chunks
+        let offset = 0;
+
+        const uploadNextChunk = () => {
+            if (controller && controller.cancelled) {
+                reject(new Error("Upload cancelled"));
+                return;
+            }
+
+            if (controller && controller.paused) {
+                controller.onResume = () => {
+                    controller.onResume = null;
+                    uploadNextChunk();
+                };
+                return;
+            }
+
+            const end = Math.min(offset + chunkSize, blob.size);
+            const chunk = blob.slice(offset, end);
+            const contentRange = `bytes ${offset}-${end - 1}/${blob.size}`;
+
+            const xhr = new XMLHttpRequest();
+            if (controller) controller.xhr = xhr;
+            xhr.open('PUT', sessionUri);
+            xhr.setRequestHeader('Content-Range', contentRange);
+
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable && onProgress) {
+                    const totalUploaded = offset + e.loaded;
+                    const percent = Math.round((totalUploaded / blob.size) * 100);
+                    onProgress(percent, totalUploaded, blob.size);
+                }
+            };
+
+            xhr.onload = () => {
+                if (xhr.status === 308) {
+                    offset = end;
+                    uploadNextChunk();
+                } else if (xhr.status === 200 || xhr.status === 201) {
+                    try {
+                        resolve(JSON.parse(xhr.responseText));
+                    } catch (e) {
+                        resolve(xhr.responseText);
+                    }
+                } else {
+                    reject(new Error("GDrive Chunk Error: " + xhr.status + " " + xhr.statusText));
+                }
+            };
+
+            xhr.onabort = () => {
+                if (controller && controller.paused) {
+                    controller.onResume = () => {
+                        controller.onResume = null;
+                        uploadNextChunk();
+                    };
+                }
+            };
+
+            xhr.onerror = () => {
+                if (controller && controller.cancelled) {
+                    reject(new Error("Upload cancelled"));
+                } else if (controller && controller.paused) {
+                    // If we paused during an active chunk, set the resume hook to retry this chunk
+                    controller.onResume = () => {
+                        controller.onResume = null;
+                        uploadNextChunk();
+                    };
+                } else {
+                    reject(new Error("Network error during GDrive chunk upload"));
+                }
+            };
+            xhr.send(chunk);
+        };
+
+        uploadNextChunk();
+    });
+}
+
 async function triggerDownload() {
     const statusTitle = document.getElementById('status-title');
     const statusText = document.getElementById('status-text');
@@ -114,7 +290,6 @@ async function triggerDownload() {
                             throw new Error(browser.i18n.getMessage("downloadMetadataNotFound"));
                         }
 
-                        // Ensure they are strictly ordered by byte offset
                         chunks.sort((a, b) => a.index - b.index);
 
                         statusText.textContent = browser.i18n.getMessage("downloadAssembling", [chunks.length.toString()]);
@@ -123,6 +298,65 @@ async function triggerDownload() {
                     }
 
                     const objectUrl = URL.createObjectURL(blob);
+
+                    
+                    const settings = await browser.storage.local.get('save-to-gdrive');
+                    if (settings['save-to-gdrive'] === '1') {
+                        const controller = new CloudUploadController();
+                        const cloudControls = document.getElementById('cloud-upload-controls');
+                        const pauseBtn = document.getElementById('pause-upload-button');
+                        const resumeBtn = document.getElementById('resume-upload-button');
+                        const cancelBtn = document.getElementById('cancel-upload-button');
+
+                        if (cloudControls) cloudControls.style.display = 'flex';
+
+                        pauseBtn.onclick = () => {
+                            controller.pause();
+                            pauseBtn.style.display = 'none';
+                            resumeBtn.style.display = 'inline-block';
+                            statusTitle.textContent = browser.i18n.getMessage("uploadPausedTitle") || "Upload Paused";
+                        };
+
+                        resumeBtn.onclick = () => {
+                            controller.resume();
+                            resumeBtn.style.display = 'none';
+                            pauseBtn.style.display = 'inline-block';
+                            statusTitle.textContent = browser.i18n.getMessage("uploadingToGDriveShort") || "Uploading to Cloud...";
+                        };
+
+                        cancelBtn.onclick = () => {
+                            controller.cancel();
+                            if (cloudControls) cloudControls.style.display = 'none';
+                        };
+
+                        try {
+                            statusTitle.textContent = browser.i18n.getMessage("uploadingToGDriveShort") || "Uploading to Cloud...";
+                            statusText.textContent = browser.i18n.getMessage("uploadingToGDrive", [filename]) || `Uploading ${filename} to Google Drive...`;
+                            
+                            await uploadToGDrive(blob, filename, (percent) => {
+                                statusText.textContent = (browser.i18n.getMessage("uploadingToGDriveShort") || "Uploading to Cloud...") + ` (${percent}%)`;
+                            }, controller);
+                            
+                            if (cloudControls) cloudControls.style.display = 'none';
+                            statusTitle.textContent = browser.i18n.getMessage("uploadSuccessGDriveTitle") || "Upload Complete!";
+                            statusText.textContent = browser.i18n.getMessage("uploadSuccessGDrive", [filename]) || `Successfully saved ${filename} to Google Drive!`;
+                            
+                            browser.runtime.sendMessage({ action: 'downloadComplete', id: cacheKey, url: targetUrl, cloud: true }).catch(() => {});
+                            
+                            setTimeout(() => {
+                                window.close();
+                            }, 2000);
+                            return;
+                        } catch (error) {
+                            if (cloudControls) cloudControls.style.display = 'none';
+                            if (error.message === "Upload cancelled") {
+                                statusTitle.textContent = browser.i18n.getMessage("uploadCancelledTitle") || "Upload Cancelled";
+                                statusText.textContent = browser.i18n.getMessage("uploadCancelledText") || "Cloud upload was cancelled.";
+                            } else {
+                                console.error("GDrive auto-upload failed:", error);
+                            }
+                        }
+                    }
 
                     statusTitle.textContent = browser.i18n.getMessage("downloadReadyTitle");
                     saveButton.style.display = "inline-block";
@@ -145,17 +379,14 @@ async function triggerDownload() {
                         saveButton.disabled = true;
                         saveButton.style.opacity = "0.5";
 
-                        const isAndroid = /Android/i.test(navigator.userAgent);
-                        setTimeout(() => {
-                            URL.revokeObjectURL(objectUrl);
-                            try {
-                                const delTx = db.transaction([STORE_NAME, CHUNK_STORE_NAME], "readwrite");
-                                delTx.objectStore(STORE_NAME).delete(cacheKey);
-                                const chunkRange = IDBKeyRange.bound([cacheKey, 0], [cacheKey, Infinity]);
-                                delTx.objectStore(CHUNK_STORE_NAME).delete(chunkRange);
-                            } catch (e) { console.warn("Cleanup failed:", e); }
-                            window.close();
-                        }, isAndroid ? 5000 : 2000);
+                        browser.runtime.sendMessage({ action: 'downloadComplete', id: cacheKey, url: targetUrl }).catch(() => {});
+                        
+                        // We no longer automatically close or cleanup here.
+                        // Cleanup happens when the user manually closes the tab.
+                        const closeButton = document.getElementById('close-button');
+                        if (closeButton) {
+                            closeButton.onclick = () => window.close();
+                        }
                     };
 
                     saveButton.onclick = performDownload;
@@ -191,6 +422,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (targetUrl) {
+        browser.runtime.sendMessage({ action: 'registerDownloadTab', id: cacheKey }).catch(() => {});
         triggerDownload();
     } else {
         window.close();

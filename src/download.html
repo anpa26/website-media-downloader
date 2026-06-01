@@ -85,10 +85,13 @@
 
     <div class="action-area">
         <mdui-button id="save-button" variant="filled" style="display: none;" data-translate="saveToDevice">Save to Device</mdui-button>
+        <div id="cloud-upload-controls" style="display: none; flex-direction: column; gap: 12px; width: 100%;">
+            <mdui-button id="pause-upload-button" variant="tonal" data-translate="pauseButton">Pause Upload</mdui-button>
+            <mdui-button id="resume-upload-button" variant="filled" style="display: none;" data-translate="resumeButton">Resume Upload</mdui-button>
+            <mdui-button id="cancel-upload-button" variant="outlined" data-translate="cancelButton">Cancel Upload</mdui-button>
+        </div>
         <mdui-button id="close-button" variant="tonal" data-translate="closeTab">Close Tab</mdui-button>
     </div>
-
-    <p class="footer-text" data-translate="downloadAutoCloseText">This tab will close automatically after the download starts.</p>
   </div>
   <script src="translations.js"></script>
   <script src="download.js"></script>
