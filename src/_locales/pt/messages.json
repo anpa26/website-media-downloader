@@ -1,4 +1,10 @@
 {
+  "ignoreExcludedMediaTitle": {"message":"Não detectar mídias excluídas"},
+  "ignoreExcludedMediaExplain": {"message":"Desativa a detecção dos nomes e domínios indicados acima para reduzir o processamento. Quando esta opção está desativada, os itens correspondentes continuam ocultos na lista e nas notificações."},
+  "skipDetectionNamesTitle": {"message":"Excluir nomes / palavras-chave"},
+  "skipDetectionNamesExplain": {"message":"Exclui URLs de mídia, nomes de arquivos e títulos de páginas correspondentes, sem diferenciar maiúsculas de minúsculas. Separe as entradas com quebras de linha ou vírgulas."},
+  "skipDetectionDomainsTitle": {"message":"Excluir domínios"},
+  "skipDetectionDomainsExplain": {"message":"Exclui estes sites ou servidores de mídia, incluindo subdomínios. Separe as entradas com quebras de linha ou vírgulas. Os itens correspondentes não aparecem nos resultados de detecção nem nas notificações."},
   "reinstallTitle": {
     "message": "Reinstalação Recomendada",
     "description": "Reinstall warning title"
@@ -850,6 +856,16 @@
     "message": "Manter um registro local dos seus downloads.",
     "description": "The explanation of the history page option."
   },
+  "settingsBackupTitle": { "message": "Configuração das definições" },
+  "settingsBackupExplain": { "message": "Exporte ou importe as definições da extensão. Contas, histórico de downloads e dados temporários não são incluídos." },
+  "exportSettingsButton": { "message": "Exportar definições" },
+  "importSettingsButton": { "message": "Importar definições" },
+  "settingsExportSuccess": { "message": "Definições exportadas com sucesso!" },
+  "settingsExportError": { "message": "Falha ao exportar as definições: $1", "placeholders": { "1": { "content": "$1" } } },
+  "settingsImportSuccess": { "message": "Definições importadas com sucesso!" },
+  "settingsImportError": { "message": "Falha ao importar as definições: $1", "placeholders": { "1": { "content": "$1" } } },
+  "settingsImportInvalidFormat": { "message": "Formato de ficheiro de definições inválido" },
+  "settingsImportNoSettings": { "message": "O ficheiro não contém definições suportadas" },
   "clearHistoryButton": {
     "message": "Limpar histórico",
     "description": "The label of the button to clear the download history."

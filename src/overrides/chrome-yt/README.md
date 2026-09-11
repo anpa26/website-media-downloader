@@ -1,6 +1,6 @@
 # Website Media Downloader (Chrome-YT)
 
-[![Version](https://img.shields.io/badge/version-2.3.2-blue.svg)](src/manifest.json)
+[![Version](https://img.shields.io/badge/version-2.3.3-blue.svg)](src/manifest.json)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE.md)
 [![Platform](https://img.shields.io/badge/platform-Chrome%20%7C%20Chromium-orange.svg)](#installation)
 
@@ -50,6 +50,15 @@ Designed with a strict focus on privacy and technical transparency, all operatio
 
 ---
 
+## What's New in v2.3.3
+
+- Added name and domain exclusions, including subdomains, with a switch to stop detecting excluded media.
+- Improved automatic filenames using server metadata and URLs. Home names and sorting now respect filename templates.
+- Kept detection notifications working with fallback names when smart naming or templates fail.
+- Standardized normal and Speed Boost tests with warm-up, equal measurement durations, request cleanup, and error handling.
+- Added settings import/export and corrected the badge to count only active downloads.
+- Moved resume and background download options to Download settings and improved exclusion inputs.
+
 ## What's New in v2.3.2
 
 - **Expanded Background Downloading**: Added wider support for background downloads to ensure seamless transfers when the popup is closed.
@@ -58,7 +67,7 @@ Designed with a strict focus on privacy and technical transparency, all operatio
 
 ---
 
-## Technical Features (v2.3.2)
+## Technical Features (v2.3.3)
 
 ### Core Detection Engine
 The detection engine has been optimized to handle complex web environments more efficiently. This version introduces:

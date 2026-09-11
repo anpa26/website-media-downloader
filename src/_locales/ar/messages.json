@@ -1,4 +1,10 @@
 {
+  "ignoreExcludedMediaTitle": {"message":"عدم اكتشاف الوسائط المستثناة"},
+  "ignoreExcludedMediaExplain": {"message":"أوقف اكتشاف الأسماء والنطاقات المطابقة للقائمة أعلاه لتقليل المعالجة. عند تعطيل هذا الخيار، تظل العناصر المطابقة مخفية من القائمة والإشعارات."},
+  "skipDetectionNamesTitle": {"message":"استثناء أسماء / كلمات مفتاحية"},
+  "skipDetectionNamesExplain": {"message":"استثنِ روابط الوسائط وأسماء الملفات وعناوين الصفحات المطابقة، دون تمييز بين الأحرف الكبيرة والصغيرة. افصل بين العناصر بأسطر جديدة أو فواصل."},
+  "skipDetectionDomainsTitle": {"message":"استثناء نطاقات"},
+  "skipDetectionDomainsExplain": {"message":"استثنِ هذه المواقع أو خوادم الوسائط، بما في ذلك النطاقات الفرعية. افصل بين العناصر بأسطر جديدة أو فواصل. لن تظهر العناصر المطابقة في نتائج الاكتشاف أو الإشعارات."},
   "reinstallTitle": {
     "message": "يُوصى بإعادة التثبيت",
     "description": "Reinstall warning title"
@@ -845,6 +851,16 @@
     "message": "الاحتفاظ بسجل محلي لتنزيلاتك.",
     "description": "The explanation of the history page option."
   },
+  "settingsBackupTitle": { "message": "إعدادات التكوين" },
+  "settingsBackupExplain": { "message": "تصدير إعدادات الإضافة أو استيرادها. لا يتم تضمين الحسابات وسجل التنزيل والبيانات المؤقتة." },
+  "exportSettingsButton": { "message": "تصدير الإعدادات" },
+  "importSettingsButton": { "message": "استيراد الإعدادات" },
+  "settingsExportSuccess": { "message": "تم تصدير الإعدادات بنجاح!" },
+  "settingsExportError": { "message": "فشل تصدير الإعدادات: $1", "placeholders": { "1": { "content": "$1" } } },
+  "settingsImportSuccess": { "message": "تم استيراد الإعدادات بنجاح!" },
+  "settingsImportError": { "message": "فشل استيراد الإعدادات: $1", "placeholders": { "1": { "content": "$1" } } },
+  "settingsImportInvalidFormat": { "message": "تنسيق ملف الإعدادات غير صالح" },
+  "settingsImportNoSettings": { "message": "لا يحتوي الملف على إعدادات مدعومة" },
   "clearHistoryButton": {
     "message": "مسح السجل",
     "description": "The label of the button to clear the download history."

@@ -1,4 +1,10 @@
 {
+  "ignoreExcludedMediaTitle": {"message": "Do not detect excluded media"},
+  "ignoreExcludedMediaExplain": {"message": "Stop detecting matching names and domains above to reduce processing. When off, matches are still hidden from the list and notifications."},
+  "skipDetectionNamesTitle": {"message":"Skip names / keywords"},
+  "skipDetectionNamesExplain": {"message":"Skip matching media URLs, filenames, and page titles (case insensitive). Separate entries with new lines or commas."},
+  "skipDetectionDomainsTitle": {"message":"Skip domains"},
+  "skipDetectionDomainsExplain": {"message":"Skip these websites or media hosts, including subdomains. Separate entries with new lines or commas. Matches will not appear in detection results or notifications."},
   "reinstallTitle": {
     "message": "Reinstallation Recommended",
     "description": "Reinstall warning title"
@@ -850,6 +856,16 @@
     "message": "Keeps a history record of all the files you have ever downloaded on this device.",
     "description": "The explanation of the history page option."
   },
+  "settingsBackupTitle": { "message": "Settings configuration" },
+  "settingsBackupExplain": { "message": "Export or import your extension settings. Accounts, download history, and temporary data are not included." },
+  "exportSettingsButton": { "message": "Export settings" },
+  "importSettingsButton": { "message": "Import settings" },
+  "settingsExportSuccess": { "message": "Settings exported successfully!" },
+  "settingsExportError": { "message": "Failed to export settings: $1", "placeholders": { "1": { "content": "$1" } } },
+  "settingsImportSuccess": { "message": "Settings imported successfully!" },
+  "settingsImportError": { "message": "Failed to import settings: $1", "placeholders": { "1": { "content": "$1" } } },
+  "settingsImportInvalidFormat": { "message": "Invalid settings file format" },
+  "settingsImportNoSettings": { "message": "The file contains no supported settings" },
   "clearHistoryButton": {
     "message": "Clear history",
     "description": "The label of the button to clear the download history."

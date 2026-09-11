@@ -1,4 +1,10 @@
 {
+  "ignoreExcludedMediaTitle": {"message":"除外したメディアを検出しない"},
+  "ignoreExcludedMediaExplain": {"message":"上記の名前やドメインに一致するメディアの検出を無効にして、処理の負荷を軽減します。オフにしても、一致する項目は一覧や通知に表示されません。"},
+  "skipDetectionNamesTitle": {"message":"除外する名前 / キーワード"},
+  "skipDetectionNamesExplain": {"message":"一致するメディアURL、ファイル名、ページタイトルを除外します（大文字・小文字は区別しません）。複数の項目は改行またはカンマで区切ってください。"},
+  "skipDetectionDomainsTitle": {"message":"除外するドメイン"},
+  "skipDetectionDomainsExplain": {"message":"指定したサイトやメディア配信元をサブドメインも含めて除外します。複数の項目は改行またはカンマで区切ってください。一致する項目は検出結果や通知に表示されません。"},
   "reinstallTitle": {
     "message": "再インストール推奨",
     "description": "Reinstall warning title"
@@ -850,6 +856,16 @@
     "message": "ダウンロードのローカル記録を保存します。",
     "description": "The explanation of the history page option."
   },
+  "settingsBackupTitle": { "message": "設定の構成" },
+  "settingsBackupExplain": { "message": "拡張機能の設定をエクスポートまたはインポートします。アカウント、ダウンロード履歴、一時データは含まれません。" },
+  "exportSettingsButton": { "message": "設定をエクスポート" },
+  "importSettingsButton": { "message": "設定をインポート" },
+  "settingsExportSuccess": { "message": "設定をエクスポートしました！" },
+  "settingsExportError": { "message": "設定をエクスポートできませんでした: $1", "placeholders": { "1": { "content": "$1" } } },
+  "settingsImportSuccess": { "message": "設定をインポートしました！" },
+  "settingsImportError": { "message": "設定をインポートできませんでした: $1", "placeholders": { "1": { "content": "$1" } } },
+  "settingsImportInvalidFormat": { "message": "設定ファイルの形式が無効です" },
+  "settingsImportNoSettings": { "message": "ファイルに対応する設定が含まれていません" },
   "clearHistoryButton": {
     "message": "履歴を消去",
     "description": "The label of the button to clear the download history."

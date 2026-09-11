@@ -208,6 +208,29 @@
                 </div>
               </div>
             </div>
+            <div class="settings-items-container detection-exclusions-card">
+                <div class="setting-item" style="display: block;">
+                  <div class="setting-text">
+                    <h3><label for="skip-detection-names" data-translate="skipDetectionNamesTitle">Skip names / keywords</label></h3>
+                    <p data-translate="skipDetectionNamesExplain">Skip matching media URLs, filenames, and page titles (case insensitive). Separate entries with new lines or commas.</p>
+                  </div>
+                  <textarea id="skip-detection-names" class="pill-input" rows="1" placeholder="trailer, promo" style="width: 100%; box-sizing: border-box; resize: none; margin-top: 12px;"></textarea>
+                </div>
+                <div class="setting-item" style="display: block;">
+                  <div class="setting-text">
+                    <h3><label for="skip-detection-domains" data-translate="skipDetectionDomainsTitle">Skip domains</label></h3>
+                    <p data-translate="skipDetectionDomainsExplain">Skip these websites or media hosts, including subdomains. Separate entries with new lines or commas. Matches will not appear in detection results or notifications.</p>
+                  </div>
+                  <textarea id="skip-detection-domains" class="pill-input" rows="1" placeholder="example.com, cdn.example.org" style="width: 100%; box-sizing: border-box; resize: none; margin-top: 12px;"></textarea>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-text">
+                    <h3 data-translate="ignoreExcludedMediaTitle">Do not detect excluded media</h3>
+                    <p data-translate="ignoreExcludedMediaExplain">Stop detecting matching names and domains above to reduce processing. When off, matches are still hidden from the list and notifications.</p>
+                  </div>
+                  <mdui-switch id="ignore-excluded-media"></mdui-switch>
+                </div>
+            </div>
           </div>
 
           
@@ -416,6 +439,29 @@
                       <option value="16">16</option>
                    </select>
                  </div>
+              </div>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="speedBoostResumeTitle">Force Speed Boost on Resume</h3>
+                  <p data-translate="speedBoostResumeExplain">Enable parallel downloading even when resuming.</p>
+                </div>
+                <mdui-switch id="speed-boost-resume"></mdui-switch>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="backgroundDownloadTitle">Background download</h3>
+                  <p data-translate="backgroundDownloadExplain">Allows downloads to continue in the background.</p>
+                </div>
+                <mdui-switch id="background-download"></mdui-switch>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="autoResumeTitle">Automatic resume download</h3>
+                  <p data-translate="autoResumeExplain">Automatically resume pending downloads when the browser starts.</p>
+                </div>
+                <mdui-switch id="auto-resume"></mdui-switch>
               </div>
               
               <div class="setting-item">
@@ -658,29 +704,6 @@
                 </div>
               </div>
               
-              <div class="setting-item">
-                <div class="setting-text">
-                  <h3 data-translate="speedBoostResumeTitle">Force Speed Boost on Resume</h3>
-                  <p data-translate="speedBoostResumeExplain">Enable parallel downloading even when resuming.</p>
-                </div>
-                <mdui-switch id="speed-boost-resume"></mdui-switch>
-              </div>
-              
-              <div class="setting-item">
-                <div class="setting-text">
-                  <h3 data-translate="backgroundDownloadTitle">Background download</h3>
-                  <p data-translate="backgroundDownloadExplain">Allows downloads to continue in the background.</p>
-                </div>
-                <mdui-switch id="background-download"></mdui-switch>
-              </div>
-              
-              <div class="setting-item">
-                <div class="setting-text">
-                  <h3 data-translate="autoResumeTitle">Automatic resume download</h3>
-                  <p data-translate="autoResumeExplain">Automatically resume pending downloads when the browser starts.</p>
-                </div>
-                <mdui-switch id="auto-resume"></mdui-switch>
-              </div>
 
               <div class="setting-item">
                 <div class="setting-text">
@@ -792,6 +815,18 @@
                   <p data-translate="historyPageExplain">Keep a local record of your downloads.</p>
                 </div>
                 <mdui-switch id="history-page"></mdui-switch>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="settingsBackupTitle">Settings configuration</h3>
+                  <p data-translate="settingsBackupExplain">Export or import your extension settings.</p>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px; align-items: stretch;">
+                  <input type="file" id="import-settings-input" accept="application/json,.json" style="display: none;">
+                  <mdui-button id="export-settings" variant="tonal" data-translate="exportSettingsButton">Export settings</mdui-button>
+                  <mdui-button id="import-settings" variant="tonal" data-translate="importSettingsButton">Import settings</mdui-button>
+                </div>
               </div>
               
 
@@ -921,7 +956,6 @@
                     </div>
                     <span id="upload-boost-speed-value" style="font-weight: 800; font-size: 15px; font-family: monospace; color: rgb(var(--mdui-color-secondary));">-</span>
                   </div>
-                  <mdui-linear-progress id="upload-boost-test-progress" value="0" style="display: none;"></mdui-linear-progress>
                   <mdui-linear-progress id="upload-boost-test-progress" value="0" style="display: none;"></mdui-linear-progress>
                   
                   <div id="speed-test-status" style="font-size: 11px; opacity: 0.7; text-align: center; margin-top: 4px;"></div>
@@ -1095,6 +1129,7 @@
 
   <script src="translations.js"></script>
 
+  <script src="media_filename.js"></script>
   <script src="popup.js"></script>
   <script src="welcome.js"></script>
 

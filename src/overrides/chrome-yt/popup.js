@@ -2483,7 +2483,7 @@ function createMediaItem(item) {
 
   const headline = document.createElement('div');
   headline.classList.add('media-headline');
-  const displayTitle = (bestRequest && bestRequest.pageTitle) ? bestRequest.pageTitle : getFileName((bestRequest && bestRequest.originalUrl) ? bestRequest.originalUrl : "");
+  const displayTitle = item.resolvedFilename || mediaFilename.resolve(bestRequest?.originalUrl || bestRequest?.url || "", bestRequest || {});
   headline.textContent = displayTitle;
   info.appendChild(headline);
 
@@ -3401,7 +3401,7 @@ async function loadMediaList() {
         return;
     }
 
-    const settings = await browser.storage.local.get(['only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'hide-segments', 'hide-page-components', 'media-sort-order', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom', 'optimize-low-end', 'group-by-type', 'disable-deduplication']);
+    const settings = await browser.storage.local.get(['filename-template', 'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'hide-segments', 'hide-page-components', 'media-sort-order', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom', 'optimize-low-end', 'group-by-type', 'disable-deduplication']);
     isGroupingEnabled = settings['group-by-type'] === '1' || settings['group-by-type'] === true;
 
     const minFileSizeSetting = settings['min-file-size'] || '0';
@@ -3536,42 +3536,12 @@ async function loadMediaList() {
 
         const bestRequest = group.requests[0];
 
-        const genericNames = [
-            'master.m3u8', 'index.m3u8', 'playlist.m3u8', 'manifest.mpd', 'manifest.m3u8',
-            'master', 'index', 'playlist', 'manifest',
-            'video.mp4', 'audio.mp3', 'video', 'audio',
-            'stream.m3u8', 'stream.mpd', 'stream'
-        ];
-        const isGenericTitle = !bestRequest.pageTitle || genericNames.includes(bestRequest.pageTitle.toLowerCase()) || genericNames.includes(getFileName(bestRequest.originalUrl || bestRequest.url || "").toLowerCase());
-        if (isGenericTitle) {
-            let fallbackTitle = "";
-            const tabId = bestRequest.tabId;
-            if (tabId && tabIdToTitle.has(tabId)) {
-                fallbackTitle = tabIdToTitle.get(tabId);
-            } else if (activeTabTitle) {
-                fallbackTitle = activeTabTitle;
-            } else if (bestRequest.pageUrl) {
-                try { fallbackTitle = new URL(bestRequest.pageUrl).hostname; } catch(e) {}
-            }
-            if (!fallbackTitle && (bestRequest.originalUrl || bestRequest.url)) {
-                try { fallbackTitle = new URL(bestRequest.originalUrl || bestRequest.url).hostname; } catch(e) {}
-            }
-            if (!fallbackTitle) {
-                fallbackTitle = browser.i18n.getMessage("defaultMediaName") || "Media File";
-            }
-
-            const cleanTitle = fallbackTitle.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_');
-            const isAudio = group.type === 'audio';
-            const isStream = group.type === 'stream';
-            let ext = isAudio ? '.mp3' : '.mp4';
-            if (isStream) {
-                const urlLower = (bestRequest.originalUrl || bestRequest.url || "").toLowerCase();
-                ext = urlLower.includes('.mpd') ? '.mpd' : '.m3u8';
-            }
-            bestRequest.pageTitle = cleanTitle + ext;
-        }
-
-        const resolvedFilename = bestRequest.pageTitle || getFileName(bestRequest.originalUrl || bestRequest.url || "");
+        const mediaUrl = bestRequest.originalUrl || bestRequest.url || "";
+        const automaticFilename = mediaFilename.resolve(mediaUrl, bestRequest);
+        const filenameTemplate = settings['filename-template'];
+        const resolvedFilename = filenameTemplate && filenameTemplate !== '0'
+            ? mediaFilename.template(filenameTemplate, mediaUrl, automaticFilename, bestRequest.pageTitle)
+            : automaticFilename;
         const urlLower = (bestRequest.originalUrl || bestRequest.url || "").toLowerCase();
         const isStreamUrl = urlLower.includes('.m3u8') || urlLower.includes('.mpd');
         let hasQuality = false;
@@ -3641,6 +3611,7 @@ async function loadMediaList() {
         const bestRequest = bestItem.bestRequest;
 
         flattenedRequests.push({
+          resolvedFilename: bestItem.resolvedFilename,
           bestRequest: bestRequest,
           type: group.type,
           isVideo: group.type === 'video',
@@ -3659,32 +3630,32 @@ async function loadMediaList() {
       if (sortOrder === 'oldest') {
         return (a.bestRequest.timeStamp || a.bestRequest.timestamp || 0) - (b.bestRequest.timeStamp || b.bestRequest.timestamp || 0);
       } else if (sortOrder === 'letter_asc') {
-        const nameA = (a.bestRequest.pageTitle || getFileName(a.bestRequest.originalUrl || "")).toLowerCase();
-        const nameB = (b.bestRequest.pageTitle || getFileName(b.bestRequest.originalUrl || "")).toLowerCase();
+        const nameA = a.resolvedFilename.toLowerCase();
+        const nameB = b.resolvedFilename.toLowerCase();
         const isNumA = /^[0-9]/.test(nameA);
         const isNumB = /^[0-9]/.test(nameB);
         if (isNumA && !isNumB) return 1;
         if (!isNumA && isNumB) return -1;
         return nameA.localeCompare(nameB);
       } else if (sortOrder === 'letter_desc') {
-        const nameA = (a.bestRequest.pageTitle || getFileName(a.bestRequest.originalUrl || "")).toLowerCase();
-        const nameB = (b.bestRequest.pageTitle || getFileName(b.bestRequest.originalUrl || "")).toLowerCase();
+        const nameA = a.resolvedFilename.toLowerCase();
+        const nameB = b.resolvedFilename.toLowerCase();
         const isNumA = /^[0-9]/.test(nameA);
         const isNumB = /^[0-9]/.test(nameB);
         if (isNumA && !isNumB) return 1;
         if (!isNumA && isNumB) return -1;
         return nameB.localeCompare(nameA);
       } else if (sortOrder === 'number_desc') {
-        const nameA = (a.bestRequest.pageTitle || getFileName(a.bestRequest.originalUrl || "")).toLowerCase();
-        const nameB = (b.bestRequest.pageTitle || getFileName(b.bestRequest.originalUrl || "")).toLowerCase();
+        const nameA = a.resolvedFilename.toLowerCase();
+        const nameB = b.resolvedFilename.toLowerCase();
         const isNumA = /^[0-9]/.test(nameA);
         const isNumB = /^[0-9]/.test(nameB);
         if (isNumA && !isNumB) return -1;
         if (!isNumA && isNumB) return 1;
         return nameB.localeCompare(nameA, undefined, { numeric: true, sensitivity: 'base' });
       } else if (sortOrder === 'number_asc') {
-        const nameA = (a.bestRequest.pageTitle || getFileName(a.bestRequest.originalUrl || "")).toLowerCase();
-        const nameB = (b.bestRequest.pageTitle || getFileName(b.bestRequest.originalUrl || "")).toLowerCase();
+        const nameA = a.resolvedFilename.toLowerCase();
+        const nameB = b.resolvedFilename.toLowerCase();
         const isNumA = /^[0-9]/.test(nameA);
         const isNumB = /^[0-9]/.test(nameB);
         if (isNumA && !isNumB) return -1;
@@ -4776,10 +4747,10 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
 
    if (!targetRequest) {
        console.warn("Target request metadata not found, using generic fallback.");
-       targetRequest = { pageTitle: document.title || "video", responseHeaders: [] };
+       targetRequest = { responseHeaders: [] };
    }
 
-   const defaultName = targetRequest.pageTitle || getFileName(url, 100);
+   const defaultName = mediaFilename.resolve(url, targetRequest);
    const settings = await browser.storage.local.get(['filename-template', 'disable-rename-dialog']);
    const template = (settings['filename-template'] && settings['filename-template'] !== '0') ? settings['filename-template'] : '';
    const disableRename = settings['disable-rename-dialog'] === '1';
@@ -4789,15 +4760,11 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
        finalName = await generateTemplateName(template, url, defaultName, targetRequest.pageTitle);
    }
 
-   const lastDotIdx = finalName.lastIndexOf('.');
+
    const isStream = url.toLowerCase().includes('.m3u8') || url.toLowerCase().includes('.mpd');
    let audioExt = settings['audio-to-mp3'] === '1' ? ".mp3" : (url.toLowerCase().includes('.mpd') ? ".m4a" : ".wav");
 
-   if (lastDotIdx !== -1) {
-       finalName = finalName.substring(0, lastDotIdx) + audioExt;
-   } else {
-       finalName += audioExt;
-   }
+   finalName = mediaFilename.changeExtension(finalName, audioExt);
 
    let newName = finalName;
    if (!disableRename) {
@@ -5107,7 +5074,7 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
 
    if (!targetRequest) {
        console.warn("Target request metadata not found, using generic fallback.");
-       targetRequest = { pageTitle: document.title || "video", responseHeaders: [] };
+       targetRequest = { responseHeaders: [] };
    }
 
    downloadId = 'dl_' + Date.now();
@@ -5124,13 +5091,13 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
      mediaDiv.dataset.downloadId = downloadId;
    }
 
-   const defaultName = targetRequest.pageTitle || getFileName(url, 100);
+   const defaultName = mediaFilename.resolve(url, targetRequest);
     const settings = await browser.storage.local.get(['filename-template', 'disable-rename-dialog']);
     const template = (settings['filename-template'] && settings['filename-template'] !== '0') ? settings['filename-template'] : '';
     const disableRename = settings['disable-rename-dialog'] === '1';
     let finalName = customFilename || defaultName;
 
-    if (template) {
+    if (template && !customFilename) {
         finalName = await generateTemplateName(template, url, defaultName, targetRequest.pageTitle);
     }
 
@@ -5899,36 +5866,7 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
 }
 
 async function generateTemplateName(template, url, originalName, suggestedTitle) {
-    let result = template || "{name}";
-    let pageTitle = suggestedTitle;
-
-    if (!pageTitle) {
-        const tabs = await browser.tabs.query({ active: true, lastFocusedWindow: true });
-        const activeTab = tabs[0];
-        pageTitle = activeTab ? activeTab.title : "Media";
-    }
-
-    const host = new URL(url).hostname;
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
-    const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
-
-    const lastDotIdx = originalName.lastIndexOf('.');
-    const nameWithoutExt = lastDotIdx !== -1 ? originalName.substring(0, lastDotIdx) : originalName;
-    const ext = lastDotIdx !== -1 ? originalName.substring(lastDotIdx) : '';
-
-    result = result
-        .replace(/{title}/g, pageTitle)
-        .replace(/{host}/g, host)
-        .replace(/{date}/g, dateStr)
-        .replace(/{time}/g, timeStr)
-        .replace(/{name}/g, nameWithoutExt);
-
-    if (ext && !result.toLowerCase().endsWith(ext.toLowerCase())) {
-        result += ext;
-    }
-
-    return result.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_');
+    return mediaFilename.template(template, url, originalName, suggestedTitle);
 }
 
 function showRenameDialog(initialValue) {

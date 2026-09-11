@@ -1,4 +1,10 @@
 {
+  "ignoreExcludedMediaTitle": {"message":"Ne pas détecter les médias exclus"},
+  "ignoreExcludedMediaExplain": {"message":"Désactive la détection des noms et domaines indiqués ci-dessus pour réduire le traitement. Lorsque cette option est désactivée, les éléments correspondants restent masqués dans la liste et les notifications."},
+  "skipDetectionNamesTitle": {"message":"Exclure des noms / mots-clés"},
+  "skipDetectionNamesExplain": {"message":"Exclut les URL de médias, noms de fichiers et titres de pages correspondants, sans distinction entre majuscules et minuscules. Séparez les entrées par des retours à la ligne ou des virgules."},
+  "skipDetectionDomainsTitle": {"message":"Exclure des domaines"},
+  "skipDetectionDomainsExplain": {"message":"Exclut ces sites ou serveurs de médias, y compris leurs sous-domaines. Séparez les entrées par des retours à la ligne ou des virgules. Les éléments correspondants ne figurent ni dans les résultats de détection ni dans les notifications."},
   "reinstallTitle": {
     "message": "Réinstallation recommandée",
     "description": "Reinstall warning title"
@@ -850,6 +856,16 @@
     "message": "Conserver un enregistrement local de vos téléchargements.",
     "description": "The explanation of the history page option."
   },
+  "settingsBackupTitle": { "message": "Configuration des paramètres" },
+  "settingsBackupExplain": { "message": "Exportez ou importez les paramètres de l’extension. Les comptes, l’historique des téléchargements et les données temporaires ne sont pas inclus." },
+  "exportSettingsButton": { "message": "Exporter les paramètres" },
+  "importSettingsButton": { "message": "Importer les paramètres" },
+  "settingsExportSuccess": { "message": "Paramètres exportés avec succès !" },
+  "settingsExportError": { "message": "Échec de l’exportation des paramètres : $1", "placeholders": { "1": { "content": "$1" } } },
+  "settingsImportSuccess": { "message": "Paramètres importés avec succès !" },
+  "settingsImportError": { "message": "Échec de l’importation des paramètres : $1", "placeholders": { "1": { "content": "$1" } } },
+  "settingsImportInvalidFormat": { "message": "Format de fichier de paramètres non valide" },
+  "settingsImportNoSettings": { "message": "Le fichier ne contient aucun paramètre pris en charge" },
   "clearHistoryButton": {
     "message": "Effacer l'historique",
     "description": "The label of the button to clear the download history."

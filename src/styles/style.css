@@ -658,6 +658,15 @@ mdui-segmented-button[selected]::part(button) {
     outline: none;
 }
 
+textarea.pill-input {
+    border-radius: calc(0.675rem + 11px);
+    field-sizing: content;
+    min-height: calc(1.35rem + 22px);
+    max-height: calc(4.05rem + 22px);
+    overflow-y: auto;
+    line-height: 1.5;
+}
+
 .pill-input:hover {
     background: rgba(var(--mdui-color-primary), 0.08);
     border-color: rgba(var(--mdui-color-primary), 0.3);

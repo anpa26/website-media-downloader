@@ -1,84 +1,102 @@
 {
-  "require_uninstall": true,
+  "require_uninstall": false,
   "en": {
-    "headline": "What's New (v2.3.2)",
-    "reinstall_description": "This version significantly changes background download and DASH stream processing. If background downloads, DASH previews or downloads, or media detection do not work correctly after updating, reinstall the extension to refresh all components. If you just installed or have already reinstalled it, you can skip this.",
+    "headline": "What's New (v2.3.3)",
     "changes": [
-      "Added wider support for background downloads.",
-      "Optimized the UI to make it slightly more lightweight.",
-      "Fixed DASH stream preview and downloading issues so they work normally."
+      "Added name and domain exclusions, including subdomains, with a switch to stop detecting excluded media.",
+      "Improved automatic filenames using server metadata and URLs. Home names and sorting now respect filename templates.",
+      "Kept detection notifications working with fallback names when smart naming or templates fail.",
+      "Standardized normal and Speed Boost tests with warm-up, equal measurement durations, request cleanup, and error handling.",
+      "Added settings import/export and corrected the badge to count only active downloads.",
+      "Moved resume and background download options to Download settings and improved exclusion inputs."
     ]
   },
   "id": {
-    "headline": "Yang Baru (v2.3.2)",
-    "reinstall_description": "Versi ini membawa perubahan besar pada unduhan latar belakang dan pemrosesan aliran DASH. Jika unduhan latar belakang, pratinjau atau unduhan DASH, maupun deteksi media tidak bekerja dengan benar setelah update, instal ulang ekstensi agar seluruh komponennya diperbarui. Jika baru memasang atau sudah reinstall, lewati saja.",
+    "headline": "Yang Baru (v2.3.3)",
     "changes": [
-      "Menambahkan dukungan unduhan latar belakang yang lebih luas.",
-      "Mengoptimalkan UI agar sedikit lebih ringan.",
-      "Memperbaiki aliran DASH agar dapat dipratinjau dan diunduh secara normal."
+      "Menambahkan pengecualian nama dan domain, termasuk subdomain, serta switch untuk menghentikan deteksi media yang dikecualikan.",
+      "Memperbaiki nama file otomatis berdasarkan metadata server dan URL. Nama serta pengurutan di Home kini mengikuti template nama file.",
+      "Menjaga notifikasi deteksi tetap muncul dengan nama cadangan jika penamaan pintar atau template gagal.",
+      "Menyamakan uji normal dan Speed Boost dengan pemanasan, durasi pengukuran yang sama, penghentian request, dan penanganan error.",
+      "Menambahkan impor/ekspor pengaturan dan memperbaiki badge agar hanya menghitung unduhan aktif.",
+      "Memindahkan opsi lanjutkan dan unduhan latar belakang ke Pengaturan Unduhan dan merapikan input pengecualian."
     ]
   },
   "de": {
-    "headline": "Was gibt's Neues (v2.3.2)",
-    "reinstall_description": "Diese Version enthält umfangreiche Änderungen an Hintergrunddownloads und der Verarbeitung von DASH-Streams. Falls Hintergrunddownloads, DASH-Vorschauen oder -Downloads beziehungsweise die Medienerkennung nach dem Update nicht richtig funktionieren, installieren Sie die Erweiterung neu, um alle Komponenten zu aktualisieren. Nach einer Neuinstallation können Sie diesen Hinweis überspringen.",
+    "headline": "Was gibt's Neues (v2.3.3)",
     "changes": [
-      "Erweiterte Unterstützung für Downloads im Hintergrund hinzugefügt.",
-      "Benutzeroberfläche (UI) optimiert, um sie etwas leichtgängiger zu machen.",
-      "DASH-Stream-Vorschau und -Download korrigiert, sodass sie normal funktionieren."
+      "Namens- und Domainausschlüsse einschließlich Subdomains mit einem Schalter zum Abschalten ihrer Erkennung hinzugefügt.",
+      "Automatische Dateinamen aus Servermetadaten und URLs verbessert. Namen und Sortierung auf der Startseite berücksichtigen jetzt Dateinamenvorlagen.",
+      "Erkennungsbenachrichtigungen verwenden Ersatznamen, wenn die automatische Benennung oder Vorlagen fehlschlagen.",
+      "Normale und Speed-Boost-Tests durch Aufwärmphase, gleiche Messdauer, Beenden von Anfragen und Fehlerbehandlung vereinheitlicht.",
+      "Import und Export von Einstellungen hinzugefügt. Der Zähler berücksichtigt nur aktive Downloads.",
+      "Fortsetzungs- und Hintergrunddownloadoptionen in die Download-Einstellungen verschoben und Ausschlussfelder verbessert."
     ]
   },
   "fr": {
-    "headline": "Nouveautés (v2.3.2)",
-    "reinstall_description": "Cette version apporte des modifications importantes aux téléchargements en arrière-plan et au traitement des flux DASH. Si les téléchargements en arrière-plan, l'aperçu ou le téléchargement DASH, ou encore la détection des médias ne fonctionnent pas correctement après la mise à jour, réinstallez l'extension afin d'actualiser tous ses composants. Si elle vient d'être installée ou réinstallée, ignorez ce message.",
+    "headline": "Nouveautés (v2.3.3)",
     "changes": [
-      "Ajout d'un support plus large pour les téléchargements en arrière-plan.",
-      "Optimisation de l'interface utilisateur pour la rendre un peu plus légère.",
-      "Correction des problèmes de prévisualisation et de téléchargement des flux DASH pour qu'ils fonctionnent normalement."
+      "Ajout d’exclusions de noms et de domaines, sous-domaines inclus, avec une option pour arrêter leur détection.",
+      "Amélioration des noms automatiques à partir des métadonnées du serveur et des URL. Les noms et le tri dans l’accueil respectent les modèles de noms de fichiers.",
+      "Les notifications de détection utilisent un nom de secours si la génération intelligente ou le modèle échoue.",
+      "Uniformisation des tests normaux et Speed Boost : phase de préparation, durée de mesure identique, arrêt des requêtes et gestion des erreurs.",
+      "Ajout de l’import/export des paramètres. Le compteur ne prend en compte que les téléchargements actifs.",
+      "Déplacement des options de reprise et de téléchargement en arrière-plan dans les paramètres de téléchargement et amélioration des champs d’exclusion."
     ]
   },
   "ja": {
-    "headline": "新機能 (v2.3.2)",
-    "reinstall_description": "このバージョンでは、バックグラウンドダウンロードとDASHストリーム処理に大幅な変更が加えられています。更新後にバックグラウンドダウンロード、DASHのプレビューやダウンロード、またはメディア検出が正常に動作しない場合は、すべてのコンポーネントを更新するため拡張機能を再インストールしてください。新規インストールまたは再インストール済みの場合は、この案内をスキップできます。",
+    "headline": "新機能 (v2.3.3)",
     "changes": [
-      "バックグラウンドダウンロードのサポート範囲を拡大しました。",
-      "UIを最適化し、動作をわずかに軽量化しました。",
-      "DASHストリームのプレビューおよびダウンロード機能が正常に動作するように修正しました。"
+      "サブドメインを含む名前・ドメインの除外設定と、除外対象の検出を停止するスイッチを追加しました。",
+      "サーバーのメタデータとURLからの自動ファイル名を改善し、ホームの名前と並び順にもファイル名テンプレートを適用しました。",
+      "自動命名やテンプレートの処理に失敗しても、代替名で検出通知を表示します。",
+      "通常とSpeed Boostのテストにウォームアップ、同じ測定時間、リクエストの停止、エラー処理を適用しました。",
+      "設定のインポート・エクスポートを追加し、バッジには実行中のダウンロードのみをカウントするよう修正しました。",
+      "再開とバックグラウンドダウンロードの項目をダウンロード設定へ移動し、除外入力欄を改善しました。"
     ]
   },
   "ko": {
-    "headline": "새로운 기능 (v2.3.2)",
-    "reinstall_description": "이 버전에서는 백그라운드 다운로드 및 DASH 스트림 처리 방식이 크게 변경되었습니다. 업데이트 후 백그라운드 다운로드, DASH 미리보기 또는 다운로드, 미디어 감지가 정상적으로 작동하지 않는 경우 모든 구성 요소를 새로 고치기 위해 확장 프로그램을 재설치하세요. 새로 설치했거나 이미 재설치한 경우 이 안내를 건너뛸 수 있습니다.",
+    "headline": "새로운 기능 (v2.3.3)",
     "changes": [
-      "백그라운드 다운로드 지원 범위를 확장했습니다.",
-      "UI를 최적화하여 작동 속도를 약간 개선했습니다.",
-      "DASH 스트림 미리보기 및 다운로드 문제를 수정하여 정상적으로 작동하도록 했습니다."
+      "하위 도메인을 포함하는 이름 및 도메인 제외 설정과 제외된 미디어의 감지를 중지하는 스위치를 추가했습니다.",
+      "서버 메타데이터와 URL을 이용한 자동 파일 이름을 개선했으며 홈의 이름과 정렬에도 파일 이름 템플릿을 적용했습니다.",
+      "자동 이름 생성이나 템플릿 처리에 실패해도 대체 이름으로 감지 알림을 표시합니다.",
+      "일반 및 Speed Boost 테스트에 준비 시간, 동일한 측정 시간, 요청 종료 및 오류 처리를 적용했습니다.",
+      "설정 가져오기/내보내기를 추가하고 배지가 진행 중인 다운로드만 집계하도록 수정했습니다.",
+      "재개 및 백그라운드 다운로드 옵션을 다운로드 설정으로 옮기고 제외 입력란을 개선했습니다."
     ]
   },
   "pt": {
-    "headline": "Novidades (v2.3.2)",
-    "reinstall_description": "Esta versão traz alterações significativas nos downloads em segundo plano e no processamento de fluxos DASH. Se os downloads em segundo plano, a visualização ou o download de DASH, ou a detecção de mídia não funcionarem corretamente após a atualização, reinstale a extensão para atualizar todos os componentes. Se acabou de instalar ou já reinstalou, pode ignorar este aviso.",
+    "headline": "Novidades (v2.3.3)",
     "changes": [
-      "Adicionado suporte mais amplo para downloads em segundo plano.",
-      "Interface do usuário otimizada para torná-la um pouco mais leve.",
-      "Corrigida a visualização e o download de fluxos DASH para funcionarem normalmente."
+      "Adicionadas exclusões de nomes e domínios, incluindo subdomínios, com uma opção para interromper a detecção das mídias excluídas.",
+      "Melhorados os nomes automáticos a partir dos metadados do servidor e das URLs. Os nomes e a ordenação na página inicial respeitam os modelos de nomes de arquivos.",
+      "As notificações de detecção usam nomes alternativos quando a geração automática ou os modelos falham.",
+      "Padronizados os testes normal e Speed Boost com aquecimento, duração de medição igual, encerramento de requisições e tratamento de erros.",
+      "Adicionada a importação/exportação de configurações. O contador considera apenas downloads ativos.",
+      "Movidas as opções de retomada e downloads em segundo plano para as configurações de download e melhorados os campos de exclusão."
     ]
   },
   "ru": {
-    "headline": "Что нового (v2.3.2)",
-    "reinstall_description": "В этой версии значительно изменены фоновые загрузки и обработка потоков DASH. Если после обновления фоновые загрузки, предпросмотр или загрузка DASH либо обнаружение медиа работают неправильно, переустановите расширение, чтобы обновить все компоненты. Если расширение только что установлено или уже переустановлено, это сообщение можно пропустить.",
+    "headline": "Что нового (v2.3.3)",
     "changes": [
-      "Добавлена более широкая поддержка фоновой загрузки.",
-      "Оптимизирован пользовательский интерфейс для снижения нагрузки.",
-      "Исправлен предпросмотр и загрузка DASH-потоков для нормальной работы."
+      "Добавлены исключения имён и доменов, включая поддомены, и переключатель для отключения обнаружения исключённых медиафайлов.",
+      "Улучшены автоматические имена на основе метаданных сервера и URL. Имена и сортировка на главной странице учитывают шаблоны имён файлов.",
+      "Уведомления об обнаружении используют запасное имя при сбое автоматического именования или шаблона.",
+      "Обычный тест и Speed Boost используют прогрев, одинаковое время измерения, завершение запросов и обработку ошибок.",
+      "Добавлен импорт и экспорт настроек. Счётчик учитывает только активные загрузки.",
+      "Параметры возобновления и фоновых загрузок перенесены в настройки загрузки, улучшены поля исключений."
     ]
   },
   "ar": {
-    "headline": "ما الجديد (v2.3.2)",
-    "reinstall_description": "يتضمن هذا الإصدار تغييرات كبيرة في التنزيلات في الخلفية ومعالجة بث DASH. إذا لم تعمل التنزيلات في الخلفية أو معاينة DASH أو تنزيله أو اكتشاف الوسائط بشكل صحيح بعد التحديث، فأعد تثبيت الامتداد لتحديث جميع المكونات. إذا ثبّت الامتداد للتو أو أعدت تثبيته بالفعل، فيمكنك تخطي هذه الرسالة.",
+    "headline": "ما الجديد (v2.3.3)",
     "changes": [
-      "إضافة دعم أوسع للتنزيلات في الخلفية.",
-      "تحسين واجهة المستخدم لتصبح أخف قليلاً.",
-      "إصلاح معاينة وتنزيل بث DASH ليعمل بشكل طبيعي."
+      "أُضيفت استثناءات للأسماء والنطاقات، بما فيها النطاقات الفرعية، مع خيار لإيقاف اكتشاف الوسائط المستثناة.",
+      "حُسّنت أسماء الملفات التلقائية باستخدام بيانات الخادم والروابط. وأصبحت الأسماء وترتيبها في الصفحة الرئيسية تتبع قوالب أسماء الملفات.",
+      "تستخدم إشعارات الاكتشاف أسماء بديلة عند فشل التسمية الذكية أو القوالب.",
+      "وُحّدت الاختبارات العادية واختبارات Speed Boost بفترة تهيئة ومدة قياس متساوية وإيقاف الطلبات ومعالجة الأخطاء.",
+      "أُضيف استيراد الإعدادات وتصديرها، وأُصلح العدّاد ليحسب التنزيلات النشطة فقط.",
+      "نُقلت خيارات الاستئناف والتنزيل في الخلفية إلى إعدادات التنزيل وحُسّنت حقول الاستثناء."
     ]
   }
 }

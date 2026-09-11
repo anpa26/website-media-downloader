@@ -1,4 +1,10 @@
 {
+  "ignoreExcludedMediaTitle": {"message": "Jangan deteksi yang dikecualikan"},
+  "ignoreExcludedMediaExplain": {"message": "Matikan deteksi untuk nama dan domain di atas agar pemrosesan lebih ringan. Jika dimatikan, yang cocok tetap disembunyikan dari daftar dan notifikasi."},
+  "skipDetectionNamesTitle": {"message":"Lewati nama / kata kunci"},
+  "skipDetectionNamesExplain": {"message":"Lewati URL media, nama file, dan judul halaman yang cocok, tanpa membedakan huruf besar/kecil. Pisahkan dengan baris baru atau koma."},
+  "skipDetectionDomainsTitle": {"message":"Lewati domain"},
+  "skipDetectionDomainsExplain": {"message":"Lewati situs atau host media ini, termasuk subdomain. Pisahkan dengan baris baru atau koma. Yang cocok tidak muncul di hasil deteksi maupun notifikasi."},
   "reinstallTitle": {
     "message": "Disarankan Instal Ulang",
     "description": "Reinstall warning title"
@@ -822,6 +828,16 @@
     "message": "Menyimpan catatan riwayat semua file yang pernah Anda unduh di perangkat ini.",
     "description": "The explanation of the history page option."
   },
+  "settingsBackupTitle": { "message": "Konfigurasi pengaturan" },
+  "settingsBackupExplain": { "message": "Ekspor atau impor pengaturan ekstensi Anda. Akun, riwayat unduhan, dan data sementara tidak disertakan." },
+  "exportSettingsButton": { "message": "Ekspor pengaturan" },
+  "importSettingsButton": { "message": "Impor pengaturan" },
+  "settingsExportSuccess": { "message": "Pengaturan berhasil diekspor!" },
+  "settingsExportError": { "message": "Gagal mengekspor pengaturan: $1", "placeholders": { "1": { "content": "$1" } } },
+  "settingsImportSuccess": { "message": "Pengaturan berhasil diimpor!" },
+  "settingsImportError": { "message": "Gagal mengimpor pengaturan: $1", "placeholders": { "1": { "content": "$1" } } },
+  "settingsImportInvalidFormat": { "message": "Format file pengaturan tidak valid" },
+  "settingsImportNoSettings": { "message": "File tidak berisi pengaturan yang didukung" },
   "clearHistoryButton": {
     "message": "Hapus riwayat",
     "description": "The label of the button to clear the download history."

@@ -1,4 +1,10 @@
 {
+  "ignoreExcludedMediaTitle": {"message":"Ausgeschlossene Medien nicht erkennen"},
+  "ignoreExcludedMediaExplain": {"message":"Deaktiviert die Erkennung für die oben angegebenen Namen und Domains, um den Verarbeitungsaufwand zu reduzieren. Ist diese Option ausgeschaltet, bleiben Treffer in der Liste und in Benachrichtigungen ausgeblendet."},
+  "skipDetectionNamesTitle": {"message":"Namen / Suchbegriffe ausschließen"},
+  "skipDetectionNamesExplain": {"message":"Schließt passende Medien-URLs, Dateinamen und Seitentitel aus, unabhängig von Groß- und Kleinschreibung. Einträge durch Zeilenumbrüche oder Kommas trennen."},
+  "skipDetectionDomainsTitle": {"message":"Domains ausschließen"},
+  "skipDetectionDomainsExplain": {"message":"Schließt diese Websites oder Medienserver einschließlich ihrer Subdomains aus. Einträge durch Zeilenumbrüche oder Kommas trennen. Treffer erscheinen weder in den Erkennungsergebnissen noch in Benachrichtigungen."},
   "reinstallTitle": {
     "message": "Neuinstallation empfohlen",
     "description": "Reinstall warning title"
@@ -850,6 +856,16 @@
     "message": "Behalten Sie einen lokalen Verlauf Ihrer Downloads.",
     "description": "The explanation of the history page option."
   },
+  "settingsBackupTitle": { "message": "Einstellungskonfiguration" },
+  "settingsBackupExplain": { "message": "Exportieren oder importieren Sie Ihre Erweiterungseinstellungen. Konten, Downloadverlauf und temporäre Daten sind nicht enthalten." },
+  "exportSettingsButton": { "message": "Einstellungen exportieren" },
+  "importSettingsButton": { "message": "Einstellungen importieren" },
+  "settingsExportSuccess": { "message": "Einstellungen erfolgreich exportiert!" },
+  "settingsExportError": { "message": "Einstellungen konnten nicht exportiert werden: $1", "placeholders": { "1": { "content": "$1" } } },
+  "settingsImportSuccess": { "message": "Einstellungen erfolgreich importiert!" },
+  "settingsImportError": { "message": "Einstellungen konnten nicht importiert werden: $1", "placeholders": { "1": { "content": "$1" } } },
+  "settingsImportInvalidFormat": { "message": "Ungültiges Einstellungsdateiformat" },
+  "settingsImportNoSettings": { "message": "Die Datei enthält keine unterstützten Einstellungen" },
   "clearHistoryButton": {
     "message": "Verlauf löschen",
     "description": "The label of the button to clear the download history."

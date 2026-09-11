@@ -1,4 +1,10 @@
 {
+  "ignoreExcludedMediaTitle": {"message":"Не обнаруживать исключённые медиафайлы"},
+  "ignoreExcludedMediaExplain": {"message":"Отключает обнаружение медиафайлов, соответствующих указанным выше именам и доменам, чтобы снизить нагрузку. Если эта опция выключена, совпадающие элементы по-прежнему скрыты в списке и уведомлениях."},
+  "skipDetectionNamesTitle": {"message":"Исключить имена / ключевые слова"},
+  "skipDetectionNamesExplain": {"message":"Исключает совпадающие URL медиафайлов, имена файлов и заголовки страниц без учёта регистра. Разделяйте записи переносами строк или запятыми."},
+  "skipDetectionDomainsTitle": {"message":"Исключить домены"},
+  "skipDetectionDomainsExplain": {"message":"Исключает указанные сайты или медиасерверы, включая поддомены. Разделяйте записи переносами строк или запятыми. Совпадающие элементы не отображаются в результатах обнаружения и уведомлениях."},
   "reinstallTitle": {
     "message": "Рекомендуется переустановка",
     "description": "Reinstall warning title"
@@ -845,6 +851,16 @@
     "message": "Сохранять локальную запись ваших загрузок.",
     "description": "The explanation of the history page option."
   },
+  "settingsBackupTitle": { "message": "Конфигурация настроек" },
+  "settingsBackupExplain": { "message": "Экспортируйте или импортируйте настройки расширения. Учётные записи, история загрузок и временные данные не включаются." },
+  "exportSettingsButton": { "message": "Экспортировать настройки" },
+  "importSettingsButton": { "message": "Импортировать настройки" },
+  "settingsExportSuccess": { "message": "Настройки успешно экспортированы!" },
+  "settingsExportError": { "message": "Не удалось экспортировать настройки: $1", "placeholders": { "1": { "content": "$1" } } },
+  "settingsImportSuccess": { "message": "Настройки успешно импортированы!" },
+  "settingsImportError": { "message": "Не удалось импортировать настройки: $1", "placeholders": { "1": { "content": "$1" } } },
+  "settingsImportInvalidFormat": { "message": "Недопустимый формат файла настроек" },
+  "settingsImportNoSettings": { "message": "Файл не содержит поддерживаемых настроек" },
   "clearHistoryButton": {
     "message": "Очистить историю",
     "description": "The label of the button to clear the download history."

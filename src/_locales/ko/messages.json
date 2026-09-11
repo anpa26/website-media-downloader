@@ -1,4 +1,10 @@
 {
+  "ignoreExcludedMediaTitle": {"message":"제외된 미디어 감지 안 함"},
+  "ignoreExcludedMediaExplain": {"message":"처리 부하를 줄이기 위해 위의 이름 및 도메인과 일치하는 미디어 감지를 중지합니다. 이 옵션을 꺼도 일치하는 항목은 목록과 알림에 표시되지 않습니다."},
+  "skipDetectionNamesTitle": {"message":"제외할 이름 / 키워드"},
+  "skipDetectionNamesExplain": {"message":"일치하는 미디어 URL, 파일 이름 및 페이지 제목을 대소문자 구분 없이 제외합니다. 여러 항목은 줄바꿈이나 쉼표로 구분하세요."},
+  "skipDetectionDomainsTitle": {"message":"제외할 도메인"},
+  "skipDetectionDomainsExplain": {"message":"하위 도메인을 포함하여 해당 웹사이트나 미디어 호스트를 제외합니다. 여러 항목은 줄바꿈이나 쉼표로 구분하세요. 일치하는 항목은 감지 결과나 알림에 표시되지 않습니다."},
   "reinstallTitle": {
     "message": "재설치 권장",
     "description": "Reinstall warning title"
@@ -845,6 +851,16 @@
     "message": "다운로드에 대한 로컬 기록을 유지합니다.",
     "description": "The explanation of the history page option."
   },
+  "settingsBackupTitle": { "message": "설정 구성" },
+  "settingsBackupExplain": { "message": "확장 프로그램 설정을 내보내거나 가져옵니다. 계정, 다운로드 기록 및 임시 데이터는 포함되지 않습니다." },
+  "exportSettingsButton": { "message": "설정 내보내기" },
+  "importSettingsButton": { "message": "설정 가져오기" },
+  "settingsExportSuccess": { "message": "설정을 성공적으로 내보냈습니다!" },
+  "settingsExportError": { "message": "설정을 내보내지 못했습니다: $1", "placeholders": { "1": { "content": "$1" } } },
+  "settingsImportSuccess": { "message": "설정을 성공적으로 가져왔습니다!" },
+  "settingsImportError": { "message": "설정을 가져오지 못했습니다: $1", "placeholders": { "1": { "content": "$1" } } },
+  "settingsImportInvalidFormat": { "message": "잘못된 설정 파일 형식" },
+  "settingsImportNoSettings": { "message": "파일에 지원되는 설정이 없습니다" },
   "clearHistoryButton": {
     "message": "기록 지우기",
     "description": "The label of the button to clear the download history."

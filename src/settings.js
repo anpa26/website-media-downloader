@@ -57,6 +57,71 @@ async function initTheme() {
 
 const CACHE_DB_NAME = 'MediaCacheDB';
 const CACHE_STORE_NAMES = ['network-cache', 'download-chunks'];
+const SETTINGS_EXPORT_FORMAT = 'website-media-downloader-settings';
+const SETTINGS_EXPORT_VERSION = 1;
+const SETTINGS_KEYS = [
+    'url-detection', 'youtube-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components', 'disable-deduplication', 'optimize-low-end', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom',
+    'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'ignore-disabled-types',
+    'media-notification', 'audio-process-notification', 'media-system-notification', 'stack-notifications', 'download-method', 'fetch-notification', 'media-cache', 'speed-boost', 'speed-boost-resume', 'connections', 'stream-download',
+    'stream-quality', 'subtitle-conversion', 'mpd-fix', 'background-download', 'auto-resume', 'stream-to-mp4', 'audio-to-mp3', 'mp3-bitrate', 'open-preference', 'mux-all-audios', 'mpd-to-mp4',
+    'embed-subtitles-mkv', 'embed-subtitles-container', 'embed-subtitles-nonyt',
+    'ignore-excluded-media', 'skip-detection-names', 'skip-detection-domains', 'filename-template', 'disable-rename-dialog', 'history-page', 'settings-layout', 'theme-mode', 'theme-color', 'group-by-type', 'save-to-gdrive', 'gdrive-stream', 'media-sort-order',
+    'save-to-dropbox', 'dropbox-stream', 'auto-check-update', 'badge-counter', 'ui-scale', 'ui-scale-custom'
+];
+
+function showSettingsMessage(key, fallback, substitutions = null) {
+    if (typeof mdui === 'undefined' || !mdui.snackbar) return;
+    const translated = substitutions === null ? browser.i18n.getMessage(key) : browser.i18n.getMessage(key, substitutions);
+    mdui.snackbar({ message: translated || fallback, placement: 'top' });
+}
+
+async function exportSettingsConfiguration() {
+    const stored = await browser.storage.local.get(SETTINGS_KEYS);
+    const settings = {};
+    for (const key of SETTINGS_KEYS) if (Object.prototype.hasOwnProperty.call(stored, key)) settings[key] = stored[key];
+    Object.assign(settings, pendingChanges);
+    const payload = { format: SETTINGS_EXPORT_FORMAT, version: SETTINGS_EXPORT_VERSION, extensionVersion: browser.runtime.getManifest().version, exportedAt: new Date().toISOString(), settings };
+    const blobUrl = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = `wmd-settings-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    showSettingsMessage('settingsExportSuccess', 'Settings exported successfully!');
+}
+
+async function importSettingsConfiguration(event) {
+    const input = event.target;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    try {
+        const payload = JSON.parse(await file.text());
+        if (!payload || payload.format !== SETTINGS_EXPORT_FORMAT || payload.version !== SETTINGS_EXPORT_VERSION || !payload.settings || Array.isArray(payload.settings) || typeof payload.settings !== 'object') throw new Error(browser.i18n.getMessage('settingsImportInvalidFormat') || 'Invalid settings file format');
+        const imported = {};
+        for (const key of SETTINGS_KEYS) if (Object.prototype.hasOwnProperty.call(payload.settings, key)) imported[key] = payload.settings[key];
+        if (Object.keys(imported).length === 0) throw new Error(browser.i18n.getMessage('settingsImportNoSettings') || 'The file contains no supported settings');
+        await browser.storage.local.set(imported);
+        pendingChanges = {};
+        const applyBar = document.getElementById('settings-apply-bar');
+        if (applyBar) applyBar.style.display = 'none';
+        showSettingsMessage('settingsImportSuccess', 'Settings imported successfully!');
+        setTimeout(() => window.location.reload(), 700);
+    } catch (error) {
+        showSettingsMessage('settingsImportError', `Failed to import settings: ${error.message}`, [error.message]);
+    }
+}
+
+function setupSettingsConfigurationControls() {
+    const exportButton = document.getElementById('export-settings');
+    const importButton = document.getElementById('import-settings');
+    const importInput = document.getElementById('import-settings-input');
+    if (!exportButton || !importButton || !importInput || exportButton.dataset.ready === '1') return;
+    exportButton.dataset.ready = '1';
+    exportButton.addEventListener('click', () => exportSettingsConfiguration().catch(error => showSettingsMessage('settingsExportError', `Failed to export settings: ${error.message}`, [error.message])));
+    importButton.addEventListener('click', () => importInput.click());
+    importInput.addEventListener('change', importSettingsConfiguration);
+}
 
 function cacheMessage(key, substitutions, fallback) {
     const message = substitutions == null
@@ -256,6 +321,7 @@ window.initializeSettingsPage = function initializeSettingsPage() {
     setupConfirmationBar();
     setupSpeedTest();
     setupIndexedDBCacheControls();
+    setupSettingsConfigurationControls();
 
     if (window.location.search.includes('startDropbox=true')) {
         const res = await browser.storage.local.get('dropbox_token');
@@ -335,7 +401,7 @@ async function initializeSettings() {
         'media-notification', 'audio-process-notification', 'media-system-notification', 'stack-notifications', 'download-method', 'fetch-notification', 'media-cache', 'speed-boost', 'speed-boost-resume', 'connections', 'stream-download',
         'stream-quality', 'subtitle-conversion', 'mpd-fix', 'background-download', 'auto-resume', 'stream-to-mp4', 'audio-to-mp3', 'mp3-bitrate', 'open-preference', 'mux-all-audios', 'mpd-to-mp4',
         'embed-subtitles-mkv', 'embed-subtitles-container', 'embed-subtitles-nonyt',
-        'filename-template', 'disable-rename-dialog', 'history-page', 'settings-layout', 'theme-mode', 'group-by-type', 'save-to-gdrive', 'gdrive-stream', 'media-sort-order',
+        'ignore-excluded-media', 'skip-detection-names', 'skip-detection-domains', 'filename-template', 'disable-rename-dialog', 'history-page', 'settings-layout', 'theme-mode', 'group-by-type', 'save-to-gdrive', 'gdrive-stream', 'media-sort-order',
         'save-to-dropbox', 'dropbox-stream', 'auto-check-update', 'badge-counter', 'ui-scale', 'ui-scale-custom'
     ];
 
@@ -345,6 +411,7 @@ async function initializeSettings() {
 
         if (value === undefined) {
             const defaultsEnabled = [
+                'ignore-excluded-media',
                 'url-detection', 'youtube-detection', 'mime-detection', 'hide-page-components', 'hide-segments',
                 'media-notification', 'audio-process-notification', 'media-system-notification', 'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle',
                 'background-download', 'auto-resume', 'only-file', 'stream-to-mp4', 'audio-to-mp3', 'auto-check-update', 'badge-counter',
@@ -744,7 +811,7 @@ async function initializeSettings() {
             continue;
         }
 
-        if (element.tagName === 'MDUI-TEXT-FIELD' || (element.tagName === 'INPUT' && (element.type === 'text' || element.type === 'number'))) {
+        if (element.tagName === 'TEXTAREA' || element.tagName === 'MDUI-TEXT-FIELD' || (element.tagName === 'INPUT' && (element.type === 'text' || element.type === 'number'))) {
             const defVal = setting === 'limit-media-list-custom' ? '0' : '';
             element.value = (value !== undefined && value !== null && value !== '') ? value : defVal;
             element.oninput = () => {
@@ -1598,14 +1665,13 @@ function setupSpeedTest() {
         if (speedometerProgress) speedometerProgress.style.strokeDasharray = '0 502.65';
         if (speedometerValue) speedometerValue.textContent = '0.00';
 
-        const localSettings = await browser.storage.local.get(['connections']);
-        const concurrency = parseInt(localSettings['connections'] || '4', 10);
-
         try {
+            const localSettings = await browser.storage.local.get(['connections']);
+            const concurrency = normalizeSpeedTestConcurrency(localSettings['connections']);
 
             statusText.textContent = browser.i18n.getMessage("speedTestStatusTestingDownload") || "Testing download speed...";
             const downloadBps = await runDownloadTest((progress, currentBps) => {
-                dlProgress.value = progress;
+                dlProgress.value = progress / 100;
                 dlValue.textContent = formatSpeed(currentBps);
                 updateSpeedometer(currentBps, 'download');
             });
@@ -1616,7 +1682,7 @@ function setupSpeedTest() {
             dlBoostProgress.style.display = 'block';
             statusText.textContent = `Testing download speed boost (using ${concurrency} connections)...`;
             const downloadBoostBps = await runParallelDownloadTest(concurrency, (progress, currentBps) => {
-                dlBoostProgress.value = progress;
+                dlBoostProgress.value = progress / 100;
                 dlBoostValue.textContent = formatSpeed(currentBps);
                 updateSpeedometer(currentBps, 'download');
             });
@@ -1627,7 +1693,7 @@ function setupSpeedTest() {
             ulProgress.style.display = 'block';
             statusText.textContent = browser.i18n.getMessage("speedTestStatusTestingUpload") || "Testing upload speed...";
             const uploadBps = await runUploadTest((progress, currentBps) => {
-                ulProgress.value = progress;
+                ulProgress.value = progress / 100;
                 ulValue.textContent = formatSpeed(currentBps);
                 updateSpeedometer(currentBps, 'upload');
             });
@@ -1638,7 +1704,7 @@ function setupSpeedTest() {
             ulBoostProgress.style.display = 'block';
             statusText.textContent = `Testing upload speed boost (using ${concurrency} connections)...`;
             const uploadBoostBps = await runParallelUploadTest(concurrency, (progress, currentBps) => {
-                ulBoostProgress.value = progress;
+                ulBoostProgress.value = progress / 100;
                 ulBoostValue.textContent = formatSpeed(currentBps);
                 updateSpeedometer(currentBps, 'upload');
             });
@@ -1676,200 +1742,150 @@ function formatSpeed(bps) {
     return Kbps.toFixed(2) + " Kbps";
 }
 
-async function runDownloadTest(onProgress) {
-    const startTime = performance.now();
+function normalizeSpeedTestConcurrency(value) {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) ? Math.max(1, Math.min(16, parsed)) : 4;
+}
+
+async function runTransferSpeedTest(direction, concurrency, onProgress) {
+    concurrency = normalizeSpeedTestConcurrency(concurrency);
+    const warmupMs = 1500;
     const durationMs = 10000;
-    let totalReceived = 0;
-
-    while (performance.now() - startTime < durationMs) {
-        const controller = new AbortController();
-        let response;
-        try {
-            response = await fetch('https://speed.cloudflare.com/__down?bytes=50000000', { signal: controller.signal });
-        } catch (e) {
-            if (totalReceived > 0) break;
-            throw new Error("Failed to download test file: " + e.message);
-        }
-        if (!response.ok) {
-            if (totalReceived > 0) break;
-            throw new Error("Failed to download test file: HTTP status " + response.status);
-        }
-
-        const reader = response.body.getReader();
-        try {
-            while (true) {
-                const elapsed = performance.now() - startTime;
-                if (elapsed >= durationMs) {
-                    controller.abort();
-                    break;
-                }
-                const { done, value } = await reader.read();
-                if (done) break;
-                totalReceived += value.length;
-                if (elapsed > 0) {
-                    const bps = (totalReceived * 8) / (elapsed / 1000);
-                    const progress = Math.min((elapsed / durationMs) * 100, 100);
-                    onProgress(progress, bps);
-                }
-            }
-        } catch (e) {
-            if (!(e.name === 'AbortError' || (e.message && e.message.includes('aborted')))) {
-                if (totalReceived > 0) break;
-                throw e;
-            }
+    const controller = new AbortController();
+    const uploads = new Set();
+    let bytes = 0;
+    let baseline = 0;
+    let measurementStart = null;
+    let measurementEnd = null;
+    let measuredBytes = 0;
+    let stopped = false;
+    let failure = null;
+    let requestId = 0;
+    const nonce = Date.now().toString(36) + Math.random().toString(36).slice(2);
+    const payload = direction === 'upload' ? new Uint8Array(2 * 1024 * 1024) : null;
+    if (payload) {
+        for (let offset = 0; offset < payload.length; offset += 65536) {
+            crypto.getRandomValues(payload.subarray(offset, offset + 65536));
         }
     }
 
-    const finalElapsed = (performance.now() - startTime) / 1000;
-    return (totalReceived * 8) / finalElapsed;
-}
+    function stop(error = null) {
+        if (stopped) return;
+        stopped = true;
+        failure = error;
+        measurementEnd = performance.now();
+        measuredBytes = bytes - baseline;
+        controller.abort();
+        for (const xhr of uploads) xhr.abort();
+    }
 
-async function runParallelDownloadTest(concurrency, onProgress) {
-    const startTime = performance.now();
-    const durationMs = 10000;
-    let totalReceived = 0;
-    let hasError = false;
-
-    const downloadJobs = Array.from({ length: concurrency }).map(async () => {
-        while (performance.now() - startTime < durationMs && !hasError) {
-            const controller = new AbortController();
-            let response;
-            try {
-                response = await fetch('https://speed.cloudflare.com/__down?bytes=50000000', { signal: controller.signal });
-            } catch (e) {
-                if (e.name === 'AbortError' || (e.message && e.message.includes('aborted'))) {
-                    break;
-                }
-                hasError = true;
-                throw new Error("Parallel download failed: " + e.message);
+    async function downloadRequest() {
+        const response = await fetch(
+            'https://speed.cloudflare.com/__down?bytes=50000000&test=' + nonce + '-' + requestId++,
+            { signal: controller.signal, cache: 'no-store' }
+        );
+        if (!response.ok) throw new Error('Download test: HTTP ' + response.status);
+        if (!response.body) throw new Error('Download test: missing response body');
+        const reader = response.body.getReader();
+        try {
+            while (!stopped) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                if (!stopped) bytes += value.byteLength;
             }
-            if (!response.ok) {
-                hasError = true;
-                throw new Error("Parallel download response error");
-            }
-
-            const reader = response.body.getReader();
-            try {
-                while (true) {
-                    const elapsed = performance.now() - startTime;
-                    if (elapsed >= durationMs || hasError) {
-                        controller.abort();
-                        break;
-                    }
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    totalReceived += value.length;
-
-                    if (elapsed > 0) {
-                        const bps = (totalReceived * 8) / (elapsed / 1000);
-                        const progress = Math.min((elapsed / durationMs) * 100, 100);
-                        onProgress(progress, bps);
-                    }
-                }
-            } catch (e) {
-                if (!(e.name === 'AbortError' || (e.message && e.message.includes('aborted')))) {
-                    hasError = true;
-                    throw e;
-                }
-            }
+        } finally {
+            try { await reader.cancel(); } catch (_) {}
+            reader.releaseLock();
         }
-    });
+    }
 
-    await Promise.all(downloadJobs);
-
-    const finalElapsed = (performance.now() - startTime) / 1000;
-    return (totalReceived * 8) / finalElapsed;
-}
-
-async function runUploadTest(onProgress) {
-    const startTime = performance.now();
-    const durationMs = 10000;
-    let totalUploaded = 0;
-
-    const chunk = new Uint8Array(2 * 1024 * 1024);
-
-    while (performance.now() - startTime < durationMs) {
-        await new Promise((resolve) => {
+    function uploadRequest() {
+        return new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
-            xhr.open("POST", "https://speed.cloudflare.com/__up");
-
-            let lastLoaded = 0;
-            xhr.upload.onprogress = (event) => {
-                const chunkUploaded = event.loaded - lastLoaded;
-                lastLoaded = event.loaded;
-                totalUploaded += chunkUploaded;
-
-                const elapsed = performance.now() - startTime;
-                if (elapsed >= durationMs) {
-                    xhr.abort();
+            let loaded = 0;
+            let settled = false;
+            const finish = error => {
+                if (settled) return;
+                settled = true;
+                uploads.delete(xhr);
+                if (error) reject(error);
+                else resolve();
+            };
+            uploads.add(xhr);
+            xhr.open('POST', 'https://speed.cloudflare.com/__up?test=' + nonce + '-' + requestId++);
+            xhr.upload.onprogress = event => {
+                if (stopped) return;
+                const next = Math.min(event.loaded, payload.byteLength);
+                bytes += Math.max(0, next - loaded);
+                loaded = Math.max(loaded, next);
+            };
+            xhr.onload = () => {
+                if (xhr.status < 200 || xhr.status >= 300) {
+                    finish(new Error('Upload test: HTTP ' + xhr.status));
                     return;
                 }
-
-                if (elapsed > 0) {
-                    const bps = (totalUploaded * 8) / (elapsed / 1000);
-                    const progress = Math.min((elapsed / durationMs) * 100, 100);
-                    onProgress(progress, bps);
-                }
+                if (!stopped) bytes += payload.byteLength - loaded;
+                finish();
             };
-
-            xhr.onload = () => resolve();
-            xhr.onerror = () => resolve();
-            xhr.onabort = () => resolve();
-
-            xhr.send(chunk);
+            xhr.onerror = () => finish(new Error('Upload test: network error'));
+            xhr.ontimeout = () => finish(new Error('Upload test: timeout'));
+            xhr.onabort = () => finish(stopped ? null : new Error('Upload test: aborted'));
+            try { xhr.send(payload); } catch (error) { finish(error); }
         });
     }
 
-    const finalElapsed = (performance.now() - startTime) / 1000;
-    return (totalUploaded * 8) / finalElapsed;
+    let endTimer;
+    const warmupTimer = setTimeout(() => {
+        baseline = bytes;
+        measurementStart = performance.now();
+        endTimer = setTimeout(() => stop(), durationMs);
+    }, warmupMs);
+    const progressTimer = setInterval(() => {
+        if (stopped || measurementStart === null) return;
+        const elapsed = performance.now() - measurementStart;
+        if (elapsed > 0) onProgress(Math.min(elapsed / durationMs * 100, 100), (bytes - baseline) * 8000 / elapsed);
+    }, 200);
+
+    try {
+        const jobs = Array.from({ length: concurrency }, async () => {
+            try {
+                while (!stopped) {
+                    if (direction === 'download') await downloadRequest();
+                    else await uploadRequest();
+                }
+            } catch (error) {
+                if (!stopped) stop(error);
+            }
+        });
+        await Promise.all(jobs);
+        if (failure) throw failure;
+        const elapsed = measurementEnd - measurementStart;
+        if (measurementStart === null || elapsed <= 0 || measuredBytes <= 0) {
+            throw new Error('No data transferred during speed measurement');
+        }
+        const bps = measuredBytes * 8000 / elapsed;
+        onProgress(100, bps);
+        return bps;
+    } finally {
+        stop();
+        clearTimeout(warmupTimer);
+        clearTimeout(endTimer);
+        clearInterval(progressTimer);
+    }
 }
 
-async function runParallelUploadTest(concurrency, onProgress) {
-    const startTime = performance.now();
-    const durationMs = 10000;
-    let totalUploaded = 0;
-    let hasError = false;
-    const chunk = new Uint8Array(1 * 1024 * 1024);
+function runDownloadTest(onProgress) {
+    return runTransferSpeedTest('download', 1, onProgress);
+}
 
-    const uploadJobs = Array.from({ length: concurrency }).map(async () => {
-        while (performance.now() - startTime < durationMs && !hasError) {
-            await new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.open("POST", "https://speed.cloudflare.com/__up");
+function runParallelDownloadTest(concurrency, onProgress) {
+    return runTransferSpeedTest('download', concurrency, onProgress);
+}
 
-                let lastLoaded = 0;
-                xhr.upload.onprogress = (event) => {
-                    const elapsed = performance.now() - startTime;
-                    if (elapsed >= durationMs || hasError) {
-                        xhr.abort();
-                        resolve();
-                        return;
-                    }
-                    const chunkUploaded = event.loaded - lastLoaded;
-                    lastLoaded = event.loaded;
-                    totalUploaded += chunkUploaded;
+function runUploadTest(onProgress) {
+    return runTransferSpeedTest('upload', 1, onProgress);
+}
 
-                    if (elapsed > 0) {
-                        const bps = (totalUploaded * 8) / (elapsed / 1000);
-                        const progress = Math.min((elapsed / durationMs) * 100, 100);
-                        onProgress(progress, bps);
-                    }
-                };
-
-                xhr.onload = () => resolve();
-                xhr.onerror = () => {
-                    hasError = true;
-                    reject(new Error("Parallel upload failed"));
-                };
-                xhr.onabort = () => resolve();
-
-                xhr.send(chunk);
-            });
-        }
-    });
-
-    await Promise.all(uploadJobs);
-
-    const finalElapsed = (performance.now() - startTime) / 1000;
-    return (totalUploaded * 8) / finalElapsed;
+function runParallelUploadTest(concurrency, onProgress) {
+    return runTransferSpeedTest('upload', concurrency, onProgress);
 }

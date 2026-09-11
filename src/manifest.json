@@ -1,7 +1,7 @@
 {
     "name": "Website Media Downloader",
     "manifest_version": 3,
-    "version": "2.3.2",
+    "version": "2.3.3",
     "description": "__MSG_extensionDescription__",
     "author": "anpa26",
     "developer": {
@@ -49,6 +49,8 @@
     "background": {
         "service_worker": "network_detector.js",
         "scripts": [
+            "detection_exclusions.js",
+            "media_filename.js",
             "libraries/wymd.js",
             "stream_jobs.js",
             "network_detector.js"

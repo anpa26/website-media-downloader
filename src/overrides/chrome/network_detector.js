@@ -20,6 +20,8 @@ if (typeof browser === 'undefined') {
     var browser = chrome;
 }
 
+if (typeof importScripts === 'function') importScripts('detection_exclusions.js', 'media_filename.js');
+
 const tabMetadata = new Map(); // tabId -> { title, url }
 
 const m3u8VariantsCacheBg = new Map();
@@ -646,8 +648,8 @@ async function updateActiveDownloadsBadge() {
 
         let activeCount = 0;
         if (typeof activeDownloads !== 'undefined' && activeDownloads) {
-            for (const [id, item] of activeDownloads) {
-                if (item && !item.paused && !item.isPaused && !item.cancelled && item.state !== 'interrupted' && item.state !== 'complete') {
+            for (const item of activeDownloads.values()) {
+                if (isActivelyDownloading(item)) {
                     activeCount++;
                 }
             }
@@ -661,6 +663,15 @@ async function updateActiveDownloadsBadge() {
     } catch (e) {
         console.warn("Failed to update active downloads badge:", e);
     }
+}
+
+function isActivelyDownloading(item) {
+    if (!item || item.paused || item.isPaused || item.cancelled) return false;
+    const state = String(item.state || '').trim().toLowerCase();
+    const status = String(item.status || item.statusText || '').trim().toLowerCase();
+    const terminalStates = new Set(['complete', 'completed', 'failed', 'error', 'interrupted', 'cancelled', 'canceled', 'paused']);
+    if (terminalStates.has(state) || terminalStates.has(status)) return false;
+    return !/^(complete(?:d)?|failed|error|interrupted|cancel(?:led|ed)|paused)(?:\b|!)/.test(status);
 }
 
 const _origActiveDownloadsSet = activeDownloads.set.bind(activeDownloads);
@@ -1429,45 +1440,24 @@ async function autoUpdateHistoryLink(pageUrl, filename, newUrl, tabId) {
     }
 }
 
-async function generateTemplateName(template, url, originalName, tabId) {
-    let result = template || "{name}";
-    let pageTitle = "Media";
-    try {
-        if (tabId && tabId >= 0) {
-            const metadata = tabMetadata.get(tabId);
-            if (metadata && metadata.title) {
-                pageTitle = metadata.title;
-            } else {
-                const tab = await browser.tabs.get(tabId);
-                if (tab && tab.title) pageTitle = tab.title;
-            }
-        }
-    } catch (e) {}
-
-    const host = new URL(url).hostname;
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
-    const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
-
-    const lastDotIdx = originalName.lastIndexOf('.');
-    const nameWithoutExt = lastDotIdx !== -1 ? originalName.substring(0, lastDotIdx) : originalName;
-    const ext = lastDotIdx !== -1 ? originalName.substring(lastDotIdx) : '';
-
-    result = result
-        .replace(/{title}/g, pageTitle)
-        .replace(/{host}/g, host)
-        .replace(/{date}/g, dateStr)
-        .replace(/{time}/g, timeStr)
-        .replace(/{name}/g, nameWithoutExt);
-
-    if (ext && !result.toLowerCase().endsWith(ext.toLowerCase())) {
-        result += ext;
+async function getAutomaticFilename(url, tabId, metadata = {}) {
+    let pageTitle = metadata.pageTitle || tabMetadata.get(tabId)?.title || '';
+    if (!pageTitle && tabId >= 0) {
+        try { pageTitle = (await browser.tabs.get(tabId)).title || ''; } catch (_) {}
     }
+    return mediaFilename.resolve(url, { ...metadata, pageTitle });
+}
 
-    return result.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_');
+async function generateTemplateName(template, url, originalName, tabId) {
+    let pageTitle = tabMetadata.get(tabId)?.title || '';
+    if (!pageTitle && tabId >= 0) {
+        try { pageTitle = (await browser.tabs.get(tabId)).title || ''; } catch (_) {}
+    }
+    return mediaFilename.template(template, url, originalName, pageTitle);
 }
 
 async function showMediaNotification(details, settings) {
+    if (await detectionExclusions.shouldSkip(details, true)) return;
     if (!settings.mediaNotification) return;
 
     const url = details.url;
@@ -1533,46 +1523,30 @@ async function showMediaNotification(details, settings) {
         return;
     }
 
-    tabNotified.add(baseUrl);
-    lastNotificationTime.set(tabId, now);
-
-    const originalFilename = getFileName(url, 50);
-    let displayFilename = originalFilename;
-
-    const genericNames = [
-        'master.m3u8', 'index.m3u8', 'playlist.m3u8', 'manifest.mpd', 'manifest.m3u8',
-        'master', 'index', 'playlist', 'manifest',
-        'video.mp4', 'audio.mp3', 'video', 'audio',
-        'stream.m3u8', 'stream.mpd', 'stream'
-    ];
-    const isGenericName = genericNames.includes(originalFilename.toLowerCase());
-
-    if (settings.filenameTemplate) {
-        displayFilename = await generateTemplateName(settings.filenameTemplate, url, originalFilename, tabId);
-    } else if (isGenericName) {
-        let pageTitle = "";
+    let displayFilename = getFileName(url, 180);
+    try {
+        displayFilename = await getAutomaticFilename(url, tabId, {
+            ...(requestItem || {}),
+            ...details,
+            pageTitle: requestItem?.pageTitle || details.pageTitle,
+            responseHeaders: details.responseHeaders || requestItem?.responseHeaders
+        });
+    } catch (error) {
+        console.warn('Notification filename fallback:', error);
+    }
+    if (settings.filenameTemplate && settings.filenameTemplate !== '0') {
         try {
-            if (tabId && tabId >= 0) {
-                const metadata = tabMetadata.get(tabId);
-                if (metadata && metadata.title) {
-                    pageTitle = metadata.title;
-                } else {
-                    const tab = await browser.tabs.get(tabId);
-                    if (tab && tab.title) pageTitle = tab.title;
-                }
-            }
-        } catch (e) {}
-        if (pageTitle) {
-            const cleanTitle = pageTitle.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_');
-            const isAudio = getMediaType(url, contentType) === 'audio';
-            const isStream = getMediaType(url, contentType) === 'stream';
-            let ext = isAudio ? '.mp3' : '.mp4';
-            if (isStream) {
-                ext = url.toLowerCase().includes('.mpd') ? '.mpd' : '.m3u8';
-            }
-            displayFilename = cleanTitle + ext;
+            displayFilename = await generateTemplateName(settings.filenameTemplate, url, displayFilename, tabId);
+        } catch (error) {
+            console.warn('Notification filename template fallback:', error);
         }
     }
+
+    const notificationTime = Date.now();
+    if (tabNotified.has(baseUrl) ||
+        (lastNotificationTime.has(tabId) && notificationTime - lastNotificationTime.get(tabId) < 2000)) return;
+    tabNotified.add(baseUrl);
+    lastNotificationTime.set(tabId, notificationTime);
 
     let pageUrl = "";
     try {
@@ -1635,7 +1609,7 @@ browser.notifications.onButtonClicked.addListener((notificationId, buttonIndex) 
                     if (isGdriveStream) method = 'fetch';
 
                     const template = res['filename-template'];
-                    const originalName = getFileName(data.url);
+                    const originalName = await getAutomaticFilename(data.url, data.tabId, request || {});
                     let finalName = originalName;
 
                     if (template) {
@@ -1808,6 +1782,7 @@ function initListener() {
         );
 
         headersSentListener = async function (details) {
+            if (await detectionExclusions.shouldSkip(details)) return;
             try {
                 const mType = getMediaType(details.url);
                 if (isMediaTypeDisabled(mType, cachedSettings)) return;
@@ -1873,6 +1848,7 @@ function initListener() {
         );
 
         headersReceivedListener = async function (details) {
+            if (await detectionExclusions.shouldSkip(details)) return;
             try {
 
                 const responseHeaders = details.responseHeaders || [];
@@ -2205,31 +2181,14 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 if (isGdriveStream) method = 'fetch';
 
                 const template = (res['filename-template'] && res['filename-template'] !== '0') ? res['filename-template'] : '';
-                const originalName = getFileName(url);
+                const originalName = await getAutomaticFilename(url, tabId, request || {});
                 let finalName = originalName;
 
                 let pageUrl = sender.tab ? sender.tab.url : "";
                 let pageTitle = sender.tab ? sender.tab.title : "";
 
-                const genericNames = [
-                    'master.m3u8', 'index.m3u8', 'playlist.m3u8', 'manifest.mpd', 'manifest.m3u8',
-                    'master', 'index', 'playlist', 'manifest',
-                    'video.mp4', 'audio.mp3', 'video', 'audio',
-                    'stream.m3u8', 'stream.mpd', 'stream'
-                ];
-                const isGenericName = genericNames.includes(originalName.toLowerCase());
-
                 if (template) {
                     finalName = await generateTemplateName(template, url, originalName, tabId);
-                } else if ((isGenericName) && pageTitle) {
-                    const cleanTitle = pageTitle.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_');
-                    const isAudio = getMediaType(url) === 'audio';
-                    const isStream = getMediaType(url) === 'stream';
-                    let ext = isAudio ? '.mp3' : '.mp4';
-                    if (isStream) {
-                        ext = url.toLowerCase().includes('.mpd') ? '.mpd' : '.m3u8';
-                    }
-                    finalName = cleanTitle + ext;
                 }
 
                 const streamPref = res['stream-download'] || 'offline';
@@ -2260,9 +2219,17 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === 'reportDetectedMedia') {
-        getSettings(function(settings) {
+        getSettings(async function(settings) {
             let { urls, pageTitle, pageUrl } = message;
             if (!urls || !Array.isArray(urls)) return;
+            const exclusionContext = {
+                pageTitle: pageTitle || sender.tab?.title,
+                pageUrl: pageUrl || sender.tab?.url,
+                tabId: sender.tab?.id
+            };
+            if (await detectionExclusions.shouldSkip(exclusionContext)) return;
+            urls = urls.filter(url => !detectionExclusions.matchesDetection({ ...exclusionContext, url }));
+            if (!urls.length) return;
             if (settings.ignoreDisabledTypes) {
                 urls = urls.filter(u => {
                     const mType = getMediaType(u);
@@ -2316,7 +2283,11 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
     }
         if (message.action === 'getMediaRequests') {
-        browser.storage.session.get(null, function (items) {
+        browser.storage.session.get(null, async function (items) {
+            await detectionExclusions.ready;
+            items = Object.fromEntries(Object.entries(items || {}).map(([url, requests]) => [
+                url, Array.isArray(requests) ? requests.filter(request => !detectionExclusions.matches({ ...request, url })) : []
+            ]).filter(([, requests]) => requests.length));
             if (cachedSettings.ignoreDisabledTypes) {
                 const filtered = {};
                 for (const [url, reqs] of Object.entries(items || {})) {
