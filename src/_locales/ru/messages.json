@@ -1065,14 +1065,6 @@
     "message": "Позволяет загрузкам продолжаться в фоновом режиме. Если отключено, загрузки будут выполняться во всплывающем окне и остановятся, если оно будет закрыто (на мобильных устройствах не открываются новые вкладки).",
     "description": "The explanation of the background download setting."
   },
-  "autoResumeTitle": {
-    "message": "Автоматическое возобновление загрузки",
-    "description": "Title for the automatic resume setting."
-  },
-  "autoResumeExplain": {
-    "message": "Автоматически возобновлять отложенные загрузки при запуске браузера.",
-    "description": "Explanation for the automatic resume setting."
-  },
   "autoCheckUpdateTitle": {
     "message": "Автоматическая проверка обновлений",
     "description": "Title for the automatic update check setting."
@@ -2223,5 +2215,51 @@
   "cacheStorageEntries": { "message": "Записей в кэше: $1" },
   "cacheStorageReadError": { "message": "Не удалось прочитать кэш: $1" },
   "cacheStorageActiveDownloadError": { "message": "Нельзя очистить кэш во время активных загрузок." },
-  "cacheStorageCleared": { "message": "Кэш очищен" }
+  "cacheStorageCleared": { "message": "Кэш очищен" },
+  "manualTsConvertTitle": {
+    "message": "Конвертировать файл TS вручную"
+  },
+  "manualTsConvertExplain": {
+    "message": "Выберите файл MPEG-TS, конвертируйте его в MP4 и сохраните прямо на устройство."
+  },
+  "manualTsSelectFile": {
+    "message": "Выбрать"
+  },
+  "manualTsConvertButton": {
+    "message": "Конвертировать"
+  },
+  "manualTsConverting": {
+    "message": "Конвертация в MP4…"
+  },
+  "manualTsConvertingProgress": {
+    "message": "Конвертация в MP4: $1%",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "manualTsComplete": {
+    "message": "Конвертация завершена. Сохранение MP4…"
+  },
+  "manualTsInvalidFile": {
+    "message": "Не удалось конвертировать выбранный файл в MP4."
+  },
+  "manualTsFailed": {
+    "message": "Ошибка конвертации: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "manualTsNoFile": {
+    "message": "Файл не выбран"
+  },
+  "manualTsInvalidFileType": {
+    "message": "Можно выбрать только файл .ts."
+  },
+  "streamConversionFallbackTs": {
+    "message": "Не удалось конвертировать в MP4. Сохранение в формате TS…"
+  }
 }

@@ -119,30 +119,49 @@ let urlList = [];
 let headersSentListener, headersReceivedListener;
 const activeDownloads = new Map();
 
-async function saveDownloadState(downloadId, data) {
-    const res = await browser.storage.local.get('pending-downloads');
-    const pending = res['pending-downloads'] || {};
-    pending[downloadId] = {
-        url: data.url,
-        filename: data.filename,
-        total: parseInt(data.total) || 0,
-        loaded: parseInt(data.loaded) || 0,
-        originalRequest: data.originalRequest,
-        chunkIndex: data.chunkIndex || 0,
-        timestamp: Date.now(),
-        isParallel: !!data.isParallel,
-        isPaused: data.isPaused === true || data.isPaused === 'true',
-        dropboxSessionId: data.dropboxSessionId,
-        mediaType: data.mediaType || getMediaType(data.url, [])
-    };
-    await browser.storage.local.set({ 'pending-downloads': pending });
+async function setPersistentJobPaused(item, jobId, isPaused) {
+    const prefix = item.isAudioJob ? "audioJob_" : item.isPersistentZipJob ? "zipJob_" : "streamJob_";
+    const key = prefix + jobId;
+    const stored = await browser.storage.local.get(key);
+    if (!stored[key]) return;
+    stored[key].isPaused = isPaused;
+    await browser.storage.local.set({ [key]: stored[key] });
 }
 
-async function removeDownloadState(downloadId) {
-    const res = await browser.storage.local.get('pending-downloads');
-    const pending = res['pending-downloads'] || {};
-    delete pending[downloadId];
-    await browser.storage.local.set({ 'pending-downloads': pending });
+// Serialize checkpoints so concurrent downloads cannot erase each other's state.
+let pendingDownloadWrites = Promise.resolve();
+function updatePendingDownloads(update) {
+    const write = pendingDownloadWrites.then(async () => {
+        const result = await browser.storage.local.get('pending-downloads');
+        const pending = result['pending-downloads'] || {};
+        update(pending);
+        await browser.storage.local.set({ 'pending-downloads': pending });
+    });
+    pendingDownloadWrites = write.catch(error => console.error('Download checkpoint failed:', error));
+    return write;
+}
+
+function saveDownloadState(downloadId, data) {
+    if (!data) return Promise.resolve();
+    const paused = data.isPaused === true || data.isPaused === "true";
+    const snapshot = {
+        url: data.url, filename: data.filename,
+        total: Number(data.total) || 0, loaded: Number(data.loaded) || 0,
+        originalRequest: data.originalRequest, chunkIndex: data.chunkIndex || 0,
+        timestamp: Date.now(), isParallel: !!data.isParallel,
+        isPaused: paused,
+        recoveryState: data.recoveryState || (paused ? "paused" : "running"),
+        recoveryJobId: data.recoveryJobId,
+        isNative: !!data.isNative, isCachedSave: !!data.isCachedSave, chunkIndexMode: data.chunkIndexMode,
+        dropboxSessionId: data.dropboxSessionId,
+        mediaType: data.mediaType || getMediaType(data.url, []),
+        status: data.status
+    };
+    return updatePendingDownloads(pending => { pending[downloadId] = snapshot; });
+}
+
+function removeDownloadState(downloadId) {
+    return updatePendingDownloads(pending => { delete pending[downloadId]; });
 }
 
 async function removeMediaRequest(url) {
@@ -174,42 +193,41 @@ async function removeMediaRequest(url) {
     }
 }
 
-async function resumeInterruptedDownloads() {
-    const settings = await browser.storage.local.get(['pending-downloads', 'auto-resume']);
-    const pending = settings['pending-downloads'] || {};
-    
-    const autoResumeEnabled = settings['auto-resume'] !== '0' && settings['auto-resume'] !== false;
-    const ids = Object.keys(pending);
-
-    if (ids.length > 0) {
-        for (const id of ids) {
-            const data = pending[id];
-
-
-            const shouldBePaused = !autoResumeEnabled || data.isPaused === true || data.isPaused === 'true';
-
-            if (shouldBePaused) {
-                activeDownloads.set(id, {
-                    url: data.url,
-                    filename: data.filename,
-                    total: parseInt(data.total) || 0,
-                    loaded: parseInt(data.loaded) || 0,
-                    originalRequest: data.originalRequest,
-                    isParallel: !!data.isParallel,
-                    isPaused: true,
-                    isManualResume: true,
-                    mediaType: data.mediaType || getMediaType(data.url, [])
-                });
-            } else {
-                setTimeout(() => {
-                    handleFetchDownload(data.url, data.filename, data.originalRequest, id, true, true, data.loaded, data.mediaType, data.dropboxSessionId);
-                }, 1000);
-            }
-        }
-    }
+async function discardStaleDownloadState() {
+    const stored = await browser.storage.local.get(null);
+    const staleKeys = Object.keys(stored).filter(key => /^(audio|stream|zip|popup)Job_/.test(key));
+    staleKeys.push("pending-downloads");
+    await browser.storage.local.remove([...new Set(staleKeys)]);
 }
 
-resumeInterruptedDownloads();
+async function resumeSavedDownload(id) {
+    const item = activeDownloads.get(id);
+    if (!item) return;
+    if (item.recoveryKey) return restartProcessingJob(id);
+    if (item.isCachedSave) {
+        item.isPaused = false;
+        pendingSaveQueue.push({ id, url: item.url, filename: item.filename });
+        processSaveQueue();
+        return;
+    }
+    if (item.isNative) {
+        try {
+            await browser.downloads.resume(Number(id));
+            item.isPaused = false;
+            item.recoveryState = "running";
+        } catch (error) {
+            item.isPaused = true;
+            item.status = error.message;
+        }
+        await saveDownloadState(id, item);
+        return;
+    }
+    item.isPaused = false;
+    item.recoveryState = "running";
+    item.isManualResume = true;
+    return handleFetchDownload(item.url, item.filename, item.originalRequest, id, true, true,
+        item.loaded, item.mediaType, item.dropboxSessionId);
+}
 
 const DB_NAME = "MediaCacheDB";
 const STORE_NAME = "network-cache";
@@ -248,11 +266,13 @@ async function storeInCache(url, blob, mime) {
         };
         return await new Promise((resolve, reject) => {
             const req = store.put(item);
-            req.onsuccess = () => resolve();
-            req.onerror = () => reject(req.error);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+            tx.onabort = () => reject(tx.error || new Error("Cache write aborted"));
         });
     } catch (e) {
         console.error("Failed to store in cache:", e);
+        throw e;
     }
 }
 
@@ -286,6 +306,7 @@ async function storeChunksInCache(downloadId, chunks) {
         });
     } catch (e) {
         console.error("Failed to store chunks in cache:", e);
+        throw e;
     }
 }
 
@@ -2029,10 +2050,12 @@ browser.downloads.onCreated.addListener((downloadItem) => {
     if (downloadItem.url && (downloadItem.url.startsWith('http') || downloadItem.url.startsWith('blob'))) {
         activeDownloads.set(downloadItem.id, {
             url: downloadItem.url,
+            filename: downloadItem.filename,
             loaded: 0,
             total: downloadItem.totalBytes,
             isNative: true
         });
+        if (downloadItem.url.startsWith('http')) saveDownloadState(downloadItem.id, activeDownloads.get(downloadItem.id)).catch(console.error);
     }
 });
 
@@ -2042,6 +2065,16 @@ browser.downloads.onChanged.addListener((delta) => {
 
     if (delta.bytesReceived) item.loaded = delta.bytesReceived.current;
     if (delta.totalBytes) item.total = delta.totalBytes.current;
+    if (delta.paused) item.isPaused = delta.paused.current;
+    if (delta.state?.current === 'interrupted' && delta.error?.current !== 'USER_CANCELED') {
+        const wasPaused = item.isPaused;
+        item.isPaused = true;
+        if (item.url.startsWith('http')) saveDownloadState(delta.id, { ...item, isPaused: wasPaused }).catch(console.error);
+        browser.runtime.sendMessage({ action: 'downloadPaused', id: delta.id,
+            loaded: item.loaded, total: item.total }).catch(() => {});
+        return;
+    }
+    if (item.url.startsWith('http')) saveDownloadState(delta.id, item).catch(console.error);
 
     if (delta.state && (delta.state.current === 'complete' || delta.state.current === 'interrupted')) {
         let errorMsg = delta.error ? delta.error.current : null;
@@ -2059,6 +2092,7 @@ browser.downloads.onChanged.addListener((delta) => {
             removeMediaRequest(item.url);
         }
         activeDownloads.delete(delta.id);
+        removeDownloadState(delta.id).catch(console.error);
     } else {
         browser.runtime.sendMessage({
             action: 'downloadProgress',
@@ -2131,9 +2165,8 @@ const cancelledZipDownloads = new Set();
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'startPersistentAudioJob') {
         const jobId = 'audio_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-        const job = { ...message, action: undefined, jobId, percent: 0, text: 'Starting...', status: 'running' };
+        const job = { ...message, action: undefined, jobId, percent: 0, text: 'Starting...', status: "running", recoveryState: "running" };
         activeDownloads.set(jobId, { id: jobId, url: message.url, audioUrl: message.audioUrl, filename: message.filename, loaded: 0, total: 100, percent: 0, status: 'Starting...', mediaType: message.audioOnly ? 'audio' : 'video', isAudioJob: true });
-        sendResponse({ success: true, jobId });
         browser.storage.local.set({ [`audioJob_${jobId}`]: job }).then(async () => {
             if (await ensureAudioOffscreenDocument()) {
                 await browser.runtime.sendMessage({ action: 'startOffscreenAudioJob', jobId });
@@ -2141,19 +2174,21 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
             return browser.tabs.create({ url: browser.runtime.getURL(`audio_processor.html?job=${encodeURIComponent(jobId)}`), active: false });
         }).then(tab => {
+            sendResponse({ success: true, jobId });
             const item = activeDownloads.get(jobId);
             if (item) {
                 item.processorTabId = tab.id;
                 item.isOffscreen = !!tab.offscreen;
             }
         }).catch(error => {
+            sendResponse({ success: false, error: error.message });
             const item = activeDownloads.get(jobId);
             if (item) item.status = error.message;
             broadcastAudioJob({ action: 'audioJobUpdate', jobId, filename: message.filename, text: error.message, complete: true, success: false });
             activeDownloads.delete(jobId);
             browser.storage.local.remove(`audioJob_${jobId}`).catch(() => {});
         });
-        return;
+        return true;
     }
     if (message.action === 'audioJobProgress') {
         const normalized = normalizeAudioJobStatus(message.text, message.percent);
@@ -2173,6 +2208,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
     }
     if (message.action === 'audioJobComplete') {
+        finalizeProcessingRecovery(`audioJob_${message.jobId}`, message.success ? "completed" : "failed");
         const item = activeDownloads.get(message.jobId);
         broadcastAudioJob({ action: 'audioJobUpdate', jobId: message.jobId, filename: item?.filename, text: message.success ? 'Complete!' : (message.error || 'Failed'), percent: message.success ? 100 : item?.percent, complete: true, success: message.success });
         if (item) browser.runtime.sendMessage({ action: message.success ? 'downloadComplete' : 'downloadError', id: item.url, url: item.url, error: message.error }).catch(() => {});
@@ -2232,6 +2268,9 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 const chunks = [];
                 let loaded = 0;
                 while (true) {
+                    while (message.jobId && activeDownloads.get(message.jobId)?.isPaused) {
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                    }
                     const { done, value } = await reader.read();
                     if (done) break;
                     chunks.push(value);
@@ -2265,10 +2304,31 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         })();
         return true;
     }
+    if (message.action === 'download_cached_blob') {
+        const downloadId = message.cacheId;
+        if (!downloadId || !String(downloadId).startsWith('processed_')) {
+            sendResponse({ success: false, error: 'Invalid completed download cache ID' });
+            return false;
+        }
+        const item = {
+            url: downloadId, filename: message.filename,
+            loaded: Number(message.size) || 0, total: Number(message.size) || 0,
+            isCachedSave: true, mediaType: 'file', mime: message.mime || 'application/octet-stream'
+        };
+        activeDownloads.set(downloadId, item);
+        pendingSaveQueue.push({ id: downloadId, url: downloadId, filename: message.filename });
+        processSaveQueue();
+        sendResponse({ success: true });
+        return false;
+    }
     if (message.action === 'download_arraybuffer') {
         const blob = new Blob([message.arrayBuffer], { type: message.mime || 'application/octet-stream' });
-        const downloadId = 'tab_' + Date.now();
-        storeInCache(downloadId, blob, message.mime).then(() => {
+        const downloadId = 'tab_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+        storeInCache(downloadId, blob, message.mime).then(async () => {
+            const item = { url: downloadId, filename: message.filename,
+                loaded: blob.size, total: blob.size, isCachedSave: true, mediaType: 'file' };
+            await saveDownloadState(downloadId, item);
+            activeDownloads.set(downloadId, item);
             pendingSaveQueue.push({
                 id: downloadId,
                 url: downloadId,
@@ -2916,7 +2976,19 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === 'startFetchDownload') {
-        handleFetchDownload(message.url, message.filename, message.request, message.downloadId, false, false, null, message.mediaType);
+        const id = message.downloadId || `dl_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const item = { url: message.url, filename: message.filename,
+            originalRequest: message.request, mediaType: message.mediaType,
+            recoveryJobId: message.recoveryJobId, chunkIndexMode: 'bytes' };
+        activeDownloads.set(id, item);
+        saveDownloadState(id, item).then(() => {
+            if (activeDownloads.get(id) !== item) {
+                sendResponse({ success: false, error: 'USER_CANCELED' });
+                return;
+            }
+            handleFetchDownload(message.url, message.filename, message.request, id, false, false, null, message.mediaType);
+            sendResponse({ success: true, downloadId: id });
+        }, error => sendResponse({ success: false, error: error.message }));
         return true;
     }
 
@@ -2928,7 +3000,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === 'cancelDownload') {
-        let targetId = message.id;
+        let targetId = activeDownloads.has(message.id) ? message.id : (Number(message.id) || message.id);
         let isNative = false;
 
         if (!targetId && message.url) {
@@ -2944,6 +3016,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (targetId) {
             const item = activeDownloads.get(targetId);
             if (item) {
+                if (item.recoveryKey) browser.storage.local.remove(item.recoveryKey).catch(() => {});
                 if (item.isZip) cancelledZipDownloads.add(targetId);
                 if (item.isAudioJob) {
                     if (item.abortController) item.abortController.abort();
@@ -2972,9 +3045,29 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === 'pauseDownload') {
-        const id = message.id;
+        const id = activeDownloads.has(message.id) ? message.id : Number(message.id);
         const item = activeDownloads.get(id);
         if (item) {
+            if (item.isStreamJob || item.isAudioJob || item.isZip) {
+                item.isPaused = true;
+                if (item.isAudioJob || item.isStreamJob || item.isPersistentZipJob) {
+                    setPersistentJobPaused(item, id, true).catch(console.error);
+                    const action = item.isAudioJob ? "pausePersistentAudioJob" :
+                        item.isPersistentZipJob ? "pausePersistentZipJob" : "pausePersistentStreamJob";
+                    browser.runtime.sendMessage({ action, jobId: id }).catch(console.error);
+                }
+                browser.runtime.sendMessage({ action: "downloadPaused", id, loaded: item.loaded || 0, total: item.total || 0 }).catch(() => {});
+                return true;
+            }
+            if (item.recoveryKey) {
+                pauseProcessingJob(id).catch(console.error);
+                return true;
+            }
+            item.recoveryState = "paused";
+            if (item.isNative) {
+                item.isPaused = true;
+                browser.downloads.pause(Number(id)).catch(() => {});
+            }
             if (item.abortController) {
                 item.isPaused = true;
                 item.abortController.abort();
@@ -2995,7 +3088,9 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 }).catch(() => {});
             }
 
-            saveDownloadState(id, item).catch(() => {});
+            if (!item.isAudioJob && !item.isStreamJob && !item.isZip && !item.recoveryKey) {
+                saveDownloadState(id, item).catch(() => {});
+            }
 
             browser.runtime.sendMessage({
                 action: 'downloadPaused',
@@ -3008,9 +3103,24 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === 'resumeActiveDownload') {
-        const id = message.id;
+        const id = activeDownloads.has(message.id) ? message.id : Number(message.id);
         const item = activeDownloads.get(id);
         if (item && item.isPaused) {
+            if (item.isStreamJob || item.isAudioJob || item.isZip) {
+                item.isPaused = false;
+                if (item.isAudioJob || item.isStreamJob || item.isPersistentZipJob) {
+                    setPersistentJobPaused(item, id, false).catch(console.error);
+                    const action = item.isAudioJob ? "resumePersistentAudioJob" :
+                        item.isPersistentZipJob ? "resumePersistentZipJob" : "resumePersistentStreamJob";
+                    browser.runtime.sendMessage({ action, jobId: id }).catch(console.error);
+                }
+                sendResponse?.({ success: true });
+                return true;
+            }
+            if (item.isNative || item.recoveryKey) {
+                resumeSavedDownload(id).then(() => sendResponse({ success: true }), error => sendResponse({ success: false, error: error.message }));
+                return true;
+            }
             item.isPaused = false;
 
             item.isManualResume = true;
@@ -3033,28 +3143,30 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === 'getActiveDownloads') {
-        const downloadsObj = {};
-        for (let [id, value] of activeDownloads) {
-            downloadsObj[id] = {
-                id: id,
-                loaded: parseInt(value.loaded) || 0,
-                total: parseInt(value.total) || 0,
-                url: value.url,
-                filename: value.filename,
-                isParallel: !!value.isParallel,
-                isPaused: !!value.isPaused,
-                mediaType: value.mediaType || getMediaType(value.url, []),
-                percent: value.percent,
-                status: value.status,
-                statusText: value.statusText,
-                currentFile: value.currentFile,
-                isAudioJob: !!value.isAudioJob,
-                isStreamJob: !!value.isStreamJob,
-                isZip: !!value.isZip,
-                isPersistentZipJob: !!value.isPersistentZipJob
-            };
-        }
-        sendResponse(downloadsObj);
+        staleDownloadStateCleanupReady.then(() => {
+            const downloadsObj = {};
+            for (let [id, value] of activeDownloads) {
+                downloadsObj[id] = {
+                    id: id,
+                    loaded: parseInt(value.loaded) || 0,
+                    total: parseInt(value.total) || 0,
+                    url: value.url,
+                    filename: value.filename,
+                    isParallel: !!value.isParallel,
+                    isPaused: !!value.isPaused,
+                    mediaType: value.mediaType || getMediaType(value.url, []),
+                    percent: value.percent,
+                    status: value.status,
+                    statusText: value.statusText,
+                    currentFile: value.currentFile,
+                    isAudioJob: !!value.isAudioJob,
+                    isStreamJob: !!value.isStreamJob,
+                    isZip: !!value.isZip,
+                    isPersistentZipJob: !!value.isPersistentZipJob
+                };
+            }
+            sendResponse(downloadsObj);
+        });
         return true;
     }
 
@@ -3138,6 +3250,10 @@ async function handleDownloadAllAsZip(items, downloadId) {
             let skipAllErrors = false;
             const usedNames = new Set();
             for (let i = 0; i < items.length; i++) {
+                while (activeDownloads.get(downloadId)?.isPaused) {
+                    if (cancelledZipDownloads.has(downloadId)) throw new Error("Cancelled");
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
                 if (cancelledZipDownloads.has(downloadId)) throw new Error("Cancelled");
                 const item = items[i];
                 const url = item.url;
@@ -3247,7 +3363,19 @@ async function handleDownloadAllAsZip(items, downloadId) {
                     }
                     usedNames.add(filename);
 
-                    yield { name: filename, input: response };
+                    const reader = response.body.getReader();
+                    const pauseAwareBody = new ReadableStream({
+                        async pull(controller) {
+                            while (activeDownloads.get(downloadId)?.isPaused) {
+                                if (cancelledZipDownloads.has(downloadId)) { controller.error(new Error("Cancelled")); return; }
+                                await new Promise(resolve => setTimeout(resolve, 200));
+                            }
+                            const { done, value } = await reader.read();
+                            if (done) controller.close(); else controller.enqueue(value);
+                        },
+                        cancel(reason) { return reader.cancel(reason); }
+                    });
+                    yield { name: filename, input: new Response(pauseAwareBody, { headers: response.headers }) };
 
                     activeDownloads.get(downloadId).loaded = i + 1;
                 } catch (err) {
@@ -3508,6 +3636,11 @@ async function cleanupDownload(id) {
         delTx.objectStore(STORE_NAME).delete(id);
         const chunkRange = IDBKeyRange.bound([id, 0], [id, Infinity]);
         delTx.objectStore(CHUNK_STORE_NAME).delete(chunkRange);
+        await new Promise((resolve, reject) => {
+            delTx.oncomplete = resolve;
+            delTx.onerror = () => reject(delTx.error);
+            delTx.onabort = () => reject(delTx.error);
+        });
     } catch (e) { console.warn("Cleanup failed:", e); }
 }
 
@@ -3935,6 +4068,8 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
             currentItem.abortController = abortController;
             currentItem.isParallel = true;
             currentItem.isPaused = false;
+            currentItem.originalRequest = cleanOptions;
+            currentItem.chunkIndexMode = 'bytes';
         } else {
             activeDownloads.set(downloadId, {
                 loaded: startOffset,
@@ -3944,6 +4079,7 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                 filename: filename,
                 originalRequest: cleanOptions,
                 isParallel: true,
+                chunkIndexMode: 'bytes',
                 isManualResume: isManualResume,
                 isPaused: false,
                 mediaType: providedMediaType || getMediaType(url, providedContentType)
@@ -4785,6 +4921,8 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
             abortController: abortController, 
             url: url,
             filename: filename,
+            originalRequest,
+            chunkIndexMode: "bytes",
             isParallel: false,
             isManualResume: isManualResume,
             isPaused: false,
@@ -4795,63 +4933,37 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
         const item = activeDownloads.get(downloadId);
         item.abortController = abortController;
         item.isPaused = false;
+        delete item.recoveryKey;
+        item.originalRequest = originalRequest;
         if (providedDropboxSessionId) item.dropboxSessionId = providedDropboxSessionId;
     }
 
-    let resumeOffset = providedResumeOffset || 0;
-    let isByteOffsetMode = resumeOffset > 10000;
-    let nextChunkIndex = isByteOffsetMode ? resumeOffset : Math.floor(resumeOffset / (1024 * 1024));
-
-    if (isResuming) {
-        try {
-            const db = await getDB();
-            const tx = db.transaction([CHUNK_STORE_NAME], "readonly");
-            const store = tx.objectStore(CHUNK_STORE_NAME);
-            const range = IDBKeyRange.bound([downloadId, 0], [downloadId, Infinity]);
-            
-            const cursorRequest = store.openCursor(range, "prev");
-            const lastChunk = await new Promise((resolve) => {
-                cursorRequest.onsuccess = (e) => resolve(e.target.result ? e.target.result.value : null);
-                cursorRequest.onerror = () => resolve(null);
-            });
-
-            if (lastChunk) {
-                const dbIsByteOffsetMode = lastChunk.chunkIndex > 10000; 
-
-                const dbResumeOffset = await new Promise((resolve) => {
-                    let sum = 0;
-                    const countTx = db.transaction([CHUNK_STORE_NAME], "readonly");
-                    const countStore = countTx.objectStore(CHUNK_STORE_NAME);
-                    const countReq = countStore.openCursor(range);
-                    countReq.onsuccess = (e) => {
-                        const cursor = e.target.result;
-                        if (cursor) {
-                            sum += cursor.value.data.length;
-                            cursor.continue();
-                        } else resolve(sum);
-                    };
-                    countReq.onerror = () => resolve(0);
-                });
-
-
-                if (dbResumeOffset > resumeOffset) {
-                    resumeOffset = dbResumeOffset;
-                    isByteOffsetMode = dbIsByteOffsetMode;
-                    if (isByteOffsetMode) {
-                        nextChunkIndex = resumeOffset; 
-                    } else {
-                        nextChunkIndex = lastChunk.chunkIndex + 1;
-                    }
-                }
-            }
-        } catch (e) {
-            console.error("Failed to calculate resume offset from DB:", e);
-        }
-    } else {
-        isByteOffsetMode = true; 
-    }
-
     try {
+        await saveDownloadState(downloadId, activeDownloads.get(downloadId));
+
+        let resumeOffset = providedResumeOffset || 0;
+        let isByteOffsetMode = resumeOffset > 10000;
+        let nextChunkIndex = isByteOffsetMode ? resumeOffset : Math.floor(resumeOffset / (1024 * 1024));
+
+        if (isResuming) {
+            // Only resume after the contiguous prefix committed to IndexedDB.
+            const checkpoint = await getCommittedDownloadPrefix(downloadId,
+                activeDownloads.get(downloadId)?.chunkIndexMode);
+            resumeOffset = checkpoint.offset;
+            isByteOffsetMode = checkpoint.mode === 'bytes';
+            nextChunkIndex = checkpoint.nextIndex;
+            const saved = activeDownloads.get(downloadId);
+            if (saved) saved.loaded = resumeOffset;
+            if (saved?.total > 0 && resumeOffset === Number(saved.total)) {
+                await storeInCache(downloadId, null, 'application/octet-stream');
+                pendingSaveQueue.push({ id: downloadId, url, filename, isStreamUploaded: false, cloud: gdriveEnabled });
+                processSaveQueue();
+                return;
+            }
+        } else {
+            isByteOffsetMode = true;
+        }
+
         const fetchOptions = createMediaFetchOptions(url, originalRequest, abortController.signal);
 
         if (resumeOffset > 0) {
@@ -4883,6 +4995,7 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
 
         if (resumeOffset > 0 && response.status !== 206) {
             console.warn("Server ignored Range header, restarting download from byte 0");
+            await cleanupDownload(downloadId);
             currentResumeOffset = 0;
             activeChunkIndex = 0;
             activeByteOffsetMode = true; 
@@ -4892,6 +5005,9 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
         let total = (contentLength ? parseInt(contentLength, 10) : 0) + currentResumeOffset;
 
         const contentRange = response.headers.get('content-range');
+        if (currentResumeOffset > 0 && (!contentRange || Number(contentRange.match(/^bytes (\d+)-/)?.[1]) !== currentResumeOffset)) {
+            throw new Error('Server returned an unexpected resume range');
+        }
         if (contentRange) {
             const match = contentRange.match(/\/(\d+)/);
             if (match) {
@@ -4903,7 +5019,7 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
         const supportsRanges = acceptRanges === 'bytes' || response.status === 206;
         const contentType = response.headers.get('content-type');
 
-        const canUseSpeedBoost = speedBoostEnabled && supportsRanges && total > 2 * 1024 * 1024 && connections > 1 && !gdriveStreamEnabled && !dropboxStreamEnabled;
+        const canUseSpeedBoost = speedBoostEnabled && supportsRanges && (currentResumeOffset === 0 || activeByteOffsetMode) && total > 2 * 1024 * 1024 && connections > 1 && !gdriveStreamEnabled && !dropboxStreamEnabled;
 
         const speedBoostAllowed = isManualResume ? speedBoostResumeEnabled : true;
 
@@ -4938,6 +5054,8 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
             existingItem.isParallel = false;
             existingItem.isPaused = false;
             existingItem.chunkIndex = activeChunkIndex;
+            existingItem.originalRequest = { ...originalRequest, ...cleanOriginalRequest };
+            existingItem.chunkIndexMode = activeByteOffsetMode ? 'bytes' : 'ordinal';
         } else {
             activeDownloads.set(downloadId, { 
                 loaded: currentResumeOffset, 
@@ -5234,6 +5352,15 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
             return;
         }
 
+        if (isResuming && activeDownloads.has(downloadId)) {
+            const item = activeDownloads.get(downloadId);
+            item.isPaused = true;
+            item.status = error.message;
+            await saveDownloadState(downloadId, item);
+            browser.runtime.sendMessage({ action: 'downloadPaused', id: downloadId,
+                loaded: item.loaded, total: item.total }).catch(() => {});
+            return;
+        }
         console.error("Background fetch download failed:", error);
         browser.runtime.sendMessage({ action: 'downloadError', url: url, error: error.message }).catch(() => {});
 
@@ -5552,7 +5679,7 @@ browser.storage.onChanged.addListener((changes, area) => {
 });
 
 initCacheState();
-restoreActiveDownloadsFromSession();
+staleDownloadStateCleanupReady = discardStaleDownloadState().catch(error => console.error("Stale download cleanup failed:", error));
 
 browser.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && (changes['speed-boost-resume'] || changes['speed-boost'])) {

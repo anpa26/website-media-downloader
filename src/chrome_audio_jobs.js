@@ -38,7 +38,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'startPersistentAudioJob') {
         const jobId = 'audio_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
         const job = { ...message, action: undefined, jobId };
-        chromeAudioJobs.set(jobId, { ...job, controller: null, percent: 0 });
+        chromeAudioJobs.set(jobId, { ...job, controller: null, percent: 0, isPaused: false });
         sendResponse({ success: true, jobId });
         chrome.storage.local.set({ [`audioJob_${jobId}`]: job })
             .then(ensureChromeAudioOffscreen)
@@ -67,6 +67,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 const chunks = [];
                 let loaded = 0;
                 while (true) {
+                    while (job?.isPaused) await new Promise(resolve => setTimeout(resolve, 200));
                     const { done, value } = await reader.read();
                     if (done) break;
                     chunks.push(value); loaded += value.byteLength;
@@ -90,6 +91,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         chrome.runtime.sendMessage({ action: message.success ? 'downloadComplete' : 'downloadError', id: job.url, url: job.url, error: message.error }).catch(() => {});
         chromeAudioJobs.delete(message.jobId);
         chrome.storage.local.remove(`audioJob_${message.jobId}`);
+    }
+    if (message.action === 'pauseDownload' || message.action === 'resumeActiveDownload' ||
+        message.action === 'pausePersistentAudioJob' || message.action === 'resumePersistentAudioJob') {
+        const paused = message.action === 'pauseDownload' || message.action === 'pausePersistentAudioJob';
+        const id = message.jobId || message.id;
+        const job = chromeAudioJobs.get(id);
+        if (job) {
+            job.isPaused = paused;
+            chrome.storage.local.get(`audioJob_${id}`).then(stored => {
+                if (stored[`audioJob_${id}`]) chrome.storage.local.set({ [`audioJob_${id}`]: { ...stored[`audioJob_${id}`], isPaused: paused } });
+            });
+            if (message.action === 'pauseDownload' || message.action === 'resumeActiveDownload') {
+                chrome.runtime.sendMessage({ action: paused ? 'pausePersistentAudioJob' : 'resumePersistentAudioJob', jobId: id }).catch(() => {});
+            }
+            sendResponse({ success: true });
+            return true;
+        }
     }
     if (message.action === 'cancelDownload') {
         for (const [id, job] of chromeAudioJobs) {

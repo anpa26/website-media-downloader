@@ -1,102 +1,111 @@
 {
   "require_uninstall": false,
   "en": {
-    "headline": "What's New (v2.3.3)",
+    "headline": "What's New (v2.3.6)",
     "changes": [
-      "Added name and domain exclusions, including subdomains, with a switch to stop detecting excluded media.",
-      "Improved automatic filenames using server metadata and URLs. Home names and sorting now respect filename templates.",
-      "Kept detection notifications working with fallback names when smart naming or templates fail.",
-      "Standardized normal and Speed Boost tests with warm-up, equal measurement durations, request cleanup, and error handling.",
-      "Added settings import/export and corrected the badge to count only active downloads.",
-      "Moved resume and background download options to Download settings and improved exclusion inputs."
+      "Fixed incorrect duration detection for stream videos.",
+      "Fixed stream pause so active downloads actually stop and resume correctly.",
+      "Fixed stale media lists appearing again on Home after reopening the browser.",
+      "Fixed category group badges so their totals accurately match the media shown in each group.",
+      "Fixed the media list not appearing when a page contains a large number of media items.",
+      "Added manual TS-to-MP4 conversion as a fallback when automatic stream conversion fails.",
+      "Fixed stream downloads failing on some websites."
     ]
   },
   "id": {
-    "headline": "Yang Baru (v2.3.3)",
+    "headline": "Yang Baru (v2.3.6)",
     "changes": [
-      "Menambahkan pengecualian nama dan domain, termasuk subdomain, serta switch untuk menghentikan deteksi media yang dikecualikan.",
-      "Memperbaiki nama file otomatis berdasarkan metadata server dan URL. Nama serta pengurutan di Home kini mengikuti template nama file.",
-      "Menjaga notifikasi deteksi tetap muncul dengan nama cadangan jika penamaan pintar atau template gagal.",
-      "Menyamakan uji normal dan Speed Boost dengan pemanasan, durasi pengukuran yang sama, penghentian request, dan penanganan error.",
-      "Menambahkan impor/ekspor pengaturan dan memperbaiki badge agar hanya menghitung unduhan aktif.",
-      "Memindahkan opsi lanjutkan dan unduhan latar belakang ke Pengaturan Unduhan dan merapikan input pengecualian."
+      "Memperbaiki deteksi durasi yang tidak benar pada video stream.",
+      "Memperbaiki fungsi jeda stream agar unduhan yang aktif benar-benar berhenti dan dapat dilanjutkan dengan benar.",
+      "Memperbaiki daftar media lama yang muncul kembali di Home setelah browser dibuka ulang.",
+      "Memperbaiki badge kategori grup agar totalnya akurat sesuai media yang ditampilkan dalam setiap grup.",
+      "Memperbaiki daftar media yang tidak muncul saat halaman memiliki banyak media.",
+      "Menambahkan konversi TS ke MP4 secara manual sebagai opsi cadangan ketika konversi stream otomatis gagal.",
+      "Memperbaiki masalah unduhan stream yang gagal pada beberapa situs web."
     ]
   },
   "de": {
-    "headline": "Was gibt's Neues (v2.3.3)",
+    "headline": "Was gibt's Neues (v2.3.6)",
     "changes": [
-      "Namens- und Domainausschlüsse einschließlich Subdomains mit einem Schalter zum Abschalten ihrer Erkennung hinzugefügt.",
-      "Automatische Dateinamen aus Servermetadaten und URLs verbessert. Namen und Sortierung auf der Startseite berücksichtigen jetzt Dateinamenvorlagen.",
-      "Erkennungsbenachrichtigungen verwenden Ersatznamen, wenn die automatische Benennung oder Vorlagen fehlschlagen.",
-      "Normale und Speed-Boost-Tests durch Aufwärmphase, gleiche Messdauer, Beenden von Anfragen und Fehlerbehandlung vereinheitlicht.",
-      "Import und Export von Einstellungen hinzugefügt. Der Zähler berücksichtigt nur aktive Downloads.",
-      "Fortsetzungs- und Hintergrunddownloadoptionen in die Download-Einstellungen verschoben und Ausschlussfelder verbessert."
+      "Die fehlerhafte Dauererkennung bei Stream-Videos wurde korrigiert.",
+      "Die Stream-Pause wurde korrigiert, sodass aktive Downloads tatsächlich stoppen und korrekt fortgesetzt werden.",
+      "Es wurde behoben, dass alte Medienlisten nach dem erneuten Öffnen des Browsers wieder auf der Startseite erschienen.",
+      "Die Zähler der Kategoriegruppen zeigen jetzt korrekt die Anzahl der in jeder Gruppe sichtbaren Medien an.",
+      "Es wurde behoben, dass die Medienliste bei einer großen Anzahl von Medien auf einer Seite nicht angezeigt wurde.",
+      "Eine manuelle TS-zu-MP4-Konvertierung wurde als Ausweichmöglichkeit hinzugefügt, falls die automatische Stream-Konvertierung fehlschlägt.",
+      "Fehlgeschlagene Stream-Downloads auf einigen Websites wurden behoben."
     ]
   },
   "fr": {
-    "headline": "Nouveautés (v2.3.3)",
+    "headline": "Nouveautés (v2.3.6)",
     "changes": [
-      "Ajout d’exclusions de noms et de domaines, sous-domaines inclus, avec une option pour arrêter leur détection.",
-      "Amélioration des noms automatiques à partir des métadonnées du serveur et des URL. Les noms et le tri dans l’accueil respectent les modèles de noms de fichiers.",
-      "Les notifications de détection utilisent un nom de secours si la génération intelligente ou le modèle échoue.",
-      "Uniformisation des tests normaux et Speed Boost : phase de préparation, durée de mesure identique, arrêt des requêtes et gestion des erreurs.",
-      "Ajout de l’import/export des paramètres. Le compteur ne prend en compte que les téléchargements actifs.",
-      "Déplacement des options de reprise et de téléchargement en arrière-plan dans les paramètres de téléchargement et amélioration des champs d’exclusion."
+      "Correction de la détection incorrecte de la durée des vidéos en streaming.",
+      "Correction de la pause des flux afin que les téléchargements actifs s’arrêtent réellement et reprennent correctement.",
+      "Correction des anciennes listes de médias qui réapparaissaient dans l’accueil après la réouverture du navigateur.",
+      "Correction des badges des groupes de catégories afin que leurs totaux correspondent aux médias affichés dans chaque groupe.",
+      "Correction de la liste des médias qui ne s’affichait pas lorsqu’une page contenait un grand nombre de médias.",
+      "Ajout de la conversion manuelle de TS vers MP4 comme solution de secours lorsque la conversion automatique du flux échoue.",
+      "Correction des échecs de téléchargement de flux sur certains sites web."
     ]
   },
   "ja": {
-    "headline": "新機能 (v2.3.3)",
+    "headline": "新機能 (v2.3.6)",
     "changes": [
-      "サブドメインを含む名前・ドメインの除外設定と、除外対象の検出を停止するスイッチを追加しました。",
-      "サーバーのメタデータとURLからの自動ファイル名を改善し、ホームの名前と並び順にもファイル名テンプレートを適用しました。",
-      "自動命名やテンプレートの処理に失敗しても、代替名で検出通知を表示します。",
-      "通常とSpeed Boostのテストにウォームアップ、同じ測定時間、リクエストの停止、エラー処理を適用しました。",
-      "設定のインポート・エクスポートを追加し、バッジには実行中のダウンロードのみをカウントするよう修正しました。",
-      "再開とバックグラウンドダウンロードの項目をダウンロード設定へ移動し、除外入力欄を改善しました。"
+      "ストリーム動画の再生時間が正しく検出されない問題を修正しました。",
+      "ストリームの一時停止を修正し、実行中のダウンロードが実際に停止して正しく再開できるようにしました。",
+      "ブラウザーを再度開いた後、古いメディア一覧がホームに再表示される問題を修正しました。",
+      "カテゴリグループのバッジが各グループに表示されているメディア数を正確に示すよう修正しました。",
+      "ページ内のメディア数が多い場合にメディア一覧が表示されない問題を修正しました。",
+      "ストリームの自動変換に失敗した場合の代替手段として、TSからMP4への手動変換を追加しました。",
+      "一部のウェブサイトでストリームのダウンロードに失敗する問題を修正しました。"
     ]
   },
   "ko": {
-    "headline": "새로운 기능 (v2.3.3)",
+    "headline": "새로운 기능 (v2.3.6)",
     "changes": [
-      "하위 도메인을 포함하는 이름 및 도메인 제외 설정과 제외된 미디어의 감지를 중지하는 스위치를 추가했습니다.",
-      "서버 메타데이터와 URL을 이용한 자동 파일 이름을 개선했으며 홈의 이름과 정렬에도 파일 이름 템플릿을 적용했습니다.",
-      "자동 이름 생성이나 템플릿 처리에 실패해도 대체 이름으로 감지 알림을 표시합니다.",
-      "일반 및 Speed Boost 테스트에 준비 시간, 동일한 측정 시간, 요청 종료 및 오류 처리를 적용했습니다.",
-      "설정 가져오기/내보내기를 추가하고 배지가 진행 중인 다운로드만 집계하도록 수정했습니다.",
-      "재개 및 백그라운드 다운로드 옵션을 다운로드 설정으로 옮기고 제외 입력란을 개선했습니다."
+      "스트림 동영상의 재생 시간이 잘못 감지되는 문제를 수정했습니다.",
+      "스트림 일시 중지를 수정하여 진행 중인 다운로드가 실제로 멈추고 올바르게 재개되도록 했습니다.",
+      "브라우저를 다시 열었을 때 이전 미디어 목록이 홈에 다시 표시되는 문제를 수정했습니다.",
+      "카테고리 그룹 배지가 각 그룹에 표시된 미디어 수를 정확히 나타내도록 수정했습니다.",
+      "페이지에 미디어가 많을 때 미디어 목록이 표시되지 않는 문제를 수정했습니다.",
+      "스트림 자동 변환에 실패할 경우를 위한 대체 수단으로 TS를 MP4로 수동 변환하는 기능을 추가했습니다.",
+      "일부 웹사이트에서 스트림 다운로드가 실패하는 문제를 수정했습니다."
     ]
   },
   "pt": {
-    "headline": "Novidades (v2.3.3)",
+    "headline": "Novidades (v2.3.6)",
     "changes": [
-      "Adicionadas exclusões de nomes e domínios, incluindo subdomínios, com uma opção para interromper a detecção das mídias excluídas.",
-      "Melhorados os nomes automáticos a partir dos metadados do servidor e das URLs. Os nomes e a ordenação na página inicial respeitam os modelos de nomes de arquivos.",
-      "As notificações de detecção usam nomes alternativos quando a geração automática ou os modelos falham.",
-      "Padronizados os testes normal e Speed Boost com aquecimento, duração de medição igual, encerramento de requisições e tratamento de erros.",
-      "Adicionada a importação/exportação de configurações. O contador considera apenas downloads ativos.",
-      "Movidas as opções de retomada e downloads em segundo plano para as configurações de download e melhorados os campos de exclusão."
+      "Corrigida a detecção incorreta da duração de vídeos em streaming.",
+      "Corrigida a pausa de streams para que os downloads ativos realmente parem e sejam retomados corretamente.",
+      "Corrigida a reaparição de listas antigas de mídia na página inicial após reabrir o navegador.",
+      "Corrigidos os badges dos grupos de categorias para que os totais correspondam às mídias exibidas em cada grupo.",
+      "Corrigida a lista de mídias que não aparecia quando uma página continha muitos itens de mídia.",
+      "Adicionada a conversão manual de TS para MP4 como alternativa quando a conversão automática do stream falhar.",
+      "Corrigidas falhas no download de streams em alguns sites."
     ]
   },
   "ru": {
-    "headline": "Что нового (v2.3.3)",
+    "headline": "Что нового (v2.3.6)",
     "changes": [
-      "Добавлены исключения имён и доменов, включая поддомены, и переключатель для отключения обнаружения исключённых медиафайлов.",
-      "Улучшены автоматические имена на основе метаданных сервера и URL. Имена и сортировка на главной странице учитывают шаблоны имён файлов.",
-      "Уведомления об обнаружении используют запасное имя при сбое автоматического именования или шаблона.",
-      "Обычный тест и Speed Boost используют прогрев, одинаковое время измерения, завершение запросов и обработку ошибок.",
-      "Добавлен импорт и экспорт настроек. Счётчик учитывает только активные загрузки.",
-      "Параметры возобновления и фоновых загрузок перенесены в настройки загрузки, улучшены поля исключений."
+      "Исправлено неверное определение длительности потокового видео.",
+      "Исправлена пауза потоковых загрузок: активные загрузки теперь действительно останавливаются и корректно возобновляются.",
+      "Исправлено повторное появление старых списков медиафайлов на главной странице после перезапуска браузера.",
+      "Счётчики групп категорий теперь точно соответствуют количеству медиафайлов, отображаемых в каждой группе.",
+      "Исправлено отсутствие списка медиафайлов, когда на странице находится большое количество медиа.",
+      "Добавлена ручная конвертация TS в MP4 как запасной вариант при сбое автоматической конвертации потока.",
+      "Исправлены сбои загрузки потоков на некоторых сайтах."
     ]
   },
   "ar": {
-    "headline": "ما الجديد (v2.3.3)",
+    "headline": "ما الجديد (v2.3.6)",
     "changes": [
-      "أُضيفت استثناءات للأسماء والنطاقات، بما فيها النطاقات الفرعية، مع خيار لإيقاف اكتشاف الوسائط المستثناة.",
-      "حُسّنت أسماء الملفات التلقائية باستخدام بيانات الخادم والروابط. وأصبحت الأسماء وترتيبها في الصفحة الرئيسية تتبع قوالب أسماء الملفات.",
-      "تستخدم إشعارات الاكتشاف أسماء بديلة عند فشل التسمية الذكية أو القوالب.",
-      "وُحّدت الاختبارات العادية واختبارات Speed Boost بفترة تهيئة ومدة قياس متساوية وإيقاف الطلبات ومعالجة الأخطاء.",
-      "أُضيف استيراد الإعدادات وتصديرها، وأُصلح العدّاد ليحسب التنزيلات النشطة فقط.",
-      "نُقلت خيارات الاستئناف والتنزيل في الخلفية إلى إعدادات التنزيل وحُسّنت حقول الاستثناء."
+      "أُصلح الاكتشاف غير الصحيح لمدة فيديوهات البث.",
+      "أُصلحت وظيفة إيقاف البث مؤقتًا بحيث تتوقف التنزيلات النشطة فعليًا وتُستأنف بصورة صحيحة.",
+      "أُصلح ظهور قوائم الوسائط القديمة مجددًا في الصفحة الرئيسية بعد إعادة فتح المتصفح.",
+      "أُصلحت شارات مجموعات الفئات لتعرض إجماليًا دقيقًا يطابق الوسائط الظاهرة في كل مجموعة.",
+      "أُصلحت مشكلة عدم ظهور قائمة الوسائط عندما تحتوي الصفحة على عدد كبير من عناصر الوسائط.",
+      "أُضيف التحويل اليدوي من TS إلى MP4 كخيار بديل عند فشل التحويل التلقائي للبث.",
+      "أُصلحت مشكلة فشل تنزيل البث على بعض مواقع الويب."
     ]
   }
 }

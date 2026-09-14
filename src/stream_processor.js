@@ -45,11 +45,10 @@ globalThis.finalizeDownload = async function(blob, filename, downloadMethod, loa
     }
     if (routeStreamToDownloadManager && blob && !streamedToGDrive && !streamedToDropbox) {
         if (typeof ensureFileExtension === 'function') filename = ensureFileExtension(filename, blob.type);
+        const cacheId = 'processed_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+        await storeCompletedDownloadBlob(cacheId, blob, blob.type);
         const saved = await browser.runtime.sendMessage({
-            action: 'download_arraybuffer',
-            arrayBuffer: await blob.arrayBuffer(),
-            filename,
-            mime: blob.type
+            action: 'download_cached_blob', cacheId, filename, mime: blob.type, size: blob.size
         });
         if (!saved?.success) throw new Error(saved?.error || 'Unable to open download manager');
         return;
@@ -57,6 +56,7 @@ globalThis.finalizeDownload = async function(blob, filename, downloadMethod, loa
     return originalFinalizeDownload(blob, filename, downloadMethod, loadingBar, streamedToGDrive, streamedToDropbox);
 };
 globalThis.activeCancellations = globalThis.activeCancellations || new Set();
+globalThis.activePauses = globalThis.activePauses || new Set();
 
 function createStreamProgressReporter(job) {
     let percent = 0;
@@ -87,19 +87,29 @@ function createStreamProgressReporter(job) {
     };
 }
 
+async function markRecoveryCompleted(key, job) {
+    await browser.storage.local.set({ [key]: { ...job, recoveryState: "completed", status: "completed" } });
+}
+
 async function runPersistentStreamJob(jobId, options = {}) {
     if (runningStreamJobs.has(jobId)) return;
     const key = `streamJob_${jobId}`;
     const stored = await browser.storage.local.get(key);
     const job = stored[key];
+    let keepRecoveryJob = false;
     if (!job) return;
+    if (typeof browser.runtime.getBrowserInfo === 'function' && !options.offscreen) {
+        const claim = await browser.runtime.sendMessage({ action: 'claimProcessingJob', key });
+        if (!claim?.allowed) return;
+    }
     runningStreamJobs.set(jobId, job);
     routeStreamToDownloadManager = !options.offscreen && !job.zip;
     if (job.zip) capturedStreamFiles = [];
     activeCancellations.delete(job.url);
+    if (job.isPaused) activePauses.add(job.url);
 
     const quality = job.quality || 'highest';
-    history.replaceState(null, '', `${location.pathname}?quality=${encodeURIComponent(quality)}`);
+    history.replaceState(null, '', `${location.pathname}?job=${encodeURIComponent(jobId)}&quality=${encodeURIComponent(quality)}`);
     const loadingBar = createStreamProgressReporter(job);
     let request = job.request || {};
     if (!request.requestHeaders?.length) {
@@ -122,6 +132,7 @@ async function runPersistentStreamJob(jobId, options = {}) {
             throw new Error('Unsupported stream format');
         }
         if (activeCancellations.has(job.url)) throw new Error('Cancelled');
+        await markRecoveryCompleted(key, job);
         if (job.zip) {
             const files = [];
             for (const file of capturedStreamFiles || []) {
@@ -137,6 +148,11 @@ async function runPersistentStreamJob(jobId, options = {}) {
         }
     } catch (error) {
         const cancelled = activeCancellations.has(job.url) || error?.message === 'Cancelled';
+        if (job.recovered && !cancelled) {
+            keepRecoveryJob = true;
+            await browser.runtime.sendMessage({ action: 'parkProcessingJob', key, error: error?.message });
+            return;
+        }
         await browser.runtime.sendMessage(job.zip ? {
             action: 'streamZipComplete', jobId, success: false,
             error: cancelled ? 'USER_CANCELED' : (error?.message || String(error))
@@ -149,8 +165,9 @@ async function runPersistentStreamJob(jobId, options = {}) {
         activeCancellations.delete(job.url);
         routeStreamToDownloadManager = false;
         capturedStreamFiles = null;
+        activePauses.delete(job.url);
         runningStreamJobs.delete(jobId);
-        await browser.storage.local.remove(key);
+        if (!keepRecoveryJob) await browser.storage.local.remove(key);
         if (!options.offscreen && browser.tabs) {
             const tab = await browser.tabs.getCurrent().catch(() => null);
             if (tab?.id !== undefined) browser.tabs.remove(tab.id).catch(() => {});
@@ -177,14 +194,22 @@ async function runPersistentZipJob(jobId, options = {}) {
     const key = `zipJob_${jobId}`;
     const stored = await browser.storage.local.get(key);
     const job = stored[key];
+    let keepRecoveryJob = false;
     if (!job) return;
-    const state = { cancelled: false, controller: null, currentUrl: null };
+    if (typeof browser.runtime.getBrowserInfo === 'function' && !options.offscreen) {
+        const claim = await browser.runtime.sendMessage({ action: 'claimProcessingJob', key });
+        if (!claim?.allowed) return;
+    }
+    const state = { cancelled: false, paused: !!job.isPaused, controller: null, currentUrl: null };
     runningZipJobs.set(jobId, state);
     const report = (status, data = {}) => browser.runtime.sendMessage({
         action: 'zipProcessorProgress', jobId, status, ...data
     }).catch(() => {});
     const throwIfCancelled = () => {
         if (state.cancelled) throw new Error('Cancelled');
+    };
+    const waitIfPaused = async () => {
+        while (state.paused) { throwIfCancelled(); await new Promise(resolve => setTimeout(resolve, 200)); }
     };
 
     try {
@@ -193,6 +218,7 @@ async function runPersistentZipJob(jobId, options = {}) {
         const items = job.items || [];
         for (let index = 0; index < items.length; index++) {
             throwIfCancelled();
+            await waitIfPaused();
             const item = items[index];
             state.currentUrl = item.url;
             report('downloading', { loaded: index, total: items.length, currentFile: item.filename });
@@ -246,7 +272,15 @@ async function runPersistentZipJob(jobId, options = {}) {
                 fetchOptions.signal = state.controller.signal;
                 const response = await fetch(item.url, fetchOptions);
                 if (!response.ok) throw new Error(`Server returned ${response.status}`);
-                const blob = await response.blob();
+                const reader = response.body.getReader();
+                const chunks = [];
+                while (true) {
+                    await waitIfPaused();
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                }
+                const blob = new Blob(chunks, { type: response.headers.get("content-type") || "application/octet-stream" });
                 let filename = item.filename || 'file';
                 if (typeof ensureFileExtension === 'function') filename = ensureFileExtension(filename, blob.type);
                 entries.push({ name: uniqueZipFilename(filename, usedNames), input: blob });
@@ -271,14 +305,22 @@ async function runPersistentZipJob(jobId, options = {}) {
             anchor.remove();
             setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
         } else {
+            const cacheId = 'processed_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+            await storeCompletedDownloadBlob(cacheId, zipBlob, 'application/zip');
             const saved = await browser.runtime.sendMessage({
-                action: 'download_arraybuffer', arrayBuffer: await zipBlob.arrayBuffer(),
-                filename: zipName, mime: 'application/zip'
+                action: 'download_cached_blob', cacheId, filename: zipName,
+                mime: 'application/zip', size: zipBlob.size
             });
             if (!saved?.success) throw new Error(saved?.error || 'Unable to open download manager');
         }
+        await markRecoveryCompleted(key, job);
         await browser.runtime.sendMessage({ action: 'zipProcessorComplete', jobId, success: true, filename: zipName });
     } catch (error) {
+        if (job.recovered && !state.cancelled && error?.name !== 'AbortError') {
+            keepRecoveryJob = true;
+            await browser.runtime.sendMessage({ action: 'parkProcessingJob', key, error: error?.message });
+            return;
+        }
         await browser.runtime.sendMessage({
             action: 'zipProcessorComplete', jobId, success: false,
             error: state.cancelled || error?.name === 'AbortError' ? 'USER_CANCELED' : (error?.message || String(error))
@@ -287,7 +329,7 @@ async function runPersistentZipJob(jobId, options = {}) {
         if (state.currentUrl) activeCancellations.delete(state.currentUrl);
         capturedStreamFiles = null;
         runningZipJobs.delete(jobId);
-        await browser.storage.local.remove(key);
+        if (!keepRecoveryJob) await browser.storage.local.remove(key);
         if (!options.offscreen && browser.tabs) {
             const tab = await browser.tabs.getCurrent().catch(() => null);
             if (tab?.id !== undefined) browser.tabs.remove(tab.id).catch(() => {});
@@ -301,6 +343,15 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             .then(() => runPersistentStreamJob(message.jobId, { offscreen: true }))
             .catch(error => console.error('Stream job queue failed:', error));
         sendResponse({ success: true });
+    } else if (message.action === 'pausePersistentStreamJob' || message.action === 'resumePersistentStreamJob') {
+        const paused = message.action === 'pausePersistentStreamJob';
+        const key = `streamJob_${message.jobId}`;
+        browser.storage.local.get(key).then(stored => {
+            if (stored[key]) browser.storage.local.set({ [key]: { ...stored[key], isPaused: paused } });
+        });
+        const job = runningStreamJobs.get(message.jobId);
+        if (job) { if (paused) activePauses.add(job.url); else activePauses.delete(job.url); }
+        sendResponse({ success: true });
     } else if (message.action === 'cancelOffscreenStreamJob') {
         const job = runningStreamJobs.get(message.jobId);
         if (job) activeCancellations.add(job.url);
@@ -309,6 +360,18 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         streamJobQueue = streamJobQueue
             .then(() => runPersistentZipJob(message.jobId, { offscreen: true }))
             .catch(error => console.error('ZIP job queue failed:', error));
+        sendResponse({ success: true });
+    } else if (message.action === 'pausePersistentZipJob' || message.action === 'resumePersistentZipJob') {
+        const paused = message.action === 'pausePersistentZipJob';
+        const key = `zipJob_${message.jobId}`;
+        browser.storage.local.get(key).then(stored => {
+            if (stored[key]) browser.storage.local.set({ [key]: { ...stored[key], isPaused: paused } });
+        });
+        const state = runningZipJobs.get(message.jobId);
+        if (state) {
+            state.paused = paused;
+            if (state.currentUrl) { if (paused) activePauses.add(state.currentUrl); else activePauses.delete(state.currentUrl); }
+        }
         sendResponse({ success: true });
     } else if (message.action === 'cancelOffscreenZipJob') {
         const state = runningZipJobs.get(message.jobId);

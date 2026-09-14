@@ -73,6 +73,26 @@ function openCacheDB() {
   });
 }
 
+async function storeCompletedDownloadBlob(cacheId, blob, mime) {
+  const db = await openCacheDB();
+  try {
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction([STORE_NAME], "readwrite");
+      tx.objectStore(STORE_NAME).put({
+        url: cacheId,
+        mime: mime || blob.type || "application/octet-stream",
+        data: blob,
+        timestamp: Date.now()
+      });
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error || new Error("Completed download cache write failed"));
+      tx.onabort = () => reject(tx.error || new Error("Completed download cache write aborted"));
+    });
+  } finally {
+    db.close();
+  }
+}
+
 async function storeConversionChunk(sessionId, index, data) {
   const db = await openCacheDB();
   return new Promise((resolve, reject) => {
@@ -163,15 +183,43 @@ function waitForSegmentRetry(delay, checkCancel) {
   });
 }
 
-async function fetchSegmentWithRetry(url, options, checkCancel, maxAttempts = 4) {
+let segmentRetryNotBefore = 0;
+
+function getSegmentRetryDelay(response, attempt) {
+  const retryAfter = response?.headers?.get?.("retry-after");
+  if (retryAfter) {
+    const seconds = Number(retryAfter);
+    const delay = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(retryAfter) - Date.now();
+    if (Number.isFinite(delay) && delay > 0) return Math.min(60000, delay);
+  }
+  return Math.min(15000, 750 * (2 ** (attempt - 1))) + Math.floor(Math.random() * 500);
+}
+
+async function waitForStreamCooldown(checkCancel) {
+  const delay = segmentRetryNotBefore - Date.now();
+  if (delay > 0) await waitForSegmentRetry(delay, checkCancel);
+}
+
+async function waitForSegmentPause(pauseKey, checkCancel) {
+  while (pauseKey && globalThis.activePauses?.has(pauseKey)) {
+    if (checkCancel?.()) throw new Error("Cancelled");
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+}
+
+async function fetchSegmentWithRetry(url, options, checkCancel, pauseKey = null, maxAttempts = 6) {
   let lastError;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     if (checkCancel?.()) throw new Error("Cancelled");
     try {
+      await waitForSegmentPause(pauseKey, checkCancel);
+      await waitForSegmentPause(pauseKey, checkCancel);
+      await waitForStreamCooldown(checkCancel);
       const response = await fetchWithCache(url, options);
       if (response.ok) return response;
       const error = new Error(`HTTP ${response.status} while downloading segment`);
       error.status = response.status;
+      error.response = response;
       throw error;
     } catch (error) {
       if (error?.message === "Cancelled" || error?.name === "AbortError" || checkCancel?.()) {
@@ -181,7 +229,8 @@ async function fetchSegmentWithRetry(url, options, checkCancel, maxAttempts = 4)
       const status = Number(error?.status || 0);
       const retryable = status === 0 || status === 408 || status === 425 || status === 429 || status >= 500;
       if (!retryable || attempt === maxAttempts) break;
-      const delay = Math.min(4000, 500 * (2 ** (attempt - 1))) + Math.floor(Math.random() * 250);
+      const delay = getSegmentRetryDelay(error.response, attempt);
+      segmentRetryNotBefore = Math.max(segmentRetryNotBefore, Date.now() + delay);
       console.warn(`Segment retry ${attempt}/${maxAttempts - 1} in ${delay}ms: ${url}`, error);
       await waitForSegmentRetry(delay, checkCancel);
     }
@@ -189,25 +238,41 @@ async function fetchSegmentWithRetry(url, options, checkCancel, maxAttempts = 4)
   throw lastError || new Error(`Failed to download segment: ${url}`);
 }
 
-async function fetchSegmentBufferWithRetry(url, options, checkCancel, maxAttempts = 4) {
+async function fetchSegmentBufferWithRetry(url, options, checkCancel, pauseKey = null, maxAttempts = 6) {
   let lastError;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     if (checkCancel?.()) throw new Error("Cancelled");
     try {
+      await waitForStreamCooldown(checkCancel);
       const response = await fetchWithCache(url, options);
       if (!response.ok) {
         const error = new Error(`HTTP ${response.status} while downloading segment`);
         error.status = response.status;
+        error.response = response;
         throw error;
       }
-      return await response.arrayBuffer();
+      if (!response.body) return await response.arrayBuffer();
+      const reader = response.body.getReader();
+      const chunks = [];
+      let total = 0;
+      while (true) {
+        await waitForSegmentPause(pauseKey, checkCancel);
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value); total += value.byteLength;
+      }
+      const result = new Uint8Array(total);
+      let offset = 0;
+      for (const chunk of chunks) { result.set(chunk, offset); offset += chunk.byteLength; }
+      return result.buffer;
     } catch (error) {
       if (error?.message === "Cancelled" || error?.name === "AbortError" || checkCancel?.()) throw new Error("Cancelled");
       lastError = error;
       const status = Number(error?.status || 0);
       const retryable = status === 0 || status === 408 || status === 425 || status === 429 || status >= 500;
       if (!retryable || attempt === maxAttempts) break;
-      const delay = Math.min(4000, 500 * (2 ** (attempt - 1))) + Math.floor(Math.random() * 250);
+      const delay = getSegmentRetryDelay(error.response, attempt);
+      segmentRetryNotBefore = Math.max(segmentRetryNotBefore, Date.now() + delay);
       console.warn(`Segment body retry ${attempt}/${maxAttempts - 1} in ${delay}ms: ${url}`, error);
       await waitForSegmentRetry(delay, checkCancel);
     }
@@ -217,7 +282,7 @@ async function fetchSegmentBufferWithRetry(url, options, checkCancel, maxAttempt
 
 cleanupStaleConversionChunks();
 
-async function transmuxToMp4(tsBlobs) {
+async function transmuxToMp4(tsBlobs, onProgress = null) {
   console.log("Starting transmuxing with mux.js. Segments count:", tsBlobs.length);
   
   await ensureMuxJsLoaded();
@@ -228,7 +293,9 @@ async function transmuxToMp4(tsBlobs) {
 
   return new Promise(async (resolve) => {
     try {
+      await ensureOptionalLibraryLoaded('mp4_duration.js', 'mp4Duration');
       const transmuxer = new muxjs.mp4.Transmuxer();
+      let durationFinalizer = null;
       const mp4Chunks = [];
       let initSegment = null;
 
@@ -236,21 +303,41 @@ async function transmuxToMp4(tsBlobs) {
         
         if (event.initSegment) {
           if (!initSegment) {
-            initSegment = event.initSegment;
+            durationFinalizer = mp4Duration.createFinalizer(event.initSegment);
+            initSegment = durationFinalizer.initSegment;
             mp4Chunks.push(initSegment);
             console.log("Init segment collected, size:", initSegment.byteLength);
           }
         }
         
         if (event.data) {
+          durationFinalizer.addFragment(event.data);
           mp4Chunks.push(event.data);
         }
       });
 
+      const inputChunkSize = 8 * 1024 * 1024 - ((8 * 1024 * 1024) % 188);
+      const totalBytes = tsBlobs.reduce((sum, blob) => sum + Number(blob?.size || blob?.byteLength || 0), 0);
+      let processedBytes = 0;
+      onProgress?.(0);
       for (let i = 0; i < tsBlobs.length; i++) {
-        const arrayBuffer = await tsBlobs[i].arrayBuffer();
-        transmuxer.push(new Uint8Array(arrayBuffer));
-        transmuxer.flush();
+        const input = tsBlobs[i];
+        if (input instanceof Blob && input.size > inputChunkSize) {
+          for (let offset = 0; offset < input.size; offset += inputChunkSize) {
+            const part = input.slice(offset, Math.min(offset + inputChunkSize, input.size));
+            transmuxer.push(new Uint8Array(await part.arrayBuffer()));
+            transmuxer.flush();
+            processedBytes += part.size;
+            onProgress?.(totalBytes > 0 ? Math.min(99, processedBytes / totalBytes * 100) : 0);
+            await new Promise(resolve => setTimeout(resolve, 0));
+          }
+        } else {
+          const bytes = input instanceof Blob ? new Uint8Array(await input.arrayBuffer()) : new Uint8Array(input);
+          transmuxer.push(bytes);
+          transmuxer.flush();
+          processedBytes += bytes.byteLength;
+          onProgress?.(totalBytes > 0 ? Math.min(99, processedBytes / totalBytes * 100) : 0);
+        }
       }
 
       transmuxer.flush();
@@ -259,7 +346,9 @@ async function transmuxToMp4(tsBlobs) {
         console.warn("Transmuxing produced no data. Returning original TS.");
         resolve({ blob: new Blob(tsBlobs, { type: "video/mp2t" }), ext: '.ts' });
       } else {
+        durationFinalizer.finish();
         console.log("Transmuxing complete. Total chunks:", mp4Chunks.length);
+        onProgress?.(100);
         resolve({ blob: new Blob(mp4Chunks, { type: 'video/mp4' }), ext: '.mp4' });
       }
     } catch (err) {
@@ -1591,7 +1680,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
       }
     }
 
-    const res = await fetchWithCache(url, fetchOptions);
+    const res = await fetchSegmentWithRetry(url, fetchOptions, checkCancel, m3u8Url);
     return res.text();
   };
 
@@ -1725,7 +1814,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
     }
 
     async function fetchAndDecodeKey(keyHref, fetchOpts) {
-      const ab = await fetchSegmentBufferWithRetry(keyHref, fetchOpts, checkCancel);
+      const ab = await fetchSegmentBufferWithRetry(keyHref, fetchOpts, checkCancel, m3u8Url);
 
       if (ab.byteLength === 16) return ab;
 
@@ -1822,9 +1911,20 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
         await ensureMuxJsLoaded();
     }
     if ((gdriveSessionUri || dropboxSessionId) && settings['stream-to-mp4'] !== '0' && typeof muxjs !== 'undefined') {
+        await ensureOptionalLibraryLoaded('mp4_duration.js', 'mp4Duration');
+        // Cloud uploads cannot rewrite their first bytes after they have been sent.
+        // The selected media playlist describes the segments this download uploads.
+        const playlistDuration = rawLines.reduce((sum, line) => {
+            const match = line.trim().match(/^#EXTINF:([0-9.]+)/i);
+            return sum + (match ? Number(match[1]) || 0 : 0);
+        }, 0);
+        let uploadedInitSegment = false;
         transmuxer = new muxjs.mp4.Transmuxer();
         transmuxer.on('data', (event) => {
-            if (event.initSegment) transmuxedOutputQueue.push(event.initSegment);
+            if (event.initSegment && !uploadedInitSegment) {
+                transmuxedOutputQueue.push(mp4Duration.setDuration(event.initSegment, playlistDuration));
+                uploadedInitSegment = true;
+            }
             if (event.data) transmuxedOutputQueue.push(event.data);
         });
     }
@@ -1962,7 +2062,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
         const mapUriMatch = it.raw.match(/URI="([^"]+)"/);
         if (mapUriMatch) {
           const mapHref = new URL(mapUriMatch[1], playlistUrl).href;
-          let mapData = new Uint8Array(await fetchSegmentBufferWithRetry(mapHref, fetchOpts, checkCancel));
+          let mapData = new Uint8Array(await fetchSegmentBufferWithRetry(mapHref, fetchOpts, checkCancel, m3u8Url));
 
           if (currentKeyBuffer) {
             const iv = currentKeyIV ? currentKeyIV : makeSequenceIV(0);
@@ -1991,7 +2091,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
         throw new Error("Cancelled");
       }
       try {
-        let arr = new Uint8Array(await fetchSegmentBufferWithRetry(seg.uri, fetchOpts, checkCancel));
+        let arr = new Uint8Array(await fetchSegmentBufferWithRetry(seg.uri, fetchOpts, checkCancel, m3u8Url));
 
         if (seg.key) {
           const seq = mediaSeq + seg.index + 1;
@@ -2085,18 +2185,30 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
         finalResult = { blob: new Blob(filteredChunks, { type: "video/mp4" }), ext: '.mp4' };
       } else {
         const convertPref = await browser.storage.local.get('stream-to-mp4');
-        if (convertPref['stream-to-mp4'] !== '0') {
-          await ensureMuxJsLoaded();
-        }
-        if (typeof muxjs !== 'undefined' && convertPref['stream-to-mp4'] !== '0') {
+        const shouldConvert = convertPref['stream-to-mp4'] !== '0';
+        if (shouldConvert) {
           if (loadingBar) {
             const statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
             if (statusInfo && !gdriveSessionUri) {
               statusInfo.textContent = browser.i18n.getMessage("downloadTransmuxing") || "Converting to MP4...";
             }
           }
-          const result = await transmuxToMp4(filteredChunks);
-          finalResult = { blob: result.blob, ext: result.ext };
+          try {
+            const result = await transmuxToMp4(filteredChunks);
+            if (!result?.blob?.size || result.ext !== '.mp4') {
+              throw new Error('MP4 conversion produced no valid MP4 output');
+            }
+            finalResult = { blob: result.blob, ext: '.mp4' };
+          } catch (conversionError) {
+            console.warn('MP4 conversion failed; saving the original stream as TS:', conversionError);
+            finalResult = { blob: new Blob(filteredChunks, { type: "video/mp2t" }), ext: '.ts' };
+            if (loadingBar) {
+              const statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
+              if (statusInfo && !gdriveSessionUri) {
+                statusInfo.textContent = browser.i18n.getMessage('streamConversionFallbackTs') || 'MP4 conversion failed. Saving as TS...';
+              }
+            }
+          }
         } else {
           finalResult = { blob: new Blob(filteredChunks, { type: "video/mp2t" }), ext: '.ts' };
         }
@@ -2593,12 +2705,12 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
       try { throwIfCancelled(); return false; } catch (_) { return true; }
     };
     if (!onStart && !onChunk) {
-      const buffer = await fetchSegmentBufferWithRetry(url, fetchOptions, checkCancel);
+      const buffer = await fetchSegmentBufferWithRetry(url, fetchOptions, checkCancel, mpdUrl);
       throwIfCancelled();
       return new Blob([buffer]);
     }
 
-    const r = await fetchSegmentWithRetry(url, fetchOptions, checkCancel);
+    const r = await fetchSegmentWithRetry(url, fetchOptions, checkCancel, mpdUrl);
     throwIfCancelled();
     if (!r.ok) throw new Error(`Fetch failed: ${url} (${r.status})`);
 
@@ -2616,6 +2728,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     try {
       while (true) {
         throwIfCancelled();
+        await waitForSegmentPause(mpdUrl, checkCancel);
         const { done, value } = await reader.read();
         if (done) break;
         chunks.push(new Blob([value]));

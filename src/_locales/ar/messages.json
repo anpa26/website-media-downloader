@@ -1065,14 +1065,6 @@
     "message": "يسمح باستمرار التنزيلات في الخلفية. إذا تم تعطيله، فستعمل التنزيلات في النافذة المنبثقة وستتوقف إذا تم إغلاقها (لا توجد علامات تبويب جديدة على الهاتف).",
     "description": "The explanation of the background download setting."
   },
-  "autoResumeTitle": {
-    "message": "استئناف التنزيل تلقائيًا",
-    "description": "Title for the automatic resume setting."
-  },
-  "autoResumeExplain": {
-    "message": "استئناف التنزيلات المعلقة تلقائيًا عند بدء تشغيل المتصفح.",
-    "description": "Explanation for the automatic resume setting."
-  },
   "autoCheckUpdateTitle": {
     "message": "التحقق التلقائي من التحديثات",
     "description": "Title for the automatic update check setting."
@@ -2223,5 +2215,51 @@
   "cacheStorageEntries": { "message": "$1 عناصر مخزنة مؤقتًا" },
   "cacheStorageReadError": { "message": "تعذرت قراءة ذاكرة التخزين المؤقت: $1" },
   "cacheStorageActiveDownloadError": { "message": "لا يمكن مسح ذاكرة التخزين المؤقت أثناء وجود تنزيلات نشطة." },
-  "cacheStorageCleared": { "message": "تم مسح ذاكرة التخزين المؤقت" }
+  "cacheStorageCleared": { "message": "تم مسح ذاكرة التخزين المؤقت" },
+  "manualTsConvertTitle": {
+    "message": "تحويل ملف TS يدويًا"
+  },
+  "manualTsConvertExplain": {
+    "message": "اختر ملف MPEG-TS وحوّله إلى MP4 ثم احفظه مباشرة على جهازك."
+  },
+  "manualTsSelectFile": {
+    "message": "اختيار"
+  },
+  "manualTsConvertButton": {
+    "message": "تحويل"
+  },
+  "manualTsConverting": {
+    "message": "جارٍ التحويل إلى MP4…"
+  },
+  "manualTsConvertingProgress": {
+    "message": "جارٍ التحويل إلى MP4: $1%",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "manualTsComplete": {
+    "message": "اكتمل التحويل. جارٍ حفظ MP4…"
+  },
+  "manualTsInvalidFile": {
+    "message": "تعذر تحويل الملف المحدد إلى MP4."
+  },
+  "manualTsFailed": {
+    "message": "فشل التحويل: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "manualTsNoFile": {
+    "message": "لم يتم اختيار ملف"
+  },
+  "manualTsInvalidFileType": {
+    "message": "يمكن اختيار ملفات .ts فقط."
+  },
+  "streamConversionFallbackTs": {
+    "message": "فشل التحويل إلى MP4. جارٍ الحفظ بصيغة TS…"
+  }
 }

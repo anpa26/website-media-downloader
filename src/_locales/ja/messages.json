@@ -1070,14 +1070,6 @@
     "message": "バックグラウンドでのダウンロードを許可します。無効にすると、ダウンロードはポップアップ内で実行され、ポップアップを閉じると停止します（モバイルでは新しいタブは開きません）。",
     "description": "The explanation of the background download setting."
   },
-  "autoResumeTitle": {
-    "message": "ダウンロードの自動再開",
-    "description": "Title for the automatic resume setting."
-  },
-  "autoResumeExplain": {
-    "message": "ブラウザの起動時に、保留中のダウンロードを自動的に再開します。",
-    "description": "Explanation for the automatic resume setting."
-  },
   "autoCheckUpdateTitle": {
     "message": "自動更新確認",
     "description": "Title for the automatic update check setting."
@@ -2223,5 +2215,51 @@
   "cacheStorageEntries": { "message": "$1 件のキャッシュエントリ" },
   "cacheStorageReadError": { "message": "キャッシュを読み取れません: $1" },
   "cacheStorageActiveDownloadError": { "message": "ダウンロード中はキャッシュを消去できません。" },
-  "cacheStorageCleared": { "message": "キャッシュを消去しました" }
+  "cacheStorageCleared": { "message": "キャッシュを消去しました" },
+  "manualTsConvertTitle": {
+    "message": "TSファイルを手動で変換"
+  },
+  "manualTsConvertExplain": {
+    "message": "MPEG-TSファイルを選択してMP4に変換し、デバイスへ直接保存します。"
+  },
+  "manualTsSelectFile": {
+    "message": "選択"
+  },
+  "manualTsConvertButton": {
+    "message": "変換"
+  },
+  "manualTsConverting": {
+    "message": "MP4に変換中…"
+  },
+  "manualTsConvertingProgress": {
+    "message": "MP4に変換中: $1%",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "manualTsComplete": {
+    "message": "変換が完了しました。MP4を保存しています…"
+  },
+  "manualTsInvalidFile": {
+    "message": "選択したファイルをMP4に変換できませんでした。"
+  },
+  "manualTsFailed": {
+    "message": "変換に失敗しました: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "manualTsNoFile": {
+    "message": "ファイルが選択されていません"
+  },
+  "manualTsInvalidFileType": {
+    "message": ".tsファイルのみ選択できます。"
+  },
+  "streamConversionFallbackTs": {
+    "message": "MP4への変換に失敗しました。TSとして保存しています…"
+  }
 }

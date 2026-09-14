@@ -63,7 +63,7 @@ const SETTINGS_KEYS = [
     'url-detection', 'youtube-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components', 'disable-deduplication', 'optimize-low-end', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom',
     'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'ignore-disabled-types',
     'media-notification', 'audio-process-notification', 'media-system-notification', 'stack-notifications', 'download-method', 'fetch-notification', 'media-cache', 'speed-boost', 'speed-boost-resume', 'connections', 'stream-download',
-    'stream-quality', 'subtitle-conversion', 'mpd-fix', 'background-download', 'auto-resume', 'stream-to-mp4', 'audio-to-mp3', 'mp3-bitrate', 'open-preference', 'mux-all-audios', 'mpd-to-mp4',
+    'stream-quality', 'subtitle-conversion', 'mpd-fix', 'background-download', 'stream-to-mp4', 'audio-to-mp3', 'mp3-bitrate', 'open-preference', 'mux-all-audios', 'mpd-to-mp4',
     'embed-subtitles-mkv', 'embed-subtitles-container', 'embed-subtitles-nonyt',
     'ignore-excluded-media', 'skip-detection-names', 'skip-detection-domains', 'filename-template', 'disable-rename-dialog', 'history-page', 'settings-layout', 'theme-mode', 'theme-color', 'group-by-type', 'save-to-gdrive', 'gdrive-stream', 'media-sort-order',
     'save-to-dropbox', 'dropbox-stream', 'auto-check-update', 'badge-counter', 'ui-scale', 'ui-scale-custom'
@@ -237,6 +237,75 @@ function setupIndexedDBCacheControls() {
     refresh();
 }
 
+function setupManualTsConverter() {
+    const fileInput = document.getElementById('manual-ts-file');
+    const selectButton = document.getElementById('manual-ts-select');
+    const convertButton = document.getElementById('manual-ts-convert');
+    const filenameLabel = document.getElementById('manual-ts-filename');
+    const progress = document.getElementById('manual-ts-progress');
+    const status = document.getElementById('manual-ts-status');
+    if (!fileInput || !selectButton || !convertButton || !filenameLabel || !progress || !status || selectButton.dataset.ready === '1') return;
+    selectButton.dataset.ready = '1';
+
+    const message = (key, fallback, substitutions) => browser.i18n.getMessage(key, substitutions) || fallback;
+    selectButton.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+        let file = fileInput.files?.[0];
+        if (file && !/\.ts$/i.test(file.name)) {
+            fileInput.value = '';
+            file = null;
+            status.style.display = 'block';
+            status.textContent = message('manualTsInvalidFileType', 'Only .ts files can be selected.');
+        }
+        filenameLabel.textContent = file?.name || message('manualTsNoFile', 'No file selected');
+        convertButton.disabled = !file;
+        progress.value = 0;
+        progress.style.display = 'none';
+        status.style.display = 'none';
+    });
+
+    convertButton.addEventListener('click', async () => {
+        const file = fileInput.files?.[0];
+        if (!file) return;
+        selectButton.disabled = true;
+        convertButton.disabled = true;
+        const convertLabel = convertButton.textContent;
+        convertButton.textContent = '';
+        convertButton.loading = true;
+        progress.value = 0;
+        progress.style.display = 'block';
+        status.style.display = 'block';
+        status.textContent = message('manualTsConverting', 'Converting to MP4…');
+        try {
+            const result = await transmuxToMp4([file], percent => {
+                const value = Math.max(0, Math.min(100, Number(percent) || 0));
+                progress.value = value;
+                status.textContent = message('manualTsConvertingProgress', 'Converting to MP4: $1%', [String(Math.round(value))]);
+            });
+            if (result.ext !== '.mp4' || !result.blob?.size) throw new Error(message('manualTsInvalidFile', 'The selected file could not be converted to MP4.'));
+            const outputName = file.name.replace(/\.ts$/i, '') + '.mp4';
+            const objectUrl = URL.createObjectURL(result.blob);
+            const link = document.createElement('a');
+            link.href = objectUrl;
+            link.download = outputName;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
+            progress.value = 100;
+            status.textContent = message('manualTsComplete', 'Conversion complete. Saving MP4…');
+        } catch (error) {
+            console.error('Manual TS conversion failed:', error);
+            status.textContent = message('manualTsFailed', 'Conversion failed: $1', [error?.message || String(error)]);
+        } finally {
+            selectButton.disabled = false;
+            convertButton.disabled = !fileInput.files?.[0];
+            convertButton.loading = false;
+            convertButton.textContent = convertLabel;
+        }
+    });
+}
+
 let settingsPageInitPromise = null;
 window.initializeSettingsPage = function initializeSettingsPage() {
   if (settingsPageInitPromise) return settingsPageInitPromise;
@@ -322,6 +391,7 @@ window.initializeSettingsPage = function initializeSettingsPage() {
     setupSpeedTest();
     setupIndexedDBCacheControls();
     setupSettingsConfigurationControls();
+    setupManualTsConverter();
 
     if (window.location.search.includes('startDropbox=true')) {
         const res = await browser.storage.local.get('dropbox_token');
@@ -399,7 +469,7 @@ async function initializeSettings() {
         'url-detection', 'youtube-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components', 'disable-deduplication', 'optimize-low-end', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom',
         'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'ignore-disabled-types',
         'media-notification', 'audio-process-notification', 'media-system-notification', 'stack-notifications', 'download-method', 'fetch-notification', 'media-cache', 'speed-boost', 'speed-boost-resume', 'connections', 'stream-download',
-        'stream-quality', 'subtitle-conversion', 'mpd-fix', 'background-download', 'auto-resume', 'stream-to-mp4', 'audio-to-mp3', 'mp3-bitrate', 'open-preference', 'mux-all-audios', 'mpd-to-mp4',
+        'stream-quality', 'subtitle-conversion', 'mpd-fix', 'background-download', 'stream-to-mp4', 'audio-to-mp3', 'mp3-bitrate', 'open-preference', 'mux-all-audios', 'mpd-to-mp4',
         'embed-subtitles-mkv', 'embed-subtitles-container', 'embed-subtitles-nonyt',
         'ignore-excluded-media', 'skip-detection-names', 'skip-detection-domains', 'filename-template', 'disable-rename-dialog', 'history-page', 'settings-layout', 'theme-mode', 'group-by-type', 'save-to-gdrive', 'gdrive-stream', 'media-sort-order',
         'save-to-dropbox', 'dropbox-stream', 'auto-check-update', 'badge-counter', 'ui-scale', 'ui-scale-custom'
@@ -414,7 +484,7 @@ async function initializeSettings() {
                 'ignore-excluded-media',
                 'url-detection', 'youtube-detection', 'mime-detection', 'hide-page-components', 'hide-segments',
                 'media-notification', 'audio-process-notification', 'media-system-notification', 'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle',
-                'background-download', 'auto-resume', 'only-file', 'stream-to-mp4', 'audio-to-mp3', 'auto-check-update', 'badge-counter',
+                'background-download', 'only-file', 'stream-to-mp4', 'audio-to-mp3', 'auto-check-update', 'badge-counter',
                 'detect-download-links', 'disable-deduplication', 'fetch-notification', 'group-by-type'
             ];
             if (defaultsEnabled.includes(setting)) {
@@ -448,7 +518,6 @@ async function initializeSettings() {
                 const speedBoost = document.getElementById('speed-boost');
                 const speedBoostResume = document.getElementById('speed-boost-resume');
                 const connections = document.getElementById('connections');
-                const autoResume = document.getElementById('auto-resume');
                 const gdriveStream = document.getElementById('gdrive-stream');
                 const onlyFile = document.getElementById('only-file');
 
@@ -524,18 +593,6 @@ async function initializeSettings() {
                             const item = connections.closest('.setting-item');
                             if (item) item.style.display = 'flex';
                         }
-                    }
-                }
-
-                if (setting === 'background-download') {
-                    if (!element.checked) {
-                        if (autoResume) {
-                            autoResume.checked = false;
-                            autoResume.disabled = true;
-                            pendingChanges['auto-resume'] = '0';
-                        }
-                    } else {
-                        if (autoResume) autoResume.disabled = false;
                     }
                 }
 
@@ -681,7 +738,6 @@ async function initializeSettings() {
                     const connections = document.getElementById('connections');
                     const gdriveStream = document.getElementById('gdrive-stream');
                     const backgroundDownload = document.getElementById('background-download');
-                    const autoResume = document.getElementById('auto-resume');
                     const cloudSaveLocation = document.getElementById('cloud-save-location');
                     const detectDownloadLinks = document.getElementById('detect-download-links');
                     const onlyFile = document.getElementById('only-file');
@@ -698,7 +754,7 @@ async function initializeSettings() {
                         }
                     }
 
-                    if (speedBoost && speedBoostResume && connections && gdriveStream && backgroundDownload && autoResume && cloudSaveLocation && detectDownloadLinks && onlyFile) {
+                    if (speedBoost && speedBoostResume && connections && gdriveStream && backgroundDownload && cloudSaveLocation && detectDownloadLinks && onlyFile) {
                         const dropboxStream = document.getElementById('dropbox-stream');
 
                         if (gdriveStream) {
@@ -737,11 +793,6 @@ async function initializeSettings() {
                                 const item = connections.closest('.setting-item');
                                 if (item) item.style.display = speedBoost.checked ? 'flex' : 'none';
                             }
-                        }
-
-                        if (autoResume) {
-                            autoResume.disabled = !backgroundDownload.checked;
-                            if (autoResume.disabled) autoResume.checked = false;
                         }
 
                         if (onlyFile && detectDownloadLinks) {

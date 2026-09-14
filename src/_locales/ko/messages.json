@@ -1065,14 +1065,6 @@
     "message": "다운로드가 백그라운드에서 계속되도록 허용합니다. 비활성화하면 다운로드가 팝업에서 실행되며 팝업을 닫으면 중단됩니다(모바일에서는 새 탭 없음).",
     "description": "The explanation of the background download setting."
   },
-  "autoResumeTitle": {
-    "message": "다운로드 자동 재개",
-    "description": "Title for the automatic resume setting."
-  },
-  "autoResumeExplain": {
-    "message": "브라우저가 시작될 때 대기 중인 다운로드를 자동으로 재개합니다.",
-    "description": "Explanation for the automatic resume setting."
-  },
   "autoCheckUpdateTitle": {
     "message": "자동 업데이트 확인",
     "description": "Title for the automatic update check setting."
@@ -2223,5 +2215,51 @@
   "cacheStorageEntries": { "message": "캐시된 항목 $1개" },
   "cacheStorageReadError": { "message": "캐시를 읽을 수 없습니다: $1" },
   "cacheStorageActiveDownloadError": { "message": "다운로드가 진행 중일 때는 캐시를 지울 수 없습니다." },
-  "cacheStorageCleared": { "message": "캐시를 지웠습니다" }
+  "cacheStorageCleared": { "message": "캐시를 지웠습니다" },
+  "manualTsConvertTitle": {
+    "message": "TS 파일 수동 변환"
+  },
+  "manualTsConvertExplain": {
+    "message": "MPEG-TS 파일을 선택하여 MP4로 변환한 뒤 기기에 바로 저장합니다."
+  },
+  "manualTsSelectFile": {
+    "message": "선택"
+  },
+  "manualTsConvertButton": {
+    "message": "변환"
+  },
+  "manualTsConverting": {
+    "message": "MP4로 변환 중…"
+  },
+  "manualTsConvertingProgress": {
+    "message": "MP4로 변환 중: $1%",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "manualTsComplete": {
+    "message": "변환이 완료되었습니다. MP4 저장 중…"
+  },
+  "manualTsInvalidFile": {
+    "message": "선택한 파일을 MP4로 변환할 수 없습니다."
+  },
+  "manualTsFailed": {
+    "message": "변환 실패: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "manualTsNoFile": {
+    "message": "선택한 파일 없음"
+  },
+  "manualTsInvalidFileType": {
+    "message": ".ts 파일만 선택할 수 있습니다."
+  },
+  "streamConversionFallbackTs": {
+    "message": "MP4 변환에 실패했습니다. TS로 저장 중…"
+  }
 }

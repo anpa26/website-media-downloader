@@ -455,14 +455,6 @@
                 </div>
                 <mdui-switch id="background-download"></mdui-switch>
               </div>
-
-              <div class="setting-item">
-                <div class="setting-text">
-                  <h3 data-translate="autoResumeTitle">Automatic resume download</h3>
-                  <p data-translate="autoResumeExplain">Automatically resume pending downloads when the browser starts.</p>
-                </div>
-                <mdui-switch id="auto-resume"></mdui-switch>
-              </div>
               
               <div class="setting-item">
                  <h3 data-translate="streamDownloadTitle">Stream preference</h3>
@@ -711,6 +703,21 @@
                   <p data-translate="streamToMp4Explain">Automatically convert MPEG-TS streams to MP4 format. (Requires mux.js)</p>
                 </div>
                 <mdui-switch id="stream-to-mp4"></mdui-switch>
+              </div>
+
+              <div class="setting-item" id="manual-ts-converter" style="align-items: flex-start;">
+                <div class="setting-text" style="min-width: 0; flex: 1;">
+                  <h3 data-translate="manualTsConvertTitle">Convert a TS file manually</h3>
+                  <p data-translate="manualTsConvertExplain">Select an MPEG-TS file, convert it to MP4, and save it directly to your device.</p>
+                  <span id="manual-ts-filename" data-translate="manualTsNoFile" style="display: block; margin-top: 8px; font-size: 12px; color: rgb(var(--mdui-color-on-surface-variant)); overflow-wrap: anywhere;">No file selected</span>
+                  <mdui-linear-progress id="manual-ts-progress" value="0" max="100" style="display: none; margin-top: 12px;"></mdui-linear-progress>
+                  <p id="manual-ts-status" role="status" aria-live="polite" style="display: none; margin-top: 8px;"></p>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: stretch; gap: 8px; flex: 0 0 auto;">
+                  <input type="file" id="manual-ts-file" accept=".ts" style="display: none;">
+                  <mdui-button id="manual-ts-select" variant="outlined" data-translate="manualTsSelectFile">Select</mdui-button>
+                  <mdui-button id="manual-ts-convert" variant="filled" disabled data-translate="manualTsConvertButton">Convert</mdui-button>
+                </div>
               </div>
 
               <div class="setting-item">

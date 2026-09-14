@@ -1,6 +1,6 @@
 # Website Media Downloader
 
-[![Version](https://img.shields.io/badge/version-2.3.3-blue.svg)](src/manifest.json)
+[![Version](https://img.shields.io/badge/version-2.3.6-blue.svg)](src/manifest.json)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE.md)
 [![Platform](https://img.shields.io/badge/platform-Chrome%20%7C%20Firefox%20%7C%20Android-orange.svg)](#installation)
 
@@ -19,7 +19,8 @@ Designed with a strict focus on privacy and technical transparency, all operatio
 - **Material Design 3**: A modern, responsive, and intuitive interface powered by MDUI components with multiple layout choices (Collapsible, Sidebar, Tabs).
 - **Universal Detection**: Captures real-time network requests and performs deep DOM scanning to identify hidden media assets.
 - **Header Spoofing**: Automatically replicates Referer, Origin, and Cookies to bypass hotlinking and server-side access restrictions.
-- **Offline Stream Conversion**: Merges HLS and DASH segments locally in the browser without using external servers.
+- **Offline Stream Conversion**: Merges HLS and DASH segments locally, with automatic MP4 conversion and TS fallback when conversion fails.
+- **Manual TS to MP4 Conversion**: Converts a downloaded `.ts` file to MP4 from Settings when automatic conversion cannot finish.
 - **QR Code Sharing**: Instantly generate QR codes for any detected media for easy transfer to mobile devices.
 - **Batch Operations**: Multi-select support for downloading or removing multiple assets simultaneously.
 - **Advanced Filtering & Search**: Granular category grouping and real-time search matching across filenames, URLs, hostnames, and page titles across all groups.
@@ -48,27 +49,22 @@ Designed with a strict focus on privacy and technical transparency, all operatio
 
 ---
 
-## What's New in v2.3.3
+## What's New in v2.3.6
 
-- Added name and domain exclusions, including subdomains, with a switch to stop detecting excluded media.
-- Improved automatic filenames using server metadata and URLs. Home names and sorting now respect filename templates.
-- Kept detection notifications working with fallback names when smart naming or templates fail.
-- Standardized normal and Speed Boost tests with warm-up, equal measurement durations, request cleanup, and error handling.
-- Added settings import/export and corrected the badge to count only active downloads.
-- Moved resume and background download options to Download settings and improved exclusion inputs.
-
-## What's New in v2.3.2
-
-- **Expanded Background Downloading**: Added wider support for background downloads to ensure seamless transfers when the popup is closed.
-- **UI Optimization**: Optimized the user interface to make it slightly more lightweight and improve responsiveness.
-- **DASH Stream Fixes**: Resolved preview and download issues with DASH streams so they function normally.
+- Fixed incorrect duration detection for stream videos.
+- Fixed stream pause and resume so active network reads actually stop and continue.
+- Prevented stale media lists from appearing again after reopening the browser.
+- Corrected category group badges to match the media currently shown.
+- Fixed media lists not appearing on pages containing many detected items.
+- Added manual TS-to-MP4 conversion as a fallback when automatic conversion fails.
+- Fixed stream downloads failing on some websites and saved the original stream as `.ts` when MP4 conversion cannot finish.
 
 ---
 
-## Technical Features (v2.3.3)
+## Technical Features
 
 ### Core Detection Engine
-The detection engine has been optimized to handle complex web environments more efficiently. This version introduces:
+The detection engine handles complex web environments through:
 - **Enhanced Stream Detection**: Improved accuracy in identifying and filtering HLS and DASH segments to prevent redundant entries.
 - **Parallel Acquisition Overhaul**: A refined multi-threaded fetching mechanism that provides more stable and efficient Speed Boost downloads.
 - **Improved Lifecycle Management**: Enhanced cleanup and state persistence when reopening the extension popup while downloads are active.

@@ -897,14 +897,6 @@
         "message": "Keeps your downloads running in the background even if you close the application interface.",
         "description": "The explanation of the background download setting."
     },
-    "autoResumeTitle": {
-        "message": "Automatic resume download",
-        "description": "Title for the automatic resume setting."
-    },
-    "autoResumeExplain": {
-        "message": "The app will automatically resume any paused downloads when you reopen your browser.",
-        "description": "Explanation for the automatic resume setting."
-    },
     "autoCheckUpdateTitle": {
         "message": "Automatic update check",
         "description": "Title for the automatic update check setting."
@@ -2070,5 +2062,51 @@
     "allLanguagesZip": null,
     "allLanguagesMux": null,
     "allSubtitlesZip": null,
-    "allSubtitlesMux": null
+    "allSubtitlesMux": null,
+    "manualTsConvertTitle": {
+        "message": "Convert a TS file manually"
+    },
+    "manualTsConvertExplain": {
+        "message": "Select an MPEG-TS file, convert it to MP4, and save it directly to your device."
+    },
+    "manualTsSelectFile": {
+        "message": "Select"
+    },
+    "manualTsConvertButton": {
+        "message": "Convert"
+    },
+    "manualTsConverting": {
+        "message": "Converting to MP4…"
+    },
+    "manualTsConvertingProgress": {
+        "message": "Converting to MP4: $1%",
+        "placeholders": {
+            "1": {
+                "content": "$1"
+            }
+        }
+    },
+    "manualTsComplete": {
+        "message": "Conversion complete. Saving MP4…"
+    },
+    "manualTsInvalidFile": {
+        "message": "The selected file could not be converted to MP4."
+    },
+    "manualTsFailed": {
+        "message": "Conversion failed: $1",
+        "placeholders": {
+            "1": {
+                "content": "$1"
+            }
+        }
+    },
+    "manualTsNoFile": {
+        "message": "No file selected"
+    },
+    "manualTsInvalidFileType": {
+        "message": "Only .ts files can be selected."
+    },
+    "streamConversionFallbackTs": {
+        "message": "MP4 conversion failed. Saving as TS…"
+    }
 }

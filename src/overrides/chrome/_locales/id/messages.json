@@ -897,14 +897,6 @@
         "message": "Membiarkan proses unduhan tetap berjalan di latar belakang meskipun Anda menutup tampilan aplikasi.",
         "description": "The explanation of the background download setting."
     },
-    "autoResumeTitle": {
-        "message": "Lanjutkan unduhan otomatis",
-        "description": "Title for the automatic resume setting."
-    },
-    "autoResumeExplain": {
-        "message": "Aplikasi akan otomatis melanjutkan proses unduhan yang tertunda saat Anda membuka kembali peramban.",
-        "description": "Explanation for the automatic resume setting."
-    },
     "autoCheckUpdateTitle": {
         "message": "Cek pembaruan otomatis",
         "description": "Title for the automatic update check setting."
@@ -2070,5 +2062,51 @@
     "allLanguagesZip": null,
     "allLanguagesMux": null,
     "allSubtitlesZip": null,
-    "allSubtitlesMux": null
+    "allSubtitlesMux": null,
+    "manualTsConvertTitle": {
+        "message": "Konversi file TS secara manual"
+    },
+    "manualTsConvertExplain": {
+        "message": "Pilih file MPEG-TS, konversikan ke MP4, lalu simpan langsung ke perangkat."
+    },
+    "manualTsSelectFile": {
+        "message": "Pilih"
+    },
+    "manualTsConvertButton": {
+        "message": "Konversi"
+    },
+    "manualTsConverting": {
+        "message": "Mengonversi ke MP4…"
+    },
+    "manualTsConvertingProgress": {
+        "message": "Mengonversi ke MP4: $1%",
+        "placeholders": {
+            "1": {
+                "content": "$1"
+            }
+        }
+    },
+    "manualTsComplete": {
+        "message": "Konversi selesai. Menyimpan MP4…"
+    },
+    "manualTsInvalidFile": {
+        "message": "File yang dipilih tidak dapat dikonversi ke MP4."
+    },
+    "manualTsFailed": {
+        "message": "Konversi gagal: $1",
+        "placeholders": {
+            "1": {
+                "content": "$1"
+            }
+        }
+    },
+    "manualTsNoFile": {
+        "message": "Belum pilih file"
+    },
+    "manualTsInvalidFileType": {
+        "message": "Hanya file .ts yang dapat dipilih."
+    },
+    "streamConversionFallbackTs": {
+        "message": "Konversi MP4 gagal. Menyimpan sebagai TS…"
+    }
 }

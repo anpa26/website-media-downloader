@@ -119,6 +119,15 @@ let urlList = [];
 let headersSentListener, headersReceivedListener;
 const activeDownloads = new Map();
 
+async function setPersistentJobPaused(item, jobId, isPaused) {
+    const prefix = item.isAudioJob ? "audioJob_" : item.isPersistentZipJob ? "zipJob_" : "streamJob_";
+    const key = prefix + jobId;
+    const stored = await browser.storage.local.get(key);
+    if (!stored[key]) return;
+    stored[key].isPaused = isPaused;
+    await browser.storage.local.set({ [key]: stored[key] });
+}
+
 async function saveDownloadState(downloadId, data) {
     const res = await browser.storage.local.get('pending-downloads');
     const pending = res['pending-downloads'] || {};
@@ -174,42 +183,17 @@ async function removeMediaRequest(url) {
     }
 }
 
-async function resumeInterruptedDownloads() {
-    const settings = await browser.storage.local.get(['pending-downloads', 'auto-resume']);
-    const pending = settings['pending-downloads'] || {};
-    
-    const autoResumeEnabled = settings['auto-resume'] !== '0' && settings['auto-resume'] !== false;
-    const ids = Object.keys(pending);
-
-    if (ids.length > 0) {
-        for (const id of ids) {
-            const data = pending[id];
-
-
-            const shouldBePaused = !autoResumeEnabled || data.isPaused === true || data.isPaused === 'true';
-
-            if (shouldBePaused) {
-                activeDownloads.set(id, {
-                    url: data.url,
-                    filename: data.filename,
-                    total: parseInt(data.total) || 0,
-                    loaded: parseInt(data.loaded) || 0,
-                    originalRequest: data.originalRequest,
-                    isParallel: !!data.isParallel,
-                    isPaused: true,
-                    isManualResume: true,
-                    mediaType: data.mediaType || getMediaType(data.url, [])
-                });
-            } else {
-                setTimeout(() => {
-                    handleFetchDownload(data.url, data.filename, data.originalRequest, id, true, true, data.loaded, data.mediaType, data.dropboxSessionId);
-                }, 1000);
-            }
-        }
-    }
+async function discardStaleDownloadState() {
+    const session = await browser.storage.session.get("recovery-startup-cleaned");
+    if (session["recovery-startup-cleaned"]) return;
+    await browser.storage.session.set({ "recovery-startup-cleaned": true });
+    const stored = await browser.storage.local.get(null);
+    const staleKeys = Object.keys(stored).filter(key => /^(audio|stream|zip|popup)Job_/.test(key));
+    staleKeys.push("pending-downloads");
+    await browser.storage.local.remove([...new Set(staleKeys)]);
 }
 
-resumeInterruptedDownloads();
+discardStaleDownloadState();
 
 const DB_NAME = "MediaCacheDB";
 const STORE_NAME = "network-cache";
@@ -2184,6 +2168,23 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
         return;
     }
+    if (message.action === 'download_cached_blob') {
+        const downloadId = message.cacheId;
+        if (!downloadId || !String(downloadId).startsWith('processed_')) {
+            sendResponse({ success: false, error: 'Invalid completed download cache ID' });
+            return false;
+        }
+        const item = {
+            url: downloadId, filename: message.filename,
+            loaded: Number(message.size) || 0, total: Number(message.size) || 0,
+            isCachedSave: true, mediaType: 'file', mime: message.mime || 'application/octet-stream'
+        };
+        activeDownloads.set(downloadId, item);
+        pendingSaveQueue.push({ id: downloadId, url: downloadId, filename: message.filename });
+        processSaveQueue();
+        sendResponse({ success: true });
+        return false;
+    }
     if (message.action === 'download_arraybuffer') {
         const blob = new Blob([message.arrayBuffer], { type: message.mime || 'application/octet-stream' });
         const downloadId = 'tab_' + Date.now();
@@ -2881,6 +2882,17 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const id = message.id;
         const item = activeDownloads.get(id);
         if (item) {
+            if (item.isStreamJob || item.isAudioJob || item.isZip) {
+                item.isPaused = true;
+                if (item.isAudioJob || item.isStreamJob || item.isPersistentZipJob) {
+                    setPersistentJobPaused(item, id, true).catch(console.error);
+                    const action = item.isAudioJob ? "pausePersistentAudioJob" :
+                        item.isPersistentZipJob ? "pausePersistentZipJob" : "pausePersistentStreamJob";
+                    browser.runtime.sendMessage({ action, jobId: id }).catch(console.error);
+                }
+                browser.runtime.sendMessage({ action: "downloadPaused", id, loaded: item.loaded || 0, total: item.total || 0 }).catch(() => {});
+                return true;
+            }
             if (item.abortController) {
                 item.isPaused = true;
                 item.abortController.abort();
@@ -2917,6 +2929,17 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const id = message.id;
         const item = activeDownloads.get(id);
         if (item && item.isPaused) {
+            if (item.isStreamJob || item.isAudioJob || item.isZip) {
+                item.isPaused = false;
+                if (item.isAudioJob || item.isStreamJob || item.isPersistentZipJob) {
+                    setPersistentJobPaused(item, id, false).catch(console.error);
+                    const action = item.isAudioJob ? "resumePersistentAudioJob" :
+                        item.isPersistentZipJob ? "resumePersistentZipJob" : "resumePersistentStreamJob";
+                    browser.runtime.sendMessage({ action, jobId: id }).catch(console.error);
+                }
+                sendResponse?.({ success: true });
+                return true;
+            }
             item.isPaused = false;
 
             item.isManualResume = true;
@@ -3043,6 +3066,10 @@ async function handleDownloadAllAsZip(items, downloadId) {
             let skipAllErrors = false;
             const usedNames = new Set();
             for (let i = 0; i < items.length; i++) {
+                while (activeDownloads.get(downloadId)?.isPaused) {
+                    if (cancelledZipDownloads.has(downloadId)) throw new Error("Cancelled");
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
                 if (cancelledZipDownloads.has(downloadId)) throw new Error("Cancelled");
                 const item = items[i];
                 const url = item.url;
@@ -3152,7 +3179,19 @@ async function handleDownloadAllAsZip(items, downloadId) {
                     }
                     usedNames.add(filename);
 
-                    yield { name: filename, input: response };
+                    const reader = response.body.getReader();
+                    const pauseAwareBody = new ReadableStream({
+                        async pull(controller) {
+                            while (activeDownloads.get(downloadId)?.isPaused) {
+                                if (cancelledZipDownloads.has(downloadId)) { controller.error(new Error("Cancelled")); return; }
+                                await new Promise(resolve => setTimeout(resolve, 200));
+                            }
+                            const { done, value } = await reader.read();
+                            if (done) controller.close(); else controller.enqueue(value);
+                        },
+                        cancel(reason) { return reader.cancel(reason); }
+                    });
+                    yield { name: filename, input: new Response(pauseAwareBody, { headers: response.headers }) };
 
                     activeDownloads.get(downloadId).loaded = i + 1;
                 } catch (err) {

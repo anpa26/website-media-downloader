@@ -68,6 +68,18 @@ async function finishZipNotification(jobId, success, filename, error) {
     setTimeout(() => browser.notifications.clear(completeId).catch(() => {}), 5000);
 }
 
+async function finalizeStreamRecovery(key, state = "completed") {
+    try {
+        const stored = await browser.storage.local.get(key);
+        const job = stored[key];
+        if (!job) return;
+        await browser.storage.local.set({ [key]: { ...job, recoveryState: state, status: state } });
+        await browser.storage.local.remove(key);
+    } catch (error) {
+        console.warn("Failed to finalize stream recovery:", error);
+    }
+}
+
 function broadcastStreamJob(message) {
     browser.tabs.query({}).then(tabs => {
         for (const tab of tabs) {
@@ -102,7 +114,7 @@ async function processStreamItemForZip(item, progressId) {
     const job = {
         jobId, zip: true, url: item.url, filename: item.filename,
         request: item.request || item.originalRequest || {},
-        quality: item.quality || 'highest', downloadMethod: 'browser', progressId
+        quality: item.quality || "highest", downloadMethod: "browser", progressId, recoveryState: "running"
     };
     await browser.storage.local.set({ [`streamJob_${jobId}`]: job });
     const resultPromise = new Promise((resolve, reject) => streamZipResolvers.set(jobId, {
@@ -133,7 +145,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const jobId = 'zip_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
         const job = {
             jobId, items: message.items || [],
-            filename: `downloads_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`
+            filename: `downloads_${new Date().toISOString().replace(/[:.]/g, "-")}.zip`, recoveryState: "running"
         };
         persistentZipJobs.set(jobId, job);
         broadcastStreamJob({
@@ -241,7 +253,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }).catch(() => {});
             persistentZipJobs.delete(message.jobId);
             if (typeof activeDownloads !== 'undefined') activeDownloads.delete(message.jobId);
-            browser.storage.local.remove(`zipJob_${message.jobId}`);
+            finalizeStreamRecovery(`zipJob_${message.jobId}`, message.success ? "completed" : "failed");
         }
         sendResponse({ success: true });
         return;
@@ -250,7 +262,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const resolver = streamZipResolvers.get(message.jobId);
         if (resolver) {
             streamZipResolvers.delete(message.jobId);
-            browser.storage.local.remove(`streamJob_${message.jobId}`);
+            finalizeStreamRecovery(`streamJob_${message.jobId}`, message.success ? "completed" : "failed");
             if (message.success) resolver.resolve(message.files || []);
             else resolver.reject(new Error(message.error || 'Stream ZIP processing failed'));
         }
@@ -259,7 +271,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     if (message.action === 'startPersistentStreamJob') {
         const jobId = 'stream_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-        const job = { ...message, action: undefined, jobId };
+        const job = { ...message, action: undefined, jobId, recoveryState: "running" };
         persistentStreamJobs.set(jobId, job);
         if (typeof activeDownloads !== 'undefined') {
             activeDownloads.set(jobId, {

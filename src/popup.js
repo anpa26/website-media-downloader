@@ -200,6 +200,23 @@ const uiCache = new Map();
 let isGroupingEnabled = false;
 let activeGroup = null;
 let activeDownloadingElements = [];
+
+function prioritizeActiveDownload(element) {
+  if (!element) return;
+  if (activeDownloadingElements.includes(element)) return;
+  activeDownloadingElements.push(element);
+  const container = document.getElementById('media-list');
+  if (!container || element.parentElement !== container) return;
+
+  // Keep active downloads in their current order, ahead of idle media.
+  const activeSet = new Set(activeDownloadingElements);
+  const firstIdle = [...container.children].find(child => !activeSet.has(child));
+  if (firstIdle && [...container.children].indexOf(element) >
+      [...container.children].indexOf(firstIdle)) {
+    container.insertBefore(element, firstIdle);
+  }
+}
+
 const selectedUrls = new Set();
 
 function getActiveRequests() {
@@ -1188,7 +1205,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'customStatus' || message.action === 'audioPopupStatus' || message.action === 'streamPopupStatus') {
     let item = uiCache.get(message.id);
     if (!item) {
-      const mediaItems = document.querySelectorAll('.media-item');
+      const mediaItems = [...new Set([...document.querySelectorAll('.media-item'), ...activeDownloadingElements])];
       for (const el of mediaItems) {
         if (el.dataset.downloadId === message.id || el.dataset.url === message.id) {
           let progressContainer = el.querySelector('.download-progress-container');
@@ -1226,7 +1243,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     if (item) {
         if (!activeDownloadingElements.includes(item.element)) {
-            activeDownloadingElements.push(item.element);
+            prioritizeActiveDownload(item.element);
         }
         if (item.dlBtn) {
             if (item.cancelBtn) item.cancelBtn.style.display = 'inline-flex';
@@ -1370,9 +1387,9 @@ function updateProgressUI(id, loaded, total, isParallel = false, isPaused = fals
   let item = uiCache.get(id);
 
   if (!item) {
-    const mediaItems = document.querySelectorAll('.media-item');
+    const mediaItems = [...new Set([...document.querySelectorAll('.media-item'), ...activeDownloadingElements])];
     for (const el of mediaItems) {
-      if (el.dataset.downloadId === id || el.dataset.url === id) {
+      if (el.dataset.downloadId === String(id) || el.dataset.url === id) {
         let progressContainer = el.querySelector('.download-progress-container');
         if (!progressContainer) {
           progressContainer = document.createElement('div');
@@ -1408,9 +1425,7 @@ function updateProgressUI(id, loaded, total, isParallel = false, isPaused = fals
   }
 
   if (item) {
-    if (!activeDownloadingElements.includes(item.element)) {
-      activeDownloadingElements.push(item.element);
-    }
+    prioritizeActiveDownload(item.element);
     const { loadingBar, statusInfo, dlBtn, cancelBtn, audioBtn } = item;
 
     if (dlBtn) {
@@ -1503,28 +1518,54 @@ function updateProgressUI(id, loaded, total, isParallel = false, isPaused = fals
   }
 }
 
-async function restoreActiveDownloadsUI(activeDownloadsPassed = null) {
-  let activeDownloads = activeDownloadsPassed;
-  if (!activeDownloads) {
-    try {
-      const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-      const activeTab = tabs[0];
-      if (activeTab && activeTab.url && activeTab.url.startsWith('http')) {
-        const tabDownloads = await browser.tabs.sendMessage(activeTab.id, { action: 'get_active_downloads' }).catch(() => null);
-        if (tabDownloads) {
-          activeDownloads = tabDownloads;
-        }
-      }
-    } catch (e) {}
-    const bgDownloads = await browser.runtime.sendMessage({ action: 'getActiveDownloads' }).catch(() => null);
-    if (bgDownloads) {
-      activeDownloads = { ...activeDownloads, ...bgDownloads };
-    }
+let activeDownloadSnapshot = null;
+let activeDownloadSnapshotTime = 0;
+let activeDownloadSnapshotRead = null;
+function getActiveDownloadSnapshot() {
+  if (activeDownloadSnapshotRead) return activeDownloadSnapshotRead;
+  if (activeDownloadSnapshot && Date.now() - activeDownloadSnapshotTime < 500) {
+    return Promise.resolve(activeDownloadSnapshot);
   }
+  activeDownloadSnapshotRead = Promise.all([
+    browser.runtime.sendMessage({ action: 'getActiveDownloads' }).catch(() => null),
+    browser.tabs.query({ active: true, currentWindow: true }).then(async tabs => {
+      const tab = tabs[0];
+      if (!tab?.url?.startsWith('http')) return null;
+      return browser.tabs.sendMessage(tab.id, { action: 'get_active_downloads' }).catch(() => null);
+    }).catch(() => null)
+  ]).then(([background, tab]) => {
+    activeDownloadSnapshot = { ...tab, ...background };
+    activeDownloadSnapshotTime = Date.now();
+    return activeDownloadSnapshot;
+  }).finally(() => { activeDownloadSnapshotRead = null; });
+  return activeDownloadSnapshotRead;
+}
+
+let activeDownloadUISync = null;
+function restoreActiveDownloadsUI(snapshot = null) {
+  if (snapshot) return syncActiveDownloadsUI(snapshot);
+  if (activeDownloadUISync) return activeDownloadUISync;
+  activeDownloadUISync = syncActiveDownloadsUI().finally(() => { activeDownloadUISync = null; });
+  return activeDownloadUISync;
+}
+
+async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
+  const activeDownloads = activeDownloadsPassed || await getActiveDownloadSnapshot();
   if (!activeDownloads) return;
 
-  const mediaItems = document.querySelectorAll('.media-item');
+  const mediaItems = [...new Set([...document.querySelectorAll('.media-item'), ...activeDownloadingElements])];
   const activeIds = Object.keys(activeDownloads);
+  const activeIdSet = new Set(activeIds);
+  const itemsById = new Map();
+  const itemsByUrl = new Map();
+  for (const item of mediaItems) {
+    if (item.dataset.downloadId) itemsById.set(item.dataset.downloadId, item);
+    const url = item.dataset.url;
+    if (url) {
+      if (!itemsByUrl.has(url)) itemsByUrl.set(url, item);
+      if (!itemsByUrl.has(url.split('?')[0])) itemsByUrl.set(url.split('?')[0], item);
+    }
+  }
 
   activeIds.forEach(id => {
     const downloadData = activeDownloads[id];
@@ -1544,6 +1585,21 @@ async function restoreActiveDownloadsUI(activeDownloadsPassed = null) {
       if (text) text.textContent = downloadData.status === 'generating'
         ? (browser.i18n.getMessage('zipGenerating') || 'Generating ZIP archive...')
         : (`${downloadData.currentFile || ''}${downloadData.currentFile ? ' • ' : ''}${downloadData.statusText || downloadData.status || browser.i18n.getMessage('zipPreparing') || 'Preparing ZIP...'}`);
+      if (container) {
+        let resume = container.querySelector('#resume-recovered-zip');
+        if (downloadData.isPaused) {
+          if (!resume) {
+            resume = document.createElement('mdui-button');
+            resume.id = 'resume-recovered-zip';
+            container.appendChild(resume);
+          }
+          resume.textContent = browser.i18n.getMessage('resumeActiveButton') || 'Resume';
+          resume.onclick = async () => {
+            await browser.runtime.sendMessage({ action: 'resumeActiveDownload', id }).catch(() => {});
+            resume.remove();
+          };
+        } else if (resume) resume.remove();
+      }
       if (cancel) {
         cancel.style.display = 'inline-block';
         cancel.onclick = () => browser.runtime.sendMessage({ action: 'cancelDownload', id }).catch(() => {});
@@ -1551,12 +1607,8 @@ async function restoreActiveDownloadsUI(activeDownloadsPassed = null) {
       return;
     }
 
-    let item = Array.from(mediaItems).find(el => {
-      if (el.dataset.downloadId === id) return true;
-      const elUrl = el.dataset.url;
-      if (!elUrl || !url) return false;
-      return elUrl === url || url.split('?')[0] === elUrl.split('?')[0];
-    });
+    const item = itemsById.get(String(id)) || itemsByUrl.get(url) ||
+      (url ? itemsByUrl.get(url.split('?')[0]) : null);
 
     if (item) {
       item.dataset.downloadId = id;
@@ -1568,7 +1620,7 @@ async function restoreActiveDownloadsUI(activeDownloadsPassed = null) {
       const audioBtn = item.querySelector('#audio-only-button');
       if (audioBtn) audioBtn.style.display = 'none';
       if (downloadData.isAudioJob || downloadData.isStreamJob) {
-        updateProgressUI(id, downloadData.percent || 0, 100, false, false, downloadData.status, downloadData.percent);
+        updateProgressUI(id, downloadData.percent || 0, 100, false, downloadData.isPaused, downloadData.status, downloadData.percent);
         const progressItem = uiCache.get(id);
         if (progressItem?.statusInfo) {
           let text = downloadData.status || 'Processing...';
@@ -1581,14 +1633,14 @@ async function restoreActiveDownloadsUI(activeDownloadsPassed = null) {
       }
       
       if (!activeDownloadingElements.includes(item)) {
-        activeDownloadingElements.push(item);
+        prioritizeActiveDownload(item);
       }
     }
   });
 
   mediaItems.forEach(item => {
     const jobId = item.dataset.downloadId || '';
-    if (jobId.startsWith('audio_') && !activeIds.includes(jobId)) {
+    if (jobId.startsWith('audio_') && !activeIdSet.has(jobId)) {
       finishDownloadUI(jobId, false);
     }
   });
@@ -1602,6 +1654,10 @@ setInterval(() => {
 
 function finishDownloadUI(id, isSuccess = false) {
   const itemData = uiCache.get(id);
+  if (replayingPopupJob && itemData?.element?.dataset.recoveryJob === replayingPopupJob) {
+    keepPopupRecovery = !isSuccess && !window.activeCancellations?.has(id) &&
+      !window.activeCancellations?.has(itemData.element.dataset.url);
+  }
   if (itemData) {
       const { element, progressContainer } = itemData;
       activeDownloadingElements = activeDownloadingElements.filter(el => el !== element);
@@ -1641,9 +1697,9 @@ function finishDownloadUI(id, isSuccess = false) {
       return;
   }
 
-  const mediaItems = document.querySelectorAll('.media-item');
+  const mediaItems = [...new Set([...document.querySelectorAll('.media-item'), ...activeDownloadingElements])];
   mediaItems.forEach(item => {
-    if (item.dataset.downloadId === id || item.dataset.url === id) {
+    if (item.dataset.downloadId === String(id) || item.dataset.url === id) {
       activeDownloadingElements = activeDownloadingElements.filter(el => el !== item);
       if (isSuccess) {
         item.remove();
@@ -1988,31 +2044,28 @@ function filterAndRenderMediaList(query = '') {
 }
 
 function getGroupCounts(activeItems) {
-  const counts = {
-    video: 0,
-    audio: 0,
-    stream: 0,
-    image: 0,
-    subtitle: 0,
-    file: 0
+  const counts = { video: 0, audio: 0, stream: 0, image: 0, subtitle: 0, file: 0 };
+  const countedUrls = new Set();
+  const increment = type => {
+    const groupType = counts[type] !== undefined ? type : "file";
+    counts[groupType]++;
   };
 
-  allFilteredRequests.forEach(item => {
-    const type = item.type || 'file';
-    if (counts[type] !== undefined) {
-      counts[type]++;
-    } else {
-      counts.file++;
-    }
+  // Active cards are rendered first and reserve their URL before detected items.
+  activeItems.forEach(item => {
+    const url = item.dataset.url || "";
+    if (url) countedUrls.add(url.split("?")[0]);
+    increment(item.dataset.type || "file");
   });
 
-  activeItems.forEach(item => {
-    const type = item.dataset.type || 'file';
-    if (counts[type] !== undefined) {
-      counts[type]++;
-    } else {
-      counts.file++;
-    }
+  // renderNextChunk hides detected URLs whose query-less URL is already rendered.
+  // Count that same visible set so a group badge matches the cards inside it.
+  allFilteredRequests.forEach(item => {
+    const url = item.bestRequest.originalUrl || item.bestRequest.url || "";
+    const normalizedUrl = url.split("?")[0];
+    if (normalizedUrl && countedUrls.has(normalizedUrl)) return;
+    if (normalizedUrl) countedUrls.add(normalizedUrl);
+    increment(item.type || "file");
   });
 
   return counts;
@@ -2081,7 +2134,7 @@ function createBackToGroupsHeaderHTML(title) {
 function ensureMediaPreviewCleanupObserver(container) {
   if (container._previewCleanupObserver) return;
   const cleanupNode = (node) => {
-    if (!(node instanceof Element)) return;
+    if (!(node instanceof Element) || node.isConnected) return;
     if (typeof node.cleanupMediaPreview === 'function') node.cleanupMediaPreview();
     node.querySelectorAll('.media-item').forEach(item => {
       if (typeof item.cleanupMediaPreview === 'function') item.cleanupMediaPreview();
@@ -2103,7 +2156,10 @@ function renderInitialList() {
   const activeItems = [...activeDownloadingElements];
 
   mediaContainer.innerHTML = '';
-  uiCache.clear();
+  // Detached category cards still need progress and completion updates.
+  for (const [key, cached] of uiCache) {
+    if (!activeItems.includes(cached.element)) uiCache.delete(key);
+  }
   renderedMediaUrls.clear();
   activeItems.forEach(item => {
     const url = item.dataset.url;
@@ -2125,7 +2181,7 @@ function renderInitialList() {
 
   if (isGroupingEnabled && activeGroup === null && !isSearching) {
     const counts = getGroupCounts(activeItems);
-    const hasItems = Object.values(counts).some(c => c > 0);
+    const hasItems = activeItems.length > 0 || Object.values(counts).some(c => c > 0);
 
     if (!hasItems) {
       mediaContainer.innerHTML = getNoMediaDetectedHTML();
@@ -2231,8 +2287,6 @@ function renderInitialList() {
 
   if (mediaControls) mediaControls.style.display = 'flex';
   renderNextChunk();
-  restoreActiveDownloadsUI();
-  updateSelectedCount();
 }
 
 function renderNextChunk() {
@@ -2251,6 +2305,7 @@ function renderNextChunk() {
     renderedMediaUrls.add(itemUrlBase);
 
     const mediaDiv = createMediaItem(item);
+    if (item.downloadId !== undefined) mediaDiv.dataset.downloadId = item.downloadId;
     fragment.appendChild(mediaDiv);
   });
 
@@ -2300,14 +2355,47 @@ function renderNextChunk() {
   isRenderingChunk = false;
 }
 
+const pendingStreamVariants = new Map();
+const streamVariantQueue = [];
+let runningStreamVariants = 0;
+function loadStreamVariants(url, isMPD) {
+  const cache = isMPD ? mpdVariantsCache : m3u8VariantsCache;
+  if (cache.has(url)) return Promise.resolve(cache.get(url));
+  if (pendingStreamVariants.has(url)) return pendingStreamVariants.get(url);
+  const result = new Promise(resolve => {
+    streamVariantQueue.push(async () => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      try {
+        resolve(await (isMPD ? getMPDVariants(url, controller.signal) : getM3U8Variants(url, controller.signal)));
+      } catch (_) { resolve([]); }
+      finally {
+        clearTimeout(timeout);
+        pendingStreamVariants.delete(url);
+        runningStreamVariants--;
+        drainStreamVariantQueue();
+      }
+    });
+  });
+  pendingStreamVariants.set(url, result);
+  drainStreamVariantQueue();
+  return result;
+}
+function drainStreamVariantQueue() {
+  while (runningStreamVariants < 4 && streamVariantQueue.length) {
+    runningStreamVariants++;
+    streamVariantQueue.shift()();
+  }
+}
+
 const m3u8VariantsCache = new Map();
 
-async function getM3U8Variants(url) {
+async function getM3U8Variants(url, signal) {
     if (m3u8VariantsCache.has(url)) {
         return m3u8VariantsCache.get(url);
     }
     try {
-        const response = await spoofedFetch(url);
+        const response = await spoofedFetch(url, { signal });
         if (!response.ok) return [];
         const text = await response.text();
         if (!text.includes("#EXT-X-STREAM-INF")) {
@@ -2346,12 +2434,12 @@ async function getM3U8Variants(url) {
 
 const mpdVariantsCache = new Map();
 
-async function getMPDVariants(url) {
+async function getMPDVariants(url, signal) {
     if (mpdVariantsCache.has(url)) {
         return mpdVariantsCache.get(url);
     }
     try {
-        const response = await spoofedFetch(url);
+        const response = await spoofedFetch(url, { signal });
         if (!response.ok) return [];
         const text = await response.text();
         
@@ -2896,9 +2984,7 @@ function createMediaItem(item) {
     resolutionRow.appendChild(resWrapper);
     actionsWrapper.appendChild(resolutionRow);
 
-    const getVariantsPromise = isM3U8 
-        ? getM3U8Variants(bestRequest.originalUrl) 
-        : getMPDVariants(bestRequest.originalUrl);
+    const getVariantsPromise = loadStreamVariants(bestRequest.originalUrl, isMPD);
 
     getVariantsPromise.then(async (variants) => {
         resSelect.innerHTML = '';
@@ -3545,7 +3631,23 @@ function checkIsSegment(url, responseHeaders, settings) {
     return false;
 }
 
-async function loadMediaList() {
+let mediaListLoad = null;
+let mediaListReloadRequested = false;
+function loadMediaList() {
+  if (mediaListLoad) {
+    mediaListReloadRequested = true;
+    return mediaListLoad;
+  }
+  mediaListLoad = (async () => {
+    do {
+      mediaListReloadRequested = false;
+      await loadMediaListOnce();
+    } while (mediaListReloadRequested);
+  })().finally(() => { mediaListLoad = null; });
+  return mediaListLoad;
+}
+
+async function loadMediaListOnce() {
   const mediaContainer = document.getElementById('media-list');
   const loadingSpinner = document.getElementById('loading-media-list');
   const globalLoading = document.getElementById('loading');
@@ -3564,22 +3666,6 @@ async function loadMediaList() {
     window.history.replaceState({}, document.title, cleanUrl);
   }
 
-  let activeTabTitle = "";
-  const tabIdToTitle = new Map();
-  try {
-    const tabs = await browser.tabs.query({ active: true, lastFocusedWindow: true });
-    const activeTab = tabs[0];
-    if (activeTab && activeTab.title && !activeTab.url.startsWith('chrome-extension://') && !activeTab.url.startsWith('moz-extension://') && !activeTab.url.startsWith('about:')) {
-      activeTabTitle = activeTab.title;
-    }
-
-    const allTabs = await browser.tabs.query({});
-    allTabs.forEach(t => {
-      if (t.id && t.title && t.url && !t.url.startsWith('chrome-extension://') && !t.url.startsWith('moz-extension://') && !t.url.startsWith('about:')) {
-        tabIdToTitle.set(t.id, t.title);
-      }
-    });
-  } catch (e) {}
   if (mainContent) mainContent.style.display = 'block';
   if (loadingSpinner) loadingSpinner.style.display = 'block';
 
@@ -3588,68 +3674,24 @@ async function loadMediaList() {
   selectedUrls.clear();
   updateSelectedCount();
 
-  const activeItems = new Map();
+  const activeItems = new Map(activeDownloadingElements.map(item => [item.dataset.url, item]));
   mediaContainer.querySelectorAll('.media-item').forEach(item => {
-    if (item.querySelector('mdui-linear-progress')) {
-      activeItems.set(item.dataset.url, item);
-    }
+    if (item.querySelector('mdui-linear-progress')) activeItems.set(item.dataset.url, item);
   });
 
   mediaContainer.innerHTML = '';
   activeItems.forEach(item => mediaContainer.appendChild(item));
 
   try {
-    const mediaRequests = await browser.runtime.sendMessage({ action: 'getMediaRequests' });
+    const [mediaRequests, settings, activeDownloads] = await Promise.all([
+      browser.runtime.sendMessage({ action: 'getMediaRequests' }),
+      browser.storage.local.get(['filename-template', 'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'hide-segments', 'hide-page-components', 'media-sort-order', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom', 'optimize-low-end', 'group-by-type', 'disable-deduplication']),
+      getActiveDownloadSnapshot()
+    ]);
     if (globalLoading) globalLoading.style.display = 'none';
     if (mainContent) mainContent.style.display = 'block';
 
-    if (!mediaRequests || Object.keys(mediaRequests).length === 0) {
-        if (loadingSpinner) loadingSpinner.style.display = 'none';
-        const backgroundDownloads = await browser.runtime.sendMessage({ action: 'getActiveDownloads' }).catch(() => null);
-        const activeEntries = Object.entries(backgroundDownloads || {});
-        if (activeEntries.length > 0) {
-          mediaContainer.innerHTML = '';
-          activeDownloadingElements = [];
-          downloadingCount = 0;
-          for (const [id, downloadData] of activeEntries) {
-            if (downloadData.isZip) continue;
-            const type = downloadData.mediaType || 'file';
-            const mockItem = {
-              bestRequest: {
-                originalUrl: downloadData.url || '',
-                size: downloadData.total,
-                filename: downloadData.filename,
-                timeStamp: Date.now()
-              },
-              type,
-              isVideo: type === 'video', isAudio: type === 'audio', isStream: type === 'stream',
-              isSubtitle: type === 'subtitle', isImage: type === 'image', isFile: type === 'file'
-            };
-            const item = createMediaItem(mockItem);
-            item.dataset.downloadId = id;
-            if (downloadData.url) item.dataset.url = downloadData.url;
-            mediaContainer.appendChild(item);
-            activeDownloadingElements.push(item);
-            updateDownloadingCount(1);
-          }
-          if (mediaControls) mediaControls.style.display = 'flex';
-          allMediaRequests = [];
-          allFilteredRequests = [];
-          await restoreActiveDownloadsUI(backgroundDownloads);
-          return;
-        }
-        if (activeItems.size === 0) {
-          mediaContainer.innerHTML = getNoMediaDetectedHTML();
-          if (mediaControls) mediaControls.style.display = 'none';
-        } else {
-          if (mediaControls) mediaControls.style.display = 'flex';
-        }
-        allMediaRequests = [];
-        allFilteredRequests = [];
-        return;
-    }
 
-    const settings = await browser.storage.local.get(['filename-template', 'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'hide-segments', 'hide-page-components', 'media-sort-order', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom', 'optimize-low-end', 'group-by-type', 'disable-deduplication']);
     isGroupingEnabled = settings['group-by-type'] === undefined || settings['group-by-type'] === '1' || settings['group-by-type'] === true;
 
     const minFileSizeSetting = settings['min-file-size'] || '0';
@@ -3741,38 +3783,6 @@ async function loadMediaList() {
       });
     }
 
-    const streamGroups = [];
-    mediaGroups.forEach(group => {
-        const bestRequest = group.requests[0];
-        if (bestRequest) {
-            const urlLower = (bestRequest.originalUrl || bestRequest.url || "").toLowerCase();
-            const isStreamUrl = urlLower.includes('.m3u8') || urlLower.includes('.mpd');
-            if (isStreamUrl) {
-                streamGroups.push({ url: bestRequest.originalUrl || bestRequest.url });
-            }
-        }
-    });
-
-    const urlVariantsMap = new Map();
-    try {
-        const variantsResults = await Promise.all(
-            streamGroups.map(async (item) => {
-                try {
-                    const isMPD = item.url.toLowerCase().includes('.mpd');
-                    const variants = isMPD ? await getMPDVariants(item.url) : await getM3U8Variants(item.url);
-                    return { url: item.url, variants };
-                } catch (e) {
-                    return { url: item.url, variants: [] };
-                }
-            })
-        );
-        variantsResults.forEach(res => {
-            urlVariantsMap.set(res.url, res.variants);
-        });
-    } catch (e) {
-        console.warn("Failed to fetch stream variants in parallel:", e);
-    }
-
     const groupsWithNames = [];
     mediaGroups.forEach(group => {
 
@@ -3794,7 +3804,7 @@ async function loadMediaList() {
         const isStreamUrl = urlLower.includes('.m3u8') || urlLower.includes('.mpd');
         let hasQuality = false;
         if (isStreamUrl) {
-            const variants = urlVariantsMap.get(bestRequest.originalUrl || bestRequest.url) || [];
+            const variants = (urlLower.includes('.mpd') ? mpdVariantsCache : m3u8VariantsCache).get(mediaUrl) || [];
             hasQuality = variants.length > 0;
         } else if (bestRequest.ytFormats && bestRequest.ytFormats.length > 1) {
             hasQuality = true;
@@ -3940,61 +3950,31 @@ async function loadMediaList() {
 
     if (loadingSpinner) loadingSpinner.style.display = 'none';
 
-    let activeDownloads = {};
-    try {
-      const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-      const activeTab = tabs[0];
-      if (activeTab && activeTab.url && activeTab.url.startsWith('http')) {
-        const tabDownloads = await browser.tabs.sendMessage(activeTab.id, { action: 'get_active_downloads' }).catch(() => null);
-        if (tabDownloads) {
-          activeDownloads = tabDownloads;
-        }
-      }
-    } catch (e) {
-      console.warn("Failed to get active downloads from tab:", e);
-    }
-    const bgDownloads = await browser.runtime.sendMessage({ action: 'getActiveDownloads' }).catch(() => null);
-    if (bgDownloads) {
-      activeDownloads = { ...activeDownloads, ...bgDownloads };
-    }
-
-    activeDownloadingElements = [];
-    if (activeDownloads) {
-      const activeIds = Object.keys(activeDownloads);
-      downloadingCount = 0;
-
-      activeIds.forEach(id => {
-        const downloadData = activeDownloads[id];
-        const url = downloadData.url;
-        if (downloadData.isZip) return;
-        updateDownloadingCount(1);
-
-        const hasInRequests = allFilteredRequests.some(item => {
-          const itemUrl = item.bestRequest.originalUrl;
-          return itemUrl === url || (url && itemUrl && url.split('?')[0] === itemUrl.split('?')[0]);
-        });
-
-        if (!hasInRequests) {
-          const type = downloadData.mediaType || 'file';
-          const mockItem = {
-            bestRequest: { originalUrl: url || '', size: downloadData.total, timeStamp: Date.now() },
-            type: type,
-            isVideo: type === 'video', isAudio: type === 'audio', isStream: type === 'stream',
-            isSubtitle: type === 'subtitle', isImage: type === 'image', isFile: type === 'file'
-          };
-
-          const mediaContainer = document.getElementById('media-list');
-          const item = createMediaItem(mockItem);
-          item.dataset.downloadId = id;
-          if (url) item.dataset.url = url;
-          mediaContainer.appendChild(item);
-
-          if (!activeDownloadingElements.includes(item)) {
-            activeDownloadingElements.push(item);
-          }
-        }
+    activeDownloadingElements = [...activeItems.values()];
+    const requestUrls = new Set(allFilteredRequests.map(item => item.bestRequest.originalUrl.split('?')[0]));
+    const downloadModels = [];
+    let activeCount = 0;
+    for (const [id, downloadData] of Object.entries(activeDownloads || {})) {
+      if (downloadData.isZip) continue;
+      activeCount++;
+      const url = downloadData.url || '';
+      if (requestUrls.has(url.split('?')[0]) || activeItems.has(url)) continue;
+      requestUrls.add(url.split('?')[0]);
+      const type = downloadData.mediaType || 'file';
+      downloadModels.push({
+        downloadId: id,
+        bestRequest: { originalUrl: url, size: downloadData.total,
+          filename: downloadData.filename, timeStamp: Date.now() },
+        type,
+        isVideo: type === 'video', isAudio: type === 'audio', isStream: type === 'stream',
+        isSubtitle: type === 'subtitle', isImage: type === 'image', isFile: type === 'file'
       });
     }
+    // Only the current category/page creates cards, including background downloads.
+    allMediaRequests = [...downloadModels, ...allMediaRequests];
+    allFilteredRequests = [...allMediaRequests];
+    downloadingCount = activeCount;
+    updateDownloadingCount(0);
 
     renderInitialList();
 
@@ -4697,6 +4677,7 @@ async function downloadAllAsZip(items) {
   items = items.filter(item => !isYoutubeVideoItem(item));
   if (items.length === 0) return;
 
+  let recoveryJobId = null;
   const backgroundSetting = await browser.storage.local.get('background-download');
   const backgroundDownloadEnabled = backgroundSetting['background-download'] !== '0';
 
@@ -4745,6 +4726,7 @@ async function downloadAllAsZip(items) {
     // With background downloads disabled, keep the work owned by this UI so
     // closing the extension view also stops the download.
     if (!backgroundDownloadEnabled || !browser.tabs?.create) {
+      recoveryJobId = await rememberPopupDownload('zip', 'zip://local', null, null, 'downloads.zip', { items });
 
       try {
         let skipAllErrors = false;
@@ -4818,6 +4800,7 @@ async function downloadAllAsZip(items) {
 
       } catch (e) {
         if (e.message !== "Cancelled") {
+          if (replayingPopupJob) keepPopupRecovery = true;
           console.error("Local ZIP error:", e);
           showDialog(browser.i18n.getMessage("zipError", [e.message]));
         }
@@ -4825,7 +4808,7 @@ async function downloadAllAsZip(items) {
       }
     } else {
 
-      browser.runtime.sendMessage({
+      await browser.runtime.sendMessage({
         action: 'startPersistentZipJob',
         items: downloadItems
       });
@@ -4845,6 +4828,8 @@ async function downloadAllAsZip(items) {
     setTimeout(() => {
       progressContainer.style.display = 'none';
     }, 5000);
+  } finally {
+    await forgetPopupDownload(recoveryJobId);
   }
 }
 
@@ -4997,7 +4982,58 @@ async function extractAudioFromBlob(blob, filename, downloadMethod, loadingBar, 
   }
 }
 
-async function downloadAudioOnly(url, mediaDiv, specificSize) {
+// Persist popup-owned operations before fetching or converting. On restart they
+// replay with the same selected tracks and filename, without another rename prompt.
+let replayingPopupJob = null;
+let keepPopupRecovery = false;
+async function rememberPopupDownload(kind, url, mediaDiv, request, filename, extra = {}) {
+  const jobId = replayingPopupJob || `popup_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const job = { jobId, kind, url, filename, request, ...extra,
+    mediaType: mediaDiv?.dataset.type || 'file', dataset: { ...mediaDiv?.dataset },
+    ytFormats: mediaDiv?.ytFormats, ytSubtitles: mediaDiv?.ytSubtitles };
+  const response = await browser.runtime.sendMessage({ action: 'registerPopupRecovery', job });
+  if (!response?.success) throw new Error(response?.error || 'Unable to save download recovery state');
+  return jobId;
+}
+async function forgetPopupDownload(jobId) {
+  if (jobId && jobId === replayingPopupJob && keepPopupRecovery) {
+    await browser.runtime.sendMessage({ action: 'parkProcessingJob', key: `popupJob_${jobId}` });
+    return;
+  }
+  if (jobId) await browser.runtime.sendMessage({ action: 'releasePopupRecovery', jobId });
+}
+
+async function restorePopupDownload() {
+  const jobId = new URLSearchParams(location.search).get('recoveryJob');
+  if (!jobId) return;
+  const key = `popupJob_${jobId}`;
+  const claim = await browser.runtime.sendMessage({ action: 'claimProcessingJob', key });
+  if (!claim?.allowed) return;
+  const job = (await browser.storage.local.get(key))[key];
+  if (!job) return;
+  replayingPopupJob = jobId;
+  if (job.kind === 'zip') {
+    await downloadAllAsZip(job.items);
+    return;
+  }
+  await browser.storage.session.set({ [job.url]: [job.request] });
+  const type = job.mediaType || 'file';
+  const item = createMediaItem({ bestRequest: { ...job.request, originalUrl: job.url }, type,
+    isVideo: type === 'video', isAudio: type === 'audio', isStream: type === 'stream',
+    isImage: type === 'image', isSubtitle: type === 'subtitle', isFile: type === 'file',
+    ytFormats: job.ytFormats, ytSubtitles: job.ytSubtitles });
+  Object.assign(item.dataset, job.dataset || {});
+  item.dataset.url = job.url;
+  item.dataset.recoveryJob = jobId;
+  item.ytFormats = job.ytFormats;
+  item.ytSubtitles = job.ytSubtitles;
+  document.getElementById('media-list').prepend(item);
+  if (job.kind === 'audio') await downloadAudioOnly(job.url, item, job.specificSize, job.filename);
+  else await downloadFile(job.url, item, job.specificSize, true, job.audioUrl, job.subtitleUrl, job.filename);
+}
+
+async function downloadAudioOnly(url, mediaDiv, specificSize, recoveredFilename = null) {
+  let recoveryJobId = null;
   let wakeLock = null;
   try { wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
 
@@ -5089,8 +5125,8 @@ const template = (settings['filename-template'] && settings['filename-template']
 
    finalName = mediaFilename.changeExtension(finalName, audioExt);
 
-   let newName = finalName;
-   if (!disableRename) {
+   let newName = recoveredFilename || finalName;
+   if (!disableRename && !recoveredFilename) {
        newName = await showRenameDialog(finalName);
        if (newName === null) return;
    }
@@ -5125,6 +5161,7 @@ const template = (settings['filename-template'] && settings['filename-template']
       if (cancelBtn) cancelBtn.style.display = 'inline-flex';
     }
 
+    recoveryJobId = await rememberPopupDownload('audio', url, mediaDiv, targetRequest, newName, { specificSize });
     updateDownloadingCount(1);
     const progressContainer = document.createElement('div');
     progressContainer.className = 'download-progress-container';
@@ -5136,6 +5173,7 @@ const template = (settings['filename-template'] && settings['filename-template']
     progressContainer.appendChild(loadingBar);
     progressContainer.appendChild(statusInfo);
     mediaDiv.appendChild(progressContainer);
+    prioritizeActiveDownload(mediaDiv);
 
     loadingBar.style.width = '100%';
     loadingBar.setAttribute('indeterminate', 'true');
@@ -5155,7 +5193,7 @@ try {
             const response = await browser.tabs.sendMessage(activeTab.id, { action: 'ping' }).catch(() => null);
             if (response && response.pong && !isStream) {
                 const backgroundJob = await browser.runtime.sendMessage({
-                    action: 'startPersistentAudioJob',
+                    action: 'startPersistentAudioJob', recoveryJobId,
                     url: url,
                     filename: newName,
                     isYouTube: isYouTubeSource,
@@ -5195,7 +5233,7 @@ try {
               loadingBar.setAttribute('indeterminate', 'true');
               statusInfo.textContent = browser.i18n.getMessage('preparingManifest') || 'Preparing stream...';
               const streamJob = await browser.runtime.sendMessage({
-                  action: 'startPersistentStreamJob', url, filename: newName,
+                  action: 'startPersistentStreamJob', recoveryJobId, url, filename: newName,
                   quality: selectedRes || 'highest', audioOnly: true,
                   request: targetRequest, downloadMethod
               });
@@ -5285,10 +5323,12 @@ try {
     if (restoreCb) restoreCb();
     window.activeCancellations.restoreCallbacks.delete(url);
     window.activeCancellations.delete(url);
+    await forgetPopupDownload(recoveryJobId);
     if (wakeLock) wakeLock.release();
   }
 }
 async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUrl = null, subtitleUrl = null, customFilename = null) {
+  let recoveryJobId = null;
   let wakeLock = null;
   try { wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
 
@@ -5473,6 +5513,7 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
 
     
 
+    recoveryJobId = await rememberPopupDownload('file', url, mediaDiv, targetRequest, newName, { specificSize, audioUrl, subtitleUrl });
     updateDownloadingCount(1);
     let loadingBar = null;
     let statusInfo = null;
@@ -5489,6 +5530,7 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
       progressContainer.appendChild(loadingBar);
       progressContainer.appendChild(statusInfo);
       mediaDiv.appendChild(progressContainer);
+      prioritizeActiveDownload(mediaDiv);
 
       loadingBar.style.width = '100%';
       loadingBar.setAttribute('indeterminate', 'true');
@@ -5523,7 +5565,7 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
                     }));
             }
             const backgroundJob = await browser.runtime.sendMessage({
-                action: 'startPersistentAudioJob',
+                action: 'startPersistentAudioJob', recoveryJobId,
                 url,
                 audioUrl: delegatedAudioUrl || null,
                 filename: newName,
@@ -6031,7 +6073,7 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
       loadingBar.setAttribute('indeterminate', 'true');
       statusInfo.textContent = browser.i18n.getMessage('preparingManifest') || 'Preparing stream...';
       const streamJob = await browser.runtime.sendMessage({
-        action: 'startPersistentStreamJob', url, filename: newName,
+        action: 'startPersistentStreamJob', recoveryJobId, url, filename: newName,
         quality: selectedRes || 'highest', request: targetRequest, downloadMethod
       });
       if (!streamJob?.success) throw new Error(streamJob?.error || 'Unable to start stream download');
@@ -6178,8 +6220,8 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
         }
       } else {
 
-        browser.runtime.sendMessage({
-          action: 'startFetchDownload',
+        await browser.runtime.sendMessage({
+          action: 'startFetchDownload', recoveryJobId,
           url: url,
           downloadId: mediaDiv ? mediaDiv.dataset.downloadId : downloadId,
           filename: newName,
@@ -6200,6 +6242,7 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
         if (restoreCb) restoreCb();
         window.activeCancellations.restoreCallbacks.delete(url);
     }
+    await forgetPopupDownload(recoveryJobId);
     if (wakeLock) wakeLock.release();
   }
 }
@@ -6661,3 +6704,13 @@ async function getM3u8BlobUrlFromMpd(mpdUrl, headers) {
     return mpdUrl;
   }
 }
+
+window.addEventListener('load', async () => {
+  if (!new URLSearchParams(location.search).has('recoveryJob')) return;
+  try {
+    await loadNavigationPageOnce('home', loadMediaList);
+    await restorePopupDownload();
+  } catch (error) {
+    console.error('Popup download recovery failed:', error);
+  }
+});

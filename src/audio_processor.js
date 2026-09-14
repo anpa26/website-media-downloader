@@ -18,11 +18,20 @@
 
 if (typeof browser === 'undefined') var browser = chrome;
 
+async function markRecoveryCompleted(key, job) {
+    await browser.storage.local.set({ [key]: { ...job, recoveryState: "completed", status: "completed" } });
+}
+
 async function runPersistentAudioJob(jobId, options = {}) {
     const key = `audioJob_${jobId}`;
     const stored = await browser.storage.local.get(key);
     const job = stored[key];
+    let keepRecoveryJob = false;
     if (!job) return;
+    if (typeof browser.runtime.getBrowserInfo === 'function' && !options.offscreen) {
+        const claim = await browser.runtime.sendMessage({ action: 'claimProcessingJob', key });
+        if (!claim?.allowed) return;
+    }
 
     const report = (text, percent, indeterminate = false) => browser.runtime.sendMessage({
         action: 'audioJobProgress', jobId, filename: job.filename, url: job.url, text, percent, indeterminate
@@ -30,7 +39,14 @@ async function runPersistentAudioJob(jobId, options = {}) {
     window.activeCancellations = window.activeCancellations || new Set();
     window.activePauses = window.activePauses || new Set();
     window.activeAbortControllers = window.activeAbortControllers || new Map();
+    if (job.isPaused) { window.activePauses.add(jobId); window.activePauses.add(job.url); }
     const checkCancel = () => window.activeCancellations.has(jobId) || window.activeCancellations.has(job.url);
+    const waitIfPaused = async () => {
+        while (window.activePauses.has(jobId) || window.activePauses.has(job.url)) {
+            if (checkCancel()) throw new Error('Cancelled');
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
+    };
     const statusInfo = { set textContent(value) { report(String(value)); }, get textContent() { return ''; } };
     const loadingBar = {
         parentNode: { querySelector: selector => selector === '.download-status-info' ? statusInfo : null },
@@ -42,6 +58,7 @@ async function runPersistentAudioJob(jobId, options = {}) {
     };
 
     try {
+        await waitIfPaused();
         await report('Connecting...', 0);
         let filename = job.filename;
         let blob;
@@ -57,6 +74,7 @@ async function runPersistentAudioJob(jobId, options = {}) {
             blob = new Blob([fetched.arrayBuffer], { type: fetched.mime || 'application/octet-stream' });
         }
 
+        await waitIfPaused();
         if (job.encodeM4aToMp3) {
             report('Converting to MP3...');
             const result = await convertM4aToMp3Direct(blob, filename, loadingBar, checkCancel);
@@ -73,6 +91,7 @@ async function runPersistentAudioJob(jobId, options = {}) {
             filename = result.filename;
         }
 
+        await waitIfPaused();
         if (options.offscreen) {
             const objectUrl = URL.createObjectURL(blob);
             const anchor = document.createElement('a');
@@ -83,16 +102,24 @@ async function runPersistentAudioJob(jobId, options = {}) {
             anchor.remove();
             setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
         } else {
+            const cacheId = 'processed_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+            await storeCompletedDownloadBlob(cacheId, blob, blob.type);
             const saved = await browser.runtime.sendMessage({
-                action: 'download_arraybuffer', arrayBuffer: await blob.arrayBuffer(), filename, mime: blob.type
+                action: 'download_cached_blob', cacheId, filename, mime: blob.type, size: blob.size
             });
             if (!saved?.success) throw new Error(saved?.error || 'Save failed');
         }
+        await markRecoveryCompleted(key, job);
         await browser.runtime.sendMessage({ action: 'audioJobComplete', jobId, success: true });
     } catch (error) {
+        if (job.recovered && !checkCancel() && error?.message !== 'Cancelled') {
+            keepRecoveryJob = true;
+            await browser.runtime.sendMessage({ action: 'parkProcessingJob', key, error: error?.message });
+            return;
+        }
         await browser.runtime.sendMessage({ action: 'audioJobComplete', jobId, success: false, error: error?.message || String(error) });
     } finally {
-        await browser.storage.local.remove(key);
+        if (!keepRecoveryJob) await browser.storage.local.remove(key);
         if (!options.offscreen && browser.tabs) {
             const tab = await browser.tabs.getCurrent().catch(() => null);
             if (tab?.id !== undefined) browser.tabs.remove(tab.id).catch(() => {});
@@ -101,7 +128,19 @@ async function runPersistentAudioJob(jobId, options = {}) {
 }
 
 globalThis.runPersistentAudioJob = runPersistentAudioJob;
-browser.runtime.onMessage.addListener((message) => {
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'pausePersistentAudioJob' || message.action === 'resumePersistentAudioJob') {
+        window.activePauses = window.activePauses || new Set();
+        const paused = message.action === 'pausePersistentAudioJob';
+        const apply = job => {
+            for (const value of [message.jobId, job?.url, ...(Array.isArray(job?.audioUrl) ? job.audioUrl.map(x => x.url) : [job?.audioUrl])].filter(Boolean)) {
+                if (paused) window.activePauses.add(value); else window.activePauses.delete(value);
+            }
+        };
+        browser.storage.local.get(`audioJob_${message.jobId}`).then(stored => apply(stored[`audioJob_${message.jobId}`]));
+        sendResponse({ success: true });
+        return;
+    }
     if (message.action !== 'cancelPersistentAudioJob') return;
     window.activeCancellations = window.activeCancellations || new Set();
     window.activeCancellations.add(message.jobId);
