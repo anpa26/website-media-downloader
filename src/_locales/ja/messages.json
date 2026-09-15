@@ -1,10 +1,22 @@
 {
-  "ignoreExcludedMediaTitle": {"message":"除外したメディアを検出しない"},
-  "ignoreExcludedMediaExplain": {"message":"上記の名前やドメインに一致するメディアの検出を無効にして、処理の負荷を軽減します。オフにしても、一致する項目は一覧や通知に表示されません。"},
-  "skipDetectionNamesTitle": {"message":"除外する名前 / キーワード"},
-  "skipDetectionNamesExplain": {"message":"一致するメディアURL、ファイル名、ページタイトルを除外します（大文字・小文字は区別しません）。複数の項目は改行またはカンマで区切ってください。"},
-  "skipDetectionDomainsTitle": {"message":"除外するドメイン"},
-  "skipDetectionDomainsExplain": {"message":"指定したサイトやメディア配信元をサブドメインも含めて除外します。複数の項目は改行またはカンマで区切ってください。一致する項目は検出結果や通知に表示されません。"},
+  "ignoreExcludedMediaTitle": {
+    "message": "除外したメディアを検出しない"
+  },
+  "ignoreExcludedMediaExplain": {
+    "message": "上記の名前やドメインに一致するメディアの検出を無効にして、処理の負荷を軽減します。オフにしても、一致する項目は一覧や通知に表示されません。"
+  },
+  "skipDetectionNamesTitle": {
+    "message": "除外する名前 / キーワード"
+  },
+  "skipDetectionNamesExplain": {
+    "message": "一致するメディアURL、ファイル名、ページタイトルを除外します（大文字・小文字は区別しません）。複数の項目は改行またはカンマで区切ってください。"
+  },
+  "skipDetectionDomainsTitle": {
+    "message": "除外するドメイン"
+  },
+  "skipDetectionDomainsExplain": {
+    "message": "指定したサイトやメディア配信元をサブドメインも含めて除外します。複数の項目は改行またはカンマで区切ってください。一致する項目は検出結果や通知に表示されません。"
+  },
   "reinstallTitle": {
     "message": "再インストール推奨",
     "description": "Reinstall warning title"
@@ -856,16 +868,46 @@
     "message": "ダウンロードのローカル記録を保存します。",
     "description": "The explanation of the history page option."
   },
-  "settingsBackupTitle": { "message": "設定の構成" },
-  "settingsBackupExplain": { "message": "拡張機能の設定をエクスポートまたはインポートします。アカウント、ダウンロード履歴、一時データは含まれません。" },
-  "exportSettingsButton": { "message": "設定をエクスポート" },
-  "importSettingsButton": { "message": "設定をインポート" },
-  "settingsExportSuccess": { "message": "設定をエクスポートしました！" },
-  "settingsExportError": { "message": "設定をエクスポートできませんでした: $1", "placeholders": { "1": { "content": "$1" } } },
-  "settingsImportSuccess": { "message": "設定をインポートしました！" },
-  "settingsImportError": { "message": "設定をインポートできませんでした: $1", "placeholders": { "1": { "content": "$1" } } },
-  "settingsImportInvalidFormat": { "message": "設定ファイルの形式が無効です" },
-  "settingsImportNoSettings": { "message": "ファイルに対応する設定が含まれていません" },
+  "settingsBackupTitle": {
+    "message": "設定の構成"
+  },
+  "settingsBackupExplain": {
+    "message": "拡張機能の設定をエクスポートまたはインポートします。アカウント、ダウンロード履歴、一時データは含まれません。"
+  },
+  "exportSettingsButton": {
+    "message": "設定をエクスポート"
+  },
+  "importSettingsButton": {
+    "message": "設定をインポート"
+  },
+  "settingsExportSuccess": {
+    "message": "設定をエクスポートしました！"
+  },
+  "settingsExportError": {
+    "message": "設定をエクスポートできませんでした: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "settingsImportSuccess": {
+    "message": "設定をインポートしました！"
+  },
+  "settingsImportError": {
+    "message": "設定をインポートできませんでした: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "settingsImportInvalidFormat": {
+    "message": "設定ファイルの形式が無効です"
+  },
+  "settingsImportNoSettings": {
+    "message": "ファイルに対応する設定が含まれていません"
+  },
   "clearHistoryButton": {
     "message": "履歴を消去",
     "description": "The label of the button to clear the download history."
@@ -2209,13 +2251,27 @@
     "message": "ソース:",
     "description": "Label for the update source in the update popup"
   },
-  "cacheStorageTitle": { "message": "キャッシュストレージ" },
-  "cacheStorageCalculating": { "message": "キャッシュ使用量を計算しています..." },
-  "cacheStorageClear": { "message": "キャッシュを消去" },
-  "cacheStorageEntries": { "message": "$1 件のキャッシュエントリ" },
-  "cacheStorageReadError": { "message": "キャッシュを読み取れません: $1" },
-  "cacheStorageActiveDownloadError": { "message": "ダウンロード中はキャッシュを消去できません。" },
-  "cacheStorageCleared": { "message": "キャッシュを消去しました" },
+  "cacheStorageTitle": {
+    "message": "キャッシュストレージ"
+  },
+  "cacheStorageCalculating": {
+    "message": "キャッシュ使用量を計算しています..."
+  },
+  "cacheStorageClear": {
+    "message": "キャッシュを消去"
+  },
+  "cacheStorageEntries": {
+    "message": "$1 件のキャッシュエントリ"
+  },
+  "cacheStorageReadError": {
+    "message": "キャッシュを読み取れません: $1"
+  },
+  "cacheStorageActiveDownloadError": {
+    "message": "ダウンロード中はキャッシュを消去できません。"
+  },
+  "cacheStorageCleared": {
+    "message": "キャッシュを消去しました"
+  },
   "manualTsConvertTitle": {
     "message": "TSファイルを手動で変換"
   },
@@ -2261,5 +2317,83 @@
   },
   "streamConversionFallbackTs": {
     "message": "MP4への変換に失敗しました。TSとして保存しています…"
+  },
+  "settingsAutoSectionTitle": {
+    "message": "自動"
+  },
+  "autoDownloadMediaTitle": {
+    "message": "メディアを自動ダウンロード"
+  },
+  "autoDownloadMediaExplain": {
+    "message": "以下のドメインから一致するメディアを自動的にダウンロードします。バックグラウンドダウンロードが必要で、デフォルトではオフになっています。"
+  },
+  "autoDownloadDomainsTitle": {
+    "message": "有効なサイト / ドメイン"
+  },
+  "autoDownloadDomainsExplain": {
+    "message": "1行に1つのドメイン、またはカンマ区切りで入力します。サブドメインも含まれます。"
+  },
+  "autoDownloadVideoTitle": {
+    "message": "動画"
+  },
+  "autoDownloadAudioTitle": {
+    "message": "音声"
+  },
+  "autoDownloadImageTitle": {
+    "message": "画像"
+  },
+  "autoDownloadStreamTitle": {
+    "message": "ストリーム"
+  },
+  "autoDownloadVideoExplain": {
+    "message": "検出された動画ファイルを自動的にダウンロードします。"
+  },
+  "autoDownloadAudioExplain": {
+    "message": "検出された音楽および音声ファイルを自動的にダウンロードします。"
+  },
+  "autoDownloadImageExplain": {
+    "message": "検出された画像ファイルを自動的にダウンロードします。"
+  },
+  "autoDownloadStreamExplain": {
+    "message": "検出されたHLSおよびDASHストリームを自動的にダウンロードします。"
+  },
+  "autoDownloadSubtitleTitle": {
+    "message": "字幕"
+  },
+  "autoDownloadSubtitleExplain": {
+    "message": "検出された字幕ファイルを自動的にダウンロードします。"
+  },
+  "autoDownloadFileTitle": {
+    "message": "ファイル"
+  },
+  "autoDownloadFileExplain": {
+    "message": "その他の対応ファイルおよびダウンロードリンクを自動的にダウンロードします。"
+  },
+  "autoDownloadAllDomainsTitle": {
+    "message": "すべてのドメイン / サイトで有効化"
+  },
+  "autoDownloadAllDomainsExplain": {
+    "message": "すべてのサイトで自動ダウンロードを適用します。オフの場合、以下にリストされたドメインのみが有効になります。"
+  },
+  "autoSkipDownloadNamesTitle": {
+    "message": "名前 / キーワードをスキップ"
+  },
+  "autoSkipDownloadNamesExplain": {
+    "message": "一致するメディアURL、ファイル名、ページタイトルを自動ダウンロードからスキップします（大文字小文字を区別しません）。改行またはカンマで区切ります。"
+  },
+  "autoSkipDownloadDomainsTitle": {
+    "message": "ドメインをスキップ"
+  },
+  "autoSkipDownloadDomainsExplain": {
+    "message": "<ctrl42>これらのサイトまたはメディアホストを自動ダウンロードからスキップします（サブドメインを含む）。改行またはカンマで区切ります。"
+  },
+  "autoIgnoreExcludedMediaTitle": {
+    "message": "除外されたメディアを自動ダウンロードしない"
+  },
+  "autoIgnoreExcludedMediaExplain": {
+    "message": "上記の名前およびドメイン除外を自動ダウンロードに適用します。検出されたアイテムはメディアリストに表示されたままになります。"
+  },
+  "autoDownloadUnavailableExplain": {
+    "message": "バックグラウンドダウンロードがオフになっているため、自動ダウンロードは利用できません。最初にバックグラウンドダウンロードを有効にしてください。"
   }
 }

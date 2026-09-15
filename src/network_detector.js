@@ -533,6 +533,8 @@ let cachedSettings = {
     ignoreDisabledTypes: false,
     optimizeLowEnd: false,
     filenameTemplate: '',
+    autoDownloadMedia: false, backgroundDownload: true, autoDownloadAllDomains: false, autoDownloadDomains: '', autoSkipDownloadNames: '', autoSkipDownloadDomains: '', autoIgnoreExcludedMedia: true,
+    autoDownloadVideo: true, autoDownloadAudio: true, autoDownloadImage: true, autoDownloadStream: true, autoDownloadSubtitle: true, autoDownloadFile: true,
     themeColor: '#8ab4f8'
 };
 
@@ -540,6 +542,7 @@ function getSettings(callback) {
     browser.storage.local.get([
         'mime-detection', 'url-detection', 'youtube-detection', 'media-notification', 'media-system-notification', 'stack-notifications', 'hide-segments', 'hide-page-components',
         'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'ignore-disabled-types', 'optimize-low-end',
+        'auto-download-media', 'background-download', 'auto-download-all-domains', 'auto-download-domains', 'auto-skip-download-names', 'auto-skip-download-domains', 'auto-ignore-excluded-media', 'auto-download-video', 'auto-download-audio', 'auto-download-image', 'auto-download-stream', 'auto-download-subtitle', 'auto-download-file',
         'filename-template', 'theme-color', 'ui-scale'
     ], function (result) {
         const s = {
@@ -559,6 +562,19 @@ function getSettings(callback) {
             onlyFile: isFlagEnabled(result['only-file'], true),
             ignoreDisabledTypes: isFlagEnabled(result['ignore-disabled-types'], false),
             optimizeLowEnd: isFlagEnabled(result['optimize-low-end'], false),
+            autoDownloadMedia: isFlagEnabled(result['auto-download-media'], false),
+            backgroundDownload: isFlagEnabled(result['background-download'], true),
+            autoDownloadAllDomains: isFlagEnabled(result['auto-download-all-domains'], false),
+            autoSkipDownloadNames: result['auto-skip-download-names'] || '',
+            autoSkipDownloadDomains: result['auto-skip-download-domains'] || '',
+            autoIgnoreExcludedMedia: isFlagEnabled(result['auto-ignore-excluded-media'], true),
+            autoDownloadDomains: result['auto-download-domains'] || '',
+            autoDownloadVideo: isFlagEnabled(result['auto-download-video'], true),
+            autoDownloadAudio: isFlagEnabled(result['auto-download-audio'], true),
+            autoDownloadImage: isFlagEnabled(result['auto-download-image'], true),
+            autoDownloadStream: isFlagEnabled(result['auto-download-stream'], true),
+            autoDownloadSubtitle: isFlagEnabled(result['auto-download-subtitle'], true),
+            autoDownloadFile: isFlagEnabled(result['auto-download-file'], true),
             filenameTemplate: (result['filename-template'] && result['filename-template'] !== '0') ? result['filename-template'] : '',
             themeColor: result['theme-color'] ? (result['theme-color'].startsWith('#') || result['theme-color'].startsWith('rgb') ? result['theme-color'] : '#' + result['theme-color']) : '#bbdefb',
             uiScale: result['ui-scale'] || '85%'
@@ -1504,6 +1520,68 @@ async function generateTemplateName(template, url, originalName, tabId) {
     return mediaFilename.template(template, url, originalName, pageTitle);
 }
 
+const autoDownloadedMedia = new Set();
+
+function normalizeAutoDownloadDomain(value) {
+    const raw = String(value || '').trim().toLowerCase();
+    if (!raw) return '';
+    try { return new URL(raw.includes('://') ? raw : `https://${raw}`).hostname.replace(/^www\./, ''); }
+    catch (_) { return raw.split('/')[0].split(':')[0].replace(/^www\./, ''); }
+}
+
+async function maybeAutoDownloadMedia(details, settings, requestItem = null) {
+    if (!settings.autoDownloadMedia || !settings.backgroundDownload || details.tabId < 0 || tabsWithDrm.has(details.tabId)) return;
+    const responseHeaders = details.responseHeaders || requestItem?.responseHeaders || [];
+    const contentType = responseHeaders.find(h => h.name?.toLowerCase() === 'content-type')?.value || '';
+    const mediaType = getMediaType(details.url, contentType);
+    if (!mediaType || !['video', 'audio', 'image', 'stream', 'subtitle', 'file'].includes(mediaType)) return;
+    if (!settings[`autoDownload${mediaType[0].toUpperCase()}${mediaType.slice(1)}`]) return;
+
+    let pageUrl = requestItem?.pageUrl || details.pageUrl || tabMetadata.get(details.tabId)?.url || '';
+    let pageTitle = requestItem?.pageTitle || details.pageTitle || tabMetadata.get(details.tabId)?.title || '';
+    if (!pageUrl) {
+        try { const tab = await browser.tabs.get(details.tabId); pageUrl = tab?.url || ''; pageTitle = tab?.title || pageTitle; } catch (_) {}
+    }
+    let pageHost = '';
+    try { pageHost = new URL(pageUrl).hostname.toLowerCase().replace(/^www\./, ''); } catch (_) { return; }
+    const domains = String(settings.autoDownloadDomains || '').split(/[\n,]+/).map(normalizeAutoDownloadDomain).filter(Boolean);
+    if (!settings.autoDownloadAllDomains && !domains.some(domain => pageHost === domain || pageHost.endsWith(`.${domain}`))) return;
+    if (settings.autoIgnoreExcludedMedia) {
+        const skippedNames = String(settings.autoSkipDownloadNames || '').split(/[\n,]+/).map(value => value.trim().toLowerCase()).filter(Boolean);
+        let decodedUrl = details.url.toLowerCase();
+        try { decodedUrl = decodeURIComponent(decodedUrl); } catch (_) {}
+        const candidateText = `${decodedUrl}\n${pageTitle.toLowerCase()}\n${getFileName(details.url).toLowerCase()}`;
+        if (skippedNames.some(value => candidateText.includes(value))) return;
+
+        let mediaHost = '';
+        try { mediaHost = new URL(details.url).hostname.toLowerCase().replace(/^www\./, ''); } catch (_) {}
+        const skippedDomains = String(settings.autoSkipDownloadDomains || '').split(/[\n,]+/).map(normalizeAutoDownloadDomain).filter(Boolean);
+        if (skippedDomains.some(domain => pageHost === domain || pageHost.endsWith(`.${domain}`) || mediaHost === domain || mediaHost.endsWith(`.${domain}`))) return;
+    }
+
+    const key = `${pageHost}|${details.url.split('?')[0].split('#')[0]}`;
+    if (autoDownloadedMedia.has(key)) return;
+    autoDownloadedMedia.add(key);
+
+    try {
+        const stored = await browser.storage.local.get(['download-method', 'stream-download']);
+        let filename = await getAutomaticFilename(details.url, details.tabId, { ...(requestItem || {}), ...details, pageTitle });
+        if (settings.filenameTemplate) filename = await generateTemplateName(settings.filenameTemplate, details.url, filename, details.tabId);
+        if (mediaType === 'stream' && details.url.toLowerCase().includes('.m3u8') && (stored['stream-download'] || 'offline') === 'offline') {
+            if (!filename.toLowerCase().endsWith('.mp4')) filename = filename.replace(/\.[^.]+$/, '') + '.mp4';
+            await addToHistory({ url: details.url, filename, timestamp: Date.now(), pageUrl, pageTitle, mediaType });
+            browser.runtime.sendMessage({ action: 'startPersistentStreamJob', url: details.url, filename, quality: 'highest', request: requestItem || {}, downloadMethod: stored['download-method'] || 'fetch' });
+        } else {
+            await addToHistory({ url: details.url, filename, timestamp: Date.now(), pageUrl, pageTitle, mediaType });
+            if ((stored['download-method'] || 'fetch') === 'fetch') handleFetchDownload(details.url, filename, requestItem, null, false, false, null, mediaType);
+            else await browser.downloads.download({ url: details.url, filename: sanitizeFilename(filename), saveAs: false });
+        }
+    } catch (error) {
+        autoDownloadedMedia.delete(key);
+        console.error('Auto-download failed:', error);
+    }
+}
+
 async function showMediaNotification(details, settings) {
     if (await detectionExclusions.shouldSkip(details, true)) return;
     if (!settings.mediaNotification) return;
@@ -2028,6 +2106,7 @@ function initListener() {
                             browser.storage.session.set(requestsObj);
                         }
 
+                        if (shouldSaveNow && !isDrmMedia) maybeAutoDownloadMedia(details, currentSettings, existingRequests[existingRequests.length - 1]);
                         if (shouldSaveNow || updated) {
                             showMediaNotification(details, currentSettings);
                         }
@@ -2882,6 +2961,12 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
                 if (hasNew) {
                     browser.storage.session.set(updates);
+
+                    for (const url in updates) {
+                        const req = updates[url][0];
+                        const detectedType = getMediaType(url) || (url.includes('mime=audio') || url.includes('#audio') ? 'audio' : 'video');
+                        maybeAutoDownloadMedia({ url, tabId: tabId ?? req.tabId, pageUrl: req.pageUrl, pageTitle: req.pageTitle, responseHeaders: [{ name: 'content-type', value: detectedType === 'video' ? 'video/mp4' : (detectedType === 'audio' ? 'audio/mp4' : 'application/octet-stream') }] }, settings, req);
+                    }
 
                     if (settings.mediaNotification) {
                         for (const url in updates) {
@@ -5379,6 +5464,15 @@ browser.runtime.onInstalled.addListener(async (details) => {
             'history-page': '0',
             'detect-download-links': '1',
             'disable-deduplication': '1',
+            'auto-download-media': '0',
+            'auto-download-all-domains': '0',
+            'auto-ignore-excluded-media': '1',
+            'auto-download-video': '1',
+            'auto-download-audio': '1',
+            'auto-download-image': '1',
+            'auto-download-stream': '1',
+            'auto-download-subtitle': '1',
+            'auto-download-file': '1',
             'open-preference': 'popup'
         };
         await browser.storage.local.set(defaults);

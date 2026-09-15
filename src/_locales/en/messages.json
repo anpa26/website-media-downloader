@@ -2267,4 +2267,30 @@
   "streamConversionFallbackTs": {
     "message": "MP4 conversion failed. Saving as TS…"
   }
+  ,"settingsAutoSectionTitle": { "message": "Auto" }
+  ,"autoDownloadMediaTitle": { "message": "Auto-download media" }
+  ,"autoDownloadMediaExplain": { "message": "Automatically download matching media from the domains below. Requires Background download and is off by default." }
+  ,"autoDownloadDomainsTitle": { "message": "Enabled sites / domains" }
+  ,"autoDownloadDomainsExplain": { "message": "One domain per line or separated by commas. Subdomains are included." }
+  ,"autoDownloadVideoTitle": { "message": "Video" }
+  ,"autoDownloadAudioTitle": { "message": "Audio" }
+  ,"autoDownloadImageTitle": { "message": "Image" }
+  ,"autoDownloadStreamTitle": { "message": "Stream" }
+  ,"autoDownloadVideoExplain": { "message": "Automatically download detected video files." }
+  ,"autoDownloadAudioExplain": { "message": "Automatically download detected music and audio files." }
+  ,"autoDownloadImageExplain": { "message": "Automatically download detected image files." }
+  ,"autoDownloadStreamExplain": { "message": "Automatically download detected HLS and DASH streams." }
+  ,"autoDownloadSubtitleTitle": { "message": "Subtitle" }
+  ,"autoDownloadSubtitleExplain": { "message": "Automatically download detected subtitle and caption files." }
+  ,"autoDownloadFileTitle": { "message": "File" }
+  ,"autoDownloadFileExplain": { "message": "Automatically download other supported files and download links." }
+  ,"autoDownloadAllDomainsTitle": { "message": "Enable for all domains / sites" }
+  ,"autoDownloadAllDomainsExplain": { "message": "Apply auto-download on every site. When off, only domains listed below are enabled." }
+  ,"autoSkipDownloadNamesTitle": { "message": "Skip names / keywords" }
+  ,"autoSkipDownloadNamesExplain": { "message": "Skip matching media URLs, filenames, and page titles from auto-download (case insensitive). Separate entries with new lines or commas." }
+  ,"autoSkipDownloadDomainsTitle": { "message": "Skip domains" }
+  ,"autoSkipDownloadDomainsExplain": { "message": "Skip these sites or media hosts from auto-download, including subdomains. Separate entries with new lines or commas." }
+  ,"autoIgnoreExcludedMediaTitle": { "message": "Do not auto-download excluded media" }
+  ,"autoIgnoreExcludedMediaExplain": { "message": "Apply the name and domain exclusions above to auto-download. Detected items remain visible in the media list." }
+  ,"autoDownloadUnavailableExplain": { "message": "Auto-download is unavailable because Background download is turned off. Enable Background download first." }
 }

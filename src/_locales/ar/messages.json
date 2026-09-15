@@ -1,10 +1,22 @@
 {
-  "ignoreExcludedMediaTitle": {"message":"عدم اكتشاف الوسائط المستثناة"},
-  "ignoreExcludedMediaExplain": {"message":"أوقف اكتشاف الأسماء والنطاقات المطابقة للقائمة أعلاه لتقليل المعالجة. عند تعطيل هذا الخيار، تظل العناصر المطابقة مخفية من القائمة والإشعارات."},
-  "skipDetectionNamesTitle": {"message":"استثناء أسماء / كلمات مفتاحية"},
-  "skipDetectionNamesExplain": {"message":"استثنِ روابط الوسائط وأسماء الملفات وعناوين الصفحات المطابقة، دون تمييز بين الأحرف الكبيرة والصغيرة. افصل بين العناصر بأسطر جديدة أو فواصل."},
-  "skipDetectionDomainsTitle": {"message":"استثناء نطاقات"},
-  "skipDetectionDomainsExplain": {"message":"استثنِ هذه المواقع أو خوادم الوسائط، بما في ذلك النطاقات الفرعية. افصل بين العناصر بأسطر جديدة أو فواصل. لن تظهر العناصر المطابقة في نتائج الاكتشاف أو الإشعارات."},
+  "ignoreExcludedMediaTitle": {
+    "message": "عدم اكتشاف الوسائط المستثناة"
+  },
+  "ignoreExcludedMediaExplain": {
+    "message": "أوقف اكتشاف الأسماء والنطاقات المطابقة للقائمة أعلاه لتقليل المعالجة. عند تعطيل هذا الخيار، تظل العناصر المطابقة مخفية من القائمة والإشعارات."
+  },
+  "skipDetectionNamesTitle": {
+    "message": "استثناء أسماء / كلمات مفتاحية"
+  },
+  "skipDetectionNamesExplain": {
+    "message": "استثنِ روابط الوسائط وأسماء الملفات وعناوين الصفحات المطابقة، دون تمييز بين الأحرف الكبيرة والصغيرة. افصل بين العناصر بأسطر جديدة أو فواصل."
+  },
+  "skipDetectionDomainsTitle": {
+    "message": "استثناء نطاقات"
+  },
+  "skipDetectionDomainsExplain": {
+    "message": "استثنِ هذه المواقع أو خوادم الوسائط، بما في ذلك النطاقات الفرعية. افصل بين العناصر بأسطر جديدة أو فواصل. لن تظهر العناصر المطابقة في نتائج الاكتشاف أو الإشعارات."
+  },
   "reinstallTitle": {
     "message": "يُوصى بإعادة التثبيت",
     "description": "Reinstall warning title"
@@ -851,16 +863,46 @@
     "message": "الاحتفاظ بسجل محلي لتنزيلاتك.",
     "description": "The explanation of the history page option."
   },
-  "settingsBackupTitle": { "message": "إعدادات التكوين" },
-  "settingsBackupExplain": { "message": "تصدير إعدادات الإضافة أو استيرادها. لا يتم تضمين الحسابات وسجل التنزيل والبيانات المؤقتة." },
-  "exportSettingsButton": { "message": "تصدير الإعدادات" },
-  "importSettingsButton": { "message": "استيراد الإعدادات" },
-  "settingsExportSuccess": { "message": "تم تصدير الإعدادات بنجاح!" },
-  "settingsExportError": { "message": "فشل تصدير الإعدادات: $1", "placeholders": { "1": { "content": "$1" } } },
-  "settingsImportSuccess": { "message": "تم استيراد الإعدادات بنجاح!" },
-  "settingsImportError": { "message": "فشل استيراد الإعدادات: $1", "placeholders": { "1": { "content": "$1" } } },
-  "settingsImportInvalidFormat": { "message": "تنسيق ملف الإعدادات غير صالح" },
-  "settingsImportNoSettings": { "message": "لا يحتوي الملف على إعدادات مدعومة" },
+  "settingsBackupTitle": {
+    "message": "إعدادات التكوين"
+  },
+  "settingsBackupExplain": {
+    "message": "تصدير إعدادات الإضافة أو استيرادها. لا يتم تضمين الحسابات وسجل التنزيل والبيانات المؤقتة."
+  },
+  "exportSettingsButton": {
+    "message": "تصدير الإعدادات"
+  },
+  "importSettingsButton": {
+    "message": "استيراد الإعدادات"
+  },
+  "settingsExportSuccess": {
+    "message": "تم تصدير الإعدادات بنجاح!"
+  },
+  "settingsExportError": {
+    "message": "فشل تصدير الإعدادات: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "settingsImportSuccess": {
+    "message": "تم استيراد الإعدادات بنجاح!"
+  },
+  "settingsImportError": {
+    "message": "فشل استيراد الإعدادات: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "settingsImportInvalidFormat": {
+    "message": "تنسيق ملف الإعدادات غير صالح"
+  },
+  "settingsImportNoSettings": {
+    "message": "لا يحتوي الملف على إعدادات مدعومة"
+  },
   "clearHistoryButton": {
     "message": "مسح السجل",
     "description": "The label of the button to clear the download history."
@@ -2209,13 +2251,27 @@
     "message": "المصدر:",
     "description": "Label for the update source in the update popup"
   },
-  "cacheStorageTitle": { "message": "تخزين ذاكرة التخزين المؤقت" },
-  "cacheStorageCalculating": { "message": "جارٍ حساب استخدام ذاكرة التخزين المؤقت..." },
-  "cacheStorageClear": { "message": "مسح ذاكرة التخزين المؤقت" },
-  "cacheStorageEntries": { "message": "$1 عناصر مخزنة مؤقتًا" },
-  "cacheStorageReadError": { "message": "تعذرت قراءة ذاكرة التخزين المؤقت: $1" },
-  "cacheStorageActiveDownloadError": { "message": "لا يمكن مسح ذاكرة التخزين المؤقت أثناء وجود تنزيلات نشطة." },
-  "cacheStorageCleared": { "message": "تم مسح ذاكرة التخزين المؤقت" },
+  "cacheStorageTitle": {
+    "message": "تخزين ذاكرة التخزين المؤقت"
+  },
+  "cacheStorageCalculating": {
+    "message": "جارٍ حساب استخدام ذاكرة التخزين المؤقت..."
+  },
+  "cacheStorageClear": {
+    "message": "مسح ذاكرة التخزين المؤقت"
+  },
+  "cacheStorageEntries": {
+    "message": "$1 عناصر مخزنة مؤقتًا"
+  },
+  "cacheStorageReadError": {
+    "message": "تعذرت قراءة ذاكرة التخزين المؤقت: $1"
+  },
+  "cacheStorageActiveDownloadError": {
+    "message": "لا يمكن مسح ذاكرة التخزين المؤقت أثناء وجود تنزيلات نشطة."
+  },
+  "cacheStorageCleared": {
+    "message": "تم مسح ذاكرة التخزين المؤقت"
+  },
   "manualTsConvertTitle": {
     "message": "تحويل ملف TS يدويًا"
   },
@@ -2261,5 +2317,83 @@
   },
   "streamConversionFallbackTs": {
     "message": "فشل التحويل إلى MP4. جارٍ الحفظ بصيغة TS…"
+  },
+  "settingsAutoSectionTitle": {
+    "message": "تلقائي"
+  },
+  "autoDownloadMediaTitle": {
+    "message": "تنزيل الوسائط تلقائيًا"
+  },
+  "autoDownloadMediaExplain": {
+    "message": "تنزيل الوسائط المطابقة تلقائيًا من النطاقات أدناه. يتطلب التنزيل في الخلفية وهو معطل افتراضيًا."
+  },
+  "autoDownloadDomainsTitle": {
+    "message": "المواقع / النطاقات الممكنة"
+  },
+  "autoDownloadDomainsExplain": {
+    "message": "نطاق واحد في كل سطر أو مفصولة بفاصلة. يتم تضمين النطاقات الفرعية."
+  },
+  "autoDownloadVideoTitle": {
+    "message": "فيديو"
+  },
+  "autoDownloadAudioTitle": {
+    "message": "صوت"
+  },
+  "autoDownloadImageTitle": {
+    "message": "صورة"
+  },
+  "autoDownloadStreamTitle": {
+    "message": "بث"
+  },
+  "autoDownloadVideoExplain": {
+    "message": "تنزيل ملفات الفيديو المكتشفة تلقائيًا."
+  },
+  "autoDownloadAudioExplain": {
+    "message": "تنزيل ملفات الموسيقى والصوت المكتشفة تلقائيًا."
+  },
+  "autoDownloadImageExplain": {
+    "message": "تنزيل ملفات الصور المكتشفة تلقائيًا."
+  },
+  "autoDownloadStreamExplain": {
+    "message": "تنزيل بثورات HLS و DASH المكتشفة تلقائيًا."
+  },
+  "autoDownloadSubtitleTitle": {
+    "message": "الترجمة"
+  },
+  "autoDownloadSubtitleExplain": {
+    "message": "تنزيل ملفات الترجمة والنصوص المكتشفة تلقائيًا."
+  },
+  "autoDownloadFileTitle": {
+    "message": "ملف"
+  },
+  "autoDownloadFileExplain": {
+    "message": "تنزيل الملفات وروابط التنزيل المدعومة الأخرى تلقائيًا."
+  },
+  "autoDownloadAllDomainsTitle": {
+    "message": "تمكين لجميع النطاقات / المواقع"
+  },
+  "autoDownloadAllDomainsExplain": {
+    "message": "تطبيق التنزيل التلقائي على جميع المواقع. عند إيقاف تشغيله، يتم تمكين النطاقات المدرجة أدناه فقط."
+  },
+  "autoSkipDownloadNamesTitle": {
+    "message": "تخطي الأسماء / الكلمات المفتاحية"
+  },
+  "autoSkipDownloadNamesExplain": {
+    "message": "تخطي عناوين URL للوسائط وأسماء الملفات وعناوين الصفحات المطابقة من التنزيل التلقائي (غير حساس للحالة). الفصل بين المدخلات بأسطر جديدة أو فواصل."
+  },
+  "autoSkipDownloadDomainsTitle": {
+    "message": "تخطي النطاقات"
+  },
+  "autoSkipDownloadDomainsExplain": {
+    "message": "تخطي هذه المواقع أو مستضيفي الوسائط من التنزيل التلقائي، بما في ذلك النطاقات الفرعية. الفصل بين المدخلات بأسطر جديدة أو فواصل."
+  },
+  "autoIgnoreExcludedMediaTitle": {
+    "message": "عدم تنزيل الوسائط المستبعدة تلقائيًا"
+  },
+  "autoIgnoreExcludedMediaExplain": {
+    "message": "تطبيق استثناءات الاسم والنطاق أعلاه على التنزيل التلقائي. تظل العناصر المكتشفة مرئية في قائمة الوسائط."
+  },
+  "autoDownloadUnavailableExplain": {
+    "message": "التنزيل التلقائي غير متاح لأن التنزيل في الخلفية معطل. قم بتمكين التنزيل في الخلفية أولاً."
   }
 }

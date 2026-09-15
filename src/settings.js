@@ -60,6 +60,7 @@ const CACHE_STORE_NAMES = ['network-cache', 'download-chunks'];
 const SETTINGS_EXPORT_FORMAT = 'website-media-downloader-settings';
 const SETTINGS_EXPORT_VERSION = 1;
 const SETTINGS_KEYS = [
+    'auto-download-media', 'auto-download-all-domains', 'auto-download-domains', 'auto-skip-download-names', 'auto-skip-download-domains', 'auto-ignore-excluded-media', 'auto-download-video', 'auto-download-audio', 'auto-download-image', 'auto-download-stream', 'auto-download-subtitle', 'auto-download-file',
     'url-detection', 'youtube-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components', 'disable-deduplication', 'optimize-low-end', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom',
     'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'ignore-disabled-types',
     'media-notification', 'audio-process-notification', 'media-system-notification', 'stack-notifications', 'download-method', 'fetch-notification', 'media-cache', 'speed-boost', 'speed-boost-resume', 'connections', 'stream-download',
@@ -466,6 +467,7 @@ async function initializeSettings() {
     }
 
     const settings = [
+        'auto-download-media', 'auto-download-all-domains', 'auto-download-domains', 'auto-skip-download-names', 'auto-skip-download-domains', 'auto-ignore-excluded-media', 'auto-download-video', 'auto-download-audio', 'auto-download-image', 'auto-download-stream', 'auto-download-subtitle', 'auto-download-file',
         'url-detection', 'youtube-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components', 'disable-deduplication', 'optimize-low-end', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom',
         'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'ignore-disabled-types',
         'media-notification', 'audio-process-notification', 'media-system-notification', 'stack-notifications', 'download-method', 'fetch-notification', 'media-cache', 'speed-boost', 'speed-boost-resume', 'connections', 'stream-download',
@@ -481,6 +483,7 @@ async function initializeSettings() {
 
         if (value === undefined) {
             const defaultsEnabled = [
+                'auto-download-video', 'auto-download-audio', 'auto-download-image', 'auto-download-stream', 'auto-download-subtitle', 'auto-download-file', 'auto-ignore-excluded-media',
                 'ignore-excluded-media',
                 'url-detection', 'youtube-detection', 'mime-detection', 'hide-page-components', 'hide-segments',
                 'media-notification', 'audio-process-notification', 'media-system-notification', 'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle',
@@ -490,7 +493,7 @@ async function initializeSettings() {
             if (defaultsEnabled.includes(setting)) {
                 value = '1';
                 browser.storage.local.set({ [setting]: value });
-            } else if (['ignore-disabled-types', 'history-page', 'save-to-gdrive', 'gdrive-stream', 'save-to-dropbox', 'dropbox-stream', 'stack-notifications', 'mux-all-audios', 'embed-subtitles-mkv', 'embed-subtitles-nonyt', 'mpd-to-mp4'].includes(setting)) {
+            } else if (['auto-download-media', 'auto-download-all-domains', 'ignore-disabled-types', 'history-page', 'save-to-gdrive', 'gdrive-stream', 'save-to-dropbox', 'dropbox-stream', 'stack-notifications', 'mux-all-audios', 'embed-subtitles-mkv', 'embed-subtitles-nonyt', 'mpd-to-mp4'].includes(setting)) {
                 value = '0';
                 browser.storage.local.set({ [setting]: value });
             } else if (setting === 'speed-boost' || setting === 'speed-boost-resume' || setting === 'disable-rename-dialog') {
@@ -520,6 +523,34 @@ async function initializeSettings() {
                 const connections = document.getElementById('connections');
                 const gdriveStream = document.getElementById('gdrive-stream');
                 const onlyFile = document.getElementById('only-file');
+
+                if (setting === 'auto-download-all-domains') {
+                    const domainsContainer = document.getElementById('auto-download-domains-container');
+                    if (domainsContainer) {
+                        domainsContainer.style.display = element.checked ? 'none' : 'block';
+                    }
+                    const skipDomainsContainer = document.getElementById('auto-skip-download-domains-container');
+                    if (skipDomainsContainer) {
+                        skipDomainsContainer.style.display = element.checked ? 'block' : 'none';
+                    }
+                }
+
+                if (setting === 'background-download') {
+                    const autoDownload = document.getElementById('auto-download-media');
+                    if (autoDownload) {
+                        autoDownload.disabled = !element.checked;
+                        const autoDownloadExplain = document.getElementById('auto-download-media-explain');
+                        if (autoDownloadExplain) {
+                            autoDownloadExplain.textContent = element.checked
+                                ? (browser.i18n.getMessage('autoDownloadMediaExplain') || 'Automatically download matching media from enabled sites.')
+                                : (browser.i18n.getMessage('autoDownloadUnavailableExplain') || 'Auto-download is unavailable because Background download is turned off.');
+                        }
+                        if (!element.checked && autoDownload.checked) {
+                            autoDownload.checked = false;
+                            pendingChanges['auto-download-media'] = '0';
+                        }
+                    }
+                }
 
                 if (setting === 'audio-to-mp3') {
                     const mp3Bitrate = document.getElementById('mp3-bitrate');
@@ -731,7 +762,7 @@ async function initializeSettings() {
                 }
             };
 
-            if (setting === 'gdrive-stream' || setting === 'speed-boost' || setting === 'background-download' || setting === 'save-to-gdrive' || setting === 'detect-download-links' || setting === 'optimize-low-end' || setting === 'embed-subtitles-mkv' || setting === 'audio-to-mp3') {
+            if (setting === 'auto-download-all-domains' || setting === 'gdrive-stream' || setting === 'speed-boost' || setting === 'background-download' || setting === 'save-to-gdrive' || setting === 'detect-download-links' || setting === 'optimize-low-end' || setting === 'embed-subtitles-mkv' || setting === 'audio-to-mp3') {
                 const checkInitial = () => {
                     const speedBoost = document.getElementById('speed-boost');
                     const speedBoostResume = document.getElementById('speed-boost-resume');
@@ -823,6 +854,7 @@ async function initializeSettings() {
                     } else {
                         setTimeout(checkInitial, 100);
                     }
+                    updateConstraints();
                 };
                 checkInitial();
             }
@@ -954,6 +986,22 @@ async function initializeSettings() {
                 }
             });
             continue;
+        }
+    }
+
+    const backgroundDownloadForAuto = document.getElementById('background-download');
+    const autoDownloadMediaInitial = document.getElementById('auto-download-media');
+    if (backgroundDownloadForAuto && autoDownloadMediaInitial) {
+        autoDownloadMediaInitial.disabled = !backgroundDownloadForAuto.checked;
+        const autoDownloadExplain = document.getElementById('auto-download-media-explain');
+        if (autoDownloadExplain) {
+            autoDownloadExplain.textContent = backgroundDownloadForAuto.checked
+                ? (browser.i18n.getMessage('autoDownloadMediaExplain') || 'Automatically download matching media from enabled sites.')
+                : (browser.i18n.getMessage('autoDownloadUnavailableExplain') || 'Auto-download is unavailable because Background download is turned off.');
+        }
+        if (!backgroundDownloadForAuto.checked && autoDownloadMediaInitial.checked) {
+            autoDownloadMediaInitial.checked = false;
+            await browser.storage.local.set({ 'auto-download-media': '0' });
         }
     }
 
