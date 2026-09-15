@@ -1,111 +1,66 @@
 {
   "require_uninstall": false,
   "en": {
-    "headline": "What's New (v2.3.6)",
+    "headline": "What's New (v2.3.7)",
     "changes": [
-      "Fixed incorrect duration detection for stream videos.",
-      "Fixed stream pause so active downloads actually stop and resume correctly.",
-      "Fixed stale media lists appearing again on Home after reopening the browser.",
-      "Fixed category group badges so their totals accurately match the media shown in each group.",
-      "Fixed the media list not appearing when a page contains a large number of media items.",
-      "Added manual TS-to-MP4 conversion as a fallback when automatic stream conversion fails.",
-      "Fixed stream downloads failing on some websites."
+      "Added automatic download support for detected videos and HLS/DASH streams.",
+      "Added filename-only exclusion filters so media remains correctly detected when a matching keyword appears only in its URL or page title."
     ]
   },
   "id": {
-    "headline": "Yang Baru (v2.3.6)",
+    "headline": "Yang Baru (v2.3.7)",
     "changes": [
-      "Memperbaiki deteksi durasi yang tidak benar pada video stream.",
-      "Memperbaiki fungsi jeda stream agar unduhan yang aktif benar-benar berhenti dan dapat dilanjutkan dengan benar.",
-      "Memperbaiki daftar media lama yang muncul kembali di Home setelah browser dibuka ulang.",
-      "Memperbaiki badge kategori grup agar totalnya akurat sesuai media yang ditampilkan dalam setiap grup.",
-      "Memperbaiki daftar media yang tidak muncul saat halaman memiliki banyak media.",
-      "Menambahkan konversi TS ke MP4 secara manual sebagai opsi cadangan ketika konversi stream otomatis gagal.",
-      "Memperbaiki masalah unduhan stream yang gagal pada beberapa situs web."
+      "Menambahkan dukungan unduhan otomatis untuk video dan stream HLS/DASH yang terdeteksi.",
+      "Menambahkan filter pengecualian khusus nama file agar media tetap terdeteksi dengan benar ketika kata yang cocok hanya muncul di URL atau judul halaman."
     ]
   },
   "de": {
-    "headline": "Was gibt's Neues (v2.3.6)",
+    "headline": "Was gibt's Neues (v2.3.7)",
     "changes": [
-      "Die fehlerhafte Dauererkennung bei Stream-Videos wurde korrigiert.",
-      "Die Stream-Pause wurde korrigiert, sodass aktive Downloads tatsächlich stoppen und korrekt fortgesetzt werden.",
-      "Es wurde behoben, dass alte Medienlisten nach dem erneuten Öffnen des Browsers wieder auf der Startseite erschienen.",
-      "Die Zähler der Kategoriegruppen zeigen jetzt korrekt die Anzahl der in jeder Gruppe sichtbaren Medien an.",
-      "Es wurde behoben, dass die Medienliste bei einer großen Anzahl von Medien auf einer Seite nicht angezeigt wurde.",
-      "Eine manuelle TS-zu-MP4-Konvertierung wurde als Ausweichmöglichkeit hinzugefügt, falls die automatische Stream-Konvertierung fehlschlägt.",
-      "Fehlgeschlagene Stream-Downloads auf einigen Websites wurden behoben."
+      "Automatische Downloads für erkannte Videos und HLS/DASH-Streams wurden hinzugefügt.",
+      "Dateinamenspezifische Ausschlussfilter wurden hinzugefügt, damit Medien weiterhin korrekt erkannt werden, wenn ein passendes Schlüsselwort nur in der URL oder im Seitentitel vorkommt."
     ]
   },
   "fr": {
-    "headline": "Nouveautés (v2.3.6)",
+    "headline": "Nouveautés (v2.3.7)",
     "changes": [
-      "Correction de la détection incorrecte de la durée des vidéos en streaming.",
-      "Correction de la pause des flux afin que les téléchargements actifs s’arrêtent réellement et reprennent correctement.",
-      "Correction des anciennes listes de médias qui réapparaissaient dans l’accueil après la réouverture du navigateur.",
-      "Correction des badges des groupes de catégories afin que leurs totaux correspondent aux médias affichés dans chaque groupe.",
-      "Correction de la liste des médias qui ne s’affichait pas lorsqu’une page contenait un grand nombre de médias.",
-      "Ajout de la conversion manuelle de TS vers MP4 comme solution de secours lorsque la conversion automatique du flux échoue.",
-      "Correction des échecs de téléchargement de flux sur certains sites web."
+      "Ajout du téléchargement automatique des vidéos détectées et des flux HLS/DASH.",
+      "Ajout de filtres d’exclusion limités au nom de fichier afin que les médias restent correctement détectés lorsqu’un mot-clé correspondant apparaît uniquement dans leur URL ou le titre de la page."
     ]
   },
   "ja": {
-    "headline": "新機能 (v2.3.6)",
+    "headline": "新機能 (v2.3.7)",
     "changes": [
-      "ストリーム動画の再生時間が正しく検出されない問題を修正しました。",
-      "ストリームの一時停止を修正し、実行中のダウンロードが実際に停止して正しく再開できるようにしました。",
-      "ブラウザーを再度開いた後、古いメディア一覧がホームに再表示される問題を修正しました。",
-      "カテゴリグループのバッジが各グループに表示されているメディア数を正確に示すよう修正しました。",
-      "ページ内のメディア数が多い場合にメディア一覧が表示されない問題を修正しました。",
-      "ストリームの自動変換に失敗した場合の代替手段として、TSからMP4への手動変換を追加しました。",
-      "一部のウェブサイトでストリームのダウンロードに失敗する問題を修正しました。"
+      "検出された動画およびHLS/DASHストリームの自動ダウンロードに対応しました。",
+      "一致するキーワードがURLまたはページタイトルにのみ含まれる場合でもメディアを正しく検出できるよう、ファイル名のみを対象とする除外フィルターを追加しました。"
     ]
   },
   "ko": {
-    "headline": "새로운 기능 (v2.3.6)",
+    "headline": "새로운 기능 (v2.3.7)",
     "changes": [
-      "스트림 동영상의 재생 시간이 잘못 감지되는 문제를 수정했습니다.",
-      "스트림 일시 중지를 수정하여 진행 중인 다운로드가 실제로 멈추고 올바르게 재개되도록 했습니다.",
-      "브라우저를 다시 열었을 때 이전 미디어 목록이 홈에 다시 표시되는 문제를 수정했습니다.",
-      "카테고리 그룹 배지가 각 그룹에 표시된 미디어 수를 정확히 나타내도록 수정했습니다.",
-      "페이지에 미디어가 많을 때 미디어 목록이 표시되지 않는 문제를 수정했습니다.",
-      "스트림 자동 변환에 실패할 경우를 위한 대체 수단으로 TS를 MP4로 수동 변환하는 기능을 추가했습니다.",
-      "일부 웹사이트에서 스트림 다운로드가 실패하는 문제를 수정했습니다."
+      "감지된 동영상 및 HLS/DASH 스트림의 자동 다운로드를 지원합니다.",
+      "일치하는 키워드가 URL이나 페이지 제목에만 포함된 경우에도 미디어가 올바르게 감지되도록 파일 이름 전용 제외 필터를 추가했습니다."
     ]
   },
   "pt": {
-    "headline": "Novidades (v2.3.6)",
+    "headline": "Novidades (v2.3.7)",
     "changes": [
-      "Corrigida a detecção incorreta da duração de vídeos em streaming.",
-      "Corrigida a pausa de streams para que os downloads ativos realmente parem e sejam retomados corretamente.",
-      "Corrigida a reaparição de listas antigas de mídia na página inicial após reabrir o navegador.",
-      "Corrigidos os badges dos grupos de categorias para que os totais correspondam às mídias exibidas em cada grupo.",
-      "Corrigida a lista de mídias que não aparecia quando uma página continha muitos itens de mídia.",
-      "Adicionada a conversão manual de TS para MP4 como alternativa quando a conversão automática do stream falhar.",
-      "Corrigidas falhas no download de streams em alguns sites."
+      "Adicionado suporte ao download automático de vídeos detectados e streams HLS/DASH.",
+      "Adicionados filtros de exclusão somente por nome de arquivo para que a mídia continue sendo detectada corretamente quando uma palavra-chave correspondente aparecer apenas na URL ou no título da página."
     ]
   },
   "ru": {
-    "headline": "Что нового (v2.3.6)",
+    "headline": "Что нового (v2.3.7)",
     "changes": [
-      "Исправлено неверное определение длительности потокового видео.",
-      "Исправлена пауза потоковых загрузок: активные загрузки теперь действительно останавливаются и корректно возобновляются.",
-      "Исправлено повторное появление старых списков медиафайлов на главной странице после перезапуска браузера.",
-      "Счётчики групп категорий теперь точно соответствуют количеству медиафайлов, отображаемых в каждой группе.",
-      "Исправлено отсутствие списка медиафайлов, когда на странице находится большое количество медиа.",
-      "Добавлена ручная конвертация TS в MP4 как запасной вариант при сбое автоматической конвертации потока.",
-      "Исправлены сбои загрузки потоков на некоторых сайтах."
+      "Добавлена автоматическая загрузка обнаруженных видео и потоков HLS/DASH.",
+      "Добавлены фильтры исключений только по имени файла, чтобы медиа корректно обнаруживались, когда совпадающее ключевое слово встречается лишь в URL или заголовке страницы."
     ]
   },
   "ar": {
-    "headline": "ما الجديد (v2.3.6)",
+    "headline": "ما الجديد (v2.3.7)",
     "changes": [
-      "أُصلح الاكتشاف غير الصحيح لمدة فيديوهات البث.",
-      "أُصلحت وظيفة إيقاف البث مؤقتًا بحيث تتوقف التنزيلات النشطة فعليًا وتُستأنف بصورة صحيحة.",
-      "أُصلح ظهور قوائم الوسائط القديمة مجددًا في الصفحة الرئيسية بعد إعادة فتح المتصفح.",
-      "أُصلحت شارات مجموعات الفئات لتعرض إجماليًا دقيقًا يطابق الوسائط الظاهرة في كل مجموعة.",
-      "أُصلحت مشكلة عدم ظهور قائمة الوسائط عندما تحتوي الصفحة على عدد كبير من عناصر الوسائط.",
-      "أُضيف التحويل اليدوي من TS إلى MP4 كخيار بديل عند فشل التحويل التلقائي للبث.",
-      "أُصلحت مشكلة فشل تنزيل البث على بعض مواقع الويب."
+      "أُضيف دعم التنزيل التلقائي لمقاطع الفيديو وتدفقات HLS/DASH المكتشفة.",
+      "أُضيفت عوامل استثناء تعتمد على اسم الملف فقط لضمان استمرار اكتشاف الوسائط بصورة صحيحة عندما تظهر الكلمة المطابقة في الرابط أو عنوان الصفحة فقط."
     ]
   }
 }

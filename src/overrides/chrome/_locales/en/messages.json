@@ -2108,5 +2108,21 @@
     },
     "streamConversionFallbackTs": {
         "message": "MP4 conversion failed. Saving as TS…"
+    },
+    "autoDownloadQualityTitle": {
+        "message": "Auto-download Quality"
+    },
+    "autoDownloadQualityExplain": {
+        "message": "Select the quality preference for auto-downloaded media when multiple quality choices are available."
+    },
+    "autoDownloadQualityHighest": {
+        "message": "Highest Quality"
+    },
+    "autoDownloadQualityLowest": {
+        "message": "Lowest Quality"
     }
+  ,"autoDownloadYoutubeModeTitle": { "message": "YouTube auto-download" }
+  ,"autoDownloadYoutubeModeExplain": { "message": "Choose whether YouTube auto-download saves video or audio only." }
+  ,"autoDownloadYoutubeModeVideo": { "message": "Video" }
+  ,"autoDownloadYoutubeModeAudio": { "message": "Audio only" }
 }

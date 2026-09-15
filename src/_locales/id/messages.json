@@ -3,6 +3,8 @@
   "ignoreExcludedMediaExplain": {"message": "Matikan deteksi untuk nama dan domain di atas agar pemrosesan lebih ringan. Jika dimatikan, yang cocok tetap disembunyikan dari daftar dan notifikasi."},
   "skipDetectionNamesTitle": {"message":"Lewati nama / kata kunci"},
   "skipDetectionNamesExplain": {"message":"Lewati URL media, nama file, dan judul halaman yang cocok, tanpa membedakan huruf besar/kecil. Pisahkan dengan baris baru atau koma."},
+  "skipDetectionNamesOnlyTitle": {"message":"Lewati nama saja"},
+  "skipDetectionNamesOnlyExplain": {"message":"Hanya cocokkan nama file. Jangan cocokkan URL media atau judul halaman."},
   "skipDetectionDomainsTitle": {"message":"Lewati domain"},
   "skipDetectionDomainsExplain": {"message":"Lewati situs atau host media ini, termasuk subdomain. Pisahkan dengan baris baru atau koma. Yang cocok tidak muncul di hasil deteksi maupun notifikasi."},
   "reinstallTitle": {
@@ -2262,4 +2264,40 @@
   "streamConversionFallbackTs": {
     "message": "Konversi MP4 gagal. Menyimpan sebagai TS…"
   }
+  ,"settingsAutoSectionTitle": { "message": "Auto" }
+  ,"autoDownloadMediaTitle": { "message": "Unduh media otomatis" }
+  ,"autoDownloadMediaExplain": { "message": "Unduh media yang cocok secara otomatis dari domain di bawah. Memerlukan Unduhan latar belakang dan default-nya nonaktif." }
+  ,"autoDownloadDomainsTitle": { "message": "Situs / domain yang diaktifkan" }
+  ,"autoDownloadDomainsExplain": { "message": "Satu domain per baris atau pisahkan dengan koma. Subdomain ikut dicakup." }
+  ,"autoDownloadVideoTitle": { "message": "Video" }
+  ,"autoDownloadAudioTitle": { "message": "Audio" }
+  ,"autoDownloadImageTitle": { "message": "Gambar" }
+  ,"autoDownloadStreamTitle": { "message": "Stream" }
+  ,"autoDownloadVideoExplain": { "message": "Unduh file video yang terdeteksi secara otomatis." }
+  ,"autoDownloadAudioExplain": { "message": "Unduh file musik dan audio yang terdeteksi secara otomatis." }
+  ,"autoDownloadImageExplain": { "message": "Unduh file gambar yang terdeteksi secara otomatis." }
+  ,"autoDownloadStreamExplain": { "message": "Unduh stream HLS dan DASH yang terdeteksi secara otomatis." }
+  ,"autoDownloadSubtitleTitle": { "message": "Subtitle" }
+  ,"autoDownloadSubtitleExplain": { "message": "Unduh file subtitle dan teks takarir yang terdeteksi secara otomatis." }
+  ,"autoDownloadFileTitle": { "message": "File" }
+  ,"autoDownloadFileExplain": { "message": "Unduh file lain yang didukung dan tautan unduhan secara otomatis." }
+  ,"autoDownloadAllDomainsTitle": { "message": "Hidupkan untuk semua domain / situs" }
+  ,"autoDownloadAllDomainsExplain": { "message": "Terapkan unduh otomatis di semua situs. Jika dimatikan, hanya domain yang tercantum di bawah yang diaktifkan." }
+  ,"autoSkipDownloadNamesTitle": { "message": "Lewati nama / kata kunci" }
+  ,"autoSkipDownloadNamesExplain": { "message": "Lewati URL media, nama file, dan judul halaman yang cocok dari unduhan otomatis, tanpa membedakan huruf besar/kecil. Pisahkan dengan baris baru atau koma." }
+  ,"autoSkipDownloadNamesOnlyTitle": { "message": "Lewati nama saja" }
+  ,"autoSkipDownloadNamesOnlyExplain": { "message": "Hanya cocokkan nama file. Jangan cocokkan URL media atau judul halaman." }
+  ,"autoSkipDownloadDomainsTitle": { "message": "Lewati domain" }
+  ,"autoSkipDownloadDomainsExplain": { "message": "Lewati situs atau host media ini dari unduhan otomatis, termasuk subdomain. Pisahkan dengan baris baru atau koma." }
+  ,"autoIgnoreExcludedMediaTitle": { "message": "Jangan unduh otomatis yang dikecualikan" }
+  ,"autoIgnoreExcludedMediaExplain": { "message": "Terapkan pengecualian nama dan domain di atas pada unduhan otomatis. Media yang terdeteksi tetap tampil di daftar." }
+  ,"autoDownloadQualityTitle": { "message": "Kualitas Unduhan Otomatis" }
+  ,"autoDownloadQualityExplain": { "message": "Pilih preferensi kualitas media yang akan diunduh secara otomatis jika opsi kualitas tersedia." }
+  ,"autoDownloadQualityHighest": { "message": "Kualitas Tertinggi" }
+  ,"autoDownloadQualityLowest": { "message": "Kualitas Terendah" }
+  ,"autoDownloadYoutubeModeTitle": { "message": "Unduhan otomatis YouTube" }
+  ,"autoDownloadYoutubeModeExplain": { "message": "Pilih apakah unduhan otomatis YouTube menyimpan video atau audio saja." }
+  ,"autoDownloadYoutubeModeVideo": { "message": "Video" }
+  ,"autoDownloadYoutubeModeAudio": { "message": "Audio saja" }
+  ,"autoDownloadUnavailableExplain": { "message": "Unduhan otomatis tidak tersedia karena Unduhan latar belakang dimatikan. Aktifkan Unduhan latar belakang terlebih dahulu." }
 }

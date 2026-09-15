@@ -533,6 +533,8 @@ let cachedSettings = {
     ignoreDisabledTypes: false,
     optimizeLowEnd: false,
     filenameTemplate: '',
+    autoDownloadMedia: false, autoDownloadQuality: 'highest', autoDownloadYoutubeMode: 'video', backgroundDownload: true, autoDownloadAllDomains: false, autoDownloadDomains: '', autoSkipDownloadNames: '', autoSkipDownloadNamesOnly: false, autoSkipDownloadDomains: '', autoIgnoreExcludedMedia: true,
+    autoDownloadVideo: true, autoDownloadStream: true,
     themeColor: '#8ab4f8'
 };
 
@@ -540,6 +542,7 @@ function getSettings(callback) {
     browser.storage.local.get([
         'mime-detection', 'url-detection', 'youtube-detection', 'media-notification', 'media-system-notification', 'stack-notifications', 'hide-segments', 'hide-page-components',
         'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'ignore-disabled-types', 'optimize-low-end',
+        'auto-download-media', 'auto-download-quality', 'auto-download-youtube-mode', 'background-download', 'auto-download-all-domains', 'auto-download-domains', 'auto-skip-download-names', 'auto-skip-download-names-only', 'auto-skip-download-domains', 'auto-ignore-excluded-media', 'auto-download-video', 'auto-download-stream',
         'filename-template', 'theme-color', 'ui-scale'
     ], function (result) {
         const s = {
@@ -559,6 +562,18 @@ function getSettings(callback) {
             onlyFile: isFlagEnabled(result['only-file'], true),
             ignoreDisabledTypes: isFlagEnabled(result['ignore-disabled-types'], false),
             optimizeLowEnd: isFlagEnabled(result['optimize-low-end'], false),
+            autoDownloadMedia: isFlagEnabled(result['auto-download-media'], false),
+            autoDownloadQuality: result['auto-download-quality'] || 'highest',
+            autoDownloadYoutubeMode: result['auto-download-youtube-mode'] === 'audio' ? 'audio' : 'video',
+            backgroundDownload: isFlagEnabled(result['background-download'], true),
+            autoDownloadAllDomains: isFlagEnabled(result['auto-download-all-domains'], false),
+            autoSkipDownloadNames: result['auto-skip-download-names'] || '',
+            autoSkipDownloadNamesOnly: isFlagEnabled(result['auto-skip-download-names-only'], false),
+            autoSkipDownloadDomains: result['auto-skip-download-domains'] || '',
+            autoIgnoreExcludedMedia: isFlagEnabled(result['auto-ignore-excluded-media'], true),
+            autoDownloadDomains: result['auto-download-domains'] || '',
+            autoDownloadVideo: isFlagEnabled(result['auto-download-video'], true),
+            autoDownloadStream: isFlagEnabled(result['auto-download-stream'], true),
             filenameTemplate: (result['filename-template'] && result['filename-template'] !== '0') ? result['filename-template'] : '',
             themeColor: result['theme-color'] ? (result['theme-color'].startsWith('#') || result['theme-color'].startsWith('rgb') ? result['theme-color'] : '#' + result['theme-color']) : '#bbdefb',
             uiScale: result['ui-scale'] || '85%'
@@ -1322,8 +1337,6 @@ function getMediaType(url, contentType) {
         return null;
     }
 
-    if (mimeLower.startsWith('video/') || urlLower.includes('mime=video') || urlLower.includes('#video')) return 'video';
-    if (mimeLower.startsWith('audio/') || urlLower.includes('mime=audio') || urlLower.includes('#audio')) return 'audio';
 
     const subtitleExtensions = [".vtt", ".srt", ".ass", ".ssa", ".ttml", ".dfxp", ".lrc", ".smi", ".sub", ".sbv"];
     const imageExtensions = [".webp", ".png", ".jpg", ".jpeg", ".gif"];
@@ -1331,14 +1344,18 @@ function getMediaType(url, contentType) {
 
     const urlPath = urlLower.split('?')[0].split('#')[0];
     const hasExt = (ext) => urlPath.endsWith(ext) || urlLower.includes(ext + '&') || urlLower.includes(ext + '?') || urlLower.includes(ext + '#') || urlLower.endsWith(ext);
+    let decodedUrlLower = urlLower;
+    try { decodedUrlLower = decodeURIComponent(urlLower); } catch (_) {}
+    const streamUrlHint = streamExtensions.some(hasExt) || hasExt('.m3u') ||
+        /[?&](?:format|type|output|protocol)=(?:m3u8?|mpd|hls|dash)(?:[&#]|$)/i.test(decodedUrlLower) ||
+        /(?:^|[/_.-])(?:master|playlist|manifest)(?:[/?#_.-]|$)/i.test(decodedUrlLower);
 
-    if (videoExtensions.some(hasExt)) return 'video';
-    if (audioExtensions.some(hasExt)) return 'audio';
+    if (streamUrlHint || mimeLower.includes('mpegurl') || mimeLower.includes('dash+xml') || urlLower.includes('#stream')) return 'stream';
+    if (videoExtensions.some(hasExt) || mimeLower.startsWith('video/') || urlLower.includes('mime=video') || urlLower.includes('#video')) return 'video';
+    if (audioExtensions.some(hasExt) || mimeLower.startsWith('audio/') || urlLower.includes('mime=audio') || urlLower.includes('#audio')) return 'audio';
 
     if (mimeLower === 'image/svg+xml' || hasExt('.svg')) return null;
     if (mimeLower.startsWith('image/') || imageExtensions.some(hasExt) || urlLower.includes('#image')) return 'image';
-
-    if (streamExtensions.some(hasExt) || mimeLower.includes('mpegurl') || mimeLower.includes('dash+xml') || urlLower.includes('#stream')) return 'stream';
     if (subtitleExtensions.some(hasExt) || mimeLower.includes('vtt') || mimeLower.includes('subrip') || mimeLower.includes('ass') || mimeLower.includes('ttml') || mimeLower.includes('dfxp') || mimeLower.includes('sami') || mimeLower.includes('smil') || mimeLower.includes('lrc') || mimeLower.includes('sbv') || mimeLower.includes('microdvd') || urlLower.includes('#subtitle')) return 'subtitle';
 
     if (downloadExtensions.some(hasExt) || urlLower.includes('#file')) return 'file';
@@ -1502,6 +1519,158 @@ async function generateTemplateName(template, url, originalName, tabId) {
         try { pageTitle = (await browser.tabs.get(tabId)).title || ''; } catch (_) {}
     }
     return mediaFilename.template(template, url, originalName, pageTitle);
+}
+
+const autoDownloadedMedia = new Set();
+const autoStreamPages = new Map();
+const AUTO_STREAM_PRIORITY_MS = 2500;
+const AUTO_STREAM_DEDUPE_MS = 30000;
+
+function normalizeAutoDownloadDomain(value) {
+    const raw = String(value || '').trim().toLowerCase();
+    if (!raw) return '';
+    try { return new URL(raw.includes('://') ? raw : `https://${raw}`).hostname.replace(/^www\./, ''); }
+    catch (_) { return raw.split('/')[0].split(':')[0].replace(/^www\./, ''); }
+}
+
+async function maybeAutoDownloadMedia(details, settings, requestItem = null) {
+    if (!settings.autoDownloadMedia || !settings.backgroundDownload || details.tabId < 0 || tabsWithDrm.has(details.tabId)) return;
+    const responseHeaders = details.responseHeaders || requestItem?.responseHeaders || [];
+    const contentType = responseHeaders.find(h => h.name?.toLowerCase() === 'content-type')?.value || '';
+    const mediaType = getMediaType(details.url, contentType);
+    const isYoutubeAutoAudio = mediaType === 'audio' && !!requestItem?.autoYoutubeAudioOnly && !!requestItem?.ytFormats?.length;
+    if (!mediaType || (!['video', 'stream'].includes(mediaType) && !isYoutubeAutoAudio)) return;
+    if (!isYoutubeAutoAudio && !settings[`autoDownload${mediaType[0].toUpperCase()}${mediaType.slice(1)}`]) return;
+
+    let pageUrl = requestItem?.pageUrl || details.pageUrl || tabMetadata.get(details.tabId)?.url || '';
+    let pageTitle = requestItem?.pageTitle || details.pageTitle || tabMetadata.get(details.tabId)?.title || '';
+    if (!pageUrl) {
+        try { const tab = await browser.tabs.get(details.tabId); pageUrl = tab?.url || ''; pageTitle = tab?.title || pageTitle; } catch (_) {}
+    }
+    if (pageUrl.startsWith('chrome-extension://') || pageUrl.startsWith('moz-extension://')) return;
+    let pageHost = '';
+    try { pageHost = new URL(pageUrl).hostname.toLowerCase().replace(/^www\./, ''); } catch (_) { return; }
+    const isYoutubePage = pageHost === 'youtube.com' || pageHost.endsWith('.youtube.com') || pageHost === 'youtu.be';
+    if (isYoutubePage && settings.youtubeDetection && !requestItem?.ytFormats?.length) return;
+    if (isYoutubePage && requestItem?.ytFormats?.length) {
+        const wantsAudio = settings.autoDownloadYoutubeMode === 'audio';
+        if (wantsAudio !== !!requestItem.autoYoutubeAudioOnly) return;
+    }
+    const domains = String(settings.autoDownloadDomains || '').split(/[\n,]+/).map(normalizeAutoDownloadDomain).filter(Boolean);
+    if (!settings.autoDownloadAllDomains && !domains.some(domain => pageHost === domain || pageHost.endsWith(`.${domain}`))) return;
+    if (settings.autoIgnoreExcludedMedia) {
+        const skippedNames = String(settings.autoSkipDownloadNames || '').split(/[\n,]+/).map(value => value.trim().toLowerCase()).filter(Boolean);
+        let decodedUrl = details.url.toLowerCase();
+        try { decodedUrl = decodeURIComponent(decodedUrl); } catch (_) {}
+        const filenameCandidate = getFileName(details.url).toLowerCase();
+        const candidateText = settings.autoSkipDownloadNamesOnly ? filenameCandidate : `${decodedUrl}\n${pageTitle.toLowerCase()}\n${filenameCandidate}`;
+        if (skippedNames.some(value => candidateText.includes(value))) return;
+
+        let mediaHost = '';
+        try { mediaHost = new URL(details.url).hostname.toLowerCase().replace(/^www\./, ''); } catch (_) {}
+        const skippedDomains = String(settings.autoSkipDownloadDomains || '').split(/[\n,]+/).map(normalizeAutoDownloadDomain).filter(Boolean);
+        if (skippedDomains.some(domain => pageHost === domain || pageHost.endsWith(`.${domain}`) || mediaHost === domain || mediaHost.endsWith(`.${domain}`))) return;
+    }
+
+    const pageMediaKey = `${details.tabId}|${pageUrl.split("#")[0]}`;
+    if (mediaType === 'stream') {
+        const detectedAt = Date.now();
+        autoStreamPages.set(pageMediaKey, detectedAt);
+        setTimeout(() => {
+            if (autoStreamPages.get(pageMediaKey) === detectedAt) autoStreamPages.delete(pageMediaKey);
+        }, AUTO_STREAM_DEDUPE_MS);
+    } else if (mediaType === 'video') {
+        await new Promise(resolve => setTimeout(resolve, AUTO_STREAM_PRIORITY_MS));
+        if (autoStreamPages.has(pageMediaKey)) return;
+    }
+
+    const key = requestItem?.ytFormats?.length
+        ? `${pageHost}|youtube-${requestItem.autoYoutubeAudioOnly ? 'audio' : 'video'}|${pageUrl.split('#')[0]}`
+        : mediaType === "stream" ? `${pageHost}|${details.url.split("#")[0]}` : `${pageHost}|${details.url.split("?")[0].split("#")[0]}`;
+    if (autoDownloadedMedia.has(key)) return;
+    autoDownloadedMedia.add(key);
+
+    try {
+        const stored = await browser.storage.local.get(['download-method', 'stream-download', 'audio-to-mp3']);
+        let filename = await getAutomaticFilename(details.url, details.tabId, { ...(requestItem || {}), ...details, pageTitle });
+        if (settings.filenameTemplate) filename = await generateTemplateName(settings.filenameTemplate, details.url, filename, details.tabId);
+        if (mediaType === 'stream') {
+            if (!filename.toLowerCase().endsWith('.mp4')) filename = filename.replace(/\.[^.]+$/, '') + '.mp4';
+            await addToHistory({ url: details.url, filename, timestamp: Date.now(), pageUrl, pageTitle, mediaType });
+            const streamType = contentType.toLowerCase().includes('dash+xml') || /\.mpd(?:[?#]|$)/i.test(details.url) ? 'dash' : 'hls';
+            const started = await globalThis.startPersistentStreamJobDirect({ action: 'startPersistentStreamJob', url: details.url, filename, quality: settings.autoDownloadQuality || 'highest', streamType, request: requestItem || {}, downloadMethod: stored['download-method'] || 'fetch' });
+            if (!started.success) throw new Error(started.error || 'Unable to start stream download');
+        } else if (requestItem?.autoYoutubeAudioOnly && requestItem.ytFormats?.length) {
+            const audioUrl = requestItem.ytFormats.find(format => format.audioUrl)?.audioUrl || details.url;
+            const encodeMp3 = stored['audio-to-mp3'] === '1';
+            const audioExt = encodeMp3 ? '.mp3' : (/webm/i.test(decodeURIComponent(audioUrl)) ? '.webm' : '.m4a');
+            const audioFilename = mediaFilename.changeExtension(filename, audioExt);
+            await addToHistory({ url: audioUrl, filename: audioFilename, timestamp: Date.now(), pageUrl, pageTitle, mediaType: 'audio' });
+            const started = await startPersistentAudioJobDirect({
+                url: audioUrl, filename: audioFilename, isYouTube: true, audioOnly: true,
+                directAudioSource: !encodeMp3, encodeM4aToMp3: encodeMp3,
+                request: requestItem, downloadMethod: stored['download-method'] || 'fetch'
+            });
+            if (!started.success) throw new Error(started.error || 'Unable to start YouTube audio download');
+        } else if (requestItem && requestItem.ytFormats && requestItem.ytFormats.length > 0) {
+            const autoQualityPref = settings.autoDownloadQuality || 'highest';
+            const videoFormats = requestItem.ytFormats.filter(format => format.height > 0 && format.videoUrl);
+            const selectedFmt = autoQualityPref === 'lowest'
+                ? videoFormats[videoFormats.length - 1]
+                : videoFormats[0];
+            if (selectedFmt) {
+                const ext = '.' + (selectedFmt.demuxer || 'mp4');
+                let finalFilename = filename;
+                if (!finalFilename.toLowerCase().endsWith(ext)) {
+                    const dotIdx = finalFilename.lastIndexOf('.');
+                    if (dotIdx !== -1) finalFilename = finalFilename.substring(0, dotIdx);
+                    finalFilename += ext;
+                }
+                await addToHistory({ url: selectedFmt.videoUrl, filename: finalFilename, timestamp: Date.now(), pageUrl, pageTitle, mediaType });
+                const started = await startPersistentAudioJobDirect({
+                    url: selectedFmt.videoUrl, audioUrl: selectedFmt.audioUrl || null,
+                    filename: finalFilename, isYouTube: true, audioOnly: false,
+                    request: requestItem, downloadMethod: stored['download-method'] || 'fetch'
+                });
+                if (!started.success) throw new Error(started.error || 'Unable to start YouTube video download');
+            } else {
+                await addToHistory({ url: details.url, filename, timestamp: Date.now(), pageUrl, pageTitle, mediaType });
+                if ((stored['download-method'] || 'fetch') === 'fetch') handleFetchDownload(details.url, filename, requestItem, null, false, false, null, mediaType);
+                else await browser.downloads.download({ url: details.url, filename: sanitizeFilename(filename), saveAs: false });
+            }
+        } else {
+            await addToHistory({ url: details.url, filename, timestamp: Date.now(), pageUrl, pageTitle, mediaType });
+            if ((stored['download-method'] || 'fetch') === 'fetch') handleFetchDownload(details.url, filename, requestItem, null, false, false, null, mediaType);
+            else await browser.downloads.download({ url: details.url, filename: sanitizeFilename(filename), saveAs: false });
+        }
+    } catch (error) {
+        autoDownloadedMedia.delete(key);
+        console.error('Auto-download failed:', error);
+    }
+}
+
+const AUTO_DOWNLOAD_RESCAN_KEYS = new Set([
+    'auto-download-media', 'auto-download-quality', 'auto-download-youtube-mode',
+    'auto-download-all-domains', 'auto-download-domains', 'auto-skip-download-names-only', 'auto-download-video', 'auto-download-stream'
+]);
+let autoDownloadRescanTimer = null;
+
+function scheduleExistingMediaAutoDownload(settings) {
+    if (!settings.autoDownloadMedia || !settings.backgroundDownload) return;
+    clearTimeout(autoDownloadRescanTimer);
+    autoDownloadRescanTimer = setTimeout(async () => {
+        const items = await browser.storage.session.get(null);
+        for (const [url, requests] of Object.entries(items || {})) {
+            if (!Array.isArray(requests) || requests.length === 0) continue;
+            const request = requests[requests.length - 1];
+            const tabId = Number.isInteger(request.tabId) ? request.tabId : -1;
+            if (tabId < 0) continue;
+            maybeAutoDownloadMedia({
+                url, tabId, pageUrl: request.pageUrl, pageTitle: request.pageTitle,
+                responseHeaders: request.responseHeaders || []
+            }, settings, request);
+        }
+    }, 150);
 }
 
 async function showMediaNotification(details, settings) {
@@ -2028,6 +2197,7 @@ function initListener() {
                             browser.storage.session.set(requestsObj);
                         }
 
+                        if (shouldSaveNow && !isDrmMedia) maybeAutoDownloadMedia(details, currentSettings, existingRequests[existingRequests.length - 1]);
                         if (shouldSaveNow || updated) {
                             showMediaNotification(details, currentSettings);
                         }
@@ -2160,34 +2330,39 @@ async function ensureAudioOffscreenDocument() {
     return true;
 }
 
+async function startPersistentAudioJobDirect(message) {
+    const jobId = 'audio_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    const job = { ...message, action: undefined, jobId, percent: 0, text: 'Starting...', status: 'running', recoveryState: 'running' };
+    activeDownloads.set(jobId, { id: jobId, url: message.url, audioUrl: message.audioUrl, filename: message.filename, loaded: 0, total: 100, percent: 0, status: 'Starting...', mediaType: message.audioOnly ? 'audio' : 'video', isAudioJob: true });
+    try {
+        await browser.storage.local.set({ [`audioJob_${jobId}`]: job });
+        let processor;
+        if (await ensureAudioOffscreenDocument()) {
+            await browser.runtime.sendMessage({ action: 'startOffscreenAudioJob', jobId });
+            processor = { id: undefined, offscreen: true };
+        } else {
+            processor = await browser.tabs.create({ url: browser.runtime.getURL(`audio_processor.html?job=${encodeURIComponent(jobId)}`), active: false });
+        }
+        const item = activeDownloads.get(jobId);
+        if (item) {
+            item.processorTabId = processor.id;
+            item.isOffscreen = !!processor.offscreen;
+        }
+        return { success: true, jobId };
+    } catch (error) {
+        const item = activeDownloads.get(jobId);
+        if (item) item.status = error.message;
+        broadcastAudioJob({ action: 'audioJobUpdate', jobId, filename: message.filename, text: error.message, complete: true, success: false });
+        activeDownloads.delete(jobId);
+        await browser.storage.local.remove(`audioJob_${jobId}`).catch(() => {});
+        return { success: false, error: error.message };
+    }
+}
 const cancelledZipDownloads = new Set();
 
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'startPersistentAudioJob') {
-        const jobId = 'audio_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-        const job = { ...message, action: undefined, jobId, percent: 0, text: 'Starting...', status: "running", recoveryState: "running" };
-        activeDownloads.set(jobId, { id: jobId, url: message.url, audioUrl: message.audioUrl, filename: message.filename, loaded: 0, total: 100, percent: 0, status: 'Starting...', mediaType: message.audioOnly ? 'audio' : 'video', isAudioJob: true });
-        browser.storage.local.set({ [`audioJob_${jobId}`]: job }).then(async () => {
-            if (await ensureAudioOffscreenDocument()) {
-                await browser.runtime.sendMessage({ action: 'startOffscreenAudioJob', jobId });
-                return { id: undefined, offscreen: true };
-            }
-            return browser.tabs.create({ url: browser.runtime.getURL(`audio_processor.html?job=${encodeURIComponent(jobId)}`), active: false });
-        }).then(tab => {
-            sendResponse({ success: true, jobId });
-            const item = activeDownloads.get(jobId);
-            if (item) {
-                item.processorTabId = tab.id;
-                item.isOffscreen = !!tab.offscreen;
-            }
-        }).catch(error => {
-            sendResponse({ success: false, error: error.message });
-            const item = activeDownloads.get(jobId);
-            if (item) item.status = error.message;
-            broadcastAudioJob({ action: 'audioJobUpdate', jobId, filename: message.filename, text: error.message, complete: true, success: false });
-            activeDownloads.delete(jobId);
-            browser.storage.local.remove(`audioJob_${jobId}`).catch(() => {});
-        });
+        startPersistentAudioJobDirect(message).then(sendResponse);
         return true;
     }
     if (message.action === 'audioJobProgress') {
@@ -2421,54 +2596,52 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         addToHistory(message.item);
         return;
     }
-    if (message.action === 'downloadYoutubeVideo') {
-        const pageUrl = sender.tab ? sender.tab.url : "";
-        const pageTitle = sender.tab ? sender.tab.title : "";
-        
-        let finalName = message.filename;
-        const ext = '.' + (message.demuxer || 'mp4');
-        if (!finalName.toLowerCase().endsWith(ext)) {
-            const dotIdx = finalName.lastIndexOf('.');
-            if (dotIdx !== -1) {
-                finalName = finalName.substring(0, dotIdx);
+    if (message.action === 'downloadYoutubeVideo' || message.action === 'downloadYoutubeAudio') {
+        (async () => {
+            const isAudioOnly = message.action === 'downloadYoutubeAudio';
+            const mediaUrl = isAudioOnly ? message.audioUrl : message.videoUrl;
+            const pageUrl = sender.tab?.url || '';
+            const pageTitle = sender.tab?.title || '';
+            const storedItems = await browser.storage.session.get(null);
+            let request = null;
+            for (const value of Object.values(storedItems)) {
+                const candidate = Array.isArray(value) ? value[0] : null;
+                if (!candidate) continue;
+                if (candidate.url === mediaUrl || candidate.ytFormats?.some(format => format.videoUrl === mediaUrl || format.audioUrl === mediaUrl)) {
+                    request = candidate;
+                    break;
+                }
             }
-            finalName += ext;
-        }
-
-        addToHistory({ url: message.videoUrl, filename: finalName, timestamp: Date.now(), pageUrl, pageTitle });
-
-        let popupUrl = `popup.html?mode=tab&autoDownloadVideoUrl=${encodeURIComponent(message.videoUrl)}&autoDemuxer=${encodeURIComponent(message.demuxer || '')}&autoCodec=${encodeURIComponent(message.codec || '')}`;
-        browser.tabs.create({
-            url: browser.runtime.getURL(popupUrl),
-            active: true
-        });
-        return;
-    }
-    if (message.action === 'downloadYoutubeAudio') {
-        const pageUrl = sender.tab ? sender.tab.url : "";
-        const pageTitle = sender.tab ? sender.tab.title : "";
-        
-        let finalName = message.filename;
-        let audioExt = '.m4a';
-        if (message.audioUrl.includes('mime=audio%2Fwebm') || message.audioUrl.includes('mime=audio/webm')) {
-            audioExt = '.webm';
-        }
-        if (!finalName.toLowerCase().endsWith(audioExt)) {
-            const dotIdx = finalName.lastIndexOf('.');
-            if (dotIdx !== -1) {
-                finalName = finalName.substring(0, dotIdx);
+            const settings = await browser.storage.local.get(['download-method', 'audio-to-mp3']);
+            let finalName = message.filename;
+            if (isAudioOnly) {
+                const encodeMp3 = settings['audio-to-mp3'] === '1';
+                const audioExt = encodeMp3 ? '.mp3' : (/webm/i.test(decodeURIComponent(mediaUrl)) ? '.webm' : '.m4a');
+                finalName = mediaFilename.changeExtension(finalName, audioExt);
+                await addToHistory({ url: mediaUrl, filename: finalName, timestamp: Date.now(), pageUrl, pageTitle, mediaType: 'audio' });
+                const result = await startPersistentAudioJobDirect({
+                    url: mediaUrl, filename: finalName, isYouTube: true, audioOnly: true,
+                    directAudioSource: !encodeMp3, encodeM4aToMp3: encodeMp3,
+                    request: request || {}, downloadMethod: settings['download-method'] || 'fetch'
+                });
+                if (!result.success) throw new Error(result.error || 'Unable to start YouTube audio download');
+            } else {
+                const ext = '.' + (message.demuxer || 'mp4');
+                finalName = mediaFilename.changeExtension(finalName, ext);
+                await addToHistory({ url: mediaUrl, filename: finalName, timestamp: Date.now(), pageUrl, pageTitle, mediaType: 'video' });
+                const result = await startPersistentAudioJobDirect({
+                    url: mediaUrl, audioUrl: message.audioUrl || null,
+                    filename: finalName, isYouTube: true, audioOnly: false,
+                    request: request || {}, downloadMethod: settings['download-method'] || 'fetch'
+                });
+                if (!result.success) throw new Error(result.error || 'Unable to start YouTube video download');
             }
-            finalName += audioExt;
-        }
-
-        addToHistory({ url: message.audioUrl, filename: finalName, timestamp: Date.now(), pageUrl, pageTitle });
-
-        let popupUrl = `popup.html?mode=tab&autoDownloadAudioUrl=${encodeURIComponent(message.audioUrl)}`;
-        browser.tabs.create({
-            url: browser.runtime.getURL(popupUrl),
-            active: true
+            sendResponse({ success: true });
+        })().catch(error => {
+            console.error('Toast YouTube download failed:', error);
+            sendResponse({ success: false, error: error.message });
         });
-        return;
+        return true;
     }
     if (message.action === 'downloadHlsStream') {
         const pageUrl = sender.tab ? sender.tab.url : "";
@@ -2882,6 +3055,26 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
                 if (hasNew) {
                     browser.storage.session.set(updates);
+
+                    for (const url in updates) {
+                        const req = updates[url][0];
+                        const detectedType = getMediaType(url) || (url.includes('mime=audio') || url.includes('#audio') ? 'audio' : 'video');
+                        maybeAutoDownloadMedia({ url, tabId: tabId ?? req.tabId, pageUrl: req.pageUrl, pageTitle: req.pageTitle, responseHeaders: [{ name: 'content-type', value: detectedType === 'video' ? 'video/mp4' : (detectedType === 'audio' ? 'audio/mp4' : 'application/octet-stream') }] }, settings, req);
+                    }
+                    if (is_youtube && Array.isArray(ytFormats)) {
+                        const audioUrl = ytFormats.find(format => format.audioUrl)?.audioUrl;
+                        const baseRequest = Object.values(updates)[0]?.[0];
+                        if (audioUrl && baseRequest) {
+                            const audioRequest = { ...baseRequest, ytFormats, autoYoutubeAudioOnly: true };
+                            maybeAutoDownloadMedia({
+                                url: audioUrl,
+                                tabId: tabId ?? baseRequest.tabId,
+                                pageUrl: baseRequest.pageUrl,
+                                pageTitle: baseRequest.pageTitle,
+                                responseHeaders: [{ name: 'content-type', value: 'audio/mp4' }]
+                            }, settings, audioRequest);
+                        }
+                    }
 
                     if (settings.mediaNotification) {
                         for (const url in updates) {
@@ -5379,6 +5572,11 @@ browser.runtime.onInstalled.addListener(async (details) => {
             'history-page': '0',
             'detect-download-links': '1',
             'disable-deduplication': '1',
+            'auto-download-media': '0',
+            'auto-download-all-domains': '0',
+            'auto-ignore-excluded-media': '1',
+            'auto-download-video': '1',
+            'auto-download-stream': '1',
             'open-preference': 'popup'
         };
         await browser.storage.local.set(defaults);
@@ -5637,6 +5835,9 @@ browser.storage.onChanged.addListener((changes, area) => {
 
     getSettings(function(newSettings) {
         cachedSettings = newSettings;
+        if (Object.keys(changes).some(key => AUTO_DOWNLOAD_RESCAN_KEYS.has(key))) {
+            scheduleExistingMediaAutoDownload(newSettings);
+        }
         if (newSettings.ignoreDisabledTypes) {
             browser.storage.session.get(null, (items) => {
                 const keysToRemove = [];

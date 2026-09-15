@@ -21,6 +21,7 @@ var detectionExclusions = (() => {
     let names = [];
     let domains = [];
     let ignoreExcluded = true;
+    let namesOnly = false;
     const split = value => typeof value === 'string'
         ? value.split(/[\n,;]+/).map(entry => entry.trim().toLowerCase()).filter(Boolean) : [];
     function configure(settings) {
@@ -32,22 +33,27 @@ var detectionExclusions = (() => {
         }).filter(Boolean);
     }
     const isEnabled = value => value !== '0' && value !== false && value !== 0;
-    const ready = api.storage.local.get(['skip-detection-names', 'skip-detection-domains', 'ignore-excluded-media']).then(settings => {
+    const ready = api.storage.local.get(['skip-detection-names', 'skip-detection-names-only', 'skip-detection-domains', 'ignore-excluded-media']).then(settings => {
         configure(settings);
         ignoreExcluded = isEnabled(settings['ignore-excluded-media']);
+        namesOnly = settings['skip-detection-names-only'] === '1' || settings['skip-detection-names-only'] === true;
     });
     api.storage.onChanged.addListener((changes, area) => {
         if (area !== 'local') return;
         if (changes['ignore-excluded-media']) ignoreExcluded = isEnabled(changes['ignore-excluded-media'].newValue);
         if (changes['skip-detection-names']) names = split(changes['skip-detection-names'].newValue);
+        if (changes['skip-detection-names-only']) namesOnly = changes['skip-detection-names-only'].newValue === '1' || changes['skip-detection-names-only'].newValue === true;
         if (changes['skip-detection-domains']) {
             configure({ 'skip-detection-names': names.join('\n'), 'skip-detection-domains': changes['skip-detection-domains'].newValue });
         }
     });
     function matches(details) {
         const urls = [details.url, details.pageUrl, details.documentUrl, details.originUrl, details.initiator];
-        const values = [...urls, details.pageTitle, details.title, details.filename,
-            ...(details.responseHeaders || []).filter(h => h.name?.toLowerCase() === 'content-disposition').map(h => h.value)];
+        let filenameFromUrl = "";
+        try { filenameFromUrl = new URL(details.url || "").pathname.split("/").pop() || ""; } catch (_) {}
+        const filenameValues = [details.filename, filenameFromUrl,
+            ...(details.responseHeaders || []).filter(h => h.name?.toLowerCase() === "content-disposition").map(h => h.value)];
+        const values = namesOnly ? filenameValues : [...urls, details.pageTitle, details.title, ...filenameValues];
         if (values.some(value => {
             let text = String(value || '').toLowerCase();
             try { text = decodeURIComponent(text).toLowerCase(); } catch (_) {}

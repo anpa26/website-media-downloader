@@ -3265,8 +3265,6 @@ function getMediaType(url, responseHeaders) {
         return null;
     }
 
-    if (contentType.startsWith('video/') || urlLower.includes('mime=video') || urlLower.includes('#video')) return 'video';
-    if (contentType.startsWith('audio/') || urlLower.includes('mime=audio') || urlLower.includes('#audio')) return 'audio';
 
     const videoExtensions = [".3g2", ".3gp", ".asx", ".avi", ".divx", ".4v", ".flv", ".ismv", ".m2t", ".m2ts", ".m2v", ".m4s", ".m4v", ".mk3d", ".mkv", ".mng", ".mov", ".mp2v", ".mp4", ".mp4v", ".mpe", ".mpeg", ".mpeg1", ".mpeg2", ".mpeg4", ".mpg", ".mxf", ".ogm", ".ogv", ".qt", ".rm", ".swf", ".ts", ".vob", ".vp9", ".webm", ".wmv"];
     const audioExtensions = [".3ga", ".aac", ".ac3", ".adts", ".aif", ".aiff", ".alac", ".ape", ".asf", ".au", ".dts", ".f4a", ".f4b", ".flac", ".isma", ".it", ".m4a", ".m4b", ".m4r", ".mid", ".mka", ".mod", ".mp1", ".mp2", ".mp3", ".mp4a", ".mpa", ".mpga", ".oga", ".ogg", ".ogx", ".opus", ".ra", ".shn", ".spx", ".vorbis", ".wav", ".weba", ".wma", ".xm"];
@@ -3277,14 +3275,18 @@ function getMediaType(url, responseHeaders) {
 
     const urlPath = urlLower.split('?')[0].split('#')[0];
     const hasExt = (ext) => urlPath.endsWith(ext) || urlLower.includes(ext + '&') || urlLower.includes(ext + '?') || urlLower.includes(ext + '#') || urlLower.endsWith(ext);
+    let decodedUrlLower = urlLower;
+    try { decodedUrlLower = decodeURIComponent(urlLower); } catch (_) {}
+    const streamUrlHint = streamExtensions.some(hasExt) || hasExt('.m3u') ||
+        /[?&](?:format|type|output|protocol)=(?:m3u8?|mpd|hls|dash)(?:[&#]|$)/i.test(decodedUrlLower) ||
+        /(?:^|[/_.-])(?:master|playlist|manifest)(?:[/?#_.-]|$)/i.test(decodedUrlLower);
 
-    if (videoExtensions.some(hasExt)) return 'video';
-    if (audioExtensions.some(hasExt)) return 'audio';
+    if (streamUrlHint || contentType.includes('mpegurl') || contentType.includes('dash+xml') || urlLower.includes('#stream')) return 'stream';
+    if (videoExtensions.some(hasExt) || contentType.startsWith('video/') || urlLower.includes('mime=video') || urlLower.includes('#video')) return 'video';
+    if (audioExtensions.some(hasExt) || contentType.startsWith('audio/') || urlLower.includes('mime=audio') || urlLower.includes('#audio')) return 'audio';
 
     if (contentType === 'image/svg+xml' || hasExt('.svg')) return null;
     if (contentType.startsWith('image/') || imageExtensions.some(hasExt) || urlLower.includes('#image')) return 'image';
-
-    if (streamExtensions.some(hasExt) || contentType.includes('mpegurl') || contentType.includes('dash+xml') || urlLower.includes('#stream')) return 'stream';
     if (subtitleExtensions.some(hasExt) || contentType.includes('vtt') || contentType.includes('subrip') || contentType.includes('ass') || contentType.includes('ttml') || contentType.includes('dfxp') || contentType.includes('sami') || contentType.includes('smil') || contentType.includes('lrc') || contentType.includes('sbv') || contentType.includes('microdvd') || urlLower.includes('#subtitle')) return 'subtitle';
 
     if (downloadExtensions.some(hasExt) || urlLower.includes('#file')) return 'file';
@@ -3401,11 +3403,15 @@ async function loadMediaListOnce() {
   activeItems.forEach(item => mediaContainer.appendChild(item));
 
   try {
-    const [mediaRequests, settings, activeDownloads] = await Promise.all([
-      browser.runtime.sendMessage({ action: 'getMediaRequests' }),
-      browser.storage.local.get(['filename-template', 'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'hide-segments', 'hide-page-components', 'media-sort-order', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom', 'optimize-low-end', 'group-by-type', 'disable-deduplication']),
-      getActiveDownloadSnapshot()
+    const activeDownloadsPromise = getActiveDownloadSnapshot();
+    const [mediaRequests, settings] = await Promise.all([
+      browser.runtime.sendMessage({ action: "getMediaRequests" }),
+      browser.storage.local.get(["filename-template", "only-video", "only-audio", "only-stream", "only-image", "only-subtitle", "only-file", "hide-segments", "hide-page-components", "media-sort-order", "limit-media-list", "limit-media-list-custom", "min-file-size", "min-file-size-custom", "optimize-low-end", "group-by-type", "disable-deduplication"])
     ]);
+    let activeDownloads = activeDownloadSnapshot || {};
+    const quickActiveDownloads = await Promise.race([activeDownloadsPromise, new Promise(resolve => setTimeout(() => resolve(null), 100))]);
+    if (quickActiveDownloads) activeDownloads = quickActiveDownloads;
+    else activeDownloadsPromise.then(snapshot => restoreActiveDownloadsUI(snapshot)).catch(() => {});
     if (globalLoading) globalLoading.style.display = 'none';
     if (mainContent) mainContent.style.display = 'block';
 
@@ -3443,7 +3449,9 @@ async function loadMediaListOnce() {
     }
 
     const mediaGroups = new Map();
+    let mediaScanIndex = 0;
     for (const rawUrl in mediaRequests) {
+      if (++mediaScanIndex % 20 === 0) await new Promise(resolve => requestAnimationFrame(resolve));
       if (activeItems.has(rawUrl)) continue;
 
       const requests = mediaRequests[rawUrl];

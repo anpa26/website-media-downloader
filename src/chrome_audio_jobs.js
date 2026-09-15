@@ -34,21 +34,27 @@ async function ensureChromeAudioOffscreen() {
     await chromeAudioOffscreenCreating;
 }
 
+async function startPersistentAudioJobDirect(message) {
+    const jobId = 'audio_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    const job = { ...message, action: undefined, jobId };
+    chromeAudioJobs.set(jobId, { ...job, controller: null, percent: 0, isPaused: false });
+    try {
+        await chrome.storage.local.set({ [`audioJob_${jobId}`]: job });
+        await ensureChromeAudioOffscreen();
+        await chrome.runtime.sendMessage({ action: 'startOffscreenAudioJob', jobId });
+        return { success: true, jobId };
+    } catch (error) {
+        chrome.runtime.sendMessage({ action: 'downloadError', id: job.url, url: job.url, error: error.message }).catch(() => {});
+        chromeAudioJobs.delete(jobId);
+        await chrome.storage.local.remove(`audioJob_${jobId}`);
+        return { success: false, error: error.message };
+    }
+}
+globalThis.startPersistentAudioJobDirect = startPersistentAudioJobDirect;
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'startPersistentAudioJob') {
-        const jobId = 'audio_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-        const job = { ...message, action: undefined, jobId };
-        chromeAudioJobs.set(jobId, { ...job, controller: null, percent: 0, isPaused: false });
-        sendResponse({ success: true, jobId });
-        chrome.storage.local.set({ [`audioJob_${jobId}`]: job })
-            .then(ensureChromeAudioOffscreen)
-            .then(() => chrome.runtime.sendMessage({ action: 'startOffscreenAudioJob', jobId }))
-            .catch(error => {
-                chrome.runtime.sendMessage({ action: 'downloadError', id: job.url, url: job.url, error: error.message }).catch(() => {});
-                chromeAudioJobs.delete(jobId);
-                chrome.storage.local.remove(`audioJob_${jobId}`);
-            });
-        return;
+        startPersistentAudioJobDirect(message).then(sendResponse);
+        return true;
     }
     if (message.action === 'fetchMediaForAudio' && message.jobId) {
         const job = chromeAudioJobs.get(message.jobId);

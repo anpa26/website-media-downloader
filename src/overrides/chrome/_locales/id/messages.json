@@ -2108,5 +2108,21 @@
     },
     "streamConversionFallbackTs": {
         "message": "Konversi MP4 gagal. Menyimpan sebagai TS…"
+    },
+    "autoDownloadQualityTitle": {
+        "message": "Kualitas Unduhan Otomatis"
+    },
+    "autoDownloadQualityExplain": {
+        "message": "Pilih preferensi kualitas media yang akan diunduh secara otomatis jika opsi kualitas tersedia."
+    },
+    "autoDownloadQualityHighest": {
+        "message": "Kualitas Tertinggi"
+    },
+    "autoDownloadQualityLowest": {
+        "message": "Kualitas Terendah"
     }
+  ,"autoDownloadYoutubeModeTitle": { "message": "Unduhan otomatis YouTube" }
+  ,"autoDownloadYoutubeModeExplain": { "message": "Pilih apakah unduhan otomatis YouTube menyimpan video atau audio saja." }
+  ,"autoDownloadYoutubeModeVideo": { "message": "Video" }
+  ,"autoDownloadYoutubeModeAudio": { "message": "Audio saja" }
 }

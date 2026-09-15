@@ -3160,6 +3160,17 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     }
   };
 
+  function pruneToSelectedRepresentations(documentNode, namespace, selectedIds) {
+    const adaptationSets = Array.from(documentNode.getElementsByTagNameNS(namespace, "AdaptationSet"));
+    for (const adaptationSet of adaptationSets) {
+      const representations = Array.from(adaptationSet.getElementsByTagNameNS(namespace, "Representation"));
+      for (const representation of representations) {
+        if (!selectedIds.has(representation.getAttribute("id"))) representation.remove();
+      }
+      if (!adaptationSet.getElementsByTagNameNS(namespace, "Representation").length) adaptationSet.remove();
+    }
+  }
+
   try {
     for (const t of tasks) {
       throwIfCancelled();

@@ -140,6 +140,48 @@ async function processStreamItemForZip(item, progressId) {
 
 globalThis.processStreamItemForZip = processStreamItemForZip;
 
+async function startPersistentStreamJobDirect(message) {
+    const jobId = 'stream_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    const job = { ...message, action: undefined, jobId, recoveryState: 'running' };
+    persistentStreamJobs.set(jobId, job);
+    if (typeof activeDownloads !== 'undefined') {
+        activeDownloads.set(jobId, {
+            id: jobId, url: job.url, filename: job.filename,
+            loaded: 0, total: 100, percent: 0, status: 'Preparing stream...',
+            mediaType: 'stream', isStreamJob: true
+        });
+    }
+    broadcastStreamJob({
+        action: 'streamJobUpdate', jobId, url: job.url, filename: job.filename,
+        text: 'Preparing stream...', percent: 0, indeterminate: true
+    });
+    browser.runtime.sendMessage({
+        action: 'streamPopupStatus', id: job.url,
+        text: 'Preparing stream...', percent: undefined, indeterminate: true
+    }).catch(() => {});
+    try {
+        await browser.storage.local.set({ [`streamJob_${jobId}`]: job });
+        let processor;
+        if (await ensureStreamOffscreenDocument()) {
+            await browser.runtime.sendMessage({ action: 'startOffscreenStreamJob', jobId });
+            processor = { offscreen: true };
+        } else {
+            processor = await browser.tabs.create({ url: browser.runtime.getURL(`stream_processor.html?job=${encodeURIComponent(jobId)}`), active: false });
+        }
+        if (processor?.id !== undefined) {
+            job.processorTabId = processor.id;
+            const item = typeof activeDownloads !== 'undefined' ? activeDownloads.get(jobId) : null;
+            if (item) item.processorTabId = processor.id;
+        }
+        return { success: true, jobId };
+    } catch (error) {
+        persistentStreamJobs.delete(jobId);
+        if (typeof activeDownloads !== 'undefined') activeDownloads.delete(jobId);
+        await browser.storage.local.remove(`streamJob_${jobId}`).catch(() => {});
+        return { success: false, error: error.message };
+    }
+}
+globalThis.startPersistentStreamJobDirect = startPersistentStreamJobDirect;
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'startPersistentZipJob') {
         const jobId = 'zip_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
@@ -270,44 +312,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
     }
     if (message.action === 'startPersistentStreamJob') {
-        const jobId = 'stream_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-        const job = { ...message, action: undefined, jobId, recoveryState: "running" };
-        persistentStreamJobs.set(jobId, job);
-        if (typeof activeDownloads !== 'undefined') {
-            activeDownloads.set(jobId, {
-                id: jobId, url: job.url, filename: job.filename,
-                loaded: 0, total: 100, percent: 0, status: 'Preparing stream...',
-                mediaType: 'stream', isStreamJob: true
-            });
-        }
-        broadcastStreamJob({
-            action: 'streamJobUpdate', jobId, url: job.url, filename: job.filename,
-            text: 'Preparing stream...', percent: 0, indeterminate: true
-        });
-        browser.runtime.sendMessage({
-            action: 'streamPopupStatus', id: job.url,
-            text: 'Preparing stream...', percent: undefined, indeterminate: true
-        }).catch(() => {});
-        browser.storage.local.set({ [`streamJob_${jobId}`]: job }).then(async () => {
-            if (await ensureStreamOffscreenDocument()) {
-                await browser.runtime.sendMessage({ action: 'startOffscreenStreamJob', jobId });
-                return { offscreen: true };
-            }
-            return browser.tabs.create({ url: browser.runtime.getURL(`stream_processor.html?job=${encodeURIComponent(jobId)}`), active: false });
-        }).then(processor => {
-            if (processor?.id !== undefined) {
-                job.processorTabId = processor.id;
-                if (typeof activeDownloads !== 'undefined') {
-                    const item = activeDownloads.get(jobId);
-                    if (item) {
-                        item.processorTabId = processor.id;
-                        activeDownloads.set(jobId, item);
-                    }
-                }
-            }
-            sendResponse({ success: true, jobId });
-        })
-          .catch(error => sendResponse({ success: false, error: error.message }));
+        startPersistentStreamJobDirect(message).then(sendResponse);
         return true;
     }
     if (message.action === 'streamJobProgress') {

@@ -1,6 +1,6 @@
 # Website Media Downloader
 
-[![Version](https://img.shields.io/badge/version-2.3.6-blue.svg)](src/manifest.json)
+[![Version](https://img.shields.io/badge/version-2.3.7-blue.svg)](src/manifest.json)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE.md)
 [![Platform](https://img.shields.io/badge/platform-Chrome%20%7C%20Firefox%20%7C%20Android-orange.svg)](#installation)
 
@@ -49,7 +49,7 @@ Designed with a strict focus on privacy and technical transparency, all operatio
 
 ---
 
-## What's New in v2.3.6
+## What's New in v2.3.7
 
 - Fixed incorrect duration detection for stream videos.
 - Fixed stream pause and resume so active network reads actually stop and continue.

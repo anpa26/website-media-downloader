@@ -1,10 +1,28 @@
 {
-  "ignoreExcludedMediaTitle": {"message":"Não detectar mídias excluídas"},
-  "ignoreExcludedMediaExplain": {"message":"Desativa a detecção dos nomes e domínios indicados acima para reduzir o processamento. Quando esta opção está desativada, os itens correspondentes continuam ocultos na lista e nas notificações."},
-  "skipDetectionNamesTitle": {"message":"Excluir nomes / palavras-chave"},
-  "skipDetectionNamesExplain": {"message":"Exclui URLs de mídia, nomes de arquivos e títulos de páginas correspondentes, sem diferenciar maiúsculas de minúsculas. Separe as entradas com quebras de linha ou vírgulas."},
-  "skipDetectionDomainsTitle": {"message":"Excluir domínios"},
-  "skipDetectionDomainsExplain": {"message":"Exclui estes sites ou servidores de mídia, incluindo subdomínios. Separe as entradas com quebras de linha ou vírgulas. Os itens correspondentes não aparecem nos resultados de detecção nem nas notificações."},
+  "ignoreExcludedMediaTitle": {
+    "message": "Não detectar mídias excluídas"
+  },
+  "ignoreExcludedMediaExplain": {
+    "message": "Desativa a detecção dos nomes e domínios indicados acima para reduzir o processamento. Quando esta opção está desativada, os itens correspondentes continuam ocultos na lista e nas notificações."
+  },
+  "skipDetectionNamesTitle": {
+    "message": "Excluir nomes / palavras-chave"
+  },
+  "skipDetectionNamesExplain": {
+    "message": "Exclui URLs de mídia, nomes de arquivos e títulos de páginas correspondentes, sem diferenciar maiúsculas de minúsculas. Separe as entradas com quebras de linha ou vírgulas."
+  },
+  "skipDetectionNamesOnlyTitle": {
+    "message": "Ignorar apenas nomes"
+  },
+  "skipDetectionNamesOnlyExplain": {
+    "message": "Comparar apenas nomes de arquivo. Não comparar URLs de mídia nem títulos de páginas."
+  },
+  "skipDetectionDomainsTitle": {
+    "message": "Excluir domínios"
+  },
+  "skipDetectionDomainsExplain": {
+    "message": "Exclui estes sites ou servidores de mídia, incluindo subdomínios. Separe as entradas com quebras de linha ou vírgulas. Os itens correspondentes não aparecem nos resultados de detecção nem nas notificações."
+  },
   "reinstallTitle": {
     "message": "Reinstalação Recomendada",
     "description": "Reinstall warning title"
@@ -856,16 +874,46 @@
     "message": "Manter um registro local dos seus downloads.",
     "description": "The explanation of the history page option."
   },
-  "settingsBackupTitle": { "message": "Configuração das definições" },
-  "settingsBackupExplain": { "message": "Exporte ou importe as definições da extensão. Contas, histórico de downloads e dados temporários não são incluídos." },
-  "exportSettingsButton": { "message": "Exportar definições" },
-  "importSettingsButton": { "message": "Importar definições" },
-  "settingsExportSuccess": { "message": "Definições exportadas com sucesso!" },
-  "settingsExportError": { "message": "Falha ao exportar as definições: $1", "placeholders": { "1": { "content": "$1" } } },
-  "settingsImportSuccess": { "message": "Definições importadas com sucesso!" },
-  "settingsImportError": { "message": "Falha ao importar as definições: $1", "placeholders": { "1": { "content": "$1" } } },
-  "settingsImportInvalidFormat": { "message": "Formato de ficheiro de definições inválido" },
-  "settingsImportNoSettings": { "message": "O ficheiro não contém definições suportadas" },
+  "settingsBackupTitle": {
+    "message": "Configuração das definições"
+  },
+  "settingsBackupExplain": {
+    "message": "Exporte ou importe as definições da extensão. Contas, histórico de downloads e dados temporários não são incluídos."
+  },
+  "exportSettingsButton": {
+    "message": "Exportar definições"
+  },
+  "importSettingsButton": {
+    "message": "Importar definições"
+  },
+  "settingsExportSuccess": {
+    "message": "Definições exportadas com sucesso!"
+  },
+  "settingsExportError": {
+    "message": "Falha ao exportar as definições: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "settingsImportSuccess": {
+    "message": "Definições importadas com sucesso!"
+  },
+  "settingsImportError": {
+    "message": "Falha ao importar as definições: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "settingsImportInvalidFormat": {
+    "message": "Formato de ficheiro de definições inválido"
+  },
+  "settingsImportNoSettings": {
+    "message": "O ficheiro não contém definições suportadas"
+  },
   "clearHistoryButton": {
     "message": "Limpar histórico",
     "description": "The label of the button to clear the download history."
@@ -2209,13 +2257,27 @@
     "message": "Origem:",
     "description": "Label for the update source in the update popup"
   },
-  "cacheStorageTitle": { "message": "Armazenamento de cache" },
-  "cacheStorageCalculating": { "message": "Calculando o uso do cache..." },
-  "cacheStorageClear": { "message": "Limpar cache" },
-  "cacheStorageEntries": { "message": "$1 entradas em cache" },
-  "cacheStorageReadError": { "message": "Não foi possível ler o cache: $1" },
-  "cacheStorageActiveDownloadError": { "message": "O cache não pode ser limpo enquanto houver downloads ativos." },
-  "cacheStorageCleared": { "message": "Cache limpo" },
+  "cacheStorageTitle": {
+    "message": "Armazenamento de cache"
+  },
+  "cacheStorageCalculating": {
+    "message": "Calculando o uso do cache..."
+  },
+  "cacheStorageClear": {
+    "message": "Limpar cache"
+  },
+  "cacheStorageEntries": {
+    "message": "$1 entradas em cache"
+  },
+  "cacheStorageReadError": {
+    "message": "Não foi possível ler o cache: $1"
+  },
+  "cacheStorageActiveDownloadError": {
+    "message": "O cache não pode ser limpo enquanto houver downloads ativos."
+  },
+  "cacheStorageCleared": {
+    "message": "Cache limpo"
+  },
   "manualTsConvertTitle": {
     "message": "Converter arquivo TS manualmente"
   },
@@ -2261,5 +2323,97 @@
   },
   "streamConversionFallbackTs": {
     "message": "A conversão para MP4 falhou. Salvando como TS…"
+  },
+  "settingsAutoSectionTitle": {
+    "message": "Automático"
+  },
+  "autoDownloadMediaTitle": {
+    "message": "Baixar mídia automaticamente"
+  },
+  "autoDownloadMediaExplain": {
+    "message": "Baixe automaticamente mídias correspondentes dos domínios abaixo. Requer download em segundo plano e vem desativado por padrão."
+  },
+  "autoDownloadDomainsTitle": {
+    "message": "Sites / domínios ativados"
+  },
+  "autoDownloadDomainsExplain": {
+    "message": "Um domínio por linha ou separado por vírgulas. Subdomínios estão incluídos."
+  },
+  "autoDownloadVideoTitle": {
+    "message": "Vídeo"
+  },
+  "autoDownloadAudioTitle": {
+    "message": "Áudio"
+  },
+  "autoDownloadImageTitle": {
+    "message": "Imagem"
+  },
+  "autoDownloadStreamTitle": {
+    "message": "Transmissão"
+  },
+  "autoDownloadVideoExplain": {
+    "message": "Baixar arquivos de vídeo detectados automaticamente."
+  },
+  "autoDownloadAudioExplain": {
+    "message": "Baixar arquivos de música e áudio detectados automaticamente."
+  },
+  "autoDownloadImageExplain": {
+    "message": "Baixar arquivos de imagem detectados automaticamente."
+  },
+  "autoDownloadStreamExplain": {
+    "message": "Baixar transmissões HLS e DASH detectadas automaticamente."
+  },
+  "autoDownloadSubtitleTitle": {
+    "message": "Legenda"
+  },
+  "autoDownloadSubtitleExplain": {
+    "message": "Baixar arquivos de legenda detectados automaticamente."
+  },
+  "autoDownloadFileTitle": {
+    "message": "Arquivo"
+  },
+  "autoDownloadFileExplain": {
+    "message": "Baixar outros arquivos suportados e links de download automaticamente."
+  },
+  "autoDownloadAllDomainsTitle": {
+    "message": "Ativar para todos os domínios / sites"
+  },
+  "autoDownloadAllDomainsExplain": {
+    "message": "Aplicar download automático em todos os sites. Quando desativado, apenas os domínios listados abaixo são ativados."
+  },
+  "autoSkipDownloadNamesTitle": {
+    "message": "Ignorar nomes / palavras-chave"
+  },
+  "autoSkipDownloadNamesExplain": {
+    "message": "Ignorar URLs de mídia, nomes de arquivos e títulos de página correspondentes do download automático (sem diferenciar maiúsculas/minúsculas). Separe as entradas por novas linhas ou vírgulas."
+  },
+  "autoSkipDownloadNamesOnlyTitle": {
+    "message": "Ignorar apenas nomes"
+  },
+  "autoSkipDownloadNamesOnlyExplain": {
+    "message": "Comparar apenas nomes de arquivo. Não comparar a URL da mídia nem o título da página."
+  },
+  "autoSkipDownloadDomainsTitle": {
+    "message": "Ignorar domínios"
+  },
+  "autoSkipDownloadDomainsExplain": {
+    "message": "Ignorar estes sites ou servidores de mídia do download automático, incluindo subdomínios. Separe as entradas por novas linhas ou vírgulas."
+  },
+  "autoIgnoreExcludedMediaTitle": {
+    "message": "Não baixar mídias excluídas automaticamente"
+  },
+  "autoIgnoreExcludedMediaExplain": {
+    "message": "Aplicar as exclusões de nome e domínio acima ao download automático. Itens detectados permanecem visíveis na lista de mídias."
+  },
+  "autoDownloadUnavailableExplain": {
+    "message": "O download automático não está disponível porque o download em segundo plano está desativado. Ative o download em segundo plano primeiro."
   }
+  ,"autoDownloadQualityTitle": { "message": "Qualidade do download automático" }
+  ,"autoDownloadQualityExplain": { "message": "Escolha a qualidade da mídia baixada automaticamente quando houver várias opções." }
+  ,"autoDownloadQualityHighest": { "message": "Qualidade máxima" }
+  ,"autoDownloadQualityLowest": { "message": "Qualidade mínima" }
+  ,"autoDownloadYoutubeModeTitle": { "message": "Download automático do YouTube" }
+  ,"autoDownloadYoutubeModeExplain": { "message": "Escolha se o download automático do YouTube salva o vídeo ou apenas o áudio." }
+  ,"autoDownloadYoutubeModeVideo": { "message": "Vídeo" }
+  ,"autoDownloadYoutubeModeAudio": { "message": "Somente áudio" }
 }

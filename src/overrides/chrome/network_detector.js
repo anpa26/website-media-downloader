@@ -562,6 +562,8 @@ let cachedSettings = {
     ignoreDisabledTypes: false,
     optimizeLowEnd: false,
     filenameTemplate: '',
+    autoDownloadMedia: false, autoDownloadQuality: 'highest', backgroundDownload: true, autoDownloadAllDomains: false, autoDownloadDomains: '', autoSkipDownloadNames: '', autoSkipDownloadNamesOnly: false, autoSkipDownloadDomains: '', autoIgnoreExcludedMedia: true,
+    autoDownloadVideo: true, autoDownloadStream: true,
     themeColor: '#8ab4f8'
 };
 
@@ -569,6 +571,7 @@ function getSettings(callback) {
     browser.storage.local.get([
         'mime-detection', 'url-detection', 'media-notification', 'media-system-notification', 'stack-notifications', 'hide-segments', 'hide-page-components',
         'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'ignore-disabled-types', 'optimize-low-end',
+        'auto-download-media', 'auto-download-quality', 'background-download', 'auto-download-all-domains', 'auto-download-domains', 'auto-skip-download-names', 'auto-skip-download-names-only', 'auto-skip-download-domains', 'auto-ignore-excluded-media', 'auto-download-video', 'auto-download-stream',
         'filename-template', 'theme-color', 'ui-scale'
     ], function (result) {
         const s = {
@@ -587,6 +590,17 @@ function getSettings(callback) {
             onlyFile: isFlagEnabled(result['only-file'], true),
             ignoreDisabledTypes: isFlagEnabled(result['ignore-disabled-types'], false),
             optimizeLowEnd: isFlagEnabled(result['optimize-low-end'], false),
+            autoDownloadMedia: isFlagEnabled(result['auto-download-media'], false),
+            autoDownloadQuality: result['auto-download-quality'] || 'highest',
+            backgroundDownload: isFlagEnabled(result['background-download'], true),
+            autoDownloadAllDomains: isFlagEnabled(result['auto-download-all-domains'], false),
+            autoSkipDownloadNames: result['auto-skip-download-names'] || '',
+            autoSkipDownloadNamesOnly: isFlagEnabled(result['auto-skip-download-names-only'], false),
+            autoSkipDownloadDomains: result['auto-skip-download-domains'] || '',
+            autoIgnoreExcludedMedia: isFlagEnabled(result['auto-ignore-excluded-media'], true),
+            autoDownloadDomains: result['auto-download-domains'] || '',
+            autoDownloadVideo: isFlagEnabled(result['auto-download-video'], true),
+            autoDownloadStream: isFlagEnabled(result['auto-download-stream'], true),
             filenameTemplate: (result['filename-template'] && result['filename-template'] !== '0') ? result['filename-template'] : '',
             themeColor: result['theme-color'] ? (result['theme-color'].startsWith('#') || result['theme-color'].startsWith('rgb') ? result['theme-color'] : '#' + result['theme-color']) : '#bbdefb',
             uiScale: result['ui-scale'] || '85%'
@@ -1263,8 +1277,6 @@ function getMediaType(url, contentType) {
         return null;
     }
 
-    if (mimeLower.startsWith('video/') || urlLower.includes('mime=video') || urlLower.includes('#video')) return 'video';
-    if (mimeLower.startsWith('audio/') || urlLower.includes('mime=audio') || urlLower.includes('#audio')) return 'audio';
 
     const subtitleExtensions = [".vtt", ".srt", ".ass", ".ssa", ".ttml", ".dfxp", ".lrc", ".smi", ".sub", ".sbv"];
     const imageExtensions = [".webp", ".png", ".jpg", ".jpeg", ".gif"];
@@ -1272,14 +1284,18 @@ function getMediaType(url, contentType) {
 
     const urlPath = urlLower.split('?')[0].split('#')[0];
     const hasExt = (ext) => urlPath.endsWith(ext) || urlLower.includes(ext + '&') || urlLower.includes(ext + '?') || urlLower.includes(ext + '#') || urlLower.endsWith(ext);
+    let decodedUrlLower = urlLower;
+    try { decodedUrlLower = decodeURIComponent(urlLower); } catch (_) {}
+    const streamUrlHint = streamExtensions.some(hasExt) || hasExt('.m3u') ||
+        /[?&](?:format|type|output|protocol)=(?:m3u8?|mpd|hls|dash)(?:[&#]|$)/i.test(decodedUrlLower) ||
+        /(?:^|[/_.-])(?:master|playlist|manifest)(?:[/?#_.-]|$)/i.test(decodedUrlLower);
 
-    if (videoExtensions.some(hasExt)) return 'video';
-    if (audioExtensions.some(hasExt)) return 'audio';
+    if (streamUrlHint || mimeLower.includes('mpegurl') || mimeLower.includes('dash+xml') || urlLower.includes('#stream')) return 'stream';
+    if (videoExtensions.some(hasExt) || mimeLower.startsWith('video/') || urlLower.includes('mime=video') || urlLower.includes('#video')) return 'video';
+    if (audioExtensions.some(hasExt) || mimeLower.startsWith('audio/') || urlLower.includes('mime=audio') || urlLower.includes('#audio')) return 'audio';
 
     if (mimeLower === 'image/svg+xml' || hasExt('.svg')) return null;
     if (mimeLower.startsWith('image/') || imageExtensions.some(hasExt) || urlLower.includes('#image')) return 'image';
-
-    if (streamExtensions.some(hasExt) || mimeLower.includes('mpegurl') || mimeLower.includes('dash+xml') || urlLower.includes('#stream')) return 'stream';
     if (subtitleExtensions.some(hasExt) || mimeLower.includes('vtt') || mimeLower.includes('subrip') || mimeLower.includes('ass') || mimeLower.includes('ttml') || mimeLower.includes('dfxp') || mimeLower.includes('sami') || mimeLower.includes('smil') || mimeLower.includes('lrc') || mimeLower.includes('sbv') || mimeLower.includes('microdvd') || urlLower.includes('#subtitle')) return 'subtitle';
 
     if (downloadExtensions.some(hasExt) || urlLower.includes('#file')) return 'file';
@@ -1440,6 +1456,112 @@ async function generateTemplateName(template, url, originalName, tabId) {
         try { pageTitle = (await browser.tabs.get(tabId)).title || ''; } catch (_) {}
     }
     return mediaFilename.template(template, url, originalName, pageTitle);
+}
+
+const autoDownloadedMedia = new Set();
+const autoStreamPages = new Map();
+const AUTO_STREAM_PRIORITY_MS = 2500;
+const AUTO_STREAM_DEDUPE_MS = 30000;
+
+function normalizeAutoDownloadDomain(value) {
+    const raw = String(value || '').trim().toLowerCase();
+    if (!raw) return '';
+    try { return new URL(raw.includes('://') ? raw : `https://${raw}`).hostname.replace(/^www\./, ''); }
+    catch (_) { return raw.split('/')[0].split(':')[0].replace(/^www\./, ''); }
+}
+
+async function maybeAutoDownloadMedia(details, settings, requestItem = null) {
+    if (!settings.autoDownloadMedia || !settings.backgroundDownload || details.tabId < 0 || tabsWithDrm.has(details.tabId)) return;
+    const responseHeaders = details.responseHeaders || requestItem?.responseHeaders || [];
+    const contentType = responseHeaders.find(h => h.name?.toLowerCase() === 'content-type')?.value || '';
+    const mediaType = getMediaType(details.url, contentType);
+    const isYoutubeAutoAudio = mediaType === 'audio' && !!requestItem?.autoYoutubeAudioOnly && !!requestItem?.ytFormats?.length;
+    if (!mediaType || (!['video', 'stream'].includes(mediaType) && !isYoutubeAutoAudio)) return;
+    if (!isYoutubeAutoAudio && !settings[`autoDownload${mediaType[0].toUpperCase()}${mediaType.slice(1)}`]) return;
+
+    let pageUrl = requestItem?.pageUrl || details.pageUrl || tabMetadata.get(details.tabId)?.url || '';
+    let pageTitle = requestItem?.pageTitle || details.pageTitle || tabMetadata.get(details.tabId)?.title || '';
+    if (!pageUrl) {
+        try { const tab = await browser.tabs.get(details.tabId); pageUrl = tab?.url || ''; pageTitle = tab?.title || pageTitle; } catch (_) {}
+    }
+    if (pageUrl.startsWith('chrome-extension://') || pageUrl.startsWith('moz-extension://')) return;
+    let pageHost = '';
+    try { pageHost = new URL(pageUrl).hostname.toLowerCase().replace(/^www\./, ''); } catch (_) { return; }
+    const domains = String(settings.autoDownloadDomains || '').split(/[\n,]+/).map(normalizeAutoDownloadDomain).filter(Boolean);
+    if (!settings.autoDownloadAllDomains && !domains.some(domain => pageHost === domain || pageHost.endsWith(`.${domain}`))) return;
+    if (settings.autoIgnoreExcludedMedia) {
+        const skippedNames = String(settings.autoSkipDownloadNames || '').split(/[\n,]+/).map(value => value.trim().toLowerCase()).filter(Boolean);
+        let decodedUrl = details.url.toLowerCase();
+        try { decodedUrl = decodeURIComponent(decodedUrl); } catch (_) {}
+        const filenameCandidate = getFileName(details.url).toLowerCase();
+        const candidateText = settings.autoSkipDownloadNamesOnly ? filenameCandidate : `${decodedUrl}\n${pageTitle.toLowerCase()}\n${filenameCandidate}`;
+        if (skippedNames.some(value => candidateText.includes(value))) return;
+
+        let mediaHost = '';
+        try { mediaHost = new URL(details.url).hostname.toLowerCase().replace(/^www\./, ''); } catch (_) {}
+        const skippedDomains = String(settings.autoSkipDownloadDomains || '').split(/[\n,]+/).map(normalizeAutoDownloadDomain).filter(Boolean);
+        if (skippedDomains.some(domain => pageHost === domain || pageHost.endsWith(`.${domain}`) || mediaHost === domain || mediaHost.endsWith(`.${domain}`))) return;
+    }
+
+    const pageMediaKey = `${details.tabId}|${pageUrl.split("#")[0]}`;
+    if (mediaType === "stream") {
+        const detectedAt = Date.now();
+        autoStreamPages.set(pageMediaKey, detectedAt);
+        setTimeout(() => {
+            if (autoStreamPages.get(pageMediaKey) === detectedAt) autoStreamPages.delete(pageMediaKey);
+        }, AUTO_STREAM_DEDUPE_MS);
+    } else if (mediaType === "video") {
+        await new Promise(resolve => setTimeout(resolve, AUTO_STREAM_PRIORITY_MS));
+        if (autoStreamPages.has(pageMediaKey)) return;
+    }
+
+    const key = mediaType === "stream" ? `${pageHost}|${details.url.split("#")[0]}` : `${pageHost}|${details.url.split("?")[0].split("#")[0]}`;
+    if (autoDownloadedMedia.has(key)) return;
+    autoDownloadedMedia.add(key);
+
+    try {
+        const stored = await browser.storage.local.get(['download-method', 'stream-download']);
+        let filename = await getAutomaticFilename(details.url, details.tabId, { ...(requestItem || {}), ...details, pageTitle });
+        if (settings.filenameTemplate) filename = await generateTemplateName(settings.filenameTemplate, details.url, filename, details.tabId);
+        if (mediaType === 'stream') {
+            if (!filename.toLowerCase().endsWith('.mp4')) filename = filename.replace(/\.[^.]+$/, '') + '.mp4';
+            await addToHistory({ url: details.url, filename, timestamp: Date.now(), pageUrl, pageTitle, mediaType });
+            const streamType = contentType.toLowerCase().includes('dash+xml') || /\.mpd(?:[?#]|$)/i.test(details.url) ? 'dash' : 'hls';
+            const started = await globalThis.startPersistentStreamJobDirect({ action: 'startPersistentStreamJob', url: details.url, filename, quality: settings.autoDownloadQuality || 'highest', streamType, request: requestItem || {}, downloadMethod: stored['download-method'] || 'fetch' });
+            if (!started.success) throw new Error(started.error || 'Unable to start stream download');
+        } else {
+            await addToHistory({ url: details.url, filename, timestamp: Date.now(), pageUrl, pageTitle, mediaType });
+            if ((stored['download-method'] || 'fetch') === 'fetch') handleFetchDownload(details.url, filename, requestItem, null, false, false, null, mediaType);
+            else await browser.downloads.download({ url: details.url, filename: sanitizeFilename(filename), saveAs: false });
+        }
+    } catch (error) {
+        autoDownloadedMedia.delete(key);
+        console.error('Auto-download failed:', error);
+    }
+}
+
+const AUTO_DOWNLOAD_RESCAN_KEYS = new Set([
+    'auto-download-media', 'auto-download-quality', 'auto-download-youtube-mode',
+    'auto-download-all-domains', 'auto-download-domains', 'auto-skip-download-names-only', 'auto-download-video', 'auto-download-stream'
+]);
+let autoDownloadRescanTimer = null;
+
+function scheduleExistingMediaAutoDownload(settings) {
+    if (!settings.autoDownloadMedia || !settings.backgroundDownload) return;
+    clearTimeout(autoDownloadRescanTimer);
+    autoDownloadRescanTimer = setTimeout(async () => {
+        const items = await browser.storage.session.get(null);
+        for (const [url, requests] of Object.entries(items || {})) {
+            if (!Array.isArray(requests) || requests.length === 0) continue;
+            const request = requests[requests.length - 1];
+            const tabId = Number.isInteger(request.tabId) ? request.tabId : -1;
+            if (tabId < 0) continue;
+            maybeAutoDownloadMedia({
+                url, tabId, pageUrl: request.pageUrl, pageTitle: request.pageTitle,
+                responseHeaders: request.responseHeaders || []
+            }, settings, request);
+        }
+    }, 150);
 }
 
 async function showMediaNotification(details, settings) {
@@ -1955,6 +2077,7 @@ function initListener() {
                             browser.storage.session.set(requestsObj);
                         }
 
+                        if (shouldSaveNow && !isDrmMedia) maybeAutoDownloadMedia(details, currentSettings, existingRequests[existingRequests.length - 1]);
                         if (shouldSaveNow || updated) {
                             showMediaNotification(details, currentSettings);
                         }
@@ -2280,6 +2403,11 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
                 if (hasNew) {
                     browser.storage.session.set(updates);
+                    for (const url in updates) {
+                        const req = updates[url][0];
+                        const detectedType = getMediaType(url) || (url.includes('mime=audio') || url.includes('#audio') ? 'audio' : 'video');
+                        maybeAutoDownloadMedia({ url, tabId: tabId ?? req.tabId, pageUrl: req.pageUrl, pageTitle: req.pageTitle, responseHeaders: [{ name: 'content-type', value: detectedType === 'video' ? 'video/mp4' : (detectedType === 'audio' ? 'audio/mp4' : 'application/octet-stream') }] }, settings, req);
+                    }
                 }
             });
         });
@@ -4708,6 +4836,11 @@ browser.runtime.onInstalled.addListener(async (details) => {
             'history-page': '0',
             'detect-download-links': '1',
             'disable-deduplication': '1',
+            'auto-download-media': '0',
+            'auto-download-all-domains': '0',
+            'auto-ignore-excluded-media': '1',
+            'auto-download-video': '1',
+            'auto-download-stream': '1',
             'open-preference': 'popup'
         };
         await browser.storage.local.set(defaults);
@@ -4966,6 +5099,9 @@ browser.storage.onChanged.addListener((changes, area) => {
 
     getSettings(function(newSettings) {
         cachedSettings = newSettings;
+        if (Object.keys(changes).some(key => AUTO_DOWNLOAD_RESCAN_KEYS.has(key))) {
+            scheduleExistingMediaAutoDownload(newSettings);
+        }
         if (newSettings.ignoreDisabledTypes) {
             browser.storage.session.get(null, (items) => {
                 const keysToRemove = [];

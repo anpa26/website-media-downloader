@@ -124,9 +124,9 @@ async function runPersistentStreamJob(jobId, options = {}) {
             action: 'streamJobProgress', jobId, url: job.url, filename: job.filename,
             text: 'Preparing stream...', percent: undefined, indeterminate: true
         });
-        if (job.url.toLowerCase().includes('.m3u8')) {
+        if (job.streamType === 'hls' || job.url.toLowerCase().includes('.m3u8')) {
             await downloadM3U8Offline(job.url, headers, job.downloadMethod || 'browser', loadingBar, request, job.filename, !!job.audioOnly);
-        } else if (job.url.toLowerCase().includes('.mpd')) {
+        } else if (job.streamType === 'dash' || job.url.toLowerCase().includes('.mpd')) {
             await downloadMPDOffline(job.url, headers, job.downloadMethod || 'browser', loadingBar, request, job.filename, !!job.audioOnly);
         } else {
             throw new Error('Unsupported stream format');

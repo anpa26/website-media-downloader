@@ -135,6 +135,76 @@
 
           <div class="settings-group">
             <h2 class="settings-section-title collapsible-header">
+              <mdui-icon><svg viewBox="0 0 24 24"><path fill="currentColor" d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66s.06-.11.08-.15L13 3h1l-1 7h3.5c.49 0 .56.34.42.61l-6 10.39z"/></svg></mdui-icon>
+              <span data-translate="settingsAutoSectionTitle">Auto</span>
+              <mdui-icon class="collapse-icon" style="margin-left: auto; display: none;"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></mdui-icon>
+            </h2>
+            <div class="settings-items-container">
+              <div class="setting-item"><div class="setting-text"><h3 data-translate="autoDownloadMediaTitle">Auto-download media</h3><p id="auto-download-media-explain" data-translate="autoDownloadMediaExplain">Automatically download matching media from the domains below. Requires Background download and is off by default.</p></div><mdui-switch id="auto-download-media"></mdui-switch></div>
+              <div class="setting-item">
+                 <div class="setting-text">
+                   <h3 data-translate="autoDownloadQualityTitle">Auto-download Quality</h3>
+                   <p data-translate="autoDownloadQualityExplain">Select quality preference for auto-downloaded media.</p>
+                 </div>
+                 <div class="pill-select-wrapper">
+                   <select id="auto-download-quality" class="pill-select">
+                      <option value="highest" data-translate="autoDownloadQualityHighest">Highest Quality</option>
+                      <option value="lowest" data-translate="autoDownloadQualityLowest">Lowest Quality</option>
+                   </select>
+                 </div>
+              </div>
+              <div class="setting-item">
+                 <div class="setting-text">
+                   <h3 data-translate="autoDownloadYoutubeModeTitle">YouTube auto-download</h3>
+                   <p data-translate="autoDownloadYoutubeModeExplain">Choose whether YouTube auto-download saves video or audio only.</p>
+                 </div>
+                 <div class="pill-select-wrapper">
+                   <select id="auto-download-youtube-mode" class="pill-select">
+                      <option value="video" data-translate="autoDownloadYoutubeModeVideo">Video</option>
+                      <option value="audio" data-translate="autoDownloadYoutubeModeAudio">Audio only</option>
+                   </select>
+                 </div>
+              </div>
+              <div class="setting-item"><div class="setting-text"><h3 data-translate="autoDownloadAllDomainsTitle">Enable for all domains / sites</h3><p data-translate="autoDownloadAllDomainsExplain">Apply auto-download on every site. When off, only domains listed below are enabled.</p></div><mdui-switch id="auto-download-all-domains"></mdui-switch></div>
+              <div id="auto-download-domains-container" class="setting-item" style="display: block;"><div class="setting-text"><h3><label for="auto-download-domains" data-translate="autoDownloadDomainsTitle">Enabled sites / domains</label></h3><p data-translate="autoDownloadDomainsExplain">One domain per line or separated by commas. Subdomains are included.</p></div><textarea id="auto-download-domains" class="pill-input" rows="2" placeholder="example.com, media.example.org" style="width: 100%; box-sizing: border-box; resize: vertical; margin-top: 12px;"></textarea></div>
+            </div>
+            <div class="settings-items-container">
+              <div class="setting-item"><div class="setting-text"><h3 data-translate="autoDownloadVideoTitle">Video</h3><p data-translate="autoDownloadVideoExplain">Automatically download detected video files.</p></div><mdui-switch id="auto-download-video"></mdui-switch></div>
+              <div class="setting-item"><div class="setting-text"><h3 data-translate="autoDownloadStreamTitle">Stream</h3><p data-translate="autoDownloadStreamExplain">Automatically download detected HLS and DASH streams.</p></div><mdui-switch id="auto-download-stream"></mdui-switch></div>
+            </div>
+            <div class="settings-items-container detection-exclusions-card">
+                <div class="setting-item" style="display: block;">
+                  <div class="setting-text">
+                    <h3><label for="auto-skip-download-names" data-translate="autoSkipDownloadNamesTitle">Skip names / keywords</label></h3>
+                    <p data-translate="autoSkipDownloadNamesExplain">Skip matching media URLs, filenames, and page titles (case insensitive). Separate entries with new lines or commas.</p>
+                  </div>
+                  <textarea id="auto-skip-download-names" class="pill-input" rows="1" placeholder="trailer, promo" style="width: 100%; box-sizing: border-box; resize: none; margin-top: 12px;"></textarea>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-text">
+                    <h3 data-translate="autoSkipDownloadNamesOnlyTitle">Skip names only</h3>
+                    <p data-translate="autoSkipDownloadNamesOnlyExplain">Only match filenames. Do not match the media URL or page title.</p>
+                  </div>
+                  <mdui-switch id="auto-skip-download-names-only"></mdui-switch>
+                </div>
+                <div id="auto-skip-download-domains-container" class="setting-item" style="display: block;">
+                  <div class="setting-text">
+                    <h3><label for="auto-skip-download-domains" data-translate="autoSkipDownloadDomainsTitle">Skip domains</label></h3>
+                    <p data-translate="autoSkipDownloadDomainsExplain">Skip these sites or media hosts from auto-download, including subdomains. Separate entries with new lines or commas.</p>
+                  </div>
+                  <textarea id="auto-skip-download-domains" class="pill-input" rows="1" placeholder="example.com, cdn.example.org" style="width: 100%; box-sizing: border-box; resize: none; margin-top: 12px;"></textarea>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-text">
+                    <h3 data-translate="autoIgnoreExcludedMediaTitle">Do not auto-download excluded media</h3>
+                    <p data-translate="autoIgnoreExcludedMediaExplain">Apply the name and domain exclusions above to auto-download. Detected items remain visible in the media list.</p>
+                  </div>
+                  <mdui-switch id="auto-ignore-excluded-media"></mdui-switch>
+                </div>
+            </div>
+          </div>
+          <div class="settings-group">
+            <h2 class="settings-section-title collapsible-header">
               <mdui-icon>
                 <svg viewBox="0 -960 960 960"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v160H520v-160H160v480h240v80H160Zm0-80v-360 40-160 480ZM864-80 756-188q-22 13-46 20.5t-50 7.5q-75 0-127.5-52.5T480-340q0-75 52.5-127.5T660-520q75 0 127.5 52.5T840-340q0 26-7.5 50T812-244l108 108-56 56ZM731-269q29-29 29-71t-29-71q-29-29-71-29t-71 29q-29 29-29 71t29 71q29 29 71 29t71-29Z"/></svg>
               </mdui-icon>
@@ -215,6 +285,13 @@
                     <p data-translate="skipDetectionNamesExplain">Skip matching media URLs, filenames, and page titles (case insensitive). Separate entries with new lines or commas.</p>
                   </div>
                   <textarea id="skip-detection-names" class="pill-input" rows="1" placeholder="trailer, promo" style="width: 100%; box-sizing: border-box; resize: none; margin-top: 12px;"></textarea>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-text">
+                    <h3 data-translate="skipDetectionNamesOnlyTitle">Skip names only</h3>
+                    <p data-translate="skipDetectionNamesOnlyExplain">Only match filenames. Do not match media URLs or page titles.</p>
+                  </div>
+                  <mdui-switch id="skip-detection-names-only"></mdui-switch>
                 </div>
                 <div class="setting-item" style="display: block;">
                   <div class="setting-text">

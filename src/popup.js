@@ -2989,8 +2989,8 @@ function createMediaItem(item) {
     getVariantsPromise.then(async (variants) => {
         resSelect.innerHTML = '';
         if (variants && variants.length > 0) {
-            const settings = await browser.storage.local.get("stream-quality");
-            const preference = settings["stream-quality"] || "highest";
+            const settings = await browser.storage.local.get(["stream-quality", "auto-download-quality"]);
+            const preference = settings["auto-download-quality"] || settings["stream-quality"] || "highest";
 
             const askOpt = document.createElement('option');
             askOpt.value = "";
@@ -3148,7 +3148,17 @@ function createMediaItem(item) {
           resSelect.appendChild(opt);
         });
 
-        updateLanguageDropdown();
+        browser.storage.local.get(['auto-download-quality', 'stream-quality']).then(st => {
+            const qualityPref = st['auto-download-quality'] || st['stream-quality'] || 'highest';
+            if (qualityPref === 'lowest' && resSelect.options.length > 0) {
+                resSelect.value = resSelect.options[resSelect.options.length - 1].value;
+            } else if (qualityPref === 'highest' && resSelect.options.length > 0) {
+                resSelect.value = resSelect.options[0].value;
+            }
+            updateLanguageDropdown();
+        }).catch(() => {
+            updateLanguageDropdown();
+        });
     }
 
     function updateLanguageDropdown() {
@@ -3547,8 +3557,6 @@ function getMediaType(url, responseHeaders) {
         return null;
     }
 
-    if (contentType.startsWith('video/') || urlLower.includes('mime=video') || urlLower.includes('#video')) return 'video';
-    if (contentType.startsWith('audio/') || urlLower.includes('mime=audio') || urlLower.includes('#audio')) return 'audio';
 
     const videoExtensions = [".3g2", ".3gp", ".asx", ".avi", ".divx", ".4v", ".flv", ".ismv", ".m2t", ".m2ts", ".m2v", ".m4s", ".m4v", ".mk3d", ".mkv", ".mng", ".mov", ".mp2v", ".mp4", ".mp4v", ".mpe", ".mpeg", ".mpeg1", ".mpeg2", ".mpeg4", ".mpg", ".mxf", ".ogm", ".ogv", ".qt", ".rm", ".swf", ".ts", ".vob", ".vp9", ".webm", ".wmv"];
     const audioExtensions = [".3ga", ".aac", ".ac3", ".adts", ".aif", ".aiff", ".alac", ".ape", ".asf", ".au", ".dts", ".f4a", ".f4b", ".flac", ".isma", ".it", ".m4a", ".m4b", ".m4r", ".mid", ".mka", ".mod", ".mp1", ".mp2", ".mp3", ".mp4a", ".mpa", ".mpga", ".oga", ".ogg", ".ogx", ".opus", ".ra", ".shn", ".spx", ".vorbis", ".wav", ".weba", ".wma", ".xm"];
@@ -3559,14 +3567,18 @@ function getMediaType(url, responseHeaders) {
 
     const urlPath = urlLower.split('?')[0].split('#')[0];
     const hasExt = (ext) => urlPath.endsWith(ext) || urlLower.includes(ext + '&') || urlLower.includes(ext + '?') || urlLower.includes(ext + '#') || urlLower.endsWith(ext);
+    let decodedUrlLower = urlLower;
+    try { decodedUrlLower = decodeURIComponent(urlLower); } catch (_) {}
+    const streamUrlHint = streamExtensions.some(hasExt) || hasExt('.m3u') ||
+        /[?&](?:format|type|output|protocol)=(?:m3u8?|mpd|hls|dash)(?:[&#]|$)/i.test(decodedUrlLower) ||
+        /(?:^|[/_.-])(?:master|playlist|manifest)(?:[/?#_.-]|$)/i.test(decodedUrlLower);
 
-    if (videoExtensions.some(hasExt)) return 'video';
-    if (audioExtensions.some(hasExt)) return 'audio';
+    if (streamUrlHint || contentType.includes('mpegurl') || contentType.includes('dash+xml') || urlLower.includes('#stream')) return 'stream';
+    if (videoExtensions.some(hasExt) || contentType.startsWith('video/') || urlLower.includes('mime=video') || urlLower.includes('#video')) return 'video';
+    if (audioExtensions.some(hasExt) || contentType.startsWith('audio/') || urlLower.includes('mime=audio') || urlLower.includes('#audio')) return 'audio';
 
     if (contentType === 'image/svg+xml' || hasExt('.svg')) return null;
     if (contentType.startsWith('image/') || imageExtensions.some(hasExt) || urlLower.includes('#image')) return 'image';
-
-    if (streamExtensions.some(hasExt) || contentType.includes('mpegurl') || contentType.includes('dash+xml') || urlLower.includes('#stream')) return 'stream';
     if (subtitleExtensions.some(hasExt) || contentType.includes('vtt') || contentType.includes('subrip') || contentType.includes('ass') || contentType.includes('ttml') || contentType.includes('dfxp') || contentType.includes('sami') || contentType.includes('smil') || contentType.includes('lrc') || contentType.includes('sbv') || contentType.includes('microdvd') || urlLower.includes('#subtitle')) return 'subtitle';
 
     if (downloadExtensions.some(hasExt) || urlLower.includes('#file')) return 'file';
@@ -3660,6 +3672,7 @@ async function loadMediaListOnce() {
   const autoOpenUrl = urlParams.get('autoOpenUrl');
   const autoDemuxer = urlParams.get('autoDemuxer') || '';
   const autoCodec = urlParams.get('autoCodec') || '';
+  const autoQualityParam = urlParams.get('autoQuality') || '';
 
   if (autoAudioUrl || autoVideoUrl || autoOpenUrl) {
     const cleanUrl = window.location.pathname + (window.location.search.includes('mode=tab') ? '?mode=tab' : '');
@@ -3683,11 +3696,15 @@ async function loadMediaListOnce() {
   activeItems.forEach(item => mediaContainer.appendChild(item));
 
   try {
-    const [mediaRequests, settings, activeDownloads] = await Promise.all([
-      browser.runtime.sendMessage({ action: 'getMediaRequests' }),
-      browser.storage.local.get(['filename-template', 'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'hide-segments', 'hide-page-components', 'media-sort-order', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom', 'optimize-low-end', 'group-by-type', 'disable-deduplication']),
-      getActiveDownloadSnapshot()
+    const activeDownloadsPromise = getActiveDownloadSnapshot();
+    const [mediaRequests, settings] = await Promise.all([
+      browser.runtime.sendMessage({ action: "getMediaRequests" }),
+      browser.storage.local.get(["filename-template", "only-video", "only-audio", "only-stream", "only-image", "only-subtitle", "only-file", "hide-segments", "hide-page-components", "media-sort-order", "limit-media-list", "limit-media-list-custom", "min-file-size", "min-file-size-custom", "optimize-low-end", "group-by-type", "disable-deduplication"])
     ]);
+    let activeDownloads = activeDownloadSnapshot || {};
+    const quickActiveDownloads = await Promise.race([activeDownloadsPromise, new Promise(resolve => setTimeout(() => resolve(null), 100))]);
+    if (quickActiveDownloads) activeDownloads = quickActiveDownloads;
+    else activeDownloadsPromise.then(snapshot => restoreActiveDownloadsUI(snapshot)).catch(() => {});
     if (globalLoading) globalLoading.style.display = 'none';
     if (mainContent) mainContent.style.display = 'block';
 
@@ -3725,7 +3742,9 @@ async function loadMediaListOnce() {
     }
 
     const mediaGroups = new Map();
+    let mediaScanIndex = 0;
     for (const rawUrl in mediaRequests) {
+      if (++mediaScanIndex % 20 === 0) await new Promise(resolve => requestAnimationFrame(resolve));
       if (activeItems.has(rawUrl)) continue;
 
       const requests = mediaRequests[rawUrl];
@@ -3980,38 +3999,28 @@ async function loadMediaListOnce() {
 
     if (autoAudioUrl) {
       const decodedUrl = decodeURIComponent(autoAudioUrl);
-      setTimeout(() => {
+      let attempts = 0;
+      const tryAutoAudioDownload = () => {
+        attempts++;
         const allItems = Array.from(document.querySelectorAll('.media-item'));
         let mediaItemEl = allItems.find(el => {
           const elUrl = el.dataset.url;
-          return elUrl === decodedUrl || (elUrl && elUrl.split('?')[0] === decodedUrl.split('?')[0]);
-        });
-        if (!mediaItemEl) {
-          mediaItemEl = allItems.find(el => {
-            if (el.ytFormats) {
-              return el.ytFormats.some(f => {
-                if (f.videoUrl === decodedUrl || f.audioUrl === decodedUrl) return true;
-                const getItag = (u) => u ? u.match(/[?&]itag=(\d+)/)?.[1] : null;
-                const itagFmtVid = getItag(f.videoUrl);
-                const itagFmtAud = getItag(f.audioUrl);
-                const itagDec = getItag(decodedUrl);
-                if (itagDec && (itagDec === itagFmtVid || itagDec === itagFmtAud)) return true;
-                return false;
-              });
-            }
-            return false;
+          if (elUrl === decodedUrl || (elUrl && elUrl.split('?')[0] === decodedUrl.split('?')[0])) return true;
+          return Array.isArray(el.ytFormats) && el.ytFormats.some(format => {
+            if (format.videoUrl === decodedUrl || format.audioUrl === decodedUrl) return true;
+            const getItag = url => url ? url.match(/[?&]itag=(\d+)/)?.[1] : null;
+            const targetItag = getItag(decodedUrl);
+            return targetItag && (targetItag === getItag(format.videoUrl) || targetItag === getItag(format.audioUrl));
           });
+        });
+        const audioBtn = mediaItemEl?.querySelector('#audio-only-button');
+        if (audioBtn && audioBtn.style.display !== 'none') {
+          audioBtn.click();
+          return;
         }
-        if (mediaItemEl) {
-          const audioBtn = mediaItemEl.querySelector('#audio-only-button');
-          if (audioBtn && audioBtn.style.display !== 'none') {
-            audioBtn.click();
-          } else {
-            const dlBtn = mediaItemEl.querySelector('#download-button');
-            if (dlBtn) dlBtn.click();
-          }
-        }
-      }, 300);
+        if (attempts < 20) setTimeout(tryAutoAudioDownload, 300);
+      };
+      setTimeout(tryAutoAudioDownload, 300);
     } else if (autoVideoUrl) {
       const decodedUrl = decodeURIComponent(autoVideoUrl);
       let attempts = 0;
@@ -4054,9 +4063,27 @@ async function loadMediaListOnce() {
                 }
               }
             }
-            // Set codec
+            const applyQualityAndDownload = async () => {
+              try {
+                let qualityPref = autoQualityParam;
+                if (!qualityPref) {
+                  const stored = await browser.storage.local.get(['auto-download-quality', 'stream-quality']);
+                  qualityPref = stored['auto-download-quality'] || stored['stream-quality'] || 'highest';
+                }
+                if (resSel.options.length > 0) {
+                  resSel.value = qualityPref === 'lowest'
+                    ? resSel.options[resSel.options.length - 1].value
+                    : resSel.options[0].value;
+                  resSel.dispatchEvent(new Event('change'));
+                }
+              } catch (error) {
+                console.warn('Could not apply auto-download quality:', error);
+              }
+              mediaItemEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              setTimeout(() => dlBtn.click(), 250);
+            };
+
             if (autoCodec) {
-              // Wait a tick for codec dropdown to populate after format change
               setTimeout(() => {
                 for (const opt of codecSel.options) {
                   if (opt.value === autoCodec) {
@@ -4065,41 +4092,10 @@ async function loadMediaListOnce() {
                     break;
                   }
                 }
-                // Wait for resolution dropdown to populate, then find matching videoUrl
-                setTimeout(() => {
-                  const ytFormats = mediaItemEl.ytFormats;
-                  let foundOptValue = null;
-                  if (ytFormats) {
-                    for (const opt of resSel.options) {
-                      const idx = parseInt(opt.value);
-                      if (!isNaN(idx)) {
-                        const optionFmt = ytFormats[idx];
-                        if (optionFmt) {
-                          const getItag = (u) => u.match(/[?&]itag=(\d+)/)?.[1];
-                          const itagOpt = getItag(optionFmt.videoUrl);
-                          const itagDec = getItag(decodedUrl);
-
-                          if (optionFmt.videoUrl === decodedUrl || (itagOpt && itagOpt === itagDec)) {
-                            foundOptValue = opt.value;
-                            break;
-                          }
-                        }
-                      }
-                    }
-                  }
-
-                  if (foundOptValue !== null) {
-                    resSel.value = foundOptValue;
-                    resSel.dispatchEvent(new Event('change'));
-                  }
-
-                  mediaItemEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  setTimeout(() => dlBtn.click(), 200);
-                }, 50);
+                setTimeout(applyQualityAndDownload, 100);
               }, 50);
             } else {
-              mediaItemEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              setTimeout(() => dlBtn.click(), 200);
+              applyQualityAndDownload();
             }
             return;
           }

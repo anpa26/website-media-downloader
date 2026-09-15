@@ -1,10 +1,28 @@
 {
-  "ignoreExcludedMediaTitle": {"message":"Ne pas détecter les médias exclus"},
-  "ignoreExcludedMediaExplain": {"message":"Désactive la détection des noms et domaines indiqués ci-dessus pour réduire le traitement. Lorsque cette option est désactivée, les éléments correspondants restent masqués dans la liste et les notifications."},
-  "skipDetectionNamesTitle": {"message":"Exclure des noms / mots-clés"},
-  "skipDetectionNamesExplain": {"message":"Exclut les URL de médias, noms de fichiers et titres de pages correspondants, sans distinction entre majuscules et minuscules. Séparez les entrées par des retours à la ligne ou des virgules."},
-  "skipDetectionDomainsTitle": {"message":"Exclure des domaines"},
-  "skipDetectionDomainsExplain": {"message":"Exclut ces sites ou serveurs de médias, y compris leurs sous-domaines. Séparez les entrées par des retours à la ligne ou des virgules. Les éléments correspondants ne figurent ni dans les résultats de détection ni dans les notifications."},
+  "ignoreExcludedMediaTitle": {
+    "message": "Ne pas détecter les médias exclus"
+  },
+  "ignoreExcludedMediaExplain": {
+    "message": "Désactive la détection des noms et domaines indiqués ci-dessus pour réduire le traitement. Lorsque cette option est désactivée, les éléments correspondants restent masqués dans la liste et les notifications."
+  },
+  "skipDetectionNamesTitle": {
+    "message": "Exclure des noms / mots-clés"
+  },
+  "skipDetectionNamesExplain": {
+    "message": "Exclut les URL de médias, noms de fichiers et titres de pages correspondants, sans distinction entre majuscules et minuscules. Séparez les entrées par des retours à la ligne ou des virgules."
+  },
+  "skipDetectionNamesOnlyTitle": {
+    "message": "Ignorer uniquement les noms"
+  },
+  "skipDetectionNamesOnlyExplain": {
+    "message": "Comparer uniquement les noms de fichiers, sans vérifier les URL des médias ni les titres des pages."
+  },
+  "skipDetectionDomainsTitle": {
+    "message": "Exclure des domaines"
+  },
+  "skipDetectionDomainsExplain": {
+    "message": "Exclut ces sites ou serveurs de médias, y compris leurs sous-domaines. Séparez les entrées par des retours à la ligne ou des virgules. Les éléments correspondants ne figurent ni dans les résultats de détection ni dans les notifications."
+  },
   "reinstallTitle": {
     "message": "Réinstallation recommandée",
     "description": "Reinstall warning title"
@@ -856,16 +874,46 @@
     "message": "Conserver un enregistrement local de vos téléchargements.",
     "description": "The explanation of the history page option."
   },
-  "settingsBackupTitle": { "message": "Configuration des paramètres" },
-  "settingsBackupExplain": { "message": "Exportez ou importez les paramètres de l’extension. Les comptes, l’historique des téléchargements et les données temporaires ne sont pas inclus." },
-  "exportSettingsButton": { "message": "Exporter les paramètres" },
-  "importSettingsButton": { "message": "Importer les paramètres" },
-  "settingsExportSuccess": { "message": "Paramètres exportés avec succès !" },
-  "settingsExportError": { "message": "Échec de l’exportation des paramètres : $1", "placeholders": { "1": { "content": "$1" } } },
-  "settingsImportSuccess": { "message": "Paramètres importés avec succès !" },
-  "settingsImportError": { "message": "Échec de l’importation des paramètres : $1", "placeholders": { "1": { "content": "$1" } } },
-  "settingsImportInvalidFormat": { "message": "Format de fichier de paramètres non valide" },
-  "settingsImportNoSettings": { "message": "Le fichier ne contient aucun paramètre pris en charge" },
+  "settingsBackupTitle": {
+    "message": "Configuration des paramètres"
+  },
+  "settingsBackupExplain": {
+    "message": "Exportez ou importez les paramètres de l’extension. Les comptes, l’historique des téléchargements et les données temporaires ne sont pas inclus."
+  },
+  "exportSettingsButton": {
+    "message": "Exporter les paramètres"
+  },
+  "importSettingsButton": {
+    "message": "Importer les paramètres"
+  },
+  "settingsExportSuccess": {
+    "message": "Paramètres exportés avec succès !"
+  },
+  "settingsExportError": {
+    "message": "Échec de l’exportation des paramètres : $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "settingsImportSuccess": {
+    "message": "Paramètres importés avec succès !"
+  },
+  "settingsImportError": {
+    "message": "Échec de l’importation des paramètres : $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "settingsImportInvalidFormat": {
+    "message": "Format de fichier de paramètres non valide"
+  },
+  "settingsImportNoSettings": {
+    "message": "Le fichier ne contient aucun paramètre pris en charge"
+  },
   "clearHistoryButton": {
     "message": "Effacer l'historique",
     "description": "The label of the button to clear the download history."
@@ -2209,13 +2257,27 @@
     "message": "Source :",
     "description": "Label for the update source in the update popup"
   },
-  "cacheStorageTitle": { "message": "Stockage du cache" },
-  "cacheStorageCalculating": { "message": "Calcul de l’utilisation du cache..." },
-  "cacheStorageClear": { "message": "Vider le cache" },
-  "cacheStorageEntries": { "message": "$1 entrées en cache" },
-  "cacheStorageReadError": { "message": "Impossible de lire le cache : $1" },
-  "cacheStorageActiveDownloadError": { "message": "Le cache ne peut pas être vidé pendant des téléchargements actifs." },
-  "cacheStorageCleared": { "message": "Cache vidé" },
+  "cacheStorageTitle": {
+    "message": "Stockage du cache"
+  },
+  "cacheStorageCalculating": {
+    "message": "Calcul de l’utilisation du cache..."
+  },
+  "cacheStorageClear": {
+    "message": "Vider le cache"
+  },
+  "cacheStorageEntries": {
+    "message": "$1 entrées en cache"
+  },
+  "cacheStorageReadError": {
+    "message": "Impossible de lire le cache : $1"
+  },
+  "cacheStorageActiveDownloadError": {
+    "message": "Le cache ne peut pas être vidé pendant des téléchargements actifs."
+  },
+  "cacheStorageCleared": {
+    "message": "Cache vidé"
+  },
   "manualTsConvertTitle": {
     "message": "Convertir manuellement un fichier TS"
   },
@@ -2261,5 +2323,97 @@
   },
   "streamConversionFallbackTs": {
     "message": "Échec de la conversion MP4. Enregistrement en TS…"
+  },
+  "settingsAutoSectionTitle": {
+    "message": "Automatique"
+  },
+  "autoDownloadMediaTitle": {
+    "message": "Téléchargement automatique des médias"
+  },
+  "autoDownloadMediaExplain": {
+    "message": "Télécharger automatiquement les médias correspondants des domaines ci-dessous. Nécessite le téléchargement en arrière-plan et est désactivé par défaut."
+  },
+  "autoDownloadDomainsTitle": {
+    "message": "Sites / domaines activés"
+  },
+  "autoDownloadDomainsExplain": {
+    "message": "Un domaine par ligne ou séparé par des virgules. Les sous-domaines sont inclus."
+  },
+  "autoDownloadVideoTitle": {
+    "message": "Vidéo"
+  },
+  "autoDownloadAudioTitle": {
+    "message": "Audio"
+  },
+  "autoDownloadImageTitle": {
+    "message": "Image"
+  },
+  "autoDownloadStreamTitle": {
+    "message": "Flux"
+  },
+  "autoDownloadVideoExplain": {
+    "message": "Télécharger automatiquement les fichiers vidéo détectés."
+  },
+  "autoDownloadAudioExplain": {
+    "message": "Télécharger automatiquement les fichiers de musique et audio détectés."
+  },
+  "autoDownloadImageExplain": {
+    "message": "Télécharger automatiquement les fichiers d'image détectés."
+  },
+  "autoDownloadStreamExplain": {
+    "message": "Télécharger automatiquement les flux HLS et DASH détectés."
+  },
+  "autoDownloadSubtitleTitle": {
+    "message": "Sous-titre"
+  },
+  "autoDownloadSubtitleExplain": {
+    "message": "Télécharger automatiquement les fichiers de sous-titres détectés."
+  },
+  "autoDownloadFileTitle": {
+    "message": "Fichier"
+  },
+  "autoDownloadFileExplain": {
+    "message": "Télécharger automatiquement les autres fichiers et liens de téléchargement pris en charge."
+  },
+  "autoDownloadAllDomainsTitle": {
+    "message": "Activer pour tous les domaines / sites"
+  },
+  "autoDownloadAllDomainsExplain": {
+    "message": "Appliquer le téléchargement automatique sur tous les sites. Si désactivé, seuls les domaines énumérés ci-dessous sont activés."
+  },
+  "autoSkipDownloadNamesTitle": {
+    "message": "Ignorer les noms / mots-clés"
+  },
+  "autoSkipDownloadNamesExplain": {
+    "message": "Ignorer les URL de médias, noms de fichiers et titres de page correspondants lors du téléchargement automatique (insensible à la casse). Séparer par des lignes ou virgules."
+  },
+  "autoSkipDownloadNamesOnlyTitle": {
+    "message": "Ignorer uniquement les noms"
+  },
+  "autoSkipDownloadNamesOnlyExplain": {
+    "message": "Comparer uniquement les noms de fichiers, sans vérifier l’URL du média ni le titre de la page."
+  },
+  "autoSkipDownloadDomainsTitle": {
+    "message": "Ignorer les domaines"
+  },
+  "autoSkipDownloadDomainsExplain": {
+    "message": "Ignorer ces sites ou hébergeurs de médias lors du téléchargement automatique, sous-domaines inclus. Séparer par des lignes ou virgules."
+  },
+  "autoIgnoreExcludedMediaTitle": {
+    "message": "Ne pas télécharger automatiquement les médias exclus"
+  },
+  "autoIgnoreExcludedMediaExplain": {
+    "message": "Appliquer les exclusions de noms et domaines ci-dessus au téléchargement automatique. Les éléments détectés restent visibles dans la liste."
+  },
+  "autoDownloadUnavailableExplain": {
+    "message": "Le téléchargement automatique n'est pas disponible car le téléchargement en arrière-plan est désactivé. Activez d'abord le téléchargement en arrière-plan."
   }
+  ,"autoDownloadQualityTitle": { "message": "Qualité du téléchargement automatique" }
+  ,"autoDownloadQualityExplain": { "message": "Choisissez la qualité des médias téléchargés automatiquement lorsque plusieurs options sont disponibles." }
+  ,"autoDownloadQualityHighest": { "message": "Qualité maximale" }
+  ,"autoDownloadQualityLowest": { "message": "Qualité minimale" }
+  ,"autoDownloadYoutubeModeTitle": { "message": "Téléchargement automatique YouTube" }
+  ,"autoDownloadYoutubeModeExplain": { "message": "Choisissez si le téléchargement automatique YouTube enregistre la vidéo ou uniquement l’audio." }
+  ,"autoDownloadYoutubeModeVideo": { "message": "Vidéo" }
+  ,"autoDownloadYoutubeModeAudio": { "message": "Audio uniquement" }
 }
