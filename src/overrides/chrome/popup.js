@@ -2002,6 +2002,47 @@ function filterAndRenderMediaList(query = '') {
   renderInitialList();
 }
 
+function getMediaRenderKey(url, type = '') {
+  if (!url) return '';
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname === 'googlevideo.com' || parsed.hostname.endsWith('.googlevideo.com')) {
+      const streamId = parsed.searchParams.get('id') || '';
+      return `googlevideo:${type}:${streamId || parsed.pathname}`;
+    }
+  } catch (_) {}
+  return `${type}:${url.split('?')[0]}`;
+}
+
+function getMediaRepresentativeScore(item) {
+  const request = item?.bestRequest || {};
+  let score = Array.isArray(request.ytFormats) ? request.ytFormats.length * 1000 : 0;
+  const url = request.originalUrl || request.url || '';
+  try {
+    const tags = new URL(url).searchParams.get('xtags') || '';
+    if (tags.includes('acont=original')) score += 100;
+  } catch (_) {}
+  if (/\boriginal\b|\bdefault\b/i.test(request.pageTitle || '')) score += 10;
+  return score;
+}
+
+function deduplicateMediaForDisplay(items) {
+  const positions = new Map();
+  const result = [];
+  for (const item of items) {
+    const url = item?.bestRequest?.originalUrl || item?.bestRequest?.url || '';
+    const key = getMediaRenderKey(url, item?.type || 'file');
+    if (!positions.has(key)) {
+      positions.set(key, result.length);
+      result.push(item);
+    } else {
+      const index = positions.get(key);
+      if (getMediaRepresentativeScore(item) > getMediaRepresentativeScore(result[index])) result[index] = item;
+    }
+  }
+  return result;
+}
+
 function getGroupCounts(activeItems) {
   const counts = { video: 0, audio: 0, stream: 0, image: 0, subtitle: 0, file: 0 };
   const countedUrls = new Set();
@@ -2013,7 +2054,7 @@ function getGroupCounts(activeItems) {
   // Active cards are rendered first and reserve their URL before detected items.
   activeItems.forEach(item => {
     const url = item.dataset.url || "";
-    if (url) countedUrls.add(url.split("?")[0]);
+    if (url) countedUrls.add(getMediaRenderKey(url, item.dataset.type || "file"));
     increment(item.dataset.type || "file");
   });
 
@@ -2021,7 +2062,7 @@ function getGroupCounts(activeItems) {
   // Count that same visible set so a group badge matches the cards inside it.
   allFilteredRequests.forEach(item => {
     const url = item.bestRequest.originalUrl || item.bestRequest.url || "";
-    const normalizedUrl = url.split("?")[0];
+    const normalizedUrl = getMediaRenderKey(url, item.type || "file");
     if (normalizedUrl && countedUrls.has(normalizedUrl)) return;
     if (normalizedUrl) countedUrls.add(normalizedUrl);
     increment(item.type || "file");
@@ -2258,8 +2299,8 @@ function renderNextChunk() {
 
   nextChunk.forEach(item => {
     const itemUrl = item.bestRequest.originalUrl;
-    const itemUrlBase = itemUrl.split('?')[0];
-    if (renderedMediaUrls.has(itemUrl) || renderedMediaUrls.has(itemUrlBase)) return;
+    const itemUrlBase = getMediaRenderKey(itemUrl, item.type || 'file');
+    if (renderedMediaUrls.has(itemUrlBase)) return;
     renderedMediaUrls.add(itemUrl);
     renderedMediaUrls.add(itemUrlBase);
 
@@ -3666,26 +3707,29 @@ async function loadMediaListOnce() {
     if (settings['optimize-low-end'] === '1' || settings['optimize-low-end'] === true) {
       limit = 0;
     }
-    if (limit > 0 && flattenedRequests.length > limit) {
-      flattenedRequests.length = limit;
+    const displayRequests = deduplicateMediaForDisplay(flattenedRequests);
+    if (limit > 0 && displayRequests.length > limit) {
+      displayRequests.length = limit;
     }
 
-    allMediaRequests = flattenedRequests;
+    allMediaRequests = displayRequests;
     allFilteredRequests = [...allMediaRequests];
 
     if (loadingSpinner) loadingSpinner.style.display = 'none';
 
     activeDownloadingElements = [...activeItems.values()];
-    const requestUrls = new Set(allFilteredRequests.map(item => item.bestRequest.originalUrl.split('?')[0]));
+    const requestUrls = new Set(allFilteredRequests.map(item =>
+      getMediaRenderKey(item.bestRequest.originalUrl, item.type || 'file')));
     const downloadModels = [];
     let activeCount = 0;
     for (const [id, downloadData] of Object.entries(activeDownloads || {})) {
       if (downloadData.isZip) continue;
       activeCount++;
       const url = downloadData.url || '';
-      if (requestUrls.has(url.split('?')[0]) || activeItems.has(url)) continue;
-      requestUrls.add(url.split('?')[0]);
       const type = downloadData.mediaType || 'file';
+      const renderKey = getMediaRenderKey(url, type);
+      if (requestUrls.has(renderKey) || activeItems.has(url)) continue;
+      requestUrls.add(renderKey);
       downloadModels.push({
         downloadId: id,
         bestRequest: { originalUrl: url, size: downloadData.total,
