@@ -1,7 +1,7 @@
 {
     "name": "Website Media Downloader",
     "manifest_version": 3,
-    "version": "2.3.7",
+    "version": "2.4.0",
     "description": "__MSG_extensionDescription__",
     "author": "anpa26",
     "developer": {
@@ -52,12 +52,26 @@
             "detection_exclusions.js",
             "media_filename.js",
             "libraries/wymd.js",
+            "popup_blocker.js",
             "stream_jobs.js",
             "download_recovery.js",
             "network_detector.js"
         ]
     },
     "content_scripts": [
+        {
+            "matches": ["<all_urls>"],
+            "js": ["redirect_guard_main.js"],
+            "run_at": "document_start",
+            "world": "MAIN",
+            "all_frames": false
+        },
+        {
+            "matches": ["<all_urls>"],
+            "js": ["popup_blocker_content.js"],
+            "run_at": "document_start",
+            "all_frames": false
+        },
         {
             "matches": [
                 "<all_urls>"

@@ -2407,13 +2407,115 @@
   },
   "autoDownloadUnavailableExplain": {
     "message": "التنزيل التلقائي غير متاح لأن التنزيل في الخلفية معطل. قم بتمكين التنزيل في الخلفية أولاً."
+  },
+  "autoDownloadQualityTitle": {
+    "message": "جودة التنزيل التلقائي"
+  },
+  "autoDownloadQualityExplain": {
+    "message": "اختر جودة الوسائط التي يتم تنزيلها تلقائيًا عند توفر خيارات متعددة."
+  },
+  "autoDownloadQualityHighest": {
+    "message": "أعلى جودة"
+  },
+  "autoDownloadQualityLowest": {
+    "message": "أدنى جودة"
+  },
+  "autoDownloadYoutubeModeTitle": {
+    "message": "التنزيل التلقائي من YouTube"
+  },
+  "autoDownloadYoutubeModeExplain": {
+    "message": "اختر ما إذا كان التنزيل التلقائي من YouTube سيحفظ الفيديو أو الصوت فقط."
+  },
+  "autoDownloadYoutubeModeVideo": {
+    "message": "فيديو"
+  },
+  "autoDownloadYoutubeModeAudio": {
+    "message": "الصوت فقط"
+  },
+  "blockIncomingPopupsTitle": {
+    "message": "حظر عمليات إعادة التوجيه والإعلانات غير المرغوب فيها"
+  },
+  "blockIncomingPopupsExplain": {
+    "message": "يمنع المواقع من نقلك إلى صفحة أخرى أو فتح علامات تبويب إعلانية دون إذن. قد لا يعمل على بعض المواقع."
+  },
+  "redirectGuardBlockedNotice": {
+    "message": "تم حظر إعادة التوجيه. انقر $COUNT$ مرة إضافية للمتابعة.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "redirectGuardClicksTitle": {
+    "message": "عدد النقرات المطلوبة للفتح"
+  },
+  "redirectGuardClicksExplain": {
+    "message": "اختر عدد المرات التي يجب فيها النقر على الرابط الخارجي قبل فتحه."
+  },
+  "redirectGuardHideContentTitle": {
+    "message": "إخفاء المحتوى المحظور"
+  },
+  "redirectGuardHideContentExplain": {
+    "message": "يخفي الإعلان أو الرابط الذي تم النقر عليه من الصفحة عند حظر إعادة التوجيه."
+  },
+  "downloadStarted": {
+    "message": "بدأ التنزيل",
+    "description": "Toast message when download starts"
+  },
+  "installedVersion": {
+    "message": "الإصدار المثبت",
+    "description": "Label for installed extension version"
+  },
+  "loadingQualities": {
+    "message": "جاري تحميل الجودات...",
+    "description": "Text shown while loading stream qualities"
+  },
+  "qualityModalTitle": {
+    "message": "اختر الجودة",
+    "description": "Title of quality selection modal"
+  },
+  "qualityModalTabVideo": {
+    "message": "فيديو",
+    "description": "Tab label for video quality"
+  },
+  "qualityModalTabAudio": {
+    "message": "صوت فقط",
+    "description": "Tab label for audio quality"
+  },
+  "qualityModalQualityLabel": {
+    "message": "الجودة / الدقة",
+    "description": "Label for quality resolution"
+  },
+  "qualityModalFormatLabel": {
+    "message": "الصيغة",
+    "description": "Label for file format"
+  },
+  "qualityModalCodecLabel": {
+    "message": "البرنامج المساعد",
+    "description": "Label for video codec"
+  },
+  "qualityModalAudioExplain": {
+    "message": "استخراج المسار الصوتي فقط من مصدر الفيديو",
+    "description": "Explanation for audio extraction"
+  },
+  "qualityModalCancelBtn": {
+    "message": "إلغاء",
+    "description": "Cancel button label in quality modal"
+  },
+  "qualityModalDownloadBtn": {
+    "message": "تنزيل",
+    "description": "Download button label in quality modal"
+  },
+  "selectButton": {
+    "message": "تحديد",
+    "description": "Select button label"
+  },
+  "settingsSaved": {
+    "message": "تم حفظ الإعدادات بنجاح",
+    "description": "Notification when settings are saved"
+  },
+  "startingDownload": {
+    "message": "جاري بدء التنزيل...",
+    "description": "Status when initiating download"
   }
-  ,"autoDownloadQualityTitle": { "message": "جودة التنزيل التلقائي" }
-  ,"autoDownloadQualityExplain": { "message": "اختر جودة الوسائط التي يتم تنزيلها تلقائيًا عند توفر خيارات متعددة." }
-  ,"autoDownloadQualityHighest": { "message": "أعلى جودة" }
-  ,"autoDownloadQualityLowest": { "message": "أدنى جودة" }
-  ,"autoDownloadYoutubeModeTitle": { "message": "التنزيل التلقائي من YouTube" }
-  ,"autoDownloadYoutubeModeExplain": { "message": "اختر ما إذا كان التنزيل التلقائي من YouTube سيحفظ الفيديو أو الصوت فقط." }
-  ,"autoDownloadYoutubeModeVideo": { "message": "فيديو" }
-  ,"autoDownloadYoutubeModeAudio": { "message": "الصوت فقط" }
 }

@@ -2407,13 +2407,115 @@
   },
   "autoDownloadUnavailableExplain": {
     "message": "バックグラウンドダウンロードがオフになっているため、自動ダウンロードは利用できません。最初にバックグラウンドダウンロードを有効にしてください。"
+  },
+  "autoDownloadQualityTitle": {
+    "message": "自動ダウンロードの品質"
+  },
+  "autoDownloadQualityExplain": {
+    "message": "複数の品質が利用できる場合に、自動ダウンロードするメディアの品質を選択します。"
+  },
+  "autoDownloadQualityHighest": {
+    "message": "最高品質"
+  },
+  "autoDownloadQualityLowest": {
+    "message": "最低品質"
+  },
+  "autoDownloadYoutubeModeTitle": {
+    "message": "YouTube 自動ダウンロード"
+  },
+  "autoDownloadYoutubeModeExplain": {
+    "message": "YouTube の自動ダウンロードで動画を保存するか、音声のみを保存するかを選択します。"
+  },
+  "autoDownloadYoutubeModeVideo": {
+    "message": "動画"
+  },
+  "autoDownloadYoutubeModeAudio": {
+    "message": "音声のみ"
+  },
+  "blockIncomingPopupsTitle": {
+    "message": "不要なリダイレクトと広告をブロック"
+  },
+  "blockIncomingPopupsExplain": {
+    "message": "ウェブサイトが許可なく現在のページを移動したり、広告タブを開いたりするのを防ぎます。一部のウェブサイトでは機能しない場合があります。"
+  },
+  "redirectGuardBlockedNotice": {
+    "message": "リダイレクトをブロックしました。続行するにはあと $COUNT$ 回タップしてください。",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "redirectGuardClicksTitle": {
+    "message": "開くために必要なタップ回数"
+  },
+  "redirectGuardClicksExplain": {
+    "message": "外部リンクを開くまでに必要なタップ回数を選択します。"
+  },
+  "redirectGuardHideContentTitle": {
+    "message": "ブロックしたコンテンツを非表示"
+  },
+  "redirectGuardHideContentExplain": {
+    "message": "リダイレクトがブロックされたとき、クリックした広告やリンクをページから非表示にします。"
+  },
+  "downloadStarted": {
+    "message": "ダウンロードを開始しました",
+    "description": "Toast message when download starts"
+  },
+  "installedVersion": {
+    "message": "インストール済みバージョン",
+    "description": "Label for installed extension version"
+  },
+  "loadingQualities": {
+    "message": "画質を読み込み中...",
+    "description": "Text shown while loading stream qualities"
+  },
+  "qualityModalTitle": {
+    "message": "画質を選択",
+    "description": "Title of quality selection modal"
+  },
+  "qualityModalTabVideo": {
+    "message": "動画",
+    "description": "Tab label for video quality"
+  },
+  "qualityModalTabAudio": {
+    "message": "音声のみ",
+    "description": "Tab label for audio quality"
+  },
+  "qualityModalQualityLabel": {
+    "message": "画質 / 解像度",
+    "description": "Label for quality resolution"
+  },
+  "qualityModalFormatLabel": {
+    "message": "フォーマット",
+    "description": "Label for file format"
+  },
+  "qualityModalCodecLabel": {
+    "message": "コーデック",
+    "description": "Label for video codec"
+  },
+  "qualityModalAudioExplain": {
+    "message": "動画ソースから音声トラックのみを抽出します",
+    "description": "Explanation for audio extraction"
+  },
+  "qualityModalCancelBtn": {
+    "message": "キャンセル",
+    "description": "Cancel button label in quality modal"
+  },
+  "qualityModalDownloadBtn": {
+    "message": "ダウンロード",
+    "description": "Download button label in quality modal"
+  },
+  "selectButton": {
+    "message": "選択",
+    "description": "Select button label"
+  },
+  "settingsSaved": {
+    "message": "設定を保存しました",
+    "description": "Notification when settings are saved"
+  },
+  "startingDownload": {
+    "message": "ダウンロードを開始中...",
+    "description": "Status when initiating download"
   }
-  ,"autoDownloadQualityTitle": { "message": "自動ダウンロードの品質" }
-  ,"autoDownloadQualityExplain": { "message": "複数の品質が利用できる場合に、自動ダウンロードするメディアの品質を選択します。" }
-  ,"autoDownloadQualityHighest": { "message": "最高品質" }
-  ,"autoDownloadQualityLowest": { "message": "最低品質" }
-  ,"autoDownloadYoutubeModeTitle": { "message": "YouTube 自動ダウンロード" }
-  ,"autoDownloadYoutubeModeExplain": { "message": "YouTube の自動ダウンロードで動画を保存するか、音声のみを保存するかを選択します。" }
-  ,"autoDownloadYoutubeModeVideo": { "message": "動画" }
-  ,"autoDownloadYoutubeModeAudio": { "message": "音声のみ" }
 }

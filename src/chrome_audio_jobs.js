@@ -119,7 +119,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         for (const [id, job] of chromeAudioJobs) {
             if (message.id === id || message.url === job.url) {
                 job.controller?.abort();
-                chrome.runtime.sendMessage({ action: 'cancelPersistentAudioJob', jobId: id, url: job.url, audioUrl: job.audioUrl }).catch(() => {});
+                chrome.runtime.sendMessage({ action: 'cancelPersistentAudioJob', jobId: id, url: job.url, audioUrl: job.audioUrl, youtubeTracks: job.youtubeTracks }).catch(() => {});
                 chromeAudioJobs.delete(id);
                 chrome.storage.local.remove(`audioJob_${id}`);
             }

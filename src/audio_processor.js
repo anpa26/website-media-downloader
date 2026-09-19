@@ -22,6 +22,99 @@ async function markRecoveryCompleted(key, job) {
     await browser.storage.local.set({ [key]: { ...job, recoveryState: "completed", status: "completed" } });
 }
 
+async function saveOffscreenAudioBlob(blob, filename) {
+    const objectUrl = URL.createObjectURL(blob);
+    try {
+        await browser.downloads.download({ url: objectUrl, filename, saveAs: false });
+    } catch (error) {
+        URL.revokeObjectURL(objectUrl);
+        throw error;
+    }
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
+}
+
+function safeTrackName(value, fallback) {
+    return String(value || fallback).replace(/[\\/:*?"<>|]/g, '_').trim() || fallback;
+}
+
+async function fetchProcessorBlob(url, jobId, request) {
+    const fetched = await browser.runtime.sendMessage({ action: 'fetchMediaForAudio', url, request, jobId });
+    if (!fetched?.success) throw new Error(fetched?.error || 'Media download failed');
+    return new Blob([fetched.arrayBuffer], { type: fetched.mime || 'application/octet-stream' });
+}
+
+async function fetchProcessorSubtitle(track) {
+    const fetched = await browser.runtime.sendMessage({ action: 'fetchText', url: track.vttUrl });
+    if (fetched?.text) return fetched.text;
+    const response = await spoofedFetch(track.vttUrl);
+    if (!response.ok) throw new Error(`Subtitle request failed: ${response.status}`);
+    return response.text();
+}
+
+function convertProcessorSubtitle(text, format) {
+    if (format === 'srt') {
+        if (globalThis.subsrt?.convert) return globalThis.subsrt.convert(text, { format: 'srt' });
+        return text.replace(/^WEBVTT[^\n]*\n+/i, '').replace(/(\d{2}:\d{2}:\d{2})\.(\d{3})/g, '$1,$2');
+    }
+    if (!/^WEBVTT/i.test(text.trim())) {
+        return 'WEBVTT\n\n' + text.trim().replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2');
+    }
+    return text;
+}
+
+async function processYoutubeTrackBundle(job, jobId, loadingBar, report) {
+    const bundle = job.youtubeTracks || {};
+    let videoBlob;
+    if (job.audioUrl) {
+        report('Downloading and muxing video tracks...', 0, true);
+        videoBlob = await downloadAndMuxYoutube(job.url, job.audioUrl, job.filename, job.downloadMethod || 'browser', loadingBar, true);
+    } else {
+        report('Downloading video...', 0, true);
+        videoBlob = await fetchProcessorBlob(job.url, jobId, job.request);
+    }
+
+    const subtitles = [];
+    for (let i = 0; i < (bundle.subtitles || []).length; i++) {
+        const track = bundle.subtitles[i];
+        report(`Downloading subtitle ${i + 1}/${bundle.subtitles.length}: ${track.displayName || track.language || 'Subtitle'}`, undefined, true);
+        const text = await fetchProcessorSubtitle(track);
+        subtitles.push({ ...track, text });
+    }
+
+    if (bundle.embedSubtitles && subtitles.length) {
+        report('Embedding subtitle tracks...', undefined, true);
+        videoBlob = await embedSubtitlesWithLibAV(videoBlob, subtitles, 'mp4', job.filename, job.downloadMethod || 'browser', loadingBar, true);
+    }
+
+    if (!bundle.zip) {
+        const ext = '.mp4';
+        return { blob: videoBlob, filename: job.filename.replace(/\.[a-z0-9]+$/i, '') + ext };
+    }
+
+    const base = job.filename.replace(/\.[a-z0-9]+$/i, '');
+    const videoEntryName = base + '.mp4';
+    const entries = [{ name: videoEntryName, input: videoBlob }];
+    for (let i = 0; i < (bundle.audioFiles || []).length; i++) {
+        const track = bundle.audioFiles[i];
+        report(`Downloading audio ${i + 1}/${bundle.audioFiles.length}: ${track.name || 'Audio'}`, undefined, true);
+        const blob = await fetchProcessorBlob(track.url, jobId, job.request);
+        const ext = /webm/i.test(track.url) ? '.webm' : '.m4a';
+        entries.push({ name: `${base} - ${safeTrackName(track.name, `Audio ${i + 1}`)}${ext}`, input: blob });
+    }
+    const subFormat = bundle.subtitleFormat === 'srt' ? 'srt' : 'vtt';
+    if (!bundle.embedSubtitles) {
+        for (let i = 0; i < subtitles.length; i++) {
+            const track = subtitles[i];
+            entries.push({
+                name: `${base} - ${safeTrackName(track.displayName || track.language, `Subtitle ${i + 1}`)}.${subFormat}`,
+                input: convertProcessorSubtitle(track.text, subFormat)
+            });
+        }
+    }
+    report('Generating ZIP archive...', undefined, true);
+    return { blob: await downloadZip(entries).blob(), filename: `${base}.zip` };
+}
+
 async function runPersistentAudioJob(jobId, options = {}) {
     const key = `audioJob_${jobId}`;
     const stored = await browser.storage.local.get(key);
@@ -33,9 +126,13 @@ async function runPersistentAudioJob(jobId, options = {}) {
         if (!claim?.allowed) return;
     }
 
-    const report = (text, percent, indeterminate = false) => browser.runtime.sendMessage({
-        action: 'audioJobProgress', jobId, filename: job.filename, url: job.url, text, percent, indeterminate
-    });
+    const report = (text, percent, indeterminate = false) => {
+        // Progress delivery is best-effort. A stale extension page must never
+        // be able to block the actual processor by holding a response open.
+        browser.runtime.sendMessage({
+            action: 'audioJobProgress', jobId, filename: job.filename, url: job.url, text, percent, indeterminate
+        }).catch(() => {});
+    };
     window.activeCancellations = window.activeCancellations || new Set();
     window.activePauses = window.activePauses || new Set();
     window.activeAbortControllers = window.activeAbortControllers || new Map();
@@ -59,19 +156,19 @@ async function runPersistentAudioJob(jobId, options = {}) {
 
     try {
         await waitIfPaused();
-        await report('Connecting...', 0);
+        report('Connecting...', 0);
         let filename = job.filename;
         let blob;
 
-        if (job.audioUrl && !job.audioOnly) {
+        if (job.youtubeTracks) {
+            const result = await processYoutubeTrackBundle(job, jobId, loadingBar, report);
+            blob = result.blob;
+            filename = result.filename;
+        } else if (job.audioUrl && !job.audioOnly) {
             report('Downloading video and audio...', 0, true);
             blob = await downloadAndMuxYoutube(job.url, job.audioUrl, filename, job.downloadMethod || 'browser', loadingBar, true);
         } else {
-            const fetched = await browser.runtime.sendMessage({
-                action: 'fetchMediaForAudio', url: job.url, request: job.request, jobId
-            });
-            if (!fetched?.success) throw new Error(fetched?.error || 'Media download failed');
-            blob = new Blob([fetched.arrayBuffer], { type: fetched.mime || 'application/octet-stream' });
+            blob = await fetchProcessorBlob(job.url, jobId, job.request);
         }
 
         await waitIfPaused();
@@ -93,14 +190,7 @@ async function runPersistentAudioJob(jobId, options = {}) {
 
         await waitIfPaused();
         if (options.offscreen) {
-            const objectUrl = URL.createObjectURL(blob);
-            const anchor = document.createElement('a');
-            anchor.href = objectUrl;
-            anchor.download = filename;
-            document.body.appendChild(anchor);
-            anchor.click();
-            anchor.remove();
-            setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
+            await saveOffscreenAudioBlob(blob, filename);
         } else {
             const cacheId = 'processed_' + Date.now() + '_' + Math.random().toString(36).slice(2);
             await storeCompletedDownloadBlob(cacheId, blob, blob.type);
@@ -133,7 +223,11 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         window.activePauses = window.activePauses || new Set();
         const paused = message.action === 'pausePersistentAudioJob';
         const apply = job => {
-            for (const value of [message.jobId, job?.url, ...(Array.isArray(job?.audioUrl) ? job.audioUrl.map(x => x.url) : [job?.audioUrl])].filter(Boolean)) {
+            const bundleUrls = [
+                ...(job?.youtubeTracks?.audioFiles || []).map(x => x.url),
+                ...(job?.youtubeTracks?.subtitles || []).map(x => x.vttUrl)
+            ];
+            for (const value of [message.jobId, job?.url, ...(Array.isArray(job?.audioUrl) ? job.audioUrl.map(x => x.url) : [job?.audioUrl]), ...bundleUrls].filter(Boolean)) {
                 if (paused) window.activePauses.add(value); else window.activePauses.delete(value);
             }
         };
@@ -147,6 +241,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.url) window.activeCancellations.add(message.url);
     const audioUrls = Array.isArray(message.audioUrl) ? message.audioUrl.map(item => item.url) : [message.audioUrl];
     for (const url of audioUrls.filter(Boolean)) window.activeCancellations.add(url);
+    for (const track of message.youtubeTracks?.audioFiles || []) if (track.url) window.activeCancellations.add(track.url);
+    for (const track of message.youtubeTracks?.subtitles || []) if (track.vttUrl) window.activeCancellations.add(track.vttUrl);
     if (window.activeAbortControllers) {
         for (const controller of window.activeAbortControllers.values()) controller.abort();
     }

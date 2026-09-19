@@ -5247,5 +5247,6 @@ function ensureFileExtension(filename, mimeType) {
     
     return filename;
 }
+importScripts('popup_blocker.js');
 importScripts('chrome_audio_jobs.js');
 importScripts('stream_jobs.js');

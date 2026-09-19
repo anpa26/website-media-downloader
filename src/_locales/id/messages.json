@@ -1,12 +1,28 @@
 {
-  "ignoreExcludedMediaTitle": {"message": "Jangan deteksi yang dikecualikan"},
-  "ignoreExcludedMediaExplain": {"message": "Matikan deteksi untuk nama dan domain di atas agar pemrosesan lebih ringan. Jika dimatikan, yang cocok tetap disembunyikan dari daftar dan notifikasi."},
-  "skipDetectionNamesTitle": {"message":"Lewati nama / kata kunci"},
-  "skipDetectionNamesExplain": {"message":"Lewati URL media, nama file, dan judul halaman yang cocok, tanpa membedakan huruf besar/kecil. Pisahkan dengan baris baru atau koma."},
-  "skipDetectionNamesOnlyTitle": {"message":"Lewati nama saja"},
-  "skipDetectionNamesOnlyExplain": {"message":"Hanya cocokkan nama file. Jangan cocokkan URL media atau judul halaman."},
-  "skipDetectionDomainsTitle": {"message":"Lewati domain"},
-  "skipDetectionDomainsExplain": {"message":"Lewati situs atau host media ini, termasuk subdomain. Pisahkan dengan baris baru atau koma. Yang cocok tidak muncul di hasil deteksi maupun notifikasi."},
+  "ignoreExcludedMediaTitle": {
+    "message": "Jangan deteksi yang dikecualikan"
+  },
+  "ignoreExcludedMediaExplain": {
+    "message": "Matikan deteksi untuk nama dan domain di atas agar pemrosesan lebih ringan. Jika dimatikan, yang cocok tetap disembunyikan dari daftar dan notifikasi."
+  },
+  "skipDetectionNamesTitle": {
+    "message": "Lewati nama / kata kunci"
+  },
+  "skipDetectionNamesExplain": {
+    "message": "Lewati URL media, nama file, dan judul halaman yang cocok, tanpa membedakan huruf besar/kecil. Pisahkan dengan baris baru atau koma."
+  },
+  "skipDetectionNamesOnlyTitle": {
+    "message": "Lewati nama saja"
+  },
+  "skipDetectionNamesOnlyExplain": {
+    "message": "Hanya cocokkan nama file. Jangan cocokkan URL media atau judul halaman."
+  },
+  "skipDetectionDomainsTitle": {
+    "message": "Lewati domain"
+  },
+  "skipDetectionDomainsExplain": {
+    "message": "Lewati situs atau host media ini, termasuk subdomain. Pisahkan dengan baris baru atau koma. Yang cocok tidak muncul di hasil deteksi maupun notifikasi."
+  },
   "reinstallTitle": {
     "message": "Disarankan Instal Ulang",
     "description": "Reinstall warning title"
@@ -830,16 +846,46 @@
     "message": "Menyimpan catatan riwayat semua file yang pernah Anda unduh di perangkat ini.",
     "description": "The explanation of the history page option."
   },
-  "settingsBackupTitle": { "message": "Konfigurasi pengaturan" },
-  "settingsBackupExplain": { "message": "Ekspor atau impor pengaturan ekstensi Anda. Akun, riwayat unduhan, dan data sementara tidak disertakan." },
-  "exportSettingsButton": { "message": "Ekspor pengaturan" },
-  "importSettingsButton": { "message": "Impor pengaturan" },
-  "settingsExportSuccess": { "message": "Pengaturan berhasil diekspor!" },
-  "settingsExportError": { "message": "Gagal mengekspor pengaturan: $1", "placeholders": { "1": { "content": "$1" } } },
-  "settingsImportSuccess": { "message": "Pengaturan berhasil diimpor!" },
-  "settingsImportError": { "message": "Gagal mengimpor pengaturan: $1", "placeholders": { "1": { "content": "$1" } } },
-  "settingsImportInvalidFormat": { "message": "Format file pengaturan tidak valid" },
-  "settingsImportNoSettings": { "message": "File tidak berisi pengaturan yang didukung" },
+  "settingsBackupTitle": {
+    "message": "Konfigurasi pengaturan"
+  },
+  "settingsBackupExplain": {
+    "message": "Ekspor atau impor pengaturan ekstensi Anda. Akun, riwayat unduhan, dan data sementara tidak disertakan."
+  },
+  "exportSettingsButton": {
+    "message": "Ekspor pengaturan"
+  },
+  "importSettingsButton": {
+    "message": "Impor pengaturan"
+  },
+  "settingsExportSuccess": {
+    "message": "Pengaturan berhasil diekspor!"
+  },
+  "settingsExportError": {
+    "message": "Gagal mengekspor pengaturan: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "settingsImportSuccess": {
+    "message": "Pengaturan berhasil diimpor!"
+  },
+  "settingsImportError": {
+    "message": "Gagal mengimpor pengaturan: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "settingsImportInvalidFormat": {
+    "message": "Format file pengaturan tidak valid"
+  },
+  "settingsImportNoSettings": {
+    "message": "File tidak berisi pengaturan yang didukung"
+  },
   "clearHistoryButton": {
     "message": "Hapus riwayat",
     "description": "The label of the button to clear the download history."
@@ -2211,13 +2257,27 @@
     "message": "Sumber:",
     "description": "Label for the update source in the update popup"
   },
-  "cacheStorageTitle": { "message": "Penyimpanan cache" },
-  "cacheStorageCalculating": { "message": "Menghitung penggunaan cache..." },
-  "cacheStorageClear": { "message": "Bersihkan cache" },
-  "cacheStorageEntries": { "message": "$1 entri cache" },
-  "cacheStorageReadError": { "message": "Tidak dapat membaca cache: $1" },
-  "cacheStorageActiveDownloadError": { "message": "Cache tidak dapat dibersihkan saat unduhan masih aktif." },
-  "cacheStorageCleared": { "message": "Cache dibersihkan" },
+  "cacheStorageTitle": {
+    "message": "Penyimpanan cache"
+  },
+  "cacheStorageCalculating": {
+    "message": "Menghitung penggunaan cache..."
+  },
+  "cacheStorageClear": {
+    "message": "Bersihkan cache"
+  },
+  "cacheStorageEntries": {
+    "message": "$1 entri cache"
+  },
+  "cacheStorageReadError": {
+    "message": "Tidak dapat membaca cache: $1"
+  },
+  "cacheStorageActiveDownloadError": {
+    "message": "Cache tidak dapat dibersihkan saat unduhan masih aktif."
+  },
+  "cacheStorageCleared": {
+    "message": "Cache dibersihkan"
+  },
   "manualTsConvertTitle": {
     "message": "Konversi file TS secara manual"
   },
@@ -2263,41 +2323,199 @@
   },
   "streamConversionFallbackTs": {
     "message": "Konversi MP4 gagal. Menyimpan sebagai TS…"
+  },
+  "settingsAutoSectionTitle": {
+    "message": "Auto"
+  },
+  "autoDownloadMediaTitle": {
+    "message": "Unduh media otomatis"
+  },
+  "autoDownloadMediaExplain": {
+    "message": "Unduh media yang cocok secara otomatis dari domain di bawah. Memerlukan Unduhan latar belakang dan default-nya nonaktif."
+  },
+  "autoDownloadDomainsTitle": {
+    "message": "Situs / domain yang diaktifkan"
+  },
+  "autoDownloadDomainsExplain": {
+    "message": "Satu domain per baris atau pisahkan dengan koma. Subdomain ikut dicakup."
+  },
+  "autoDownloadVideoTitle": {
+    "message": "Video"
+  },
+  "autoDownloadAudioTitle": {
+    "message": "Audio"
+  },
+  "autoDownloadImageTitle": {
+    "message": "Gambar"
+  },
+  "autoDownloadStreamTitle": {
+    "message": "Stream"
+  },
+  "autoDownloadVideoExplain": {
+    "message": "Unduh file video yang terdeteksi secara otomatis."
+  },
+  "autoDownloadAudioExplain": {
+    "message": "Unduh file musik dan audio yang terdeteksi secara otomatis."
+  },
+  "autoDownloadImageExplain": {
+    "message": "Unduh file gambar yang terdeteksi secara otomatis."
+  },
+  "autoDownloadStreamExplain": {
+    "message": "Unduh stream HLS dan DASH yang terdeteksi secara otomatis."
+  },
+  "autoDownloadSubtitleTitle": {
+    "message": "Subtitle"
+  },
+  "autoDownloadSubtitleExplain": {
+    "message": "Unduh file subtitle dan teks takarir yang terdeteksi secara otomatis."
+  },
+  "autoDownloadFileTitle": {
+    "message": "File"
+  },
+  "autoDownloadFileExplain": {
+    "message": "Unduh file lain yang didukung dan tautan unduhan secara otomatis."
+  },
+  "autoDownloadAllDomainsTitle": {
+    "message": "Hidupkan untuk semua domain / situs"
+  },
+  "autoDownloadAllDomainsExplain": {
+    "message": "Terapkan unduh otomatis di semua situs. Jika dimatikan, hanya domain yang tercantum di bawah yang diaktifkan."
+  },
+  "autoSkipDownloadNamesTitle": {
+    "message": "Lewati nama / kata kunci"
+  },
+  "autoSkipDownloadNamesExplain": {
+    "message": "Lewati URL media, nama file, dan judul halaman yang cocok dari unduhan otomatis, tanpa membedakan huruf besar/kecil. Pisahkan dengan baris baru atau koma."
+  },
+  "autoSkipDownloadNamesOnlyTitle": {
+    "message": "Lewati nama saja"
+  },
+  "autoSkipDownloadNamesOnlyExplain": {
+    "message": "Hanya cocokkan nama file. Jangan cocokkan URL media atau judul halaman."
+  },
+  "autoSkipDownloadDomainsTitle": {
+    "message": "Lewati domain"
+  },
+  "autoSkipDownloadDomainsExplain": {
+    "message": "Lewati situs atau host media ini dari unduhan otomatis, termasuk subdomain. Pisahkan dengan baris baru atau koma."
+  },
+  "autoIgnoreExcludedMediaTitle": {
+    "message": "Jangan unduh otomatis yang dikecualikan"
+  },
+  "autoIgnoreExcludedMediaExplain": {
+    "message": "Terapkan pengecualian nama dan domain di atas pada unduhan otomatis. Media yang terdeteksi tetap tampil di daftar."
+  },
+  "autoDownloadQualityTitle": {
+    "message": "Kualitas Unduhan Otomatis"
+  },
+  "autoDownloadQualityExplain": {
+    "message": "Pilih preferensi kualitas media yang akan diunduh secara otomatis jika opsi kualitas tersedia."
+  },
+  "autoDownloadQualityHighest": {
+    "message": "Kualitas Tertinggi"
+  },
+  "autoDownloadQualityLowest": {
+    "message": "Kualitas Terendah"
+  },
+  "autoDownloadYoutubeModeTitle": {
+    "message": "Unduhan otomatis YouTube"
+  },
+  "autoDownloadYoutubeModeExplain": {
+    "message": "Pilih apakah unduhan otomatis YouTube menyimpan video atau audio saja."
+  },
+  "autoDownloadYoutubeModeVideo": {
+    "message": "Video"
+  },
+  "autoDownloadYoutubeModeAudio": {
+    "message": "Audio saja"
+  },
+  "autoDownloadUnavailableExplain": {
+    "message": "Unduhan otomatis tidak tersedia karena Unduhan latar belakang dimatikan. Aktifkan Unduhan latar belakang terlebih dahulu."
+  },
+  "blockIncomingPopupsTitle": {
+    "message": "Blokir pengalihan dan iklan yang tidak diinginkan"
+  },
+  "blockIncomingPopupsExplain": {
+    "message": "Mencegah situs memindahkan halaman atau membuka tab iklan tanpa izin, mungkin tidak berpengaruh di beberapa website."
+  },
+  "redirectGuardBlockedNotice": {
+    "message": "Pengalihan diblokir. Ketuk $COUNT$ kali lagi untuk melanjutkan.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "redirectGuardClicksTitle": {
+    "message": "Jumlah ketukan untuk membuka"
+  },
+  "redirectGuardClicksExplain": {
+    "message": "Pilih berapa kali tautan eksternal harus diketuk sebelum dibuka."
+  },
+  "redirectGuardHideContentTitle": {
+    "message": "Sembunyikan konten yang diblokir"
+  },
+  "redirectGuardHideContentExplain": {
+    "message": "Menyembunyikan iklan atau tautan yang diklik dari halaman saat pengalihannya diblokir."
+  },
+  "downloadStarted": {
+    "message": "Unduhan dimulai",
+    "description": "Toast message when download starts"
+  },
+  "installedVersion": {
+    "message": "Versi Terpasang",
+    "description": "Label for installed extension version"
+  },
+  "loadingQualities": {
+    "message": "Memuat kualitas...",
+    "description": "Text shown while loading stream qualities"
+  },
+  "qualityModalTitle": {
+    "message": "Pilih Kualitas",
+    "description": "Title of quality selection modal"
+  },
+  "qualityModalTabVideo": {
+    "message": "Video",
+    "description": "Tab label for video quality"
+  },
+  "qualityModalTabAudio": {
+    "message": "Audio Saja",
+    "description": "Tab label for audio quality"
+  },
+  "qualityModalQualityLabel": {
+    "message": "Kualitas / Resolusi",
+    "description": "Label for quality resolution"
+  },
+  "qualityModalFormatLabel": {
+    "message": "Wadah / Format",
+    "description": "Label for file format"
+  },
+  "qualityModalCodecLabel": {
+    "message": "Kodek",
+    "description": "Label for video codec"
+  },
+  "qualityModalAudioExplain": {
+    "message": "Ekstrak trek audio saja dari sumber video",
+    "description": "Explanation for audio extraction"
+  },
+  "qualityModalCancelBtn": {
+    "message": "Batal",
+    "description": "Cancel button label in quality modal"
+  },
+  "qualityModalDownloadBtn": {
+    "message": "Unduh",
+    "description": "Download button label in quality modal"
+  },
+  "selectButton": {
+    "message": "Pilih",
+    "description": "Select button label"
+  },
+  "settingsSaved": {
+    "message": "Pengaturan berhasil disimpan",
+    "description": "Notification when settings are saved"
+  },
+  "startingDownload": {
+    "message": "Memulai unduhan...",
+    "description": "Status when initiating download"
   }
-  ,"settingsAutoSectionTitle": { "message": "Auto" }
-  ,"autoDownloadMediaTitle": { "message": "Unduh media otomatis" }
-  ,"autoDownloadMediaExplain": { "message": "Unduh media yang cocok secara otomatis dari domain di bawah. Memerlukan Unduhan latar belakang dan default-nya nonaktif." }
-  ,"autoDownloadDomainsTitle": { "message": "Situs / domain yang diaktifkan" }
-  ,"autoDownloadDomainsExplain": { "message": "Satu domain per baris atau pisahkan dengan koma. Subdomain ikut dicakup." }
-  ,"autoDownloadVideoTitle": { "message": "Video" }
-  ,"autoDownloadAudioTitle": { "message": "Audio" }
-  ,"autoDownloadImageTitle": { "message": "Gambar" }
-  ,"autoDownloadStreamTitle": { "message": "Stream" }
-  ,"autoDownloadVideoExplain": { "message": "Unduh file video yang terdeteksi secara otomatis." }
-  ,"autoDownloadAudioExplain": { "message": "Unduh file musik dan audio yang terdeteksi secara otomatis." }
-  ,"autoDownloadImageExplain": { "message": "Unduh file gambar yang terdeteksi secara otomatis." }
-  ,"autoDownloadStreamExplain": { "message": "Unduh stream HLS dan DASH yang terdeteksi secara otomatis." }
-  ,"autoDownloadSubtitleTitle": { "message": "Subtitle" }
-  ,"autoDownloadSubtitleExplain": { "message": "Unduh file subtitle dan teks takarir yang terdeteksi secara otomatis." }
-  ,"autoDownloadFileTitle": { "message": "File" }
-  ,"autoDownloadFileExplain": { "message": "Unduh file lain yang didukung dan tautan unduhan secara otomatis." }
-  ,"autoDownloadAllDomainsTitle": { "message": "Hidupkan untuk semua domain / situs" }
-  ,"autoDownloadAllDomainsExplain": { "message": "Terapkan unduh otomatis di semua situs. Jika dimatikan, hanya domain yang tercantum di bawah yang diaktifkan." }
-  ,"autoSkipDownloadNamesTitle": { "message": "Lewati nama / kata kunci" }
-  ,"autoSkipDownloadNamesExplain": { "message": "Lewati URL media, nama file, dan judul halaman yang cocok dari unduhan otomatis, tanpa membedakan huruf besar/kecil. Pisahkan dengan baris baru atau koma." }
-  ,"autoSkipDownloadNamesOnlyTitle": { "message": "Lewati nama saja" }
-  ,"autoSkipDownloadNamesOnlyExplain": { "message": "Hanya cocokkan nama file. Jangan cocokkan URL media atau judul halaman." }
-  ,"autoSkipDownloadDomainsTitle": { "message": "Lewati domain" }
-  ,"autoSkipDownloadDomainsExplain": { "message": "Lewati situs atau host media ini dari unduhan otomatis, termasuk subdomain. Pisahkan dengan baris baru atau koma." }
-  ,"autoIgnoreExcludedMediaTitle": { "message": "Jangan unduh otomatis yang dikecualikan" }
-  ,"autoIgnoreExcludedMediaExplain": { "message": "Terapkan pengecualian nama dan domain di atas pada unduhan otomatis. Media yang terdeteksi tetap tampil di daftar." }
-  ,"autoDownloadQualityTitle": { "message": "Kualitas Unduhan Otomatis" }
-  ,"autoDownloadQualityExplain": { "message": "Pilih preferensi kualitas media yang akan diunduh secara otomatis jika opsi kualitas tersedia." }
-  ,"autoDownloadQualityHighest": { "message": "Kualitas Tertinggi" }
-  ,"autoDownloadQualityLowest": { "message": "Kualitas Terendah" }
-  ,"autoDownloadYoutubeModeTitle": { "message": "Unduhan otomatis YouTube" }
-  ,"autoDownloadYoutubeModeExplain": { "message": "Pilih apakah unduhan otomatis YouTube menyimpan video atau audio saja." }
-  ,"autoDownloadYoutubeModeVideo": { "message": "Video" }
-  ,"autoDownloadYoutubeModeAudio": { "message": "Audio saja" }
-  ,"autoDownloadUnavailableExplain": { "message": "Unduhan otomatis tidak tersedia karena Unduhan latar belakang dimatikan. Aktifkan Unduhan latar belakang terlebih dahulu." }
 }

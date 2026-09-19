@@ -1,12 +1,28 @@
 {
-  "ignoreExcludedMediaTitle": {"message": "Do not detect excluded media"},
-  "ignoreExcludedMediaExplain": {"message": "Stop detecting matching names and domains above to reduce processing. When off, matches are still hidden from the list and notifications."},
-  "skipDetectionNamesTitle": {"message":"Skip names / keywords"},
-  "skipDetectionNamesExplain": {"message":"Skip matching media URLs, filenames, and page titles (case insensitive). Separate entries with new lines or commas."},
-  "skipDetectionNamesOnlyTitle": {"message":"Skip names only"},
-  "skipDetectionNamesOnlyExplain": {"message":"Only match filenames. Do not match media URLs or page titles."},
-  "skipDetectionDomainsTitle": {"message":"Skip domains"},
-  "skipDetectionDomainsExplain": {"message":"Skip these websites or media hosts, including subdomains. Separate entries with new lines or commas. Matches will not appear in detection results or notifications."},
+  "ignoreExcludedMediaTitle": {
+    "message": "Do not detect excluded media"
+  },
+  "ignoreExcludedMediaExplain": {
+    "message": "Stop detecting matching names and domains above to reduce processing. When off, matches are still hidden from the list and notifications."
+  },
+  "skipDetectionNamesTitle": {
+    "message": "Skip names / keywords"
+  },
+  "skipDetectionNamesExplain": {
+    "message": "Skip matching media URLs, filenames, and page titles (case insensitive). Separate entries with new lines or commas."
+  },
+  "skipDetectionNamesOnlyTitle": {
+    "message": "Skip names only"
+  },
+  "skipDetectionNamesOnlyExplain": {
+    "message": "Only match filenames. Do not match media URLs or page titles."
+  },
+  "skipDetectionDomainsTitle": {
+    "message": "Skip domains"
+  },
+  "skipDetectionDomainsExplain": {
+    "message": "Skip these websites or media hosts, including subdomains. Separate entries with new lines or commas. Matches will not appear in detection results or notifications."
+  },
   "reinstallTitle": {
     "message": "Reinstallation Recommended",
     "description": "Reinstall warning title"
@@ -858,16 +874,46 @@
     "message": "Keeps a history record of all the files you have ever downloaded on this device.",
     "description": "The explanation of the history page option."
   },
-  "settingsBackupTitle": { "message": "Settings configuration" },
-  "settingsBackupExplain": { "message": "Export or import your extension settings. Accounts, download history, and temporary data are not included." },
-  "exportSettingsButton": { "message": "Export settings" },
-  "importSettingsButton": { "message": "Import settings" },
-  "settingsExportSuccess": { "message": "Settings exported successfully!" },
-  "settingsExportError": { "message": "Failed to export settings: $1", "placeholders": { "1": { "content": "$1" } } },
-  "settingsImportSuccess": { "message": "Settings imported successfully!" },
-  "settingsImportError": { "message": "Failed to import settings: $1", "placeholders": { "1": { "content": "$1" } } },
-  "settingsImportInvalidFormat": { "message": "Invalid settings file format" },
-  "settingsImportNoSettings": { "message": "The file contains no supported settings" },
+  "settingsBackupTitle": {
+    "message": "Settings configuration"
+  },
+  "settingsBackupExplain": {
+    "message": "Export or import your extension settings. Accounts, download history, and temporary data are not included."
+  },
+  "exportSettingsButton": {
+    "message": "Export settings"
+  },
+  "importSettingsButton": {
+    "message": "Import settings"
+  },
+  "settingsExportSuccess": {
+    "message": "Settings exported successfully!"
+  },
+  "settingsExportError": {
+    "message": "Failed to export settings: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "settingsImportSuccess": {
+    "message": "Settings imported successfully!"
+  },
+  "settingsImportError": {
+    "message": "Failed to import settings: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "settingsImportInvalidFormat": {
+    "message": "Invalid settings file format"
+  },
+  "settingsImportNoSettings": {
+    "message": "The file contains no supported settings"
+  },
   "clearHistoryButton": {
     "message": "Clear history",
     "description": "The label of the button to clear the download history."
@@ -2216,13 +2262,27 @@
     "message": "Source:",
     "description": "Label for the update source in the update popup"
   },
-  "cacheStorageTitle": { "message": "Cache storage" },
-  "cacheStorageCalculating": { "message": "Calculating cache usage..." },
-  "cacheStorageClear": { "message": "Clear cache" },
-  "cacheStorageEntries": { "message": "$1 cached entries" },
-  "cacheStorageReadError": { "message": "Unable to read cache: $1" },
-  "cacheStorageActiveDownloadError": { "message": "Cache cannot be cleared while downloads are active." },
-  "cacheStorageCleared": { "message": "Cache cleared" },
+  "cacheStorageTitle": {
+    "message": "Cache storage"
+  },
+  "cacheStorageCalculating": {
+    "message": "Calculating cache usage..."
+  },
+  "cacheStorageClear": {
+    "message": "Clear cache"
+  },
+  "cacheStorageEntries": {
+    "message": "$1 cached entries"
+  },
+  "cacheStorageReadError": {
+    "message": "Unable to read cache: $1"
+  },
+  "cacheStorageActiveDownloadError": {
+    "message": "Cache cannot be cleared while downloads are active."
+  },
+  "cacheStorageCleared": {
+    "message": "Cache cleared"
+  },
   "manualTsConvertTitle": {
     "message": "Convert a TS file manually"
   },
@@ -2268,41 +2328,199 @@
   },
   "streamConversionFallbackTs": {
     "message": "MP4 conversion failed. Saving as TS…"
+  },
+  "settingsAutoSectionTitle": {
+    "message": "Auto"
+  },
+  "autoDownloadMediaTitle": {
+    "message": "Auto-download media"
+  },
+  "autoDownloadMediaExplain": {
+    "message": "Automatically download matching media from the domains below. Requires Background download and is off by default."
+  },
+  "autoDownloadDomainsTitle": {
+    "message": "Enabled sites / domains"
+  },
+  "autoDownloadDomainsExplain": {
+    "message": "One domain per line or separated by commas. Subdomains are included."
+  },
+  "autoDownloadVideoTitle": {
+    "message": "Video"
+  },
+  "autoDownloadAudioTitle": {
+    "message": "Audio"
+  },
+  "autoDownloadImageTitle": {
+    "message": "Image"
+  },
+  "autoDownloadStreamTitle": {
+    "message": "Stream"
+  },
+  "autoDownloadVideoExplain": {
+    "message": "Automatically download detected video files."
+  },
+  "autoDownloadAudioExplain": {
+    "message": "Automatically download detected music and audio files."
+  },
+  "autoDownloadImageExplain": {
+    "message": "Automatically download detected image files."
+  },
+  "autoDownloadStreamExplain": {
+    "message": "Automatically download detected HLS and DASH streams."
+  },
+  "autoDownloadSubtitleTitle": {
+    "message": "Subtitle"
+  },
+  "autoDownloadSubtitleExplain": {
+    "message": "Automatically download detected subtitle and caption files."
+  },
+  "autoDownloadFileTitle": {
+    "message": "File"
+  },
+  "autoDownloadFileExplain": {
+    "message": "Automatically download other supported files and download links."
+  },
+  "autoDownloadAllDomainsTitle": {
+    "message": "Enable for all domains / sites"
+  },
+  "autoDownloadAllDomainsExplain": {
+    "message": "Apply auto-download on every site. When off, only domains listed below are enabled."
+  },
+  "autoSkipDownloadNamesTitle": {
+    "message": "Skip names / keywords"
+  },
+  "autoSkipDownloadNamesExplain": {
+    "message": "Skip matching media URLs, filenames, and page titles from auto-download (case insensitive). Separate entries with new lines or commas."
+  },
+  "autoSkipDownloadNamesOnlyTitle": {
+    "message": "Skip names only"
+  },
+  "autoSkipDownloadNamesOnlyExplain": {
+    "message": "Only match filenames. Do not match the media URL or page title."
+  },
+  "autoSkipDownloadDomainsTitle": {
+    "message": "Skip domains"
+  },
+  "autoSkipDownloadDomainsExplain": {
+    "message": "Skip these sites or media hosts from auto-download, including subdomains. Separate entries with new lines or commas."
+  },
+  "autoIgnoreExcludedMediaTitle": {
+    "message": "Do not auto-download excluded media"
+  },
+  "autoIgnoreExcludedMediaExplain": {
+    "message": "Apply the name and domain exclusions above to auto-download. Detected items remain visible in the media list."
+  },
+  "autoDownloadQualityTitle": {
+    "message": "Auto-download Quality"
+  },
+  "autoDownloadQualityExplain": {
+    "message": "Select the quality preference for auto-downloaded media when multiple quality choices are available."
+  },
+  "autoDownloadQualityHighest": {
+    "message": "Highest Quality"
+  },
+  "autoDownloadQualityLowest": {
+    "message": "Lowest Quality"
+  },
+  "autoDownloadYoutubeModeTitle": {
+    "message": "YouTube auto-download"
+  },
+  "autoDownloadYoutubeModeExplain": {
+    "message": "Choose whether YouTube auto-download saves video or audio only."
+  },
+  "autoDownloadYoutubeModeVideo": {
+    "message": "Video"
+  },
+  "autoDownloadYoutubeModeAudio": {
+    "message": "Audio only"
+  },
+  "autoDownloadUnavailableExplain": {
+    "message": "Auto-download is unavailable because Background download is turned off. Enable Background download first."
+  },
+  "blockIncomingPopupsTitle": {
+    "message": "Block unwanted redirects and ads"
+  },
+  "blockIncomingPopupsExplain": {
+    "message": "Prevents websites from moving the current page or opening ad tabs without permission. May not work on some websites."
+  },
+  "redirectGuardBlockedNotice": {
+    "message": "Redirect blocked. Tap $COUNT$ more time(s) to continue.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "redirectGuardClicksTitle": {
+    "message": "Taps required to open"
+  },
+  "redirectGuardClicksExplain": {
+    "message": "Choose how many times an external link must be tapped before it opens."
+  },
+  "redirectGuardHideContentTitle": {
+    "message": "Hide blocked content"
+  },
+  "redirectGuardHideContentExplain": {
+    "message": "Hides the clicked ad or link from the webpage when its redirect is blocked."
+  },
+  "downloadStarted": {
+    "message": "Download started",
+    "description": "Toast message when download starts"
+  },
+  "installedVersion": {
+    "message": "Installed Version",
+    "description": "Label for installed extension version"
+  },
+  "loadingQualities": {
+    "message": "Loading qualities...",
+    "description": "Text shown while loading stream qualities"
+  },
+  "qualityModalTitle": {
+    "message": "Select Quality",
+    "description": "Title of quality selection modal"
+  },
+  "qualityModalTabVideo": {
+    "message": "Video",
+    "description": "Tab label for video quality"
+  },
+  "qualityModalTabAudio": {
+    "message": "Audio Only",
+    "description": "Tab label for audio quality"
+  },
+  "qualityModalQualityLabel": {
+    "message": "Quality / Resolution",
+    "description": "Label for quality resolution"
+  },
+  "qualityModalFormatLabel": {
+    "message": "Container / Format",
+    "description": "Label for file format"
+  },
+  "qualityModalCodecLabel": {
+    "message": "Codec",
+    "description": "Label for video codec"
+  },
+  "qualityModalAudioExplain": {
+    "message": "Extract audio stream only from video source",
+    "description": "Explanation for audio extraction"
+  },
+  "qualityModalCancelBtn": {
+    "message": "Cancel",
+    "description": "Cancel button label in quality modal"
+  },
+  "qualityModalDownloadBtn": {
+    "message": "Download",
+    "description": "Download button label in quality modal"
+  },
+  "selectButton": {
+    "message": "Select",
+    "description": "Select button label"
+  },
+  "settingsSaved": {
+    "message": "Settings saved successfully",
+    "description": "Notification when settings are saved"
+  },
+  "startingDownload": {
+    "message": "Starting download...",
+    "description": "Status when initiating download"
   }
-  ,"settingsAutoSectionTitle": { "message": "Auto" }
-  ,"autoDownloadMediaTitle": { "message": "Auto-download media" }
-  ,"autoDownloadMediaExplain": { "message": "Automatically download matching media from the domains below. Requires Background download and is off by default." }
-  ,"autoDownloadDomainsTitle": { "message": "Enabled sites / domains" }
-  ,"autoDownloadDomainsExplain": { "message": "One domain per line or separated by commas. Subdomains are included." }
-  ,"autoDownloadVideoTitle": { "message": "Video" }
-  ,"autoDownloadAudioTitle": { "message": "Audio" }
-  ,"autoDownloadImageTitle": { "message": "Image" }
-  ,"autoDownloadStreamTitle": { "message": "Stream" }
-  ,"autoDownloadVideoExplain": { "message": "Automatically download detected video files." }
-  ,"autoDownloadAudioExplain": { "message": "Automatically download detected music and audio files." }
-  ,"autoDownloadImageExplain": { "message": "Automatically download detected image files." }
-  ,"autoDownloadStreamExplain": { "message": "Automatically download detected HLS and DASH streams." }
-  ,"autoDownloadSubtitleTitle": { "message": "Subtitle" }
-  ,"autoDownloadSubtitleExplain": { "message": "Automatically download detected subtitle and caption files." }
-  ,"autoDownloadFileTitle": { "message": "File" }
-  ,"autoDownloadFileExplain": { "message": "Automatically download other supported files and download links." }
-  ,"autoDownloadAllDomainsTitle": { "message": "Enable for all domains / sites" }
-  ,"autoDownloadAllDomainsExplain": { "message": "Apply auto-download on every site. When off, only domains listed below are enabled." }
-  ,"autoSkipDownloadNamesTitle": { "message": "Skip names / keywords" }
-  ,"autoSkipDownloadNamesExplain": { "message": "Skip matching media URLs, filenames, and page titles from auto-download (case insensitive). Separate entries with new lines or commas." }
-  ,"autoSkipDownloadNamesOnlyTitle": { "message": "Skip names only" }
-  ,"autoSkipDownloadNamesOnlyExplain": { "message": "Only match filenames. Do not match the media URL or page title." }
-  ,"autoSkipDownloadDomainsTitle": { "message": "Skip domains" }
-  ,"autoSkipDownloadDomainsExplain": { "message": "Skip these sites or media hosts from auto-download, including subdomains. Separate entries with new lines or commas." }
-  ,"autoIgnoreExcludedMediaTitle": { "message": "Do not auto-download excluded media" }
-  ,"autoIgnoreExcludedMediaExplain": { "message": "Apply the name and domain exclusions above to auto-download. Detected items remain visible in the media list." }
-  ,"autoDownloadQualityTitle": { "message": "Auto-download Quality" }
-  ,"autoDownloadQualityExplain": { "message": "Select the quality preference for auto-downloaded media when multiple quality choices are available." }
-  ,"autoDownloadQualityHighest": { "message": "Highest Quality" }
-  ,"autoDownloadQualityLowest": { "message": "Lowest Quality" }
-  ,"autoDownloadYoutubeModeTitle": { "message": "YouTube auto-download" }
-  ,"autoDownloadYoutubeModeExplain": { "message": "Choose whether YouTube auto-download saves video or audio only." }
-  ,"autoDownloadYoutubeModeVideo": { "message": "Video" }
-  ,"autoDownloadYoutubeModeAudio": { "message": "Audio only" }
-  ,"autoDownloadUnavailableExplain": { "message": "Auto-download is unavailable because Background download is turned off. Enable Background download first." }
 }

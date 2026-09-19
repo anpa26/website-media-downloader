@@ -183,6 +183,25 @@ mdui-card {
     padding: 0;
 }
 
+.settings-items-container {
+    border-radius: var(--app-border-radius);
+    background-color: var(--surface-lowest);
+    border: 1px solid rgb(var(--mdui-color-outline-variant));
+    box-shadow: none;
+    overflow: hidden;
+}
+
+.card-header-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary);
+    padding: 12px 20px 4px;
+    opacity: 0.8;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 .settings-group mdui-divider {
     display: none;
 }

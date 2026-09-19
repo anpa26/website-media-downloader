@@ -1024,10 +1024,10 @@ async function addNewDownload(id, url, filename) {
 
 // Receive new downloads from background service worker
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === 'startDownload') {
-        addNewDownload(message.id, message.url, message.filename);
-        if (sendResponse) sendResponse({ success: true });
-    }
+    if (message.action !== 'startDownload') return false;
+    addNewDownload(message.id, message.url, message.filename)
+        .then(() => sendResponse({ success: true }))
+        .catch(error => sendResponse({ success: false, error: error.message }));
     return true;
 });
 

@@ -2043,6 +2043,47 @@ function filterAndRenderMediaList(query = '') {
   renderInitialList();
 }
 
+function getMediaRenderKey(url, type = '') {
+  if (!url) return '';
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname === 'googlevideo.com' || parsed.hostname.endsWith('.googlevideo.com')) {
+      const streamId = parsed.searchParams.get('id') || '';
+      return `googlevideo:${type}:${streamId || parsed.pathname}`;
+    }
+  } catch (_) {}
+  return `${type}:${url.split('?')[0]}`;
+}
+
+function getMediaRepresentativeScore(item) {
+  const request = item?.bestRequest || {};
+  let score = Array.isArray(request.ytFormats) ? request.ytFormats.length * 1000 : 0;
+  const url = request.originalUrl || request.url || '';
+  try {
+    const tags = new URL(url).searchParams.get('xtags') || '';
+    if (tags.includes('acont=original')) score += 100;
+  } catch (_) {}
+  if (/\boriginal\b|\bdefault\b/i.test(request.pageTitle || '')) score += 10;
+  return score;
+}
+
+function deduplicateMediaForDisplay(items) {
+  const positions = new Map();
+  const result = [];
+  for (const item of items) {
+    const url = item?.bestRequest?.originalUrl || item?.bestRequest?.url || '';
+    const key = getMediaRenderKey(url, item?.type || 'file');
+    if (!positions.has(key)) {
+      positions.set(key, result.length);
+      result.push(item);
+    } else {
+      const index = positions.get(key);
+      if (getMediaRepresentativeScore(item) > getMediaRepresentativeScore(result[index])) result[index] = item;
+    }
+  }
+  return result;
+}
+
 function getGroupCounts(activeItems) {
   const counts = { video: 0, audio: 0, stream: 0, image: 0, subtitle: 0, file: 0 };
   const countedUrls = new Set();
@@ -2054,7 +2095,7 @@ function getGroupCounts(activeItems) {
   // Active cards are rendered first and reserve their URL before detected items.
   activeItems.forEach(item => {
     const url = item.dataset.url || "";
-    if (url) countedUrls.add(url.split("?")[0]);
+    if (url) countedUrls.add(getMediaRenderKey(url, item.dataset.type || "file"));
     increment(item.dataset.type || "file");
   });
 
@@ -2062,7 +2103,7 @@ function getGroupCounts(activeItems) {
   // Count that same visible set so a group badge matches the cards inside it.
   allFilteredRequests.forEach(item => {
     const url = item.bestRequest.originalUrl || item.bestRequest.url || "";
-    const normalizedUrl = url.split("?")[0];
+    const normalizedUrl = getMediaRenderKey(url, item.type || "file");
     if (normalizedUrl && countedUrls.has(normalizedUrl)) return;
     if (normalizedUrl) countedUrls.add(normalizedUrl);
     increment(item.type || "file");
@@ -2299,8 +2340,8 @@ function renderNextChunk() {
 
   nextChunk.forEach(item => {
     const itemUrl = item.bestRequest.originalUrl;
-    const itemUrlBase = itemUrl.split('?')[0];
-    if (renderedMediaUrls.has(itemUrl) || renderedMediaUrls.has(itemUrlBase)) return;
+    const itemUrlBase = getMediaRenderKey(itemUrl, item.type || 'file');
+    if (renderedMediaUrls.has(itemUrlBase)) return;
     renderedMediaUrls.add(itemUrl);
     renderedMediaUrls.add(itemUrlBase);
 
@@ -3960,26 +4001,29 @@ async function loadMediaListOnce() {
     if (settings['optimize-low-end'] === '1' || settings['optimize-low-end'] === true) {
       limit = 0;
     }
-    if (limit > 0 && flattenedRequests.length > limit) {
-      flattenedRequests.length = limit;
+    const displayRequests = deduplicateMediaForDisplay(flattenedRequests);
+    if (limit > 0 && displayRequests.length > limit) {
+      displayRequests.length = limit;
     }
 
-    allMediaRequests = flattenedRequests;
+    allMediaRequests = displayRequests;
     allFilteredRequests = [...allMediaRequests];
 
     if (loadingSpinner) loadingSpinner.style.display = 'none';
 
     activeDownloadingElements = [...activeItems.values()];
-    const requestUrls = new Set(allFilteredRequests.map(item => item.bestRequest.originalUrl.split('?')[0]));
+    const requestUrls = new Set(allFilteredRequests.map(item =>
+      getMediaRenderKey(item.bestRequest.originalUrl, item.type || 'file')));
     const downloadModels = [];
     let activeCount = 0;
     for (const [id, downloadData] of Object.entries(activeDownloads || {})) {
       if (downloadData.isZip) continue;
       activeCount++;
       const url = downloadData.url || '';
-      if (requestUrls.has(url.split('?')[0]) || activeItems.has(url)) continue;
-      requestUrls.add(url.split('?')[0]);
       const type = downloadData.mediaType || 'file';
+      const renderKey = getMediaRenderKey(url, type);
+      if (requestUrls.has(renderKey) || activeItems.has(url)) continue;
+      requestUrls.add(renderKey);
       downloadModels.push({
         downloadId: id,
         bestRequest: { originalUrl: url, size: downloadData.total,
@@ -5534,7 +5578,7 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
       uiCache.set(downloadId, { element: mediaDiv, loadingBar, statusInfo, progressContainer });
     }
 
-    const dlSettings = await browser.storage.local.get(['download-method', 'stream-download', 'background-download', 'mux-all-audios', 'embed-subtitles-mkv', 'embed-subtitles-container']);
+    const dlSettings = await browser.storage.local.get(['download-method', 'stream-download', 'background-download', 'mux-all-audios', 'embed-subtitles-mkv', 'embed-subtitles-container', 'subtitle-conversion']);
     let downloadMethod = dlSettings['download-method'] || 'browser';
     if (url.includes('#audio.m4a') || url.includes('#audio.webm')) {
         downloadMethod = 'fetch';
@@ -5543,27 +5587,55 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
     const bgDownloadEnabled = dlSettings['background-download'] !== '0';
     const muxAllAudios = dlSettings['mux-all-audios'] === '1';
     const embedSubtitlesMkv = dlSettings['embed-subtitles-mkv'] === '1';
-    const embedSubtitlesContainer = dlSettings['embed-subtitles-container'] || 'mp4';
+    const embedSubtitlesContainer = 'mp4';
 
     try {
         if (!bgDownloadEnabled) throw new Error('Background download disabled');
         const isYouTube = url.toLowerCase().includes('googlevideo.com') || url.toLowerCase().includes('youtube.com') || url.toLowerCase().includes('youtu.be') || (mediaDiv && mediaDiv.dataset.originalUrl && (mediaDiv.dataset.originalUrl.toLowerCase().includes('youtube.com') || mediaDiv.dataset.originalUrl.toLowerCase().includes('googlevideo.com') || mediaDiv.dataset.originalUrl.toLowerCase().includes('youtu.be')));
-        if (isYouTube && (!subtitleUrl || subtitleUrl === 'none') && (audioUrl !== 'all' || muxAllAudios)) {
+        if (isYouTube) {
+            const ytFormats = (mediaDiv && mediaDiv.ytFormats) || [];
+            const allAudioTracks = [];
+            const seenAudioUrls = new Set();
+            for (const fmt of ytFormats) {
+                if (fmt.audioUrl && !seenAudioUrls.has(fmt.audioUrl)) {
+                    seenAudioUrls.add(fmt.audioUrl);
+                    allAudioTracks.push({
+                        url: fmt.audioUrl,
+                        name: fmt.audioTrack?.displayName || fmt.audioTrack?.display_name || 'Default Audio',
+                        language: fmt.audioTrack?.language || fmt.audioTrack?.lang || 'und',
+                        isDefault: !!(fmt.audioTrack?.audioIsDefault || fmt.audioTrack?.audio_is_default)
+                    });
+                }
+            }
             let delegatedAudioUrl = audioUrl;
             if (audioUrl === 'all' && muxAllAudios) {
-                const ytFormats = (mediaDiv && mediaDiv.ytFormats) || [];
-                const seenAudioUrls = new Set();
-                delegatedAudioUrl = ytFormats
-                    .filter(fmt => fmt.audioUrl && !seenAudioUrls.has(fmt.audioUrl) && seenAudioUrls.add(fmt.audioUrl))
-                    .map(fmt => ({
-                        url: fmt.audioUrl,
-                        name: fmt.audioTrack?.displayName || 'Default Audio'
-                    }));
+                delegatedAudioUrl = allAudioTracks;
+            } else if (audioUrl === 'all') {
+                delegatedAudioUrl = (allAudioTracks.find(track => track.isDefault) || allAudioTracks[0])?.url || null;
             }
+
+            const ytSubtitles = (mediaDiv && mediaDiv.ytSubtitles) || [];
+            let delegatedSubtitles = [];
+            if (subtitleUrl === 'all') delegatedSubtitles = ytSubtitles;
+            else if (subtitleUrl && subtitleUrl !== 'none') {
+                delegatedSubtitles = [ytSubtitles.find(track => track.vttUrl === subtitleUrl) || {
+                    vttUrl: subtitleUrl, displayName: 'Subtitle', language: 'und'
+                }];
+            }
+            const embedSelectedSubtitles = embedSubtitlesMkv && delegatedSubtitles.length > 0;
+            const zipYoutubeTracks = (!embedSelectedSubtitles && delegatedSubtitles.length > 0) || (audioUrl === 'all' && !muxAllAudios);
             const backgroundJob = await browser.runtime.sendMessage({
                 action: 'startPersistentAudioJob', recoveryJobId,
                 url,
                 audioUrl: delegatedAudioUrl || null,
+                youtubeTracks: {
+                    subtitles: delegatedSubtitles,
+                    audioFiles: audioUrl === 'all' && !muxAllAudios ? allAudioTracks : [],
+                    embedSubtitles: embedSelectedSubtitles,
+                    container: embedSubtitlesContainer,
+                    subtitleFormat: dlSettings['subtitle-conversion'] || 'none',
+                    zip: zipYoutubeTracks
+                },
                 filename: newName,
                 isYouTube: true,
                 audioOnly: false,

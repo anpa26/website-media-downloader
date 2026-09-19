@@ -2407,13 +2407,115 @@
   },
   "autoDownloadUnavailableExplain": {
     "message": "O download automático não está disponível porque o download em segundo plano está desativado. Ative o download em segundo plano primeiro."
+  },
+  "autoDownloadQualityTitle": {
+    "message": "Qualidade do download automático"
+  },
+  "autoDownloadQualityExplain": {
+    "message": "Escolha a qualidade da mídia baixada automaticamente quando houver várias opções."
+  },
+  "autoDownloadQualityHighest": {
+    "message": "Qualidade máxima"
+  },
+  "autoDownloadQualityLowest": {
+    "message": "Qualidade mínima"
+  },
+  "autoDownloadYoutubeModeTitle": {
+    "message": "Download automático do YouTube"
+  },
+  "autoDownloadYoutubeModeExplain": {
+    "message": "Escolha se o download automático do YouTube salva o vídeo ou apenas o áudio."
+  },
+  "autoDownloadYoutubeModeVideo": {
+    "message": "Vídeo"
+  },
+  "autoDownloadYoutubeModeAudio": {
+    "message": "Somente áudio"
+  },
+  "blockIncomingPopupsTitle": {
+    "message": "Bloquear redirecionamentos e anúncios indesejados"
+  },
+  "blockIncomingPopupsExplain": {
+    "message": "Impede que sites redirecionem a página atual ou abram abas de anúncios sem permissão. Pode não funcionar em alguns sites."
+  },
+  "redirectGuardBlockedNotice": {
+    "message": "Redirecionamento bloqueado. Toque mais $COUNT$ vez(es) para continuar.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "redirectGuardClicksTitle": {
+    "message": "Toques necessários para abrir"
+  },
+  "redirectGuardClicksExplain": {
+    "message": "Escolha quantas vezes um link externo deve ser tocado antes de abrir."
+  },
+  "redirectGuardHideContentTitle": {
+    "message": "Ocultar conteúdo bloqueado"
+  },
+  "redirectGuardHideContentExplain": {
+    "message": "Oculta da página o anúncio ou link clicado quando o redirecionamento é bloqueado."
+  },
+  "downloadStarted": {
+    "message": "Download iniciado",
+    "description": "Toast message when download starts"
+  },
+  "installedVersion": {
+    "message": "Versão Instalada",
+    "description": "Label for installed extension version"
+  },
+  "loadingQualities": {
+    "message": "Carregando qualidades...",
+    "description": "Text shown while loading stream qualities"
+  },
+  "qualityModalTitle": {
+    "message": "Selecionar Qualidade",
+    "description": "Title of quality selection modal"
+  },
+  "qualityModalTabVideo": {
+    "message": "Vídeo",
+    "description": "Tab label for video quality"
+  },
+  "qualityModalTabAudio": {
+    "message": "Apenas Áudio",
+    "description": "Tab label for audio quality"
+  },
+  "qualityModalQualityLabel": {
+    "message": "Qualidade / Resolução",
+    "description": "Label for quality resolution"
+  },
+  "qualityModalFormatLabel": {
+    "message": "Formato",
+    "description": "Label for file format"
+  },
+  "qualityModalCodecLabel": {
+    "message": "Codec",
+    "description": "Label for video codec"
+  },
+  "qualityModalAudioExplain": {
+    "message": "Extrair apenas a faixa de áudio da fonte de vídeo",
+    "description": "Explanation for audio extraction"
+  },
+  "qualityModalCancelBtn": {
+    "message": "Cancelar",
+    "description": "Cancel button label in quality modal"
+  },
+  "qualityModalDownloadBtn": {
+    "message": "Baixar",
+    "description": "Download button label in quality modal"
+  },
+  "selectButton": {
+    "message": "Selecionar",
+    "description": "Select button label"
+  },
+  "settingsSaved": {
+    "message": "Configurações salvas com sucesso",
+    "description": "Notification when settings are saved"
+  },
+  "startingDownload": {
+    "message": "Iniciando download...",
+    "description": "Status when initiating download"
   }
-  ,"autoDownloadQualityTitle": { "message": "Qualidade do download automático" }
-  ,"autoDownloadQualityExplain": { "message": "Escolha a qualidade da mídia baixada automaticamente quando houver várias opções." }
-  ,"autoDownloadQualityHighest": { "message": "Qualidade máxima" }
-  ,"autoDownloadQualityLowest": { "message": "Qualidade mínima" }
-  ,"autoDownloadYoutubeModeTitle": { "message": "Download automático do YouTube" }
-  ,"autoDownloadYoutubeModeExplain": { "message": "Escolha se o download automático do YouTube salva o vídeo ou apenas o áudio." }
-  ,"autoDownloadYoutubeModeVideo": { "message": "Vídeo" }
-  ,"autoDownloadYoutubeModeAudio": { "message": "Somente áudio" }
 }

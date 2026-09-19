@@ -2407,13 +2407,115 @@
   },
   "autoDownloadUnavailableExplain": {
     "message": "Автоскачивание недоступно, так как выключено фоновое скачивание. Сначала включите фоновое скачивание."
+  },
+  "autoDownloadQualityTitle": {
+    "message": "Качество автоскачивания"
+  },
+  "autoDownloadQualityExplain": {
+    "message": "Выберите качество автоматически скачиваемых медиафайлов, если доступно несколько вариантов."
+  },
+  "autoDownloadQualityHighest": {
+    "message": "Максимальное качество"
+  },
+  "autoDownloadQualityLowest": {
+    "message": "Минимальное качество"
+  },
+  "autoDownloadYoutubeModeTitle": {
+    "message": "Автоскачивание с YouTube"
+  },
+  "autoDownloadYoutubeModeExplain": {
+    "message": "Выберите, сохранять видео или только аудио при автоскачивании с YouTube."
+  },
+  "autoDownloadYoutubeModeVideo": {
+    "message": "Видео"
+  },
+  "autoDownloadYoutubeModeAudio": {
+    "message": "Только аудио"
+  },
+  "blockIncomingPopupsTitle": {
+    "message": "Блокировать нежелательные перенаправления и рекламу"
+  },
+  "blockIncomingPopupsExplain": {
+    "message": "Не позволяет сайтам перенаправлять текущую страницу или открывать рекламные вкладки без разрешения. На некоторых сайтах функция может не работать."
+  },
+  "redirectGuardBlockedNotice": {
+    "message": "Перенаправление заблокировано. Нажмите ещё $COUNT$ раз(а), чтобы продолжить.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "redirectGuardClicksTitle": {
+    "message": "Число нажатий для открытия"
+  },
+  "redirectGuardClicksExplain": {
+    "message": "Выберите, сколько раз нужно нажать внешнюю ссылку, прежде чем она откроется."
+  },
+  "redirectGuardHideContentTitle": {
+    "message": "Скрывать заблокированный контент"
+  },
+  "redirectGuardHideContentExplain": {
+    "message": "Скрывает на странице нажатую рекламу или ссылку, если её перенаправление заблокировано."
+  },
+  "downloadStarted": {
+    "message": "Загрузка началась",
+    "description": "Toast message when download starts"
+  },
+  "installedVersion": {
+    "message": "Установленная версия",
+    "description": "Label for installed extension version"
+  },
+  "loadingQualities": {
+    "message": "Загрузка качества...",
+    "description": "Text shown while loading stream qualities"
+  },
+  "qualityModalTitle": {
+    "message": "Выберите качество",
+    "description": "Title of quality selection modal"
+  },
+  "qualityModalTabVideo": {
+    "message": "Видео",
+    "description": "Tab label for video quality"
+  },
+  "qualityModalTabAudio": {
+    "message": "Только аудио",
+    "description": "Tab label for audio quality"
+  },
+  "qualityModalQualityLabel": {
+    "message": "Качество / Разрешение",
+    "description": "Label for quality resolution"
+  },
+  "qualityModalFormatLabel": {
+    "message": "Формат",
+    "description": "Label for file format"
+  },
+  "qualityModalCodecLabel": {
+    "message": "Кодек",
+    "description": "Label for video codec"
+  },
+  "qualityModalAudioExplain": {
+    "message": "Извлечь только аудиодорожку из видеоисточника",
+    "description": "Explanation for audio extraction"
+  },
+  "qualityModalCancelBtn": {
+    "message": "Отмена",
+    "description": "Cancel button label in quality modal"
+  },
+  "qualityModalDownloadBtn": {
+    "message": "Скачать",
+    "description": "Download button label in quality modal"
+  },
+  "selectButton": {
+    "message": "Выбрать",
+    "description": "Select button label"
+  },
+  "settingsSaved": {
+    "message": "Настройки успешно сохранены",
+    "description": "Notification when settings are saved"
+  },
+  "startingDownload": {
+    "message": "Запуск загрузки...",
+    "description": "Status when initiating download"
   }
-  ,"autoDownloadQualityTitle": { "message": "Качество автоскачивания" }
-  ,"autoDownloadQualityExplain": { "message": "Выберите качество автоматически скачиваемых медиафайлов, если доступно несколько вариантов." }
-  ,"autoDownloadQualityHighest": { "message": "Максимальное качество" }
-  ,"autoDownloadQualityLowest": { "message": "Минимальное качество" }
-  ,"autoDownloadYoutubeModeTitle": { "message": "Автоскачивание с YouTube" }
-  ,"autoDownloadYoutubeModeExplain": { "message": "Выберите, сохранять видео или только аудио при автоскачивании с YouTube." }
-  ,"autoDownloadYoutubeModeVideo": { "message": "Видео" }
-  ,"autoDownloadYoutubeModeAudio": { "message": "Только аудио" }
 }

@@ -2407,13 +2407,115 @@
   },
   "autoDownloadUnavailableExplain": {
     "message": "백그라운드 다운로드가 꺼져 있어 자동 다운로드를 사용할 수 없습니다. 먼저 백그라운드 다운로드를 활성화하세요."
+  },
+  "autoDownloadQualityTitle": {
+    "message": "자동 다운로드 품질"
+  },
+  "autoDownloadQualityExplain": {
+    "message": "여러 품질 옵션이 있을 때 자동으로 다운로드할 미디어 품질을 선택합니다."
+  },
+  "autoDownloadQualityHighest": {
+    "message": "최고 품질"
+  },
+  "autoDownloadQualityLowest": {
+    "message": "최저 품질"
+  },
+  "autoDownloadYoutubeModeTitle": {
+    "message": "YouTube 자동 다운로드"
+  },
+  "autoDownloadYoutubeModeExplain": {
+    "message": "YouTube 자동 다운로드에서 동영상 또는 오디오만 저장할지 선택합니다."
+  },
+  "autoDownloadYoutubeModeVideo": {
+    "message": "동영상"
+  },
+  "autoDownloadYoutubeModeAudio": {
+    "message": "오디오만"
+  },
+  "blockIncomingPopupsTitle": {
+    "message": "원치 않는 리디렉션 및 광고 차단"
+  },
+  "blockIncomingPopupsExplain": {
+    "message": "웹사이트가 허가 없이 현재 페이지를 이동하거나 광고 탭을 여는 것을 방지합니다. 일부 웹사이트에서는 작동하지 않을 수 있습니다."
+  },
+  "redirectGuardBlockedNotice": {
+    "message": "리디렉션이 차단되었습니다. 계속하려면 $COUNT$번 더 탭하세요.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "redirectGuardClicksTitle": {
+    "message": "열기 위해 필요한 탭 횟수"
+  },
+  "redirectGuardClicksExplain": {
+    "message": "외부 링크가 열리기 전에 탭해야 하는 횟수를 선택하세요."
+  },
+  "redirectGuardHideContentTitle": {
+    "message": "차단된 콘텐츠 숨기기"
+  },
+  "redirectGuardHideContentExplain": {
+    "message": "리디렉션이 차단되면 클릭한 광고나 링크를 웹페이지에서 숨깁니다."
+  },
+  "downloadStarted": {
+    "message": "다운로드가 시작되었습니다",
+    "description": "Toast message when download starts"
+  },
+  "installedVersion": {
+    "message": "설치된 버전",
+    "description": "Label for installed extension version"
+  },
+  "loadingQualities": {
+    "message": "화질 불러오는 중...",
+    "description": "Text shown while loading stream qualities"
+  },
+  "qualityModalTitle": {
+    "message": "화질 선택",
+    "description": "Title of quality selection modal"
+  },
+  "qualityModalTabVideo": {
+    "message": "비디오",
+    "description": "Tab label for video quality"
+  },
+  "qualityModalTabAudio": {
+    "message": "오디오 전용",
+    "description": "Tab label for audio quality"
+  },
+  "qualityModalQualityLabel": {
+    "message": "화질 / 해상도",
+    "description": "Label for quality resolution"
+  },
+  "qualityModalFormatLabel": {
+    "message": "포맷",
+    "description": "Label for file format"
+  },
+  "qualityModalCodecLabel": {
+    "message": "코덱",
+    "description": "Label for video codec"
+  },
+  "qualityModalAudioExplain": {
+    "message": "비디오 소스에서 오디오 트랙만 추출합니다",
+    "description": "Explanation for audio extraction"
+  },
+  "qualityModalCancelBtn": {
+    "message": "취소",
+    "description": "Cancel button label in quality modal"
+  },
+  "qualityModalDownloadBtn": {
+    "message": "다운로드",
+    "description": "Download button label in quality modal"
+  },
+  "selectButton": {
+    "message": "선택",
+    "description": "Select button label"
+  },
+  "settingsSaved": {
+    "message": "설정이 성공적으로 저장되었습니다",
+    "description": "Notification when settings are saved"
+  },
+  "startingDownload": {
+    "message": "다운로드 시작 중...",
+    "description": "Status when initiating download"
   }
-  ,"autoDownloadQualityTitle": { "message": "자동 다운로드 품질" }
-  ,"autoDownloadQualityExplain": { "message": "여러 품질 옵션이 있을 때 자동으로 다운로드할 미디어 품질을 선택합니다." }
-  ,"autoDownloadQualityHighest": { "message": "최고 품질" }
-  ,"autoDownloadQualityLowest": { "message": "최저 품질" }
-  ,"autoDownloadYoutubeModeTitle": { "message": "YouTube 자동 다운로드" }
-  ,"autoDownloadYoutubeModeExplain": { "message": "YouTube 자동 다운로드에서 동영상 또는 오디오만 저장할지 선택합니다." }
-  ,"autoDownloadYoutubeModeVideo": { "message": "동영상" }
-  ,"autoDownloadYoutubeModeAudio": { "message": "오디오만" }
 }

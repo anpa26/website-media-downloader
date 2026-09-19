@@ -3813,7 +3813,7 @@ async function downloadAndMuxYoutube(videoUrl, audioUrl, filename, downloadMetho
                 if (statusInfo) statusInfo.textContent = `Fetching audio ${i+1}/${audioUrl.length}: ${audioUrl[i].name}...`;
                 const data = await fetchAsUint8Array(audioUrl[i].url);
                 console.log(`downloadAndMuxYoutube: Audio data ${i+1} fetched (${data.length} bytes)`);
-                audioDatas.push({ data: data, url: audioUrl[i].url, name: audioUrl[i].name });
+                audioDatas.push({ data: data, url: audioUrl[i].url, name: audioUrl[i].name, language: audioUrl[i].language, isDefault: audioUrl[i].isDefault });
             }
         } else {
             const [vData, aData] = await Promise.all([
@@ -3885,7 +3885,7 @@ async function downloadAndMuxYoutube(videoUrl, audioUrl, filename, downloadMetho
 
         const videoExt = getExtFromUrl(videoUrl);
         const videoFile = 'input_video' + videoExt;
-        const targetExt = filename.includes('.') ? filename.substring(filename.lastIndexOf('.')) : (isMultiAudio ? '.mkv' : '.mp4');
+        const targetExt = '.mp4';
         const outputFile = 'output' + targetExt;
         
         console.log("LibAV: videoExt=" + videoExt + ", output=" + outputFile);
@@ -3911,8 +3911,17 @@ async function downloadAndMuxYoutube(videoUrl, audioUrl, filename, downloadMetho
         ffmpegArgs.push("-c:v", "copy", "-c:a", "copy");
 
         if (isMultiAudio) {
+            const audioLanguage = value => {
+                const map = { en:'eng', id:'ind', ja:'jpn', ko:'kor', zh:'zho', fr:'fra', de:'deu', es:'spa', pt:'por', ru:'rus', ar:'ara', hi:'hin', tr:'tur', it:'ita', nl:'nld', pl:'pol', th:'tha', vi:'vie' };
+                const base = String(value || '').split(/[-_.]/)[0].toLowerCase();
+                return base.length === 3 ? base : (map[base] || 'und');
+            };
             for (let i = 0; i < audioDatas.length; i++) {
-                ffmpegArgs.push(`-metadata:s:a:${i}`, `title=${audioDatas[i].name}`);
+                const trackName = audioDatas[i].name || `Audio ${i + 1}`;
+                ffmpegArgs.push(`-metadata:s:a:${i}`, `title=${trackName}`);
+                ffmpegArgs.push(`-metadata:s:a:${i}`, `handler_name=${trackName}`);
+                ffmpegArgs.push(`-metadata:s:a:${i}`, `language=${audioLanguage(audioDatas[i].language)}`);
+                ffmpegArgs.push(`-disposition:a:${i}`, audioDatas[i].isDefault || (!audioDatas.some(track => track.isDefault) && i === 0) ? 'default' : '0');
             }
         }
 
@@ -4120,7 +4129,27 @@ function updateProgressStatus(loadingBar, downloaded, total, statusInfo, url = n
     }
 }
 
-async function embedSubtitlesWithLibAV(videoBlob, subData, containerFormat, filename, downloadMethod, loadingBar) {
+function normalizeVttForMux(rawText) {
+    let text = String(rawText || '').replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n').trim();
+    if (!text) return null;
+    if (!/^WEBVTT(?:\s|$)/i.test(text)) text = 'WEBVTT\n\n' + text.replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2');
+    const cuePattern = /(?:^|\n)(?:[^\n]*\n)?((?:\d{2}:)?\d{2}:\d{2}[.,]\d{3})\s+-->\s+((?:\d{2}:)?\d{2}:\d{2}[.,]\d{3})[^\n]*\n([\s\S]*?)(?=\n{2,}|$)/g;
+    const toSeconds = value => { const p = value.replace(',', '.').split(':').map(Number); return p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : p[0] * 60 + p[1]; };
+    const toTimestamp = value => `${String(Math.floor(value / 3600)).padStart(2, '0')}:${String(Math.floor((value % 3600) / 60)).padStart(2, '0')}:${(value % 60).toFixed(3).padStart(6, '0')}`;
+    const byStart = new Map();
+    let match;
+    while ((match = cuePattern.exec(text))) {
+        const start = toSeconds(match[1]), end = toSeconds(match[2]);
+        const payload = match[3].replace(/<\d{2}:\d{2}:\d{2}\.\d{3}>/g, '').replace(/<\/?c(?:\.[^>]*)?>/g, '').replace(/<[^>]+>/g, '').replace(/\n{2,}/g, '\n').trim();
+        if (Number.isFinite(start) && Number.isFinite(end) && end > start && payload) byStart.set(start, { start, end, payload });
+    }
+    const cues = Array.from(byStart.values()).sort((a, b) => a.start - b.start);
+    if (!cues.length) return null;
+    for (let i = 0; i < cues.length - 1; i++) if (cues[i].end > cues[i + 1].start) cues[i].end = Math.max(cues[i].start + 0.001, cues[i + 1].start);
+    return 'WEBVTT\n\n' + cues.map((cue, index) => `${index + 1}\n${toTimestamp(cue.start)} --> ${toTimestamp(cue.end)}\n${cue.payload}`).join('\n\n') + '\n';
+}
+
+async function embedSubtitlesWithLibAV(videoBlob, subData, containerFormat, filename, downloadMethod, loadingBar, returnBlob = false) {
     console.log("embedSubtitlesWithLibAV: Starting...");
     const statusInfo = loadingBar ? loadingBar.parentNode.querySelector('.download-status-info') : null;
     if (statusInfo) statusInfo.textContent = "Initializing LibAV...";
@@ -4177,16 +4206,18 @@ async function embedSubtitlesWithLibAV(videoBlob, subData, containerFormat, file
 
         const ffmpegArgs = ["-y", "-i", videoFile];
 
-        for (let i = 0; i < subData.length; i++) {
+        const normalizedSubData = subData.map(item => ({ ...item, text: normalizeVttForMux(item.text) })).filter(item => item.text);
+        if (!normalizedSubData.length) throw new Error('No valid subtitle cues to embed');
+        for (let i = 0; i < normalizedSubData.length; i++) {
             const subFile = `sub_${i}.vtt`;
             const subEncoder = new TextEncoder();
-            const subBytes = subEncoder.encode(subData[i].text);
+            const subBytes = subEncoder.encode(normalizedSubData[i].text);
             await libav.writeFile(subFile, subBytes);
             ffmpegArgs.push("-i", subFile);
         }
 
         ffmpegArgs.push("-map", "0");
-        for (let i = 0; i < subData.length; i++) {
+        for (let i = 0; i < normalizedSubData.length; i++) {
             ffmpegArgs.push("-map", `${i + 1}`);
         }
 
@@ -4208,14 +4239,14 @@ async function embedSubtitlesWithLibAV(videoBlob, subData, containerFormat, file
             return map[base] || 'und';
         };
 
-        for (let i = 0; i < subData.length; i++) {
-            const lang = toIso3(subData[i].language);
-            const name = subData[i].displayName || `Subtitle ${i+1}`;
+        for (let i = 0; i < normalizedSubData.length; i++) {
+            const lang = toIso3(normalizedSubData[i].language);
+            const name = normalizedSubData[i].displayName || `Subtitle ${i+1}`;
             ffmpegArgs.push(`-metadata:s:s:${i}`, `language=${lang}`);
             ffmpegArgs.push(`-metadata:s:s:${i}`, `title=${name}`);
         }
 
-        ffmpegArgs.push(outputFile);
+        ffmpegArgs.push("-shortest", outputFile);
 
         if (statusInfo) statusInfo.textContent = "Embedding subtitles with LibAV...";
         const exitCode = await libav.ffmpeg(ffmpegArgs);
@@ -4233,6 +4264,8 @@ async function embedSubtitlesWithLibAV(videoBlob, subData, containerFormat, file
 
         const finalFilename = filename.replace(/\.[^/.]+$/, "") + (isMp4 ? '.mp4' : '.mkv');
 
+        if (returnBlob) return blob;
+
         if (typeof finalizeDownload === 'function') {
             await finalizeDownload(blob, finalFilename, downloadMethod, loadingBar, false, false);
         } else {
@@ -4246,7 +4279,7 @@ async function embedSubtitlesWithLibAV(videoBlob, subData, containerFormat, file
         }
     } catch (e) {
         console.error("FFmpeg subtitle embedding failed:", e);
-        alert("FFmpeg Error: " + (e.stack || e.message || e) + "\n\nFFmpeg Log:\n" + ffmpegLog);
+        if (typeof alert === 'function') alert("FFmpeg Error: " + (e.stack || e.message || e) + "\n\nFFmpeg Log:\n" + ffmpegLog);
         throw e;
     } finally {
         console.log = origLog;

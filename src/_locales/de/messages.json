@@ -2407,13 +2407,115 @@
   },
   "autoDownloadUnavailableExplain": {
     "message": "Automatischer Download ist nicht verfügbar, da der Hintergrund-Download ausgeschaltet ist. Aktivieren Sie zuerst den Hintergrund-Download."
+  },
+  "autoDownloadQualityTitle": {
+    "message": "Qualität für automatische Downloads"
+  },
+  "autoDownloadQualityExplain": {
+    "message": "Wählen Sie die bevorzugte Qualität für automatisch heruntergeladene Medien, wenn mehrere Optionen verfügbar sind."
+  },
+  "autoDownloadQualityHighest": {
+    "message": "Höchste Qualität"
+  },
+  "autoDownloadQualityLowest": {
+    "message": "Niedrigste Qualität"
+  },
+  "autoDownloadYoutubeModeTitle": {
+    "message": "Automatischer YouTube-Download"
+  },
+  "autoDownloadYoutubeModeExplain": {
+    "message": "Wählen Sie, ob beim automatischen YouTube-Download das Video oder nur der Ton gespeichert wird."
+  },
+  "autoDownloadYoutubeModeVideo": {
+    "message": "Video"
+  },
+  "autoDownloadYoutubeModeAudio": {
+    "message": "Nur Audio"
+  },
+  "blockIncomingPopupsTitle": {
+    "message": "Unerwünschte Weiterleitungen und Werbung blockieren"
+  },
+  "blockIncomingPopupsExplain": {
+    "message": "Verhindert, dass Websites die aktuelle Seite umleiten oder ohne Erlaubnis Werbe-Tabs öffnen. Funktioniert möglicherweise nicht auf allen Websites."
+  },
+  "redirectGuardBlockedNotice": {
+    "message": "Weiterleitung blockiert. Noch $COUNT$-mal tippen, um fortzufahren.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "redirectGuardClicksTitle": {
+    "message": "Zum Öffnen erforderliche Klicks"
+  },
+  "redirectGuardClicksExplain": {
+    "message": "Wähle, wie oft ein externer Link angeklickt werden muss, bevor er geöffnet wird."
+  },
+  "redirectGuardHideContentTitle": {
+    "message": "Blockierte Inhalte ausblenden"
+  },
+  "redirectGuardHideContentExplain": {
+    "message": "Blendet die angeklickte Werbung oder den Link aus, wenn die Weiterleitung blockiert wird."
+  },
+  "downloadStarted": {
+    "message": "Download gestartet",
+    "description": "Toast message when download starts"
+  },
+  "installedVersion": {
+    "message": "Installierte Version",
+    "description": "Label for installed extension version"
+  },
+  "loadingQualities": {
+    "message": "Qualitäten werden geladen...",
+    "description": "Text shown while loading stream qualities"
+  },
+  "qualityModalTitle": {
+    "message": "Qualität auswählen",
+    "description": "Title of quality selection modal"
+  },
+  "qualityModalTabVideo": {
+    "message": "Video",
+    "description": "Tab label for video quality"
+  },
+  "qualityModalTabAudio": {
+    "message": "Nur Audio",
+    "description": "Tab label for audio quality"
+  },
+  "qualityModalQualityLabel": {
+    "message": "Qualität / Auflösung",
+    "description": "Label for quality resolution"
+  },
+  "qualityModalFormatLabel": {
+    "message": "Format",
+    "description": "Label for file format"
+  },
+  "qualityModalCodecLabel": {
+    "message": "Codec",
+    "description": "Label for video codec"
+  },
+  "qualityModalAudioExplain": {
+    "message": "Nur Audiospur aus der Videoquelle extrahieren",
+    "description": "Explanation for audio extraction"
+  },
+  "qualityModalCancelBtn": {
+    "message": "Abbrechen",
+    "description": "Cancel button label in quality modal"
+  },
+  "qualityModalDownloadBtn": {
+    "message": "Herunterladen",
+    "description": "Download button label in quality modal"
+  },
+  "selectButton": {
+    "message": "Auswählen",
+    "description": "Select button label"
+  },
+  "settingsSaved": {
+    "message": "Einstellungen erfolgreich gespeichert",
+    "description": "Notification when settings are saved"
+  },
+  "startingDownload": {
+    "message": "Download wird gestartet...",
+    "description": "Status when initiating download"
   }
-  ,"autoDownloadQualityTitle": { "message": "Qualität für automatische Downloads" }
-  ,"autoDownloadQualityExplain": { "message": "Wählen Sie die bevorzugte Qualität für automatisch heruntergeladene Medien, wenn mehrere Optionen verfügbar sind." }
-  ,"autoDownloadQualityHighest": { "message": "Höchste Qualität" }
-  ,"autoDownloadQualityLowest": { "message": "Niedrigste Qualität" }
-  ,"autoDownloadYoutubeModeTitle": { "message": "Automatischer YouTube-Download" }
-  ,"autoDownloadYoutubeModeExplain": { "message": "Wählen Sie, ob beim automatischen YouTube-Download das Video oder nur der Ton gespeichert wird." }
-  ,"autoDownloadYoutubeModeVideo": { "message": "Video" }
-  ,"autoDownloadYoutubeModeAudio": { "message": "Nur Audio" }
 }

@@ -2333,7 +2333,7 @@ async function ensureAudioOffscreenDocument() {
 async function startPersistentAudioJobDirect(message) {
     const jobId = 'audio_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
     const job = { ...message, action: undefined, jobId, percent: 0, text: 'Starting...', status: 'running', recoveryState: 'running' };
-    activeDownloads.set(jobId, { id: jobId, url: message.url, audioUrl: message.audioUrl, filename: message.filename, loaded: 0, total: 100, percent: 0, status: 'Starting...', mediaType: message.audioOnly ? 'audio' : 'video', isAudioJob: true });
+    activeDownloads.set(jobId, { id: jobId, url: message.url, audioUrl: message.audioUrl, youtubeTracks: message.youtubeTracks, filename: message.filename, loaded: 0, total: 100, percent: 0, status: 'Starting...', mediaType: message.audioOnly ? 'audio' : 'video', isAudioJob: true });
     try {
         await browser.storage.local.set({ [`audioJob_${jobId}`]: job });
         let processor;
@@ -3213,7 +3213,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 if (item.isZip) cancelledZipDownloads.add(targetId);
                 if (item.isAudioJob) {
                     if (item.abortController) item.abortController.abort();
-                    browser.runtime.sendMessage({ action: 'cancelPersistentAudioJob', jobId: targetId, url: item.url, audioUrl: item.audioUrl }).catch(() => {});
+                    browser.runtime.sendMessage({ action: 'cancelPersistentAudioJob', jobId: targetId, url: item.url, audioUrl: item.audioUrl, youtubeTracks: item.youtubeTracks }).catch(() => {});
                     if (item.processorTabId !== undefined) browser.tabs.remove(item.processorTabId).catch(() => {});
                     browser.storage.local.remove(`audioJob_${targetId}`).catch(() => {});
                     broadcastAudioJob({ action: 'audioJobUpdate', jobId: targetId, filename: item.filename, text: 'Cancelled', percent: item.percent, loaded: item.loaded, total: item.total, complete: true, success: false });

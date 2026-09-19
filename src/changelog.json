@@ -1,66 +1,84 @@
 {
   "require_uninstall": false,
   "en": {
-    "headline": "What's New (v2.3.7)",
+    "headline": "What's New (v2.4.0)",
     "changes": [
-      "Added automatic download support for detected videos and HLS/DASH streams.",
-      "Added filename-only exclusion filters so media remains correctly detected when a matching keyword appears only in its URL or page title."
+      "Fixed an issue where YouTube media was not detected correctly.",
+      "Fixed an issue where YouTube multi-track videos failed to download properly in the background.",
+      "Reorganized and cleaned up the settings layout.",
+      "Added support for blocking redirects and ads, with option to hide blocked content."
     ]
   },
   "id": {
-    "headline": "Yang Baru (v2.3.7)",
+    "headline": "Yang Baru (v2.4.0)",
     "changes": [
-      "Menambahkan dukungan unduhan otomatis untuk video dan stream HLS/DASH yang terdeteksi.",
-      "Menambahkan filter pengecualian khusus nama file agar media tetap terdeteksi dengan benar ketika kata yang cocok hanya muncul di URL atau judul halaman."
+      "Memperbaiki masalah di mana YouTube tidak terdeteksi dengan benar.",
+      "Memperbaiki masalah di mana video multi-track YouTube tidak dapat diunduh dengan benar di latar belakang.",
+      "Merapikan tata letak pengaturan (Settings).",
+      "Menambahkan dukungan untuk memblokir redirect dan iklan serta menghilangkannya."
     ]
   },
   "de": {
-    "headline": "Was gibt's Neues (v2.3.7)",
+    "headline": "Was gibt's Neues (v2.4.0)",
     "changes": [
-      "Automatische Downloads für erkannte Videos und HLS/DASH-Streams wurden hinzugefügt.",
-      "Dateinamenspezifische Ausschlussfilter wurden hinzugefügt, damit Medien weiterhin korrekt erkannt werden, wenn ein passendes Schlüsselwort nur in der URL oder im Seitentitel vorkommt."
+      "Behebt ein Problem, bei dem YouTube-Medien nicht korrekt erkannt wurden.",
+      "Behebt ein Problem, bei dem YouTube-Multi-Track-Videos im Hintergrund nicht ordnungsgemäß heruntergeladen werden konnten.",
+      "Das Einstellungs-Layout wurde aufgeräumt und neu strukturiert.",
+      "Unterstützung für das Blockieren und Ausblenden von Weiterleitungen und Werbung hinzugefügt."
     ]
   },
   "fr": {
-    "headline": "Nouveautés (v2.3.7)",
+    "headline": "Nouveautés (v2.4.0)",
     "changes": [
-      "Ajout du téléchargement automatique des vidéos détectées et des flux HLS/DASH.",
-      "Ajout de filtres d’exclusion limités au nom de fichier afin que les médias restent correctement détectés lorsqu’un mot-clé correspondant apparaît uniquement dans leur URL ou le titre de la page."
+      "Correction d'un problème où les médias YouTube n'étaient pas détectés correctement.",
+      "Correction d'un problème empêchant les vidéos multi-pistes YouTube de se télécharger correctement en arrière-plan.",
+      "Organisation et nettoyage de la page des paramètres.",
+      "Ajout de la prise en charge du blocage et du masquage des redirections et des publicités."
     ]
   },
   "ja": {
-    "headline": "新機能 (v2.3.7)",
+    "headline": "新機能 (v2.4.0)",
     "changes": [
-      "検出された動画およびHLS/DASHストリームの自動ダウンロードに対応しました。",
-      "一致するキーワードがURLまたはページタイトルにのみ含まれる場合でもメディアを正しく検出できるよう、ファイル名のみを対象とする除外フィルターを追加しました。"
+      "YouTubeのメディアが正しく検出されない問題を修正しました。",
+      "YouTubeのマルチトラック動画がバックグラウンドで正常にダウンロードできない問題を修正しました。",
+      "設定レイアウトを整理・改善しました。",
+      "リダイレクトや広告のブロックおよび非表示機能のサポートを追加しました。"
     ]
   },
   "ko": {
-    "headline": "새로운 기능 (v2.3.7)",
+    "headline": "새로운 기능 (v2.4.0)",
     "changes": [
-      "감지된 동영상 및 HLS/DASH 스트림의 자동 다운로드를 지원합니다.",
-      "일치하는 키워드가 URL이나 페이지 제목에만 포함된 경우에도 미디어가 올바르게 감지되도록 파일 이름 전용 제외 필터를 추가했습니다."
+      "YouTube 미디어가 올바르게 감지되지 않는 문제를 수정했습니다.",
+      "YouTube 멀티트랙 동영상이 백그라운드에서 정상적으로 다운로드되지 않는 문제를 수정했습니다.",
+      "설정 레이아웃을 정리하고 개선했습니다.",
+      "리디렉션 및 광고 차단 및 숨기기 지원을 추가했습니다."
     ]
   },
   "pt": {
-    "headline": "Novidades (v2.3.7)",
+    "headline": "Novidades (v2.4.0)",
     "changes": [
-      "Adicionado suporte ao download automático de vídeos detectados e streams HLS/DASH.",
-      "Adicionados filtros de exclusão somente por nome de arquivo para que a mídia continue sendo detectada corretamente quando uma palavra-chave correspondente aparecer apenas na URL ou no título da página."
+      "Corrigido um problema em que a mídia do YouTube não era detectada corretamente.",
+      "Corrigido um problema em que vídeos multifaixa do YouTube não podiam ser baixados corretamente em segundo plano.",
+      "Reorganizado e otimizado o layout das configurações.",
+      "Adicionado suporte para bloquear e ocultar redirecionamentos e anúncios."
     ]
   },
   "ru": {
-    "headline": "Что нового (v2.3.7)",
+    "headline": "Что нового (v2.4.0)",
     "changes": [
-      "Добавлена автоматическая загрузка обнаруженных видео и потоков HLS/DASH.",
-      "Добавлены фильтры исключений только по имени файла, чтобы медиа корректно обнаруживались, когда совпадающее ключевое слово встречается лишь в URL или заголовке страницы."
+      "Исправлена проблема, из-за которой медиафайлы YouTube определялись некорректно.",
+      "Исправлена проблема, из-за которой многодорожечные видео YouTube не могли нормально скачиваться в фоновом режиме.",
+      "Оптимизирован и упорядочен макет настроек.",
+      "Добавлена поддержка блокировки и скрытия перенаправлений и рекламы."
     ]
   },
   "ar": {
-    "headline": "ما الجديد (v2.3.7)",
+    "headline": "ما الجديد (v2.4.0)",
     "changes": [
-      "أُضيف دعم التنزيل التلقائي لمقاطع الفيديو وتدفقات HLS/DASH المكتشفة.",
-      "أُضيفت عوامل استثناء تعتمد على اسم الملف فقط لضمان استمرار اكتشاف الوسائط بصورة صحيحة عندما تظهر الكلمة المطابقة في الرابط أو عنوان الصفحة فقط."
+      "إصلاح مشكلة عدم اكتشاف وسائط YouTube بشكل صحيح.",
+      "إصلاح مشكلة عدم تنزيل مقاطع فيديو YouTube متعددة المسارات بشكل صحيح في الخلفية.",
+      "ترتيب وتنظيف تخطيط الإعدادات.",
+      "إضافة دعم لحظر وإخفاء إعادة التوجيه والإعلانات."
     ]
   }
 }

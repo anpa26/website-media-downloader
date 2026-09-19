@@ -480,8 +480,16 @@
                   </select>
                 </div>
               </div>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="backgroundDownloadTitle">Background download</h3>
+                  <p data-translate="backgroundDownloadExplain">Allows downloads to continue in the background.</p>
+                </div>
+                <mdui-switch id="background-download"></mdui-switch>
+              </div>
+            </div>
 
-
+            <div class="settings-items-container">
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="mediaCacheTitle">Media cache</h3>
@@ -489,7 +497,6 @@
                 </div>
                 <mdui-switch id="media-cache"></mdui-switch>
               </div>
-
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="cacheStorageTitle">Cache storage</h3>
@@ -497,7 +504,9 @@
                 </div>
                 <mdui-button id="clear-indexeddb-cache" variant="tonal" data-translate="cacheStorageClear">Clear cache</mdui-button>
               </div>
-              
+            </div>
+
+            <div class="settings-items-container">
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="speedBoostTitle">Speed boost</h3>
@@ -505,7 +514,6 @@
                 </div>
                 <mdui-switch id="speed-boost"></mdui-switch>
               </div>
-              
               <div class="setting-item">
                  <h3 data-translate="connectionsTitle">Parallel connections</h3>
                  <div class="pill-select-wrapper">
@@ -524,15 +532,11 @@
                 </div>
                 <mdui-switch id="speed-boost-resume"></mdui-switch>
               </div>
+            </div>
 
-              <div class="setting-item">
-                <div class="setting-text">
-                  <h3 data-translate="backgroundDownloadTitle">Background download</h3>
-                  <p data-translate="backgroundDownloadExplain">Allows downloads to continue in the background.</p>
-                </div>
-                <mdui-switch id="background-download"></mdui-switch>
-              </div>
+
               
+            <div class="settings-items-container">
               <div class="setting-item">
                  <h3 data-translate="streamDownloadTitle">Stream preference</h3>
                  <div class="pill-select-wrapper">
@@ -542,7 +546,6 @@
                    </select>
                  </div>
               </div>
-              
               <div class="setting-item">
                  <h3 data-translate="streamQualityTitle">Stream quality</h3>
                  <div class="pill-select-wrapper">
@@ -553,7 +556,6 @@
                    </select>
                  </div>
               </div>
-              
               <div class="setting-item">
                  <h3 data-translate="subtitleConversionTitle">Convert subtitle to</h3>
                  <div class="pill-select-wrapper">
@@ -571,11 +573,9 @@
                    </select>
                  </div>
               </div>
-              
-              
-              
-              
-              
+            </div>
+
+            <div class="settings-items-container">
               <div class="setting-item vertical" style="padding-top: 4px; padding-bottom: 10px; gap: 6px;">
                  <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                     <h3 data-translate="filenameTemplateTitle" style="margin: 0;">Filename template</h3>
@@ -590,7 +590,6 @@
                     <div class="pill-helper-text" data-translate="filenameTemplateHelper"></div>
                  </div>
               </div>
-              
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="disableRenameDialogTitle">Disable rename file dialog</h3>
@@ -681,6 +680,34 @@
             </h2>
 
             <div class="settings-items-container">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="blockIncomingPopupsTitle">Block unwanted redirects and ads</h3>
+                  <p data-translate="blockIncomingPopupsExplain">Prevents websites from moving the current page or opening ad tabs without permission. May not work on some websites.</p>
+                </div>
+                <mdui-switch id="block-incoming-popups"></mdui-switch>
+              </div>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="redirectGuardClicksTitle">Taps required to open</h3>
+                  <p data-translate="redirectGuardClicksExplain">Choose how many times an external link must be tapped before it opens.</p>
+                </div>
+                <div class="pill-select-wrapper">
+                  <select id="redirect-guard-clicks" class="pill-select">
+                    <option value="1">1×</option><option value="2" selected>2×</option><option value="3">3×</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="redirectGuardHideContentTitle">Hide blocked content</h3>
+                  <p data-translate="redirectGuardHideContentExplain">Hides the clicked ad or link from the webpage when its redirect is blocked.</p>
+                </div>
+                <mdui-switch id="redirect-guard-hide-content"></mdui-switch>
+              </div>
+            </div>
+
+            <div class="settings-items-container">
 
 
               <div class="setting-item">
@@ -697,7 +724,27 @@
                 </div>
                 <mdui-switch id="mpd-to-mp4"></mdui-switch>
               </div>
+            </div>
 
+            <div class="settings-items-container">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="audioToMp3Setting">Convert audio to MP3</h3>
+                  <p data-translate="audioToMp3SettingDesc">Automatically convert audio-only downloads from WAV/PCM to MP3 format.</p>
+                </div>
+                <mdui-switch id="audio-to-mp3"></mdui-switch>
+              </div>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="mp3BitrateTitle">MP3 bitrate quality</h3>
+                  <p data-translate="mp3BitrateExplain">Set the bitrate quality when converting audio to MP3.</p>
+                </div>
+                <div class="pill-select-wrapper">
+                  <select id="mp3-bitrate" class="pill-select">
+                    <option value="96">96 kbps</option><option value="128">128 kbps</option><option value="192">192 kbps</option><option value="256">256 kbps</option><option value="320">320 kbps</option>
+                  </select>
+                </div>
+              </div>
               <div class="setting-item">
                   <div class="setting-text">
                     <h3 data-translate="embedSubtitlesNonYtTitle">Embed subtitles into video (Standard video)</h3>
@@ -705,6 +752,34 @@
                   </div>
                   <mdui-switch id="embed-subtitles-nonyt"></mdui-switch>
                 </div>
+            </div>
+
+            <div class="settings-items-container">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="streamToMp4Title">Save stream as MP4</h3>
+                  <p data-translate="streamToMp4Explain">Automatically convert MPEG-TS streams to MP4 format. (Requires mux.js)</p>
+                </div>
+                <mdui-switch id="stream-to-mp4"></mdui-switch>
+              </div>
+
+              <div class="setting-item" id="manual-ts-converter" style="align-items: flex-start;">
+                <div class="setting-text" style="min-width: 0; flex: 1;">
+                  <h3 data-translate="manualTsConvertTitle">Convert a TS file manually</h3>
+                  <p data-translate="manualTsConvertExplain">Select an MPEG-TS file, convert it to MP4, and save it directly to your device.</p>
+                  <span id="manual-ts-filename" data-translate="manualTsNoFile" style="display: block; margin-top: 8px; font-size: 12px; color: rgb(var(--mdui-color-on-surface-variant)); overflow-wrap: anywhere;">No file selected</span>
+                  <mdui-linear-progress id="manual-ts-progress" value="0" max="100" style="display: none; margin-top: 12px;"></mdui-linear-progress>
+                  <p id="manual-ts-status" role="status" aria-live="polite" style="display: none; margin-top: 8px;"></p>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: stretch; gap: 8px; flex: 0 0 auto;">
+                  <input type="file" id="manual-ts-file" accept=".ts" style="display: none;">
+                  <mdui-button id="manual-ts-select" variant="outlined" data-translate="manualTsSelectFile">Select</mdui-button>
+                  <mdui-button id="manual-ts-convert" variant="filled" disabled data-translate="manualTsConvertButton">Convert</mdui-button>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-items-container">
 
 
               <div class="setting-item">
@@ -774,52 +849,6 @@
               </div>
               
 
-              <div class="setting-item">
-                <div class="setting-text">
-                  <h3 data-translate="streamToMp4Title">Save stream as MP4</h3>
-                  <p data-translate="streamToMp4Explain">Automatically convert MPEG-TS streams to MP4 format. (Requires mux.js)</p>
-                </div>
-                <mdui-switch id="stream-to-mp4"></mdui-switch>
-              </div>
-
-              <div class="setting-item" id="manual-ts-converter" style="align-items: flex-start;">
-                <div class="setting-text" style="min-width: 0; flex: 1;">
-                  <h3 data-translate="manualTsConvertTitle">Convert a TS file manually</h3>
-                  <p data-translate="manualTsConvertExplain">Select an MPEG-TS file, convert it to MP4, and save it directly to your device.</p>
-                  <span id="manual-ts-filename" data-translate="manualTsNoFile" style="display: block; margin-top: 8px; font-size: 12px; color: rgb(var(--mdui-color-on-surface-variant)); overflow-wrap: anywhere;">No file selected</span>
-                  <mdui-linear-progress id="manual-ts-progress" value="0" max="100" style="display: none; margin-top: 12px;"></mdui-linear-progress>
-                  <p id="manual-ts-status" role="status" aria-live="polite" style="display: none; margin-top: 8px;"></p>
-                </div>
-                <div style="display: flex; flex-direction: column; align-items: stretch; gap: 8px; flex: 0 0 auto;">
-                  <input type="file" id="manual-ts-file" accept=".ts" style="display: none;">
-                  <mdui-button id="manual-ts-select" variant="outlined" data-translate="manualTsSelectFile">Select</mdui-button>
-                  <mdui-button id="manual-ts-convert" variant="filled" disabled data-translate="manualTsConvertButton">Convert</mdui-button>
-                </div>
-              </div>
-
-              <div class="setting-item">
-                <div class="setting-text">
-                  <h3 data-translate="audioToMp3Setting">Convert audio to MP3</h3>
-                  <p data-translate="audioToMp3SettingDesc">Automatically convert audio-only downloads from WAV/PCM to MP3 format.</p>
-                </div>
-                <mdui-switch id="audio-to-mp3"></mdui-switch>
-              </div>
-
-              <div class="setting-item">
-                <div class="setting-text">
-                  <h3 data-translate="mp3BitrateTitle">MP3 bitrate quality</h3>
-                  <p data-translate="mp3BitrateExplain">Set the bitrate quality when converting audio to MP3.</p>
-                </div>
-                <div class="pill-select-wrapper">
-                  <select id="mp3-bitrate" class="pill-select">
-                    <option value="96">96 kbps</option>
-                    <option value="128">128 kbps</option>
-                    <option value="192">192 kbps</option>
-                    <option value="256">256 kbps</option>
-                    <option value="320">320 kbps</option>
-                  </select>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -895,14 +924,6 @@
               
               <div class="setting-item">
                 <div class="setting-text">
-                  <h3 data-translate="historyPageTitle">Enable history page</h3>
-                  <p data-translate="historyPageExplain">Keep a local record of your downloads.</p>
-                </div>
-                <mdui-switch id="history-page"></mdui-switch>
-              </div>
-
-              <div class="setting-item">
-                <div class="setting-text">
                   <h3 data-translate="settingsBackupTitle">Settings configuration</h3>
                   <p data-translate="settingsBackupExplain">Export or import your extension settings.</p>
                 </div>
@@ -914,22 +935,9 @@
               </div>
               
 
-              <div class="setting-item">
-                <div class="setting-text">
-                  <h3 data-translate="autoCheckUpdateTitle">Automatic update check</h3>
-                  <p data-translate="autoCheckUpdateExplain">Automatically check for extension updates when opened.</p>
-                </div>
-                <mdui-switch id="auto-check-update"></mdui-switch>
-              </div>
+            </div>
 
-              <div class="setting-item">
-                <div class="setting-text">
-                  <h3 data-translate="badgeCounterTitle">Badge counter on icon</h3>
-                  <p data-translate="badgeCounterExplain">Show active running downloads count on extension icon.</p>
-                </div>
-                <mdui-switch id="badge-counter"></mdui-switch>
-              </div>
-
+            <div class="settings-items-container interface-appearance-card">
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="themeModeTitle">Theme mode</h3>
@@ -944,7 +952,6 @@
                   </select>
                 </div>
               </div>
-              
               <div class="setting-item vertical">
                 <h3 data-translate="colorPickerTitle">Theme color</h3>
                 <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; width: 100%;">
@@ -968,17 +975,43 @@
                   <div style="display: flex; align-items: center; gap: 8px;">
                     <input type="text" id="color-hex-input" class="pill-input" placeholder="#BBDEFB" style="width: 90px; text-align: center; font-family: monospace; text-transform: uppercase; font-weight: 800; font-size: 0.8rem;">
                     <mdui-button-icon id="open-settings-tab" data-helper-translate="openInNewTabHelper">
-                    <mdui-icon>
-                      <svg viewBox="0 -960 960 960"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 312-312H520v-80h240v240h-80v-124L388-332Z"/></svg>
-                    </mdui-icon>
-                  </mdui-button-icon>
+                      <mdui-icon>
+                        <svg viewBox="0 -960 960 960"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 312-312H520v-80h240v240h-80v-124L388-332Z"/></svg>
+                      </mdui-icon>
+                    </mdui-button-icon>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-items-container interface-system-card">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="autoCheckUpdateTitle">Automatic update check</h3>
+                  <p data-translate="autoCheckUpdateExplain">Automatically check for extension updates when opened.</p>
+                </div>
+                <mdui-switch id="auto-check-update"></mdui-switch>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="badgeCounterTitle">Badge counter on icon</h3>
+                  <p data-translate="badgeCounterExplain">Show active running downloads count on extension icon.</p>
+                </div>
+                <mdui-switch id="badge-counter"></mdui-switch>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="historyPageTitle">Enable history page</h3>
+                  <p data-translate="historyPageExplain">Keep a local record of your downloads.</p>
+                </div>
+                <mdui-switch id="history-page"></mdui-switch>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div class="settings-group">
+          <div class="settings-group">
             <h2 class="settings-section-title collapsible-header">
               <mdui-icon>
                 <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 3a9 9 0 0 0-9 9 9.07 9.07 0 0 0 .76 3.61l1.43-1.43a7.14 7.14 0 0 1-.19-2.18 7 7 0 1 1 11.23 5.62l1.43 1.43A9 9 0 0 0 12 3zm0 5a4 4 0 0 0-4 4 3.93 3.93 0 0 0 .19 1.18l2.25-2.25a2 2 0 1 1 2.82 2.82l-2.25 2.25A3.93 3.93 0 0 0 12 16a4 4 0 0 0 4-4 4 4 0 0 0-4-4z"/></svg>
@@ -1048,6 +1081,7 @@
             </div>
           </div>
         </div>
+      </mdui-tab-panel>
 
     </mdui-tabs>
 
