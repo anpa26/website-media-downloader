@@ -1,7 +1,7 @@
 {
   "require_uninstall": false,
   "en": {
-    "headline": "What's New (v2.4.0)",
+    "headline": "What's New (v2.4.0.1)",
     "changes": [
       "Fixed an issue where YouTube media was not detected correctly.",
       "Fixed an issue where YouTube multi-track videos failed to download properly in the background.",
@@ -10,7 +10,7 @@
     ]
   },
   "id": {
-    "headline": "Yang Baru (v2.4.0)",
+    "headline": "Yang Baru (v2.4.0.1)",
     "changes": [
       "Memperbaiki masalah di mana YouTube tidak terdeteksi dengan benar.",
       "Memperbaiki masalah di mana video multi-track YouTube tidak dapat diunduh dengan benar di latar belakang.",
@@ -19,7 +19,7 @@
     ]
   },
   "de": {
-    "headline": "Was gibt's Neues (v2.4.0)",
+    "headline": "Was gibt's Neues (v2.4.0.1)",
     "changes": [
       "Behebt ein Problem, bei dem YouTube-Medien nicht korrekt erkannt wurden.",
       "Behebt ein Problem, bei dem YouTube-Multi-Track-Videos im Hintergrund nicht ordnungsgemäß heruntergeladen werden konnten.",
@@ -28,7 +28,7 @@
     ]
   },
   "fr": {
-    "headline": "Nouveautés (v2.4.0)",
+    "headline": "Nouveautés (v2.4.0.1)",
     "changes": [
       "Correction d'un problème où les médias YouTube n'étaient pas détectés correctement.",
       "Correction d'un problème empêchant les vidéos multi-pistes YouTube de se télécharger correctement en arrière-plan.",
@@ -37,7 +37,7 @@
     ]
   },
   "ja": {
-    "headline": "新機能 (v2.4.0)",
+    "headline": "新機能 (v2.4.0.1)",
     "changes": [
       "YouTubeのメディアが正しく検出されない問題を修正しました。",
       "YouTubeのマルチトラック動画がバックグラウンドで正常にダウンロードできない問題を修正しました。",
@@ -46,7 +46,7 @@
     ]
   },
   "ko": {
-    "headline": "새로운 기능 (v2.4.0)",
+    "headline": "새로운 기능 (v2.4.0.1)",
     "changes": [
       "YouTube 미디어가 올바르게 감지되지 않는 문제를 수정했습니다.",
       "YouTube 멀티트랙 동영상이 백그라운드에서 정상적으로 다운로드되지 않는 문제를 수정했습니다.",
@@ -55,7 +55,7 @@
     ]
   },
   "pt": {
-    "headline": "Novidades (v2.4.0)",
+    "headline": "Novidades (v2.4.0.1)",
     "changes": [
       "Corrigido um problema em que a mídia do YouTube não era detectada corretamente.",
       "Corrigido um problema em que vídeos multifaixa do YouTube não podiam ser baixados corretamente em segundo plano.",
@@ -64,7 +64,7 @@
     ]
   },
   "ru": {
-    "headline": "Что нового (v2.4.0)",
+    "headline": "Что нового (v2.4.0.1)",
     "changes": [
       "Исправлена проблема, из-за которой медиафайлы YouTube определялись некорректно.",
       "Исправлена проблема, из-за которой многодорожечные видео YouTube не могли нормально скачиваться в фоновом режиме.",
@@ -73,7 +73,7 @@
     ]
   },
   "ar": {
-    "headline": "ما الجديد (v2.4.0)",
+    "headline": "ما الجديد (v2.4.0.1)",
     "changes": [
       "إصلاح مشكلة عدم اكتشاف وسائط YouTube بشكل صحيح.",
       "إصلاح مشكلة عدم تنزيل مقاطع فيديو YouTube متعددة المسارات بشكل صحيح في الخلفية.",

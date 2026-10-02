@@ -881,10 +881,10 @@
     "message": "Exporte ou importe as definições da extensão. Contas, histórico de downloads e dados temporários não são incluídos."
   },
   "exportSettingsButton": {
-    "message": "Exportar definições"
+    "message": "Exportar"
   },
   "importSettingsButton": {
-    "message": "Importar definições"
+    "message": "Importar"
   },
   "settingsExportSuccess": {
     "message": "Definições exportadas com sucesso!"
@@ -915,7 +915,7 @@
     "message": "O ficheiro não contém definições suportadas"
   },
   "clearHistoryButton": {
-    "message": "Limpar histórico",
+    "message": "Limpar",
     "description": "The label of the button to clear the download history."
   },
   "exportHistoryButton": {

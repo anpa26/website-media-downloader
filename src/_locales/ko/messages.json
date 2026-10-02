@@ -876,10 +876,10 @@
     "message": "확장 프로그램 설정을 내보내거나 가져옵니다. 계정, 다운로드 기록 및 임시 데이터는 포함되지 않습니다."
   },
   "exportSettingsButton": {
-    "message": "설정 내보내기"
+    "message": "내보내기"
   },
   "importSettingsButton": {
-    "message": "설정 가져오기"
+    "message": "가져오기"
   },
   "settingsExportSuccess": {
     "message": "설정을 성공적으로 내보냈습니다!"
@@ -910,7 +910,7 @@
     "message": "파일에 지원되는 설정이 없습니다"
   },
   "clearHistoryButton": {
-    "message": "기록 지우기",
+    "message": "지우기",
     "description": "The label of the button to clear the download history."
   },
   "exportHistoryButton": {

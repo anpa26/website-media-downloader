@@ -696,7 +696,7 @@
         "description": "The explanation of the history page option."
     },
     "clearHistoryButton": {
-        "message": "Effacer l'historique",
+        "message": "Effacer",
         "description": "The label of the button to clear the download history."
     },
     "exportHistoryButton": {

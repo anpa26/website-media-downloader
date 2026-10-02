@@ -881,10 +881,10 @@
     "message": "Exportieren oder importieren Sie Ihre Erweiterungseinstellungen. Konten, Downloadverlauf und temporäre Daten sind nicht enthalten."
   },
   "exportSettingsButton": {
-    "message": "Einstellungen exportieren"
+    "message": "Exportieren"
   },
   "importSettingsButton": {
-    "message": "Einstellungen importieren"
+    "message": "Importieren"
   },
   "settingsExportSuccess": {
     "message": "Einstellungen erfolgreich exportiert!"
@@ -915,7 +915,7 @@
     "message": "Die Datei enthält keine unterstützten Einstellungen"
   },
   "clearHistoryButton": {
-    "message": "Verlauf löschen",
+    "message": "Löschen",
     "description": "The label of the button to clear the download history."
   },
   "exportHistoryButton": {

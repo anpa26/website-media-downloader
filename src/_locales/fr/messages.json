@@ -881,10 +881,10 @@
     "message": "Exportez ou importez les paramètres de l’extension. Les comptes, l’historique des téléchargements et les données temporaires ne sont pas inclus."
   },
   "exportSettingsButton": {
-    "message": "Exporter les paramètres"
+    "message": "Exporter"
   },
   "importSettingsButton": {
-    "message": "Importer les paramètres"
+    "message": "Importer"
   },
   "settingsExportSuccess": {
     "message": "Paramètres exportés avec succès !"
@@ -915,7 +915,7 @@
     "message": "Le fichier ne contient aucun paramètre pris en charge"
   },
   "clearHistoryButton": {
-    "message": "Effacer l'historique",
+    "message": "Effacer",
     "description": "The label of the button to clear the download history."
   },
   "exportHistoryButton": {

@@ -34,23 +34,26 @@
 
 html,
 body {
-    width: 550px;
     height: 600px;
 }
 
 body {
+    width: 550px;
     margin: 0;
     padding: 0;
     font-size: 15px;
     background-color: rgb(var(--mdui-color-surface));
     color: rgb(var(--mdui-color-on-surface));
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
 }
 
 html.is-tab,
 body.is-tab {
     width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
     height: auto !important;
     min-height: 100vh !important;
 }
@@ -58,6 +61,8 @@ body.is-tab {
 html.is-mobile,
 body.is-mobile {
     width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
     height: 100% !important;
 }
 
@@ -65,6 +70,8 @@ body.is-mobile {
     html:not(.is-popup),
     body:not(.is-popup) {
         width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
         height: 100% !important;
     }
 }
@@ -518,6 +525,9 @@ mdui-linear-progress {
 }
 
 mdui-bottom-app-bar {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     border-top: 1px solid rgb(var(--mdui-color-outline-variant));
     background-color: rgb(var(--mdui-color-surface-container-high));
     backdrop-filter: blur(12px);
@@ -535,6 +545,25 @@ mdui-bottom-app-bar {
 .bottom-actions {
     display: flex;
     gap: 12px;
+}
+
+.history-actions {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+#clear-history {
+    position: static;
+    transform: none;
+    --mdui-state-layer-hover: 0;
+    --mdui-state-layer-focus: 0;
+    --mdui-state-layer-pressed: 0;
 }
 
 #loading, #loading-media-list {

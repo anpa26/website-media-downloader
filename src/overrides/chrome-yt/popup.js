@@ -93,10 +93,6 @@ function refreshNavbarLayout(navbar) {
   if (!navbar) return;
   requestAnimationFrame(() => {
     if (typeof navbar.requestUpdate === 'function') navbar.requestUpdate();
-    window.dispatchEvent(new Event('resize'));
-    const currentValue = navbar.value;
-    navbar.value = '';
-    requestAnimationFrame(() => { navbar.value = currentValue; });
   });
 }
 let currentNavigationTab = 'home';
@@ -741,7 +737,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await initTheme();
 
   const scaleResult = await browser.storage.local.get('ui-scale');
-  document.documentElement.style.zoom = scaleResult['ui-scale'] || '85%';
+  document.getElementById('main-content').style.zoom = scaleResult['ui-scale'] || '85%';
 
   const historyPageResult = await browser.storage.local.get('history-page');
   if (historyPageResult['history-page'] === '1') {
@@ -750,10 +746,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (navbar) {
       setTimeout(() => {
         if (typeof navbar.requestUpdate === 'function') navbar.requestUpdate();
-        window.dispatchEvent(new Event('resize'));
-        const currentVal = navbar.value;
-        navbar.value = '';
-        navbar.value = currentVal;
       }, 100);
     }
   }
@@ -959,7 +951,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (changes['ui-scale']) {
-      document.documentElement.style.zoom = changes['ui-scale'].newValue || '85%';
+      document.getElementById('main-content').style.zoom = changes['ui-scale'].newValue || '85%';
     }
   });
 
