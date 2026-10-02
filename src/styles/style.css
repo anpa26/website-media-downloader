@@ -553,6 +553,7 @@ mdui-bottom-app-bar {
     position: relative;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     width: 100%;
     min-width: 0;
@@ -560,9 +561,8 @@ mdui-bottom-app-bar {
 }
 
 #clear-history {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+    position: static;
+    transform: none;
 }
 
 #loading, #loading-media-list {
