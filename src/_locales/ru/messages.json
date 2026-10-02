@@ -910,7 +910,7 @@
     "message": "Файл не содержит поддерживаемых настроек"
   },
   "clearHistoryButton": {
-    "message": "Очистить историю",
+    "message": "Очистить",
     "description": "The label of the button to clear the download history."
   },
   "exportHistoryButton": {

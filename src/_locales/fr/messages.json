@@ -915,7 +915,7 @@
     "message": "Le fichier ne contient aucun paramètre pris en charge"
   },
   "clearHistoryButton": {
-    "message": "Effacer l'historique",
+    "message": "Effacer",
     "description": "The label of the button to clear the download history."
   },
   "exportHistoryButton": {

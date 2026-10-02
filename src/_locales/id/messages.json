@@ -887,7 +887,7 @@
     "message": "File tidak berisi pengaturan yang didukung"
   },
   "clearHistoryButton": {
-    "message": "Hapus riwayat",
+    "message": "Hapus",
     "description": "The label of the button to clear the download history."
   },
   "exportHistoryButton": {

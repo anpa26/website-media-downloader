@@ -537,6 +537,20 @@ mdui-bottom-app-bar {
     gap: 12px;
 }
 
+.history-actions {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+#clear-history {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
 #loading, #loading-media-list {
     padding: 100px 20px;
     opacity: 0.6;

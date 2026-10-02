@@ -910,7 +910,7 @@
     "message": "لا يحتوي الملف على إعدادات مدعومة"
   },
   "clearHistoryButton": {
-    "message": "مسح السجل",
+    "message": "مسح",
     "description": "The label of the button to clear the download history."
   },
   "exportHistoryButton": {

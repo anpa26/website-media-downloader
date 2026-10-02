@@ -915,7 +915,7 @@
     "message": "ファイルに対応する設定が含まれていません"
   },
   "clearHistoryButton": {
-    "message": "履歴を消去",
+    "message": "消去",
     "description": "The label of the button to clear the download history."
   },
   "exportHistoryButton": {

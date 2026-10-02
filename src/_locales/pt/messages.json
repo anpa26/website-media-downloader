@@ -915,7 +915,7 @@
     "message": "O ficheiro não contém definições suportadas"
   },
   "clearHistoryButton": {
-    "message": "Limpar histórico",
+    "message": "Limpar",
     "description": "The label of the button to clear the download history."
   },
   "exportHistoryButton": {

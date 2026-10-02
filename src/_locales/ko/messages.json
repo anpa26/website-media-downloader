@@ -910,7 +910,7 @@
     "message": "파일에 지원되는 설정이 없습니다"
   },
   "clearHistoryButton": {
-    "message": "기록 지우기",
+    "message": "지우기",
     "description": "The label of the button to clear the download history."
   },
   "exportHistoryButton": {

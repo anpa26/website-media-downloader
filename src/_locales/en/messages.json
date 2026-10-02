@@ -915,7 +915,7 @@
     "message": "The file contains no supported settings"
   },
   "clearHistoryButton": {
-    "message": "Clear history",
+    "message": "Clear",
     "description": "The label of the button to clear the download history."
   },
   "exportHistoryButton": {
