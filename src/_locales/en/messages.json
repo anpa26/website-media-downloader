@@ -881,10 +881,10 @@
     "message": "Export or import your extension settings. Accounts, download history, and temporary data are not included."
   },
   "exportSettingsButton": {
-    "message": "Export settings"
+    "message": "Export"
   },
   "importSettingsButton": {
-    "message": "Import settings"
+    "message": "Import"
   },
   "settingsExportSuccess": {
     "message": "Settings exported successfully!"
@@ -915,7 +915,7 @@
     "message": "The file contains no supported settings"
   },
   "clearHistoryButton": {
-    "message": "Clear history",
+    "message": "Clear",
     "description": "The label of the button to clear the download history."
   },
   "exportHistoryButton": {

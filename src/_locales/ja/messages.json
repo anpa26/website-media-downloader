@@ -881,10 +881,10 @@
     "message": "拡張機能の設定をエクスポートまたはインポートします。アカウント、ダウンロード履歴、一時データは含まれません。"
   },
   "exportSettingsButton": {
-    "message": "設定をエクスポート"
+    "message": "エクスポート"
   },
   "importSettingsButton": {
-    "message": "設定をインポート"
+    "message": "インポート"
   },
   "settingsExportSuccess": {
     "message": "設定をエクスポートしました！"
@@ -915,7 +915,7 @@
     "message": "ファイルに対応する設定が含まれていません"
   },
   "clearHistoryButton": {
-    "message": "履歴を消去",
+    "message": "消去",
     "description": "The label of the button to clear the download history."
   },
   "exportHistoryButton": {

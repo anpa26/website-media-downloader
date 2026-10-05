@@ -718,7 +718,7 @@
         "description": "The explanation of the history page option."
     },
     "clearHistoryButton": {
-        "message": "Hapus riwayat",
+        "message": "Hapus",
         "description": "The label of the button to clear the download history."
     },
     "exportHistoryButton": {

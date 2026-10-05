@@ -18,7 +18,7 @@
 
 if (typeof browser === 'undefined') var browser = chrome;
 
-let redirectGuardEnabled = false;
+let redirectGuardEnabled = true;
 let redirectGuardClicks = 2;
 let redirectGuardHideContent = false;
 const blockedNavigationAttempts = new Map();
@@ -79,12 +79,14 @@ function allowOrBlockNavigation(event, url) {
     const attempt = previous && Date.now() - previous.time <= SECOND_CLICK_WINDOW ? previous.count + 1 : 1;
     if (attempt >= redirectGuardClicks) {
         blockedNavigationAttempts.delete(key);
-        document.documentElement?.setAttribute('data-wmd-navigation-allowed-until', String(Date.now() + 1000));
-        browser.runtime.sendMessage({ action: 'popupBlockerGesture', url: key }).catch(() => {});
         return true;
     }
-    blockedNavigationAttempts.clear();
     blockedNavigationAttempts.set(key, { count: attempt, time: Date.now() });
+    for (const [candidate, state] of blockedNavigationAttempts) {
+        if (Date.now() - state.time > SECOND_CLICK_WINDOW || blockedNavigationAttempts.size > 100) {
+            blockedNavigationAttempts.delete(candidate);
+        }
+    }
     event.preventDefault();
     event.stopImmediatePropagation();
     if (redirectGuardHideContent) {
@@ -107,31 +109,78 @@ function scriptedRedirectUrl(element) {
     return match ? match[0] : '';
 }
 
+function carryRedirectChainToNewContext(element) {
+    const target = String(element?.getAttribute?.('target') || '').toLowerCase();
+    if (target !== '_blank') return false;
+    const hadTarget = element.hasAttribute('target');
+    const originalTarget = element.getAttribute('target');
+    const token = `__wmd_redirect_chain__:${Date.now() + 10000}|`;
+    element.setAttribute('target', token);
+    setTimeout(() => {
+        if (element.getAttribute('target') !== token) return;
+        if (hadTarget) element.setAttribute('target', originalTarget);
+        else element.removeAttribute('target');
+    }, 0);
+    return true;
+}
+
+function markExplicitNavigation(element, url) {
+    let normalizedUrl = '';
+    try { normalizedUrl = new URL(url, location.href).href; } catch (_) {}
+    if (carryRedirectChainToNewContext(element)) {
+        document.documentElement?.setAttribute('data-wmd-popup-allowed-until', String(Date.now() + 1500));
+        document.documentElement?.setAttribute('data-wmd-popup-allowed-url', normalizedUrl);
+        return;
+    }
+    document.documentElement?.setAttribute('data-wmd-navigation-allowed-until', String(Date.now() + 1500));
+    document.documentElement?.setAttribute('data-wmd-navigation-allowed-url', normalizedUrl);
+    window.dispatchEvent(new CustomEvent('__wmdRedirectGuardArmChain'));
+}
+
 function reportPopupIntent(event) {
     if (!event.isTrusted) return;
     const anchor = event.target?.closest?.('a[href]');
     if (!anchor) {
         const scriptedUrl = scriptedRedirectUrl(event.target);
-        if (scriptedUrl) allowOrBlockNavigation(event, scriptedUrl);
+        if (scriptedUrl && allowOrBlockNavigation(event, scriptedUrl)) {
+            markExplicitNavigation(event.target?.closest?.('[onclick]'), scriptedUrl);
+            browser.runtime.sendMessage({ action: 'popupBlockerGesture', url: scriptedUrl }).catch(() => {});
+        }
         return;
     }
     if (/^javascript:/i.test(anchor.getAttribute('href') || '')) {
         const scriptedUrl = scriptedRedirectUrl(anchor);
-        if (scriptedUrl) allowOrBlockNavigation(event, scriptedUrl);
+        if (scriptedUrl && allowOrBlockNavigation(event, scriptedUrl)) {
+            markExplicitNavigation(anchor, scriptedUrl);
+            browser.runtime.sendMessage({ action: 'popupBlockerGesture', url: scriptedUrl }).catch(() => {});
+        }
         return;
     }
-    if (!allowOrBlockNavigation(event, anchor.href)) return;
-    const opensNewTab = anchor.target === '_blank' || event.button === 1 || event.ctrlKey || event.metaKey;
-    if (!opensNewTab) return;
     let url = '';
     try { url = new URL(anchor.href, location.href).href; } catch (_) {}
-    if (url) browser.runtime.sendMessage({ action: 'popupBlockerGesture', url }).catch(() => {});
+    if (!url || !allowOrBlockNavigation(event, url)) return;
+    markExplicitNavigation(anchor, url);
+    browser.runtime.sendMessage({ action: 'popupBlockerGesture', url }).catch(() => {});
 }
 
 document.addEventListener('click', reportPopupIntent, true);
 document.addEventListener('auxclick', reportPopupIntent, true);
+window.addEventListener('__wmdRedirectGuardBlocked', event => {
+    if (!redirectGuardEnabled) return;
+    showRedirectBlockedNotice(redirectGuardClicks);
+    browser.runtime.sendMessage({
+        action: 'redirectGuardBlocked',
+        url: typeof event.detail === 'string' ? event.detail : ''
+    }).catch(() => {});
+});
 document.addEventListener('submit', event => {
     if (!event.isTrusted) return;
     const form = event.target;
-    if (form?.action) allowOrBlockNavigation(event, form.action);
+    if (!form?.action) return;
+    if (!allowOrBlockNavigation(event, form.action)) return;
+    const opensNewContext = String(form.getAttribute('target') || '').toLowerCase() === '_blank';
+    markExplicitNavigation(form, form.action);
+    if (opensNewContext) {
+        browser.runtime.sendMessage({ action: 'popupBlockerGesture', url: form.action }).catch(() => {});
+    }
 }, true);

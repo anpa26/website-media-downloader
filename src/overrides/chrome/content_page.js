@@ -21,13 +21,16 @@
     window.mdu_page_injected = true;
 
     window.mdu_optimize_low_end = false;
+    window.mdu_detection_enabled = true;
+    const shadowObservers = new Set();
+    const websocketListeners = new Map();
 
     // 1. DRM detection hook
     try {
         const originalRequestMediaKeySystemAccess = navigator.requestMediaKeySystemAccess;
         if (originalRequestMediaKeySystemAccess && !navigator.mdu_hooked) {
             navigator.requestMediaKeySystemAccess = function() {
-                window.postMessage({ type: 'MDU_DRM_DETECTED' }, '*');
+                if (window.mdu_detection_enabled) window.postMessage({ type: 'MDU_DRM_DETECTED' }, '*');
                 return originalRequestMediaKeySystemAccess.apply(this, arguments);
             };
             navigator.mdu_hooked = true;
@@ -40,14 +43,15 @@
         if (originalAttachShadow && !Element.prototype.mdu_hooked) {
             Element.prototype.attachShadow = function(init) {
                 const shadowRoot = originalAttachShadow.apply(this, arguments);
-                if (window.mdu_optimize_low_end) return shadowRoot;
+                if (window.mdu_optimize_low_end || !window.mdu_detection_enabled) return shadowRoot;
                 
                 window.postMessage({ type: 'MDU_DOM_CHANGED' }, '*');
                 try {
                     const observer = new MutationObserver(() => {
-                        window.postMessage({ type: 'MDU_DOM_CHANGED' }, '*');
+                        if (window.mdu_detection_enabled) window.postMessage({ type: 'MDU_DOM_CHANGED' }, '*');
                     });
                     observer.observe(shadowRoot, { childList: true, subtree: true });
+                    shadowObservers.add(observer);
                 } catch (e) {}
                 return shadowRoot;
             };
@@ -63,7 +67,7 @@
             const ws = new OriginalWebSocket(url, protocols);
             
             const checkMedia = async (data) => {
-                if (window.mdu_optimize_low_end) return;
+                if (window.mdu_optimize_low_end || !window.mdu_detection_enabled) return;
                 if (detectedWs.has(url)) return;
                 
                 try {
@@ -88,9 +92,11 @@
                 } catch (e) {}
             };
 
-            ws.addEventListener('message', (event) => {
+            const messageListener = (event) => {
                 checkMedia(event.data);
-            });
+            };
+            ws.addEventListener('message', messageListener);
+            websocketListeners.set(ws, messageListener);
 
             return ws;
         };
@@ -100,6 +106,7 @@
 
     // 4. Deep scan function
     window.mdu_deep_scan = function() {
+        if (!window.mdu_detection_enabled) return;
         const urls = [];
         try {
             if (window.__additionalData) {
@@ -136,6 +143,13 @@
             if (window.mdu_deep_scan) window.mdu_deep_scan();
         } else if (event.data.type === 'MDU_UPDATE_SETTINGS') {
             window.mdu_optimize_low_end = !!event.data.optimizeLowEnd;
+            window.mdu_detection_enabled = event.data.detectionEnabled !== false;
+            if (!window.mdu_detection_enabled) {
+                for (const observer of shadowObservers) observer.disconnect();
+                shadowObservers.clear();
+                for (const [socket, listener] of websocketListeners) socket.removeEventListener('message', listener);
+                websocketListeners.clear();
+            }
         }
     });
 })();

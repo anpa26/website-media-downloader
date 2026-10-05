@@ -1,6 +1,6 @@
 # Website Media Downloader
 
-[![Version](https://img.shields.io/badge/version-2.4.0-blue.svg)](src/manifest.json)
+[![Version](https://img.shields.io/badge/version-2.4.1-blue.svg)](src/manifest.json)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE.md)
 [![Platform](https://img.shields.io/badge/platform-Chrome%20%7C%20Firefox%20%7C%20Android-orange.svg)](#installation)
 
@@ -49,12 +49,10 @@ Designed with a strict focus on privacy and technical transparency, all operatio
 
 ---
 
-## What's New in v2.4.0
+## What's New in v2.4.1
 
-- Fixed an issue where YouTube media was not detected correctly.
-- Fixed an issue where YouTube multi-track videos failed to download properly in the background.
-- Reorganized and cleaned up the settings layout into consolidated cards.
-- Added support for blocking redirects and ads, with options to hide blocked content.
+- Improved redirect and ad blocking to work more intelligently.
+- Fixed detection processes continuing to run after detection was disabled.
 
 ---
 

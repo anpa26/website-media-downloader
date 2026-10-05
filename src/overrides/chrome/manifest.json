@@ -23,13 +23,17 @@
             "js": ["redirect_guard_main.js"],
             "run_at": "document_start",
             "world": "MAIN",
-            "all_frames": false
+            "all_frames": true,
+            "match_about_blank": true,
+            "match_origin_as_fallback": true
         },
         {
             "matches": ["<all_urls>"],
             "js": ["popup_blocker_content.js"],
             "run_at": "document_start",
-            "all_frames": false
+            "all_frames": true,
+            "match_about_blank": true,
+            "match_origin_as_fallback": true
         },
         {
             "matches": [

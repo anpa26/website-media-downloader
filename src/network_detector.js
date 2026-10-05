@@ -336,6 +336,8 @@ const SPOOF_HEADERS = [
 
 async function loadPersistentHeaders() {
     try {
+        const detection = await browser.storage.local.get(['mime-detection', 'url-detection', 'youtube-detection']);
+        if (!isFlagEnabled(detection['mime-detection'], true) && !isFlagEnabled(detection['url-detection'], true) && !isFlagEnabled(detection['youtube-detection'], true)) return;
         const res = await browser.storage.session.get('urlToHeaderMap');
         if (res.urlToHeaderMap) {
             for (const [url, headers] of Object.entries(res.urlToHeaderMap)) {
@@ -399,6 +401,7 @@ browser.webRequest.onBeforeSendHeaders.addListener(
                                 details.originUrl?.startsWith('moz-extension://') ||
                                 details.url.includes('blob:chrome-extension://') ||
                                 details.url.includes('blob:moz-extension://');
+        if (!networkDetectionEnabled(details) && !isFromExtension) return;
 
         if (isFromExtension && (details.url.includes('/youtubei/v1/player') || details.url.includes('googlevideo.com') || details.url.includes('youtube.com'))) {
             let hasOrigin = false;
@@ -519,6 +522,7 @@ let cachedSettings = {
     mimeDetection: true,
     urlDetection: true,
     youtubeDetection: true,
+    detectDownloadLinks: true,
     mediaNotification: true,
     mediaSystemNotification: true,
     stackNotifications: false,
@@ -538,9 +542,14 @@ let cachedSettings = {
     themeColor: '#8ab4f8'
 };
 
+function networkDetectionEnabled(details, settings = cachedSettings) {
+    const youtubeRequest = settings.youtubeDetection && /(?:youtube\.com|googlevideo\.com|youtu\.be)/i.test(details?.url || '');
+    return !!(settings.mimeDetection || settings.urlDetection || youtubeRequest);
+}
+
 function getSettings(callback) {
     browser.storage.local.get([
-        'mime-detection', 'url-detection', 'youtube-detection', 'media-notification', 'media-system-notification', 'stack-notifications', 'hide-segments', 'hide-page-components',
+        'mime-detection', 'url-detection', 'youtube-detection', 'detect-download-links', 'media-notification', 'media-system-notification', 'stack-notifications', 'hide-segments', 'hide-page-components',
         'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'ignore-disabled-types', 'optimize-low-end',
         'auto-download-media', 'auto-download-quality', 'auto-download-youtube-mode', 'background-download', 'auto-download-all-domains', 'auto-download-domains', 'auto-skip-download-names', 'auto-skip-download-names-only', 'auto-skip-download-domains', 'auto-ignore-excluded-media', 'auto-download-video', 'auto-download-stream',
         'filename-template', 'theme-color', 'ui-scale'
@@ -549,6 +558,7 @@ function getSettings(callback) {
             mimeDetection: isFlagEnabled(result['mime-detection'], true),
             urlDetection: isFlagEnabled(result['url-detection'], true),
             youtubeDetection: isFlagEnabled(result['youtube-detection'], true),
+            detectDownloadLinks: isFlagEnabled(result['detect-download-links'], true),
             mediaNotification: isFlagEnabled(result['media-notification'], true),
             mediaSystemNotification: isFlagEnabled(result['media-system-notification'], true),
             stackNotifications: isFlagEnabled(result['stack-notifications'], false),
@@ -1884,18 +1894,9 @@ function arrayBufferToBase64(buffer) {
     return btoa(binary);
 }
 
-let beforeRequestListener, beforeSendHeadersListener;
+let beforeRequestListener, beforeSendHeadersListener, cleanupListener;
 
-function initListener() {
-
-    openCacheDB().then(db => {
-        const tx = db.transaction([STORE_NAME, CHUNK_STORE_NAME], "readwrite");
-        tx.objectStore(STORE_NAME).clear();
-        tx.objectStore(CHUNK_STORE_NAME).clear();
-    }).catch(e => {
-        console.error("Failed to clear IndexedDB cache on init:", e);
-    });
-
+function initListener(skipCacheReset = false) {
     urlList = ["<all_urls>"];
 
     getSettings(function (settings) {
@@ -1916,7 +1917,21 @@ function initListener() {
             beforeRequestListener = null;
         }
 
-        const cleanupListener = (details) => {
+        if (!mimeEnabled && !urlEnabled) {
+            if (cleanupListener) {
+                browser.webRequest.onCompleted.removeListener(cleanupListener);
+                browser.webRequest.onErrorOccurred.removeListener(cleanupListener);
+            }
+            return;
+        }
+
+        if (!skipCacheReset) openCacheDB().then(db => {
+            const tx = db.transaction([STORE_NAME, CHUNK_STORE_NAME], "readwrite");
+            tx.objectStore(STORE_NAME).clear();
+            tx.objectStore(CHUNK_STORE_NAME).clear();
+        }).catch(e => console.error("Failed to clear IndexedDB cache on init:", e));
+
+        cleanupListener ||= (details) => {
             if (temporaryHeaderMap.has(details.requestId)) {
                 temporaryHeaderMap.delete(details.requestId);
             }
@@ -2517,14 +2532,20 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true;
     }
     if (message.action === 'extract' && message.videoId) {
-        const extractor = getYoutubeExtractor();
-        if (extractor) {
-            extractor.extractAllStreams(message.videoId)
-                .then(data => sendResponse({ success: true, data }))
-                .catch(err => sendResponse({ success: false, error: err.message }));
-        } else {
-            sendResponse({ success: false, error: 'YoutubeMultiTrack library not loaded' });
-        }
+        browser.storage.local.get('youtube-detection').then(result => {
+            if (!isFlagEnabled(result['youtube-detection'], true)) {
+                sendResponse({ success: false, disabled: true, error: 'YouTube detection is disabled' });
+                return;
+            }
+            const extractor = getYoutubeExtractor();
+            if (extractor) {
+                extractor.extractAllStreams(message.videoId)
+                    .then(data => sendResponse({ success: true, data }))
+                    .catch(err => sendResponse({ success: false, error: err.message }));
+            } else {
+                sendResponse({ success: false, error: 'YoutubeMultiTrack library not loaded' });
+            }
+        });
         return true; // Keep message channel open for async response
     }
     if (message.action === 'heartbeat') {
@@ -5814,10 +5835,11 @@ function attachCacheListener() {
 
 async function initCacheState() {
     try {
-        const res = await browser.storage.local.get('media-cache');
+        const res = await browser.storage.local.get(['media-cache', 'mime-detection', 'url-detection']);
         const enabled = !!isFlagEnabled(res['media-cache']);
         mediaCacheEnabled = enabled;
-        if (mediaCacheEnabled) {
+        const detectionEnabled = isFlagEnabled(res['mime-detection'], true) || isFlagEnabled(res['url-detection'], true);
+        if (mediaCacheEnabled && detectionEnabled) {
             attachCacheListener();
         } else {
             detachCacheListener();
@@ -5835,6 +5857,13 @@ browser.storage.onChanged.addListener((changes, area) => {
 
     getSettings(function(newSettings) {
         cachedSettings = newSettings;
+        if (Object.prototype.hasOwnProperty.call(changes, 'mime-detection') || Object.prototype.hasOwnProperty.call(changes, 'url-detection')) {
+            initListener(true);
+            if (newSettings.mimeDetection || newSettings.urlDetection || newSettings.youtubeDetection) loadPersistentHeaders();
+            if (mediaCacheEnabled && (newSettings.mimeDetection || newSettings.urlDetection)) attachCacheListener();
+            else detachCacheListener();
+        }
+        if (Object.prototype.hasOwnProperty.call(changes, 'youtube-detection') && newSettings.youtubeDetection) loadPersistentHeaders();
         if (Object.keys(changes).some(key => AUTO_DOWNLOAD_RESCAN_KEYS.has(key))) {
             scheduleExistingMediaAutoDownload(newSettings);
         }
@@ -5861,7 +5890,7 @@ browser.storage.onChanged.addListener((changes, area) => {
         const newEnabled = !!isFlagEnabled(changes['media-cache'].newValue);
         if (newEnabled !== mediaCacheEnabled) {
             mediaCacheEnabled = newEnabled;
-            if (mediaCacheEnabled) {
+            if (mediaCacheEnabled && (cachedSettings.mimeDetection || cachedSettings.urlDetection)) {
                 attachCacheListener();
             } else {
                 detachCacheListener();

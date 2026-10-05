@@ -15,4 +15,129 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-function getCodec(e){let t="unknown";if(e){let i=e.match(/codecs="([^"]+)"/);if(i){let e=i[1].split(".")[0].toUpperCase();t=e.startsWith("VP09")||e.startsWith("VP9")?"VP9":e.startsWith("AVC")?"H264":e.startsWith("HEVC")||e.startsWith("HVC")?"H265":e.startsWith("AV01")?"AV1":e}}return t}function getLabel(e){return e?e>=2160?"4K":e>=1440?"1440p":e+"p":""}function mapYoutubeStreams(e){const t=[],i=[];for(const o of e.muxed||[]){const e=o.mimeType&&o.mimeType.includes("webm")?"webm":"mp4";let a=o.url;a.includes(".mp4")||a.includes(".webm")||(a+="#video."+e),t.push({videoUrl:a,audioUrl:null,width:o.width||0,height:o.height||0,bitrate:o.bitrate||0,contentLength:o.contentLength||0,demuxer:e,codec:getCodec(o.mimeType),label:getLabel(o.height),hasAudio:!0,audioTrack:null}),i.includes(a)||i.push(a)}for(const o of e.video||[]){const a=o.mimeType&&o.mimeType.includes("webm")?"webm":"mp4";let s=o.url;if(s.includes(".mp4")||s.includes(".webm")||(s+="#video."+a),e.audio&&e.audio.length>0){const i=new Map;for(const t of e.audio){const e=t.displayName||t.language||"default",o=i.get(e);(!o||(t.bitrate||0)>(o.bitrate||0))&&i.set(e,t)}const d=Array.from(i.values());for(const e of d){let i=e.url;i.includes(".m4a")||i.includes(".webm")||(i.includes("mime=audio%2Fwebm")||i.includes("mime=audio/webm")?i+="#audio.webm":i+="#audio.m4a"),t.push({videoUrl:s,audioUrl:i,width:o.width||0,height:o.height||0,bitrate:(o.bitrate||0)+(e.bitrate||0),contentLength:o.contentLength||0,demuxer:a,codec:getCodec(o.mimeType),label:getLabel(o.height),hasAudio:!0,audioTrack:e.trackId?{id:e.trackId,displayName:e.displayName,display_name:e.displayName,language:e.language||"und",lang:e.language||"und",audioIsDefault:e.isDefault,audio_is_default:e.isDefault}:null})}}else t.push({videoUrl:s,audioUrl:null,width:o.width||0,height:o.height||0,bitrate:o.bitrate||0,contentLength:o.contentLength||0,demuxer:a,codec:getCodec(o.mimeType),label:getLabel(o.height),hasAudio:!1,audioTrack:null});i.includes(s)||i.push(s)}for(const t of e.audio||[]){let e=t.url;const o=e.includes("mime=audio%2Fwebm")||e.includes("mime=audio/webm");e.includes(".m4a")||e.includes(".webm")||(e+=o?"#audio.webm":"#audio.m4a"),i.includes(e)||i.push(e)}return{ytFormats:t,urls:i}}function getYoutubeVideoId(){const e=window.location.href;try{const t=new URL(e);if(t.hostname.includes("youtube.com"))return t.pathname.startsWith("/embed/")?t.pathname.split("/")[2]:t.searchParams.get("v");if(t.hostname.includes("youtu.be"))return t.pathname.slice(1)}catch(e){}return null}let lastVideoId="";async function checkForVideoChange(){const e=getYoutubeVideoId();e&&e!==lastVideoId&&(lastVideoId=e,console.log("[website-media-downloader] Detecting YouTube video ID:",e),chrome.runtime.sendMessage({action:"extract",videoId:e},t=>{if(t&&t.success){const i=t.data;if(i&&i.videoDetails){const{ytFormats:t,urls:o}=mapYoutubeStreams(i);if(t.length>0&&(chrome.runtime.sendMessage({action:"reportDetectedMedia",urls:o,pageTitle:i.videoDetails.title||document.title,pageUrl:window.location.href,is_youtube:!0,ytFormats:t,ytSubtitles:i.subtitles||null}),console.log("[website-media-downloader] Successfully reported media for video ID:",e)),i.audio&&i.audio.length>0){const t=new Map;for(const e of i.audio){const i=e.displayName||e.language||"default",o=t.get(i);(!o||(e.bitrate||0)>(o.bitrate||0))&&t.set(i,e)}Array.from(t.values()).forEach(e=>{let t=e.url;const o=t.includes("mime=audio%2Fwebm")||t.includes("mime=audio/webm");t.includes(".m4a")||t.includes(".webm")||(t+=o?"#audio.webm":"#audio.m4a"),chrome.runtime.sendMessage({action:"reportDetectedMedia",urls:[t],pageTitle:`${i.videoDetails.title||document.title} - ${e.displayName}`,pageUrl:window.location.href,is_youtube:!1})}),console.log("[website-media-downloader] Successfully reported audio tracks for video ID:",e)}i.subtitles&&i.subtitles.length>0&&(i.subtitles.forEach(e=>{chrome.runtime.sendMessage({action:"reportDetectedMedia",urls:[e.vttUrl+"#subtitle.vtt"],pageTitle:`${i.videoDetails.title||document.title} - ${e.displayName}`,pageUrl:window.location.href,is_youtube:!1})}),console.log("[website-media-downloader] Successfully reported subtitles for video ID:",e))}}else console.error("[website-media-downloader] Extraction failed:",t?t.error:"No response")}))}setInterval(checkForVideoChange,1500),checkForVideoChange();
+
+let youtubeDetectionEnabled = true;
+let youtubeDetectionTimer = null;
+let lastVideoId = '';
+
+const flagEnabled = (value, fallback = true) => value == null ? fallback : value === '1' || value === true;
+
+function getCodec(mimeType) {
+    const codec = mimeType?.match(/codecs="([^"]+)"/)?.[1]?.split('.')[0]?.toUpperCase() || '';
+    if (codec.startsWith('VP09') || codec.startsWith('VP9')) return 'VP9';
+    if (codec.startsWith('AVC')) return 'H264';
+    if (codec.startsWith('HEVC') || codec.startsWith('HVC')) return 'H265';
+    if (codec.startsWith('AV01')) return 'AV1';
+    return 'unknown';
+}
+
+const getLabel = height => height ? (height >= 2160 ? '4K' : height >= 1440 ? '1440p' : `${height}p`) : '';
+
+function taggedAudioUrl(audio) {
+    let url = audio.url;
+    if (!url.includes('.m4a') && !url.includes('.webm')) {
+        url += url.includes('mime=audio%2Fwebm') || url.includes('mime=audio/webm') ? '#audio.webm' : '#audio.m4a';
+    }
+    return url;
+}
+
+function bestAudioTracks(audioItems) {
+    const tracks = new Map();
+    for (const audio of audioItems || []) {
+        const key = audio.displayName || audio.language || 'default';
+        if (!tracks.has(key) || (audio.bitrate || 0) > (tracks.get(key).bitrate || 0)) tracks.set(key, audio);
+    }
+    return [...tracks.values()];
+}
+
+function mapYoutubeStreams(data) {
+    const ytFormats = [];
+    const urls = [];
+    const addUrl = url => { if (!urls.includes(url)) urls.push(url); };
+
+    for (const item of data.muxed || []) {
+        const demuxer = item.mimeType?.includes('webm') ? 'webm' : 'mp4';
+        let videoUrl = item.url;
+        if (!videoUrl.includes('.mp4') && !videoUrl.includes('.webm')) videoUrl += `#video.${demuxer}`;
+        ytFormats.push({ videoUrl, audioUrl: null, width: item.width || 0, height: item.height || 0,
+            bitrate: item.bitrate || 0, contentLength: item.contentLength || 0, demuxer,
+            codec: getCodec(item.mimeType), label: getLabel(item.height), hasAudio: true, audioTrack: null });
+        addUrl(videoUrl);
+    }
+
+    const audioTracks = bestAudioTracks(data.audio);
+    for (const video of data.video || []) {
+        const demuxer = video.mimeType?.includes('webm') ? 'webm' : 'mp4';
+        let videoUrl = video.url;
+        if (!videoUrl.includes('.mp4') && !videoUrl.includes('.webm')) videoUrl += `#video.${demuxer}`;
+        if (audioTracks.length) {
+            for (const audio of audioTracks) {
+                ytFormats.push({ videoUrl, audioUrl: taggedAudioUrl(audio), width: video.width || 0,
+                    height: video.height || 0, bitrate: (video.bitrate || 0) + (audio.bitrate || 0),
+                    contentLength: video.contentLength || 0, demuxer, codec: getCodec(video.mimeType),
+                    label: getLabel(video.height), hasAudio: true,
+                    audioTrack: audio.trackId ? { id: audio.trackId, displayName: audio.displayName,
+                        display_name: audio.displayName, language: audio.language || 'und', lang: audio.language || 'und',
+                        audioIsDefault: audio.isDefault, audio_is_default: audio.isDefault } : null });
+            }
+        } else {
+            ytFormats.push({ videoUrl, audioUrl: null, width: video.width || 0, height: video.height || 0,
+                bitrate: video.bitrate || 0, contentLength: video.contentLength || 0, demuxer,
+                codec: getCodec(video.mimeType), label: getLabel(video.height), hasAudio: false, audioTrack: null });
+        }
+        addUrl(videoUrl);
+    }
+    for (const audio of data.audio || []) addUrl(taggedAudioUrl(audio));
+    return { ytFormats, urls };
+}
+
+function getYoutubeVideoId() {
+    try {
+        const url = new URL(location.href);
+        if (url.hostname.includes('youtube.com')) return url.pathname.startsWith('/embed/') ? url.pathname.split('/')[2] : url.searchParams.get('v');
+        if (url.hostname.includes('youtu.be')) return url.pathname.slice(1);
+    } catch (_) {}
+    return null;
+}
+
+function reportYoutubeData(data) {
+    if (!youtubeDetectionEnabled || !data?.videoDetails) return;
+    const title = data.videoDetails.title || document.title;
+    const { ytFormats, urls } = mapYoutubeStreams(data);
+    if (ytFormats.length) chrome.runtime.sendMessage({ action: 'reportDetectedMedia', urls, pageTitle: title,
+        pageUrl: location.href, is_youtube: true, ytFormats, ytSubtitles: data.subtitles || null });
+    for (const audio of bestAudioTracks(data.audio)) chrome.runtime.sendMessage({ action: 'reportDetectedMedia',
+        urls: [taggedAudioUrl(audio)], pageTitle: `${title} - ${audio.displayName}`, pageUrl: location.href, is_youtube: false });
+    for (const subtitle of data.subtitles || []) chrome.runtime.sendMessage({ action: 'reportDetectedMedia',
+        urls: [`${subtitle.vttUrl}#subtitle.vtt`], pageTitle: `${title} - ${subtitle.displayName}`,
+        pageUrl: location.href, is_youtube: false });
+}
+
+function checkForVideoChange() {
+    if (!youtubeDetectionEnabled) return;
+    const videoId = getYoutubeVideoId();
+    if (!videoId || videoId === lastVideoId) return;
+    lastVideoId = videoId;
+    chrome.runtime.sendMessage({ action: 'extract', videoId }, response => {
+        if (!youtubeDetectionEnabled) return;
+        if (response?.success) reportYoutubeData(response.data);
+        else if (!response?.disabled) console.error('[website-media-downloader] Extraction failed:', response?.error || 'No response');
+    });
+}
+
+function syncYoutubeDetection(value) {
+    youtubeDetectionEnabled = flagEnabled(value);
+    if (!youtubeDetectionEnabled) {
+        if (youtubeDetectionTimer) clearInterval(youtubeDetectionTimer);
+        youtubeDetectionTimer = null;
+        lastVideoId = '';
+        return;
+    }
+    if (!youtubeDetectionTimer) youtubeDetectionTimer = setInterval(checkForVideoChange, 1500);
+    checkForVideoChange();
+}
+
+chrome.storage.local.get('youtube-detection', result => syncYoutubeDetection(result['youtube-detection']));
+chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes['youtube-detection']) syncYoutubeDetection(changes['youtube-detection'].newValue);
+});

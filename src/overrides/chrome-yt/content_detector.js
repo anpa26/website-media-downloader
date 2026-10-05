@@ -27,12 +27,16 @@
     }
 
     const contentStorageKeys = [
-        'detect-download-links', 'hide-segments', 'hide-page-components',
+        'url-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components',
         'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file',
         'ignore-disabled-types', 'optimize-low-end'
     ];
 
     let cachedContentSettings = {};
+    let isGlobalOpt = false;
+    const settingEnabled = (value, defaultValue = true) => value == null ? defaultValue : value === '1' || value === true;
+    const contentDetectionEnabled = (settings = cachedContentSettings) =>
+        settingEnabled(settings['url-detection']) || settingEnabled(settings['mime-detection']) || settingEnabled(settings['detect-download-links']);
     async function safeStorageGet(keys) {
         try {
             if (typeof browser !== 'undefined' && browser.storage && browser.storage.local) {
@@ -55,6 +59,7 @@
 
     window.addEventListener('message', (event) => {
         if (event.data) {
+            if (!contentDetectionEnabled() && String(event.data.type || '').startsWith('MDU_')) return;
             if (event.data.type === 'MDU_DRM_DETECTED') {
                 try {
                     browser.runtime.sendMessage({ action: 'drmDetected' });
@@ -318,6 +323,7 @@
         const selector = isOpt ? 'img, video, audio, source, track, a, iframe, object, embed, [data-src], [data-url], [data-href], [data-original], [style*="background"]' : '*';
         const elements = container.querySelectorAll(selector);
         for (const el of elements) {
+            if (!contentDetectionEnabled()) break;
             await processElement(el, result, detectDownloads, extraExts);
         }
     }
@@ -325,8 +331,10 @@
     let scanPending = false;
     let fullScanTimeout = null;
     window.mdu_scan = function() {
+        if (!contentDetectionEnabled()) return;
         if (fullScanTimeout) clearTimeout(fullScanTimeout);
         fullScanTimeout = setTimeout(async () => {
+            if (!contentDetectionEnabled()) return;
             if (scanPending) return;
             scanPending = true;
 
@@ -336,6 +344,10 @@
             const extraExts = detectDownloads ? downloadExtensions : [];
 
             await scanContainer(document, result, detectDownloads, extraExts);
+            if (!contentDetectionEnabled()) {
+                scanPending = false;
+                return;
+            }
 
             if (window.mdu_run_surgical_scrapers) {
                 const surgicalUrls = window.mdu_run_surgical_scrapers();
@@ -363,6 +375,10 @@
     let pendingNodesToScan = new Set();
 
     async function processPendingNodes() {
+        if (!contentDetectionEnabled()) {
+            pendingNodesToScan.clear();
+            return;
+        }
         if (pendingNodesToScan.size === 0) return;
         const nodes = Array.from(pendingNodesToScan);
         pendingNodesToScan.clear();
@@ -373,6 +389,7 @@
         const extraExts = detectDownloads ? downloadExtensions : [];
 
         for (const node of nodes) {
+            if (!contentDetectionEnabled()) return;
             if (!node.isConnected) continue;
             await processElement(node, result, detectDownloads, extraExts);
             try {
@@ -380,6 +397,7 @@
                 const selector = isOpt ? 'img, video, audio, source, track, a, iframe, object, embed, [data-src], [data-url], [data-href], [data-original], [style*="background"]' : '*';
                 const elements = node.querySelectorAll(selector);
                 for (const el of elements) {
+                    if (!contentDetectionEnabled()) break;
                     await processElement(el, result, detectDownloads, extraExts);
                 }
             } catch (e) {}
@@ -410,9 +428,8 @@
         scanTimeout = setTimeout(processPendingNodes, 100);
     }
 
-    window.mdu_scan();
-
     const observer = new MutationObserver((mutations) => {
+        if (!contentDetectionEnabled()) return;
         const addedElements = [];
         for (const mutation of mutations) {
             for (const node of mutation.addedNodes) {
@@ -427,35 +444,36 @@
     });
 
     let isObserving = false;
-    safeStorageGet(['optimize-low-end']).then((result) => {
-        const isOpt = result && (result['optimize-low-end'] === '1' || result['optimize-low-end'] === true);
+    function syncDetectionState() {
+        const enabled = contentDetectionEnabled();
+        const isOpt = cachedContentSettings['optimize-low-end'] === '1' || cachedContentSettings['optimize-low-end'] === true;
         isGlobalOpt = isOpt;
-
-        // Notify the main-world script of the current optimization settings
-        window.postMessage({ type: 'MDU_UPDATE_SETTINGS', optimizeLowEnd: isOpt }, '*');
-
-        if (!isOpt) {
+        window.postMessage({ type: 'MDU_UPDATE_SETTINGS', optimizeLowEnd: isOpt, detectionEnabled: enabled }, '*');
+        if ((!enabled || isOpt) && isObserving) {
+            observer.disconnect();
+            isObserving = false;
+            pendingNodesToScan.clear();
+        } else if (enabled && !isOpt && !isObserving && document.body) {
             observer.observe(document.body, { childList: true, subtree: true });
             isObserving = true;
         }
+    }
+
+    safeStorageGet(contentStorageKeys).then((result) => {
+        cachedContentSettings = result;
+        const isOpt = result && (result['optimize-low-end'] === '1' || result['optimize-low-end'] === true);
+        isGlobalOpt = isOpt;
+
+        syncDetectionState();
+        if (contentDetectionEnabled(result)) window.mdu_scan();
     }).catch(() => {});
 
     try {
         browser.storage.onChanged.addListener((changes, area) => {
-            if (area === 'local' && changes['optimize-low-end']) {
-                const isOpt = changes['optimize-low-end'].newValue === '1' || changes['optimize-low-end'].newValue === true;
-                isGlobalOpt = isOpt;
-
-                // Notify the main-world script of changed optimization settings
-                window.postMessage({ type: 'MDU_UPDATE_SETTINGS', optimizeLowEnd: isOpt }, '*');
-
-                if (isOpt && isObserving) {
-                    observer.disconnect();
-                    isObserving = false;
-                } else if (!isOpt && !isObserving) {
-                    observer.observe(document.body, { childList: true, subtree: true });
-                    isObserving = true;
-                }
+            if (area === 'local' && contentStorageKeys.some(key => Object.prototype.hasOwnProperty.call(changes, key))) {
+                for (const [key, change] of Object.entries(changes)) cachedContentSettings[key] = change.newValue;
+                syncDetectionState();
+                if (contentDetectionEnabled()) window.mdu_scan();
             }
         });
     } catch(e) {}
