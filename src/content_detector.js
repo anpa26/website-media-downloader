@@ -27,13 +27,19 @@
     }
 
     const contentStorageKeys = [
-        'detect-download-links', 'hide-segments', 'hide-page-components',
+        'url-detection', 'mime-detection', 'youtube-detection', 'detect-download-links', 'hide-segments', 'hide-page-components',
         'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file',
         'ignore-disabled-types', 'optimize-low-end', 'audio-process-notification', 'theme-color',
         'ui-scale'
     ];
 
     let cachedContentSettings = {};
+    let isGlobalOpt = false;
+    const settingEnabled = (value, defaultValue = true) => value === undefined || value === null ? defaultValue : value === '1' || value === true;
+    const contentDetectionEnabled = (settings = cachedContentSettings) =>
+        settingEnabled(settings['url-detection']) ||
+        settingEnabled(settings['mime-detection']) ||
+        settingEnabled(settings['detect-download-links']);
     function processNotificationsEnabled() {
         return cachedContentSettings['audio-process-notification'] !== '0' &&
             cachedContentSettings['audio-process-notification'] !== false;
@@ -43,6 +49,7 @@
         try {
             if (typeof browser !== 'undefined' && browser.storage && browser.storage.local) {
                 cachedContentSettings = await browser.storage.local.get(contentStorageKeys);
+                syncDetectionState();
             }
         } catch(e) {}
     }
@@ -63,6 +70,7 @@
 
     window.addEventListener('message', (event) => {
         if (event.data) {
+            if (!contentDetectionEnabled() && String(event.data.type || '').startsWith('MDU_') && event.data.type !== 'MDU_UPDATE_SETTINGS') return;
             if (event.data.type === 'MDU_DRM_DETECTED') {
                 try {
                     browser.runtime.sendMessage({ action: 'drmDetected' });
@@ -326,6 +334,7 @@
         const selector = isOpt ? 'img, video, audio, source, track, a, iframe, object, embed, [data-src], [data-url], [data-href], [data-original], [style*="background"]' : '*';
         const elements = container.querySelectorAll(selector);
         for (const el of elements) {
+            if (!contentDetectionEnabled()) break;
             await processElement(el, result, detectDownloads, extraExts);
         }
     }
@@ -333,8 +342,10 @@
     let scanPending = false;
     let fullScanTimeout = null;
     window.mdu_scan = function() {
+        if (!contentDetectionEnabled()) return;
         if (fullScanTimeout) clearTimeout(fullScanTimeout);
         fullScanTimeout = setTimeout(async () => {
+            if (!contentDetectionEnabled()) return;
             if (scanPending) return;
             scanPending = true;
 
@@ -344,6 +355,10 @@
             const extraExts = detectDownloads ? downloadExtensions : [];
 
             await scanContainer(document, result, detectDownloads, extraExts);
+            if (!contentDetectionEnabled()) {
+                scanPending = false;
+                return;
+            }
 
             if (window.mdu_run_surgical_scrapers) {
                 const surgicalUrls = window.mdu_run_surgical_scrapers();
@@ -376,6 +391,10 @@
     let pendingNodesToScan = new Set();
 
     async function processPendingNodes() {
+        if (!contentDetectionEnabled()) {
+            pendingNodesToScan.clear();
+            return;
+        }
         if (pendingNodesToScan.size === 0) return;
         const nodes = Array.from(pendingNodesToScan);
         pendingNodesToScan.clear();
@@ -386,6 +405,7 @@
         const extraExts = detectDownloads ? downloadExtensions : [];
 
         for (const node of nodes) {
+            if (!contentDetectionEnabled()) return;
             if (!node.isConnected) continue;
             await processElement(node, result, detectDownloads, extraExts);
             try {
@@ -393,6 +413,7 @@
                 const selector = isOpt ? 'img, video, audio, source, track, a, iframe, object, embed, [data-src], [data-url], [data-href], [data-original], [style*="background"]' : '*';
                 const elements = node.querySelectorAll(selector);
                 for (const el of elements) {
+                    if (!contentDetectionEnabled()) break;
                     await processElement(el, result, detectDownloads, extraExts);
                 }
             } catch (e) {}
@@ -428,9 +449,8 @@
         scanTimeout = setTimeout(processPendingNodes, 100);
     }
 
-    window.mdu_scan();
-
     const observer = new MutationObserver((mutations) => {
+        if (!contentDetectionEnabled()) return;
         const addedElements = [];
         for (const mutation of mutations) {
             for (const node of mutation.addedNodes) {
@@ -445,7 +465,24 @@
     });
 
     let isObserving = false;
-    browser.storage.local.get(['optimize-low-end']).then((result) => {
+    function syncDetectionState() {
+        const enabled = contentDetectionEnabled();
+        const isOpt = cachedContentSettings['optimize-low-end'] === '1' || cachedContentSettings['optimize-low-end'] === true;
+        isGlobalOpt = isOpt;
+        document.documentElement?.setAttribute('data-wmd-detection-enabled', enabled ? '1' : '0');
+        window.postMessage({ type: 'MDU_UPDATE_SETTINGS', optimizeLowEnd: isOpt, detectionEnabled: enabled }, '*');
+        if ((!enabled || isOpt) && isObserving) {
+            observer.disconnect();
+            isObserving = false;
+            pendingNodesToScan.clear();
+        } else if (enabled && !isOpt && !isObserving && document.body) {
+            observer.observe(document.body, { childList: true, subtree: true });
+            isObserving = true;
+        }
+    }
+
+    browser.storage.local.get(contentStorageKeys).then((result) => {
+        cachedContentSettings = result;
         const isOpt = result && (result['optimize-low-end'] === '1' || result['optimize-low-end'] === true);
         isGlobalOpt = isOpt;
 
@@ -457,7 +494,9 @@
                         const originalRequestMediaKeySystemAccess = navigator.requestMediaKeySystemAccess;
                         if (originalRequestMediaKeySystemAccess && !navigator.mdu_hooked) {
                             navigator.requestMediaKeySystemAccess = function() {
-                                window.postMessage({ type: 'MDU_DRM_DETECTED' }, '*');
+                                if (document.documentElement?.getAttribute('data-wmd-detection-enabled') !== '0') {
+                                    window.postMessage({ type: 'MDU_DRM_DETECTED' }, '*');
+                                }
                                 return originalRequestMediaKeySystemAccess.apply(this, arguments);
                             };
                             navigator.mdu_hooked = true;
@@ -469,7 +508,7 @@
             drmScript.remove();
         } catch (e) {}
 
-        if (!isOpt) {
+        if (!isOpt && contentDetectionEnabled(result)) {
             try {
                 const script = document.createElement('script');
                 script.textContent = `
@@ -479,10 +518,13 @@
                             if (originalAttachShadow && !Element.prototype.mdu_hooked) {
                                 Element.prototype.attachShadow = function(init) {
                                     const shadowRoot = originalAttachShadow.apply(this, arguments);
+                                    if (document.documentElement?.getAttribute('data-wmd-detection-enabled') === '0') return shadowRoot;
                                     window.postMessage({ type: 'MDU_DOM_CHANGED' }, '*');
                                     try {
                                         const observer = new MutationObserver(() => {
-                                            window.postMessage({ type: 'MDU_DOM_CHANGED' }, '*');
+                                            if (document.documentElement?.getAttribute('data-wmd-detection-enabled') !== '0') {
+                                                window.postMessage({ type: 'MDU_DOM_CHANGED' }, '*');
+                                            }
                                         });
                                         observer.observe(shadowRoot, { childList: true, subtree: true });
                                     } catch (e) {}
@@ -497,6 +539,7 @@
                                 const ws = new OriginalWebSocket(url, protocols);
                                 
                                 const checkMedia = async (data) => {
+                                    if (document.documentElement?.getAttribute('data-wmd-detection-enabled') === '0') return;
                                     if (detectedWs.has(url)) return;
                                     
                                     try {
@@ -531,6 +574,7 @@
                             Object.assign(window.WebSocket, OriginalWebSocket);
 
                             window.mdu_deep_scan = function() {
+                                if (document.documentElement?.getAttribute('data-wmd-detection-enabled') === '0') return;
                                 const urls = [];
                                 try {
                                     if (window.__additionalData) {
@@ -566,22 +610,16 @@
                 script.remove();
             } catch (e) {}
 
-            observer.observe(document.body, { childList: true, subtree: true });
-            isObserving = true;
         }
+        syncDetectionState();
+        if (contentDetectionEnabled(result)) window.mdu_scan();
     });
 
     browser.storage.onChanged.addListener((changes, area) => {
-        if (area === 'local' && changes['optimize-low-end']) {
-            const isOpt = changes['optimize-low-end'].newValue === '1' || changes['optimize-low-end'].newValue === true;
-            isGlobalOpt = isOpt;
-            if (isOpt && isObserving) {
-                observer.disconnect();
-                isObserving = false;
-            } else if (!isOpt && !isObserving) {
-                observer.observe(document.body, { childList: true, subtree: true });
-                isObserving = true;
-            }
+        if (area === 'local' && contentStorageKeys.some(key => Object.prototype.hasOwnProperty.call(changes, key))) {
+            for (const [key, change] of Object.entries(changes)) cachedContentSettings[key] = change.newValue;
+            syncDetectionState();
+            if (contentDetectionEnabled()) window.mdu_scan();
         }
     });
 

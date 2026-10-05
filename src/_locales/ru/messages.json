@@ -876,10 +876,10 @@
     "message": "Экспортируйте или импортируйте настройки расширения. Учётные записи, история загрузок и временные данные не включаются."
   },
   "exportSettingsButton": {
-    "message": "Экспортировать настройки"
+    "message": "Экспортировать"
   },
   "importSettingsButton": {
-    "message": "Импортировать настройки"
+    "message": "Импортировать"
   },
   "settingsExportSuccess": {
     "message": "Настройки успешно экспортированы!"
@@ -910,7 +910,7 @@
     "message": "Файл не содержит поддерживаемых настроек"
   },
   "clearHistoryButton": {
-    "message": "Очистить историю",
+    "message": "Очистить",
     "description": "The label of the button to clear the download history."
   },
   "exportHistoryButton": {

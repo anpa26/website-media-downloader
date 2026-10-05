@@ -1,7 +1,7 @@
 {
     "name": "Website Media Downloader",
     "manifest_version": 3,
-    "version": "2.4.0",
+    "version": "2.4.1",
     "description": "__MSG_extensionDescription__",
     "author": "anpa26",
     "developer": {
@@ -64,13 +64,17 @@
             "js": ["redirect_guard_main.js"],
             "run_at": "document_start",
             "world": "MAIN",
-            "all_frames": false
+            "all_frames": true,
+            "match_about_blank": true,
+            "match_origin_as_fallback": true
         },
         {
             "matches": ["<all_urls>"],
             "js": ["popup_blocker_content.js"],
             "run_at": "document_start",
-            "all_frames": false
+            "all_frames": true,
+            "match_about_blank": true,
+            "match_origin_as_fallback": true
         },
         {
             "matches": [

@@ -448,6 +448,12 @@ async function initializeSettings() {
                 const gdriveStream = document.getElementById('gdrive-stream');
                 const onlyFile = document.getElementById('only-file');
 
+                if (setting === 'redirect-guard-hide-content') {
+                    const clicks = document.getElementById('redirect-guard-clicks');
+                    const item = clicks?.closest('.setting-item');
+                    if (item) item.style.display = element.checked ? 'none' : 'flex';
+                }
+
                 if (setting === 'auto-download-all-domains') {
                     const domainsContainer = document.getElementById('auto-download-domains-container');
                     if (domainsContainer) {
@@ -669,7 +675,7 @@ async function initializeSettings() {
                 }
             };
 
-            if (setting === 'auto-download-all-domains' || setting === 'gdrive-stream' || setting === 'speed-boost' || setting === 'background-download' || setting === 'save-to-gdrive' || setting === 'detect-download-links' || setting === 'optimize-low-end') {
+            if (setting === 'auto-download-all-domains' || setting === 'gdrive-stream' || setting === 'speed-boost' || setting === 'background-download' || setting === 'save-to-gdrive' || setting === 'detect-download-links' || setting === 'optimize-low-end' || setting === 'redirect-guard-hide-content') {
                 const checkInitial = () => {
                     const speedBoost = document.getElementById('speed-boost');
                     const speedBoostResume = document.getElementById('speed-boost-resume');

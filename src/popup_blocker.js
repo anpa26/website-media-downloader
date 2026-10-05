@@ -22,35 +22,38 @@ const popupBlockerGestures = new Map();
 const popupBlockerPendingTabs = new Map();
 const POPUP_GESTURE_TTL = 2500;
 
-function popupBlockerComparableUrl(value) {
-    try {
-        const url = new URL(value);
-        return `${url.origin}${url.pathname}${url.search}`;
-    } catch (_) {
-        return '';
-    }
-}
-
 async function popupBlockerEnabled() {
     const stored = await browser.storage.local.get('block-incoming-popups').catch(() => ({}));
-    return stored['block-incoming-popups'] === '1';
+    const value = stored['block-incoming-popups'];
+    return value === '1' || value === true;
 }
 
-function popupBlockerIsExtensionUrl(url) {
-    return /^(?:moz|chrome)-extension:/i.test(url || '');
+function popupBlockerIsTrustedInternalUrl(url) {
+    return /^(?:moz|chrome)-extension:|^(?:about|chrome|chrome-search|edge|brave|vivaldi|opera|resource):/i.test(url || '');
+}
+
+function popupBlockerSameDestination(intendedUrl, targetUrl) {
+    try {
+        const intended = new URL(intendedUrl);
+        const target = new URL(targetUrl);
+        return intended.origin === target.origin;
+    } catch (_) {
+        return false;
+    }
 }
 
 async function inspectIncomingPopup(tabId, openerTabId, targetUrl) {
     if (!await popupBlockerEnabled()) return;
     const opener = await browser.tabs.get(openerTabId).catch(() => null);
-    if (!opener || popupBlockerIsExtensionUrl(opener.url) || popupBlockerIsExtensionUrl(targetUrl)) return;
+    if (!opener || popupBlockerIsTrustedInternalUrl(opener.url) || popupBlockerIsTrustedInternalUrl(targetUrl)) return;
 
     const gesture = popupBlockerGestures.get(openerTabId);
-    popupBlockerGestures.delete(openerTabId);
     const fresh = gesture && Date.now() - gesture.time <= POPUP_GESTURE_TTL;
-    const intended = fresh ? popupBlockerComparableUrl(gesture.url) : '';
-    const actual = popupBlockerComparableUrl(targetUrl);
-    if (intended && actual === intended) return;
+    if (fresh && popupBlockerSameDestination(gesture.url, targetUrl)) {
+        popupBlockerGestures.delete(openerTabId);
+        return;
+    }
+    if (!fresh) popupBlockerGestures.delete(openerTabId);
 
     await browser.tabs.remove(tabId).catch(() => {});
 }
@@ -61,7 +64,7 @@ browser.runtime.onMessage.addListener((message, sender) => {
 });
 
 browser.tabs.onCreated.addListener(tab => {
-    if (tab.openerTabId === undefined || popupBlockerIsExtensionUrl(tab.url)) return;
+    if (tab.openerTabId === undefined || popupBlockerIsTrustedInternalUrl(tab.url)) return;
     if (tab.url && tab.url !== 'about:blank') {
         inspectIncomingPopup(tab.id, tab.openerTabId, tab.url);
         return;

@@ -113,10 +113,10 @@
 
         </div>
         <mdui-bottom-app-bar>
-          <div style="flex-grow: 1; display: flex; justify-content: center; gap: 8px;">
+          <div class="history-actions">
             <mdui-button variant="tonal" id="export-history" data-translate="exportHistoryButton">Export</mdui-button>
+            <mdui-button variant="tonal" id="clear-history" data-translate="clearHistoryButton">Clear</mdui-button>
             <mdui-button variant="tonal" id="import-history" data-translate="importHistoryButton">Import</mdui-button>
-            <mdui-button variant="tonal" id="clear-history" data-translate="clearHistoryButton">Clear history</mdui-button>
           </div>
         </mdui-bottom-app-bar>
       </mdui-tab-panel>
@@ -968,8 +968,8 @@
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 8px; align-items: stretch;">
                   <input type="file" id="import-settings-input" accept="application/json,.json" style="display: none;">
-                  <mdui-button id="export-settings" variant="tonal" data-translate="exportSettingsButton">Export settings</mdui-button>
-                  <mdui-button id="import-settings" variant="tonal" data-translate="importSettingsButton">Import settings</mdui-button>
+                  <mdui-button id="export-settings" variant="tonal" data-translate="exportSettingsButton">Export</mdui-button>
+                  <mdui-button id="import-settings" variant="tonal" data-translate="importSettingsButton">Import</mdui-button>
                 </div>
               </div>
               

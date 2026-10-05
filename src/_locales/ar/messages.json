@@ -876,10 +876,10 @@
     "message": "تصدير إعدادات الإضافة أو استيرادها. لا يتم تضمين الحسابات وسجل التنزيل والبيانات المؤقتة."
   },
   "exportSettingsButton": {
-    "message": "تصدير الإعدادات"
+    "message": "تصدير"
   },
   "importSettingsButton": {
-    "message": "استيراد الإعدادات"
+    "message": "استيراد"
   },
   "settingsExportSuccess": {
     "message": "تم تصدير الإعدادات بنجاح!"
@@ -910,7 +910,7 @@
     "message": "لا يحتوي الملف على إعدادات مدعومة"
   },
   "clearHistoryButton": {
-    "message": "مسح السجل",
+    "message": "مسح",
     "description": "The label of the button to clear the download history."
   },
   "exportHistoryButton": {

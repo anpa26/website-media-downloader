@@ -537,6 +537,25 @@ mdui-bottom-app-bar {
     gap: 12px;
 }
 
+.history-actions {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+#clear-history {
+    position: static;
+    transform: none;
+    --mdui-state-layer-hover: 0;
+    --mdui-state-layer-focus: 0;
+    --mdui-state-layer-pressed: 0;
+}
+
 #loading, #loading-media-list {
     padding: 100px 20px;
     opacity: 0.6;

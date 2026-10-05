@@ -853,10 +853,10 @@
     "message": "Ekspor atau impor pengaturan ekstensi Anda. Akun, riwayat unduhan, dan data sementara tidak disertakan."
   },
   "exportSettingsButton": {
-    "message": "Ekspor pengaturan"
+    "message": "Ekspor"
   },
   "importSettingsButton": {
-    "message": "Impor pengaturan"
+    "message": "Impor"
   },
   "settingsExportSuccess": {
     "message": "Pengaturan berhasil diekspor!"
@@ -887,7 +887,7 @@
     "message": "File tidak berisi pengaturan yang didukung"
   },
   "clearHistoryButton": {
-    "message": "Hapus riwayat",
+    "message": "Hapus",
     "description": "The label of the button to clear the download history."
   },
   "exportHistoryButton": {
