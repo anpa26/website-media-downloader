@@ -133,14 +133,44 @@ jobs:
           
           # Package firefox build if selected
           if [ "${{ github.event.inputs.target_browser }}" = "both" ] || [ "${{ github.event.inputs.target_browser }}" = "firefox only" ]; then
-            # Package firefox build
-            cd build/firefox
-            zip -9 -r ../../website-media-downloader-firefox-${{ github.event.inputs.tag_name }}.xpi ./*
-            cd ../..
-
             # Package Firefox clean source code (mirrors root: src/ folder, metadata in root)
             zip -9 -r website-media-downloader-firefox-source-${{ github.event.inputs.tag_name }}.zip src README.md LICENSE.md CONTRIBUTING.md licenses -x "src/overrides/*" "src/build.js" "src/minify.js" "src/chrome_audio_jobs.js" "src/offscreen.html" "src/offscreen.js"
           fi
+
+      - name: Sign Firefox Extension with AMO
+        if: ${{ github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only' }}
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          if [ -z "$WEB_EXT_API_KEY" ] || [ -z "$WEB_EXT_API_SECRET" ]; then
+            echo "AMO_JWT_ISSUER and AMO_JWT_SECRET repository secrets are required."
+            exit 1
+          fi
+
+          mkdir -p signed-artifacts
+          npx --yes web-ext sign \
+            --source-dir build/firefox \
+            --artifacts-dir signed-artifacts \
+            --channel unlisted \
+            --api-key "$WEB_EXT_API_KEY" \
+            --api-secret "$WEB_EXT_API_SECRET"
+
+          SIGNED_XPI=$(find signed-artifacts -maxdepth 1 -type f -name '*.xpi' -print -quit)
+          if [ -z "$SIGNED_XPI" ]; then
+            echo "AMO did not return a signed XPI."
+            exit 1
+          fi
+
+          cp "$SIGNED_XPI" "website-media-downloader-firefox-${{ github.event.inputs.tag_name }}.xpi"
+
+      - name: Verify Signed Firefox Artifact
+        if: ${{ github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only' }}
+        run: |
+          XPI="website-media-downloader-firefox-${{ github.event.inputs.tag_name }}.xpi"
+          test -s "$XPI"
+          unzip -t "$XPI"
+          unzip -Z1 "$XPI" | grep -Eq '^META-INF/(mozilla\.rsa|cose\.sig)$'
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
