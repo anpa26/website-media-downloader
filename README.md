@@ -203,6 +203,16 @@ You can install the extension directly from the official Firefox Add-ons store:
 
 ---
 
+## Redirect & Unwanted Ad Protection
+
+**Website Media Downloader** also includes optional protection against unwanted redirects and advertising tabs, with the following settings:
+
+- **Block Unwanted Redirects and Ads**: Helps prevent websites from unexpectedly redirecting pages or opening advertising tabs without permission. May not work on every website.
+- **Number of Taps to Open**: Configure how many taps or clicks are required before an external link can be opened.
+- **Hide Blocked Content**: Hides advertisements or clickable elements after they trigger a blocked redirect.
+
+**Note**: *This feature is not a traditional ad blocker. It does not automatically detect or remove advertisements from website. Content is only hidden after a user interaction triggers a blocked redirect, helping prevent repeated accidental clicks.*
+
 ## Troubleshooting
 
 - **Media not detected?** Try refreshing the page and playing the video again. If it still doesn't show up, go to Settings and enable "Detection via server's MIME response".
