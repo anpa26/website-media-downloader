@@ -133,6 +133,7 @@
       <mdui-tab-panel slot="panel" value="settings">
         <div id="settings-container">
 
+          <!-- LIGHT_EXCLUDE_AUTO_DOWNLOAD_START -->
           <div class="settings-group">
             <h2 class="settings-section-title collapsible-header">
               <mdui-icon><svg viewBox="0 0 24 24"><path fill="currentColor" d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66s.06-.11.08-.15L13 3h1l-1 7h3.5c.49 0 .56.34.42.61l-6 10.39z"/></svg></mdui-icon>
@@ -203,6 +204,7 @@
                 </div>
             </div>
           </div>
+          <!-- LIGHT_EXCLUDE_AUTO_DOWNLOAD_END -->
           <div class="settings-group">
             <h2 class="settings-section-title collapsible-header">
               <mdui-icon>
@@ -342,6 +344,7 @@
                 </div>
                 <mdui-switch id="audio-process-notification"></mdui-switch>
               </div>
+              <!-- LIGHT_EXCLUDE_DEVICE_NOTIFICATIONS_START -->
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="mediaSystemNotificationCheckbox">Enable system detection notification</h3>
@@ -349,6 +352,7 @@
                 </div>
                 <mdui-switch id="media-system-notification"></mdui-switch>
               </div>
+              <!-- LIGHT_EXCLUDE_DEVICE_NOTIFICATIONS_END -->
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="stackNotificationsCheckbox">Stack notifications</h3>
@@ -356,6 +360,7 @@
                 </div>
                 <mdui-switch id="stack-notifications"></mdui-switch>
               </div>
+              <!-- LIGHT_EXCLUDE_DEVICE_NOTIFICATIONS_START -->
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="fetchNotificationTitle">Download notifications</h3>
@@ -363,6 +368,7 @@
                 </div>
                 <mdui-switch id="fetch-notification"></mdui-switch>
               </div>
+              <!-- LIGHT_EXCLUDE_DEVICE_NOTIFICATIONS_END -->
             </div>
           </div>
 
@@ -471,7 +477,6 @@
               </div>
             </div>
           </div>
-
           <div class="settings-group">
             <h2 class="settings-section-title collapsible-header">
               <mdui-icon>
@@ -615,6 +620,7 @@
             </div>
           </div>
 
+          <!-- LIGHT_EXCLUDE_CLOUD_SETTINGS_START -->
           <div class="settings-group">
             <h2 class="settings-section-title collapsible-header">
               <mdui-icon>
@@ -684,6 +690,7 @@
               </div>
             </div>
           </div>
+          <!-- LIGHT_EXCLUDE_CLOUD_SETTINGS_END -->
 
           <div class="settings-group">
             <h2 class="settings-section-title collapsible-header">
@@ -732,6 +739,7 @@
                  </div>
                  <mdui-switch id="mpd-fix"></mdui-switch>
                </div>
+              <!-- LIGHT_EXCLUDE_MEDIA_PROCESSING_OPTIONS_START -->
               <div class="setting-item">
                  <div class="setting-text">
                    <h3 data-translate="mpdToMp4Checkbox">Merge MPD audio and video into MP4</h3>
@@ -739,9 +747,11 @@
                  </div>
                  <mdui-switch id="mpd-to-mp4"></mdui-switch>
                </div>
+              <!-- LIGHT_EXCLUDE_MEDIA_PROCESSING_OPTIONS_END -->
             </div>
 
             <div class="settings-items-container">
+              <!-- LIGHT_EXCLUDE_MEDIA_PROCESSING_OPTIONS_START -->
               <div class="setting-item">
                  <div class="setting-text">
                    <h3 data-translate="muxAllAudiosCheckbox">Mux all audio tracks (YouTube)</h3>
@@ -749,6 +759,8 @@
                  </div>
                  <mdui-switch id="mux-all-audios"></mdui-switch>
                </div>
+              <!-- LIGHT_EXCLUDE_MEDIA_PROCESSING_OPTIONS_END -->
+              <!-- LIGHT_EXCLUDE_MEDIA_PROCESSING_OPTIONS_START -->
               <div class="setting-item">
                   <div class="setting-text">
                     <h3 data-translate="embedSubtitlesMkvTitle">Embed all subtitles into video (YouTube)</h3>
@@ -756,9 +768,11 @@
                   </div>
                   <mdui-switch id="embed-subtitles-mkv"></mdui-switch>
                 </div>
+              <!-- LIGHT_EXCLUDE_MEDIA_PROCESSING_OPTIONS_END -->
             </div>
 
             <div class="settings-items-container">
+              <!-- LIGHT_EXCLUDE_MP3_CONVERSION_START -->
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="audioToMp3Setting">Convert audio to MP3</h3>
@@ -777,13 +791,16 @@
                   </select>
                 </div>
               </div>
-              <div class="setting-item">
+              <!-- LIGHT_EXCLUDE_MP3_CONVERSION_END -->
+                <!-- LIGHT_EXCLUDE_MEDIA_PROCESSING_OPTIONS_START -->
+                <div class="setting-item">
                    <div class="setting-text">
                      <h3 data-translate="embedSubtitlesNonYtTitle">Embed subtitles into video (Standard video)</h3>
                      <p data-translate="embedSubtitlesNonYtExplain">When enabled, shows subtitle selector card for standard video downloads to embed selected subtitles.</p>
                    </div>
                    <mdui-switch id="embed-subtitles-nonyt"></mdui-switch>
                  </div>
+                <!-- LIGHT_EXCLUDE_MEDIA_PROCESSING_OPTIONS_END -->
               <div class="setting-item" id="setting-embed-subtitles-container" style="display: none !important;">
                   <h3 data-translate="embedSubtitlesContainerTitle">Subtitle embed container</h3>
                   <div class="pill-select-wrapper">
@@ -794,6 +811,7 @@
                </div>
             </div>
 
+            <!-- LIGHT_EXCLUDE_STREAM_MP4_START -->
             <div class="settings-items-container">
               <div class="setting-item">
                 <div class="setting-text">
@@ -818,6 +836,7 @@
                 </div>
               </div>
             </div>
+            <!-- LIGHT_EXCLUDE_STREAM_MP4_END -->
 
             <div class="settings-items-container">
 
@@ -1050,6 +1069,7 @@
             </div>
           </div>
 
+          <!-- LIGHT_EXCLUDE_SPEED_TEST_START -->
           <div class="settings-group">
             <h2 class="settings-section-title collapsible-header">
               <mdui-icon>
@@ -1119,6 +1139,7 @@
               </div>
             </div>
         </div>
+        <!-- LIGHT_EXCLUDE_SPEED_TEST_END -->
         </div>
       </mdui-tab-panel>
 

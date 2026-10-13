@@ -389,7 +389,9 @@ window.initializeSettingsPage = function initializeSettingsPage() {
     ]);
     await initializeSettings();
     setupConfirmationBar();
+    // LIGHT_EXCLUDE_SPEED_TEST_START
     setupSpeedTest();
+    // LIGHT_EXCLUDE_SPEED_TEST_END
     setupIndexedDBCacheControls();
     setupSettingsConfigurationControls();
     setupManualTsConverter();
@@ -1722,6 +1724,7 @@ function setupCollapsibleLogic() {
     });
 }
 
+// LIGHT_EXCLUDE_SPEED_TEST_START
 function setupSpeedTest() {
     const startBtn = document.getElementById('start-speed-test');
     if (!startBtn) return;
@@ -2005,3 +2008,4 @@ function runUploadTest(onProgress) {
 function runParallelUploadTest(concurrency, onProgress) {
     return runTransferSpeedTest('upload', concurrency, onProgress);
 }
+// LIGHT_EXCLUDE_SPEED_TEST_END

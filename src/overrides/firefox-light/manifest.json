@@ -1,0 +1,12 @@
+{
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "{a3e8274d-921c-4ad5-af7b-cb9e015def72}",
+            "data_collection_permissions": {
+                "required": [
+                    "none"
+                ]
+            }
+        }
+    }
+}

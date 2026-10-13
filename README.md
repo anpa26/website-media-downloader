@@ -151,20 +151,25 @@ website-media-downloader/
 │   ├── styles/
 │   ├── overrides/          # Browser-specific overrides
 │   │   ├── chrome/         # Chrome overrides
-│   │   └── chrome-yt/      # Chrome-YT overrides
+│   │   ├── chrome-yt/      # Chrome-YT overrides
+│   │   ├── light/          # Shared Light edition overrides
+│   │   └── firefox-light/  # Firefox Light identity override
 │   ├── *.js / *.html       # Extension logic & UI
 │   ├── manifest.json       # Firefox base manifest
 │   └── build.js            # Build script
 └── build/                  # Build output (git-ignored)
     ├── chrome/
     ├── chrome-yt/
-    └── firefox/
+    ├── firefox/
+    ├── chrome-light/
+    ├── chrome-yt-light/
+    └── firefox-light/
 ```
 
 ## Building
 
 ```bash
-# Build Chrome, Chrome-YT, and Firefox
+# Build Chrome, Chrome-YT, Firefox, and Light
 node src/build.js all
 
 # Build Chrome only
@@ -176,11 +181,19 @@ node src/build.js chrome-yt
 # Build Firefox only
 node src/build.js firefox
 
+# Build all Light editions
+node src/build.js light
+
+# Build one Light edition only
+node src/build.js chrome-light
+node src/build.js chrome-yt-light
+node src/build.js firefox-light
+
 # Clean build output
 node src/build.js clean
 ```
 
-Build output goes to `build/chrome/`, `build/chrome-yt/`, and `build/firefox/`, each containing a ready-to-load extension.
+Each build output is written to its matching directory under `build/`. The three Light editions exclude the Network Speed Test and cloud integrations, and share customizations from `src/overrides/light/`. Firefox Light has its own add-on UUID; Chrome and Chrome-YT Light receive distinct extension IDs when published as separate Web Store listings.
 
 ---
 

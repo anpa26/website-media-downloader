@@ -25,7 +25,9 @@
     Usage:
         node src/build.js chrome      - Build Chrome extension
         node src/build.js firefox     - Build Firefox extension
-        node src/build.js all         - Build both (default)
+        node src/build.js light       - Build all Light editions
+        node src/build.js chrome-light|chrome-yt-light|firefox-light
+        node src/build.js all         - Build all targets (default)
         node src/build.js clean       - Remove build outputs
 */
 
@@ -37,17 +39,63 @@ const SRC_DIR = __dirname;
 const OVERRIDES_DIR = path.join(SRC_DIR, 'overrides');
 const BUILD_DIR = path.join(ROOT, 'build');
 
-const EXCLUDE_FROM_BUILD = new Set(['build.js', 'overrides', 'minify.js']);
+const EXCLUDE_FROM_BUILD = new Set(['build.js', 'overrides', 'minify.js', 'light_mediabunny_mux.js']);
+
+const MEDIABUNNY_FILES = ['mediabunny.min.js', 'MEDIABUNNY-LICENSE.txt'];
+const LIGHT_MP3_FILES = ['lame.min.js', 'mp3_worker.js'];
+const LIGHT_STREAM_CONVERSION_FILES = ['mux.js', 'mp4_duration.js'];
+
+const FIREFOX_EXCLUDES = new Set(['chrome_audio_jobs.js', 'offscreen.html', 'offscreen.js']);
 
 const EXCLUDE_PER_TARGET = {
-    chrome: new Set(['yt_core.js', 'wymd.js']),
-    'chrome-yt': new Set(),
-    firefox: new Set(['chrome_audio_jobs.js', 'offscreen.html', 'offscreen.js'])
+    chrome: new Set(['yt_core.js', 'wymd.js', ...MEDIABUNNY_FILES]),
+    'chrome-yt': new Set(MEDIABUNNY_FILES),
+    firefox: new Set([...FIREFOX_EXCLUDES, ...MEDIABUNNY_FILES]),
+    'chrome-light': new Set(['yt_core.js', 'wymd.js', 'download_recovery.js', 'audio_processor.html', 'libav.js', ...LIGHT_MP3_FILES, ...LIGHT_STREAM_CONVERSION_FILES]),
+    'chrome-yt-light': new Set(['download_recovery.js', 'audio_processor.html', 'libav.js', ...LIGHT_MP3_FILES, ...LIGHT_STREAM_CONVERSION_FILES]),
+    'firefox-light': new Set([...FIREFOX_EXCLUDES, 'libav.js', ...LIGHT_MP3_FILES, ...LIGHT_STREAM_CONVERSION_FILES])
 };
 
 const FORBIDDEN_PER_TARGET = {
-    firefox: ['chrome_audio_jobs.js', 'offscreen.html', 'offscreen.js']
+    firefox: [...FIREFOX_EXCLUDES],
+    'firefox-light': [...FIREFOX_EXCLUDES]
 };
+
+const FIREFOX_BASED_TARGETS = new Set(['firefox', 'firefox-light']);
+const CHROME_LIGHT_TARGETS = new Set(['chrome-light', 'chrome-yt-light']);
+const LIGHT_TARGETS = new Set(['chrome-light', 'chrome-yt-light', 'firefox-light']);
+const OVERRIDE_CHAIN_PER_TARGET = {
+    'chrome-light': ['chrome', 'light'],
+    'chrome-yt-light': ['chrome-yt', 'light'],
+    'firefox-light': ['light', 'firefox-light']
+};
+const LIGHT_SPEED_TEST_MESSAGES = [
+    'settingsSpeedTestSectionTitle',
+    'speedTestIntro',
+    'runSpeedTestBtn',
+    'downloadSpeed',
+    'uploadSpeed',
+    'speedTestStatusTestingDownload',
+    'speedTestStatusTestingUpload',
+    'speedTestStatusCompleted',
+    'speedTestStatusFailed'
+];
+const LIGHT_DEVICE_NOTIFICATION_MESSAGES = [
+    'mediaSystemNotificationCheckbox',
+    'mediaSystemNotificationExplain',
+    'fetchNotificationTitle',
+    'fetchNotificationExplain'
+];
+const LIGHT_CLOUD_SETTING_KEYS = [
+    'save-to-gdrive',
+    'gdrive-stream',
+    'gdrive_token',
+    'gdrive_user',
+    'save-to-dropbox',
+    'dropbox-stream',
+    'dropbox_token',
+    'dropbox_user'
+];
 
 function cleanDir(dir) {
     if (fs.existsSync(dir)) {
@@ -95,10 +143,11 @@ function mergeJsonFile(basePath, overridePath) {
  * - Non-JSON files fully replace the base
  */
 function applyOverrides(target, outDir) {
-    const overrideDir = path.join(OVERRIDES_DIR, target);
-    if (!fs.existsSync(overrideDir)) return;
-
-    applyOverridesRecursive(overrideDir, outDir);
+    const overrideTargets = OVERRIDE_CHAIN_PER_TARGET[target] || [target];
+    for (const overrideTarget of overrideTargets) {
+        const overrideDir = path.join(OVERRIDES_DIR, overrideTarget);
+        if (fs.existsSync(overrideDir)) applyOverridesRecursive(overrideDir, outDir);
+    }
 }
 
 function applyOverridesRecursive(overrideDir, outDir) {
@@ -122,9 +171,10 @@ function applyOverridesRecursive(overrideDir, outDir) {
  * Count the number of override files for a given target.
  */
 function countOverrideFiles(target) {
-    const overrideDir = path.join(OVERRIDES_DIR, target);
     let count = 0;
-    if (fs.existsSync(overrideDir)) {
+    for (const overrideTarget of OVERRIDE_CHAIN_PER_TARGET[target] || [target]) {
+        const overrideDir = path.join(OVERRIDES_DIR, overrideTarget);
+        if (!fs.existsSync(overrideDir)) continue;
         const walk = (dir) => {
             for (const e of fs.readdirSync(dir)) {
                 const p = path.join(dir, e);
@@ -137,13 +187,330 @@ function countOverrideFiles(target) {
     return count;
 }
 
+function removeMarkedSections(filePath, feature) {
+    const startMarker = `LIGHT_EXCLUDE_${feature}_START`;
+    const endMarker = `LIGHT_EXCLUDE_${feature}_END`;
+    let content = fs.readFileSync(filePath, 'utf8');
+    let removed = 0;
+
+    while (content.includes(startMarker)) {
+        const start = content.lastIndexOf('\n', content.indexOf(startMarker)) + 1;
+        const endMarkerIndex = content.indexOf(endMarker, start);
+        if (endMarkerIndex === -1) {
+            throw new Error(`[light] Missing ${endMarker} in ${path.relative(SRC_DIR, filePath)}`);
+        }
+        const endLine = content.indexOf('\n', endMarkerIndex);
+        content = content.slice(0, start) + content.slice(endLine === -1 ? content.length : endLine + 1);
+        removed++;
+    }
+
+    if (removed === 0) {
+        throw new Error(`[light] Missing ${startMarker} in ${path.relative(SRC_DIR, filePath)}`);
+    }
+    fs.writeFileSync(filePath, content, 'utf8');
+}
+
+function findMatchingBrace(source, openBrace) {
+    let depth = 0;
+    let quote = null;
+    let escaped = false;
+    let lineComment = false;
+    let blockComment = false;
+    for (let i = openBrace; i < source.length; i++) {
+        const char = source[i];
+        const next = source[i + 1];
+        if (lineComment) {
+            if (char === '\n') lineComment = false;
+            continue;
+        }
+        if (blockComment) {
+            if (char === '*' && next === '/') { blockComment = false; i++; }
+            continue;
+        }
+        if (quote) {
+            if (escaped) escaped = false;
+            else if (char === '\\') escaped = true;
+            else if (char === quote) quote = null;
+            continue;
+        }
+        if (char === '/' && next === '/') { lineComment = true; i++; continue; }
+        if (char === '/' && next === '*') { blockComment = true; i++; continue; }
+        if (char === '"' || char === "'" || char === '`') { quote = char; continue; }
+        if (char === '{') depth++;
+        if (char === '}' && --depth === 0) return i;
+    }
+    throw new Error('Unmatched brace while stripping Light-only code');
+}
+
+function replaceNamedFunction(source, functionName, replacement) {
+    const signature = new RegExp(`(?:async\\s+)?function\\s+${functionName}\\s*\\(`);
+    const match = signature.exec(source);
+    if (!match) return { source, replaced: false };
+    const start = match.index;
+    const openBrace = source.indexOf('{', start + match[0].length);
+    const end = findMatchingBrace(source, openBrace);
+    return { source: source.slice(0, start) + replacement.trim() + source.slice(end + 1), replaced: true };
+}
+
+function replaceFunctionBody(source, functionName, body) {
+    const signature = new RegExp(`(?:async\\s+)?function\\s+${functionName}\\s*\\(`);
+    const match = signature.exec(source);
+    if (!match) return { source, replaced: false };
+    const openBrace = source.indexOf('{', match.index + match[0].length);
+    const end = findMatchingBrace(source, openBrace);
+    return {
+        source: source.slice(0, openBrace + 1) + `\n    ${body}\n` + source.slice(end),
+        replaced: true
+    };
+}
+
+function stripDisabledFunctionBodies(filePath, replacements) {
+    if (!fs.existsSync(filePath)) return;
+    let source = fs.readFileSync(filePath, 'utf8');
+    // Work from the bottom of the file upward. This also keeps an unusual
+    // regular-expression literal in one function from affecting the parser
+    // position of declarations that follow it.
+    for (const [functionName, body] of Object.entries(replacements).reverse()) {
+        let result;
+        try {
+            result = replaceFunctionBody(source, functionName, body);
+        } catch (error) {
+            throw new Error(`[light] Could not strip ${functionName} in ${path.relative(SRC_DIR, filePath)}: ${error.message}`);
+        }
+        if (!result.replaced) {
+            throw new Error(`[light] Missing function ${functionName} in ${path.relative(SRC_DIR, filePath)}`);
+        }
+        source = result.source;
+    }
+    fs.writeFileSync(filePath, source, 'utf8');
+}
+
+function replaceSection(filePath, startText, endText, replacement) {
+    let source = fs.readFileSync(filePath, 'utf8');
+    const start = source.indexOf(startText);
+    const end = source.indexOf(endText, start + startText.length);
+    if (start === -1 || end === -1) {
+        throw new Error(`[light] Missing section boundary in ${path.relative(SRC_DIR, filePath)}`);
+    }
+    source = source.slice(0, start) + replacement.trim() + '\n\n' + source.slice(end);
+    fs.writeFileSync(filePath, source, 'utf8');
+}
+
+function stripLibAvCode(outDir) {
+    const muxReplacement = fs.readFileSync(path.join(SRC_DIR, 'light_mediabunny_mux.js'), 'utf8');
+    const converterPath = path.join(outDir, 'offlineStreamConvert.js');
+    let converter = fs.readFileSync(converterPath, 'utf8');
+    const muxResult = replaceNamedFunction(converter, 'downloadAndMuxYoutube', muxReplacement);
+    converter = muxResult.source;
+
+    const subtitleResult = replaceNamedFunction(
+        converter,
+        'embedSubtitlesWithLibAV',
+        `async function embedSubtitlesLight(videoBlob) {\n    return videoBlob;\n}`
+    );
+    converter = subtitleResult.source;
+
+    const mpdFlag = 'if (mpdToMp4Enabled) {';
+    const mpdStart = converter.lastIndexOf(mpdFlag);
+    if (mpdStart !== -1) {
+        const openBrace = converter.indexOf('{', mpdStart);
+        const end = findMatchingBrace(converter, openBrace);
+        converter = converter.slice(0, mpdStart) + 'if (false) {}' + converter.slice(end + 1);
+    }
+
+    fs.writeFileSync(converterPath, converter, 'utf8');
+
+    const replaceLegacySubtitleCall = dir => {
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+            const entryPath = path.join(dir, entry.name);
+            if (entry.isDirectory()) replaceLegacySubtitleCall(entryPath);
+            else if (/\.js$/i.test(entry.name)) {
+                const source = fs.readFileSync(entryPath, 'utf8');
+                if (source.includes('embedSubtitlesWithLibAV') || source.includes('LibAV')) {
+                    fs.writeFileSync(
+                        entryPath,
+                        source.replaceAll('embedSubtitlesWithLibAV', 'embedSubtitlesLight').replaceAll('LibAV', 'Light muxer'),
+                        'utf8'
+                    );
+                }
+            }
+        }
+    };
+    replaceLegacySubtitleCall(outDir);
+
+    const readmePath = path.join(outDir, 'README.md');
+    if (fs.existsSync(readmePath)) {
+        const readme = fs.readFileSync(readmePath, 'utf8');
+        fs.writeFileSync(
+            readmePath,
+            readme.replace(
+                /- Media Processing: \[libav\.js\]\([^\n]+\)/i,
+                muxResult.replaced ? '- Media Processing: [Mediabunny](https://github.com/Vanilagy/mediabunny/)' : ''
+            ),
+            'utf8'
+        );
+    }
+
+    if (!muxResult.replaced) {
+        for (const file of MEDIABUNNY_FILES) {
+            const unusedPath = path.join(outDir, 'libraries', file);
+            if (fs.existsSync(unusedPath)) fs.unlinkSync(unusedPath);
+        }
+        return;
+    }
+
+    for (const htmlName of ['popup.html', 'audio_processor.html', 'offscreen.html', 'stream_processor.html']) {
+        const htmlPath = path.join(outDir, htmlName);
+        if (!fs.existsSync(htmlPath)) continue;
+        let html = fs.readFileSync(htmlPath, 'utf8');
+        if (!html.includes('offlineStreamConvert.js')) continue;
+        html = html.replace(
+            /(<script\s+src=["']offlineStreamConvert\.js["']><\/script>)/,
+            '<script src="libraries/mediabunny.min.js"></script>\n$1'
+        );
+        fs.writeFileSync(htmlPath, html, 'utf8');
+    }
+}
+
+function stripMp3Conversion(outDir) {
+    const converterPath = path.join(outDir, 'offlineStreamConvert.js');
+    let converter = fs.readFileSync(converterPath, 'utf8');
+    converter = replaceNamedFunction(
+        converter,
+        'convertM4aToMp3Direct',
+        `async function convertM4aToMp3Direct(blob, filename) {\n    return { blob, filename: filename.replace(/\\.mp3$/i, '.m4a') };\n}`
+    ).source;
+    converter = replaceNamedFunction(
+        converter,
+        'convertAudioToMp3IfEnabled',
+        `async function convertAudioToMp3IfEnabled(blob, filename) {\n    return { blob, filename: filename.replace(/\\.mp3$/i, '.wav') };\n}`
+    ).source;
+    fs.writeFileSync(converterPath, converter, 'utf8');
+}
+
+function stripDisabledIntegrations(outDir) {
+    const unavailable = `throw new Error('This integration is not available in the Light edition.');`;
+    const cloudStubs = [
+        'startDropboxStreamUpload', 'appendDropboxStream', 'finishDropboxStream',
+        'startGDriveStreamUpload', 'uploadStreamChunk', 'reauthDropbox', 'reauthGDrive',
+        'uploadToDropbox', 'uploadToGDrive', 'uploadChunks'
+    ].map(name => `async function ${name}() { ${unavailable} }`).join('\n');
+    const backgroundCloudStubs = [
+        'startDropboxStreamUpload', 'appendDropboxStream', 'finishDropboxStream',
+        'startGDriveStreamUpload', 'uploadStreamChunk', 'reauthDropbox', 'reauthGDrive',
+        'uploadToGDrive', 'uploadChunks'
+    ].map(name => `async function ${name}() { ${unavailable} }`).join('\n');
+
+    const converterPath = path.join(outDir, 'offlineStreamConvert.js');
+    replaceSection(converterPath, 'class CloudUploadController', 'function getExtFromMime', cloudStubs);
+    replaceSection(
+        converterPath,
+        '    let transmuxer = null;',
+        '    let nextUploadIndex = 0;',
+        '    let transmuxer = null;\n    const transmuxedOutputQueue = [];'
+    );
+    stripDisabledFunctionBodies(converterPath, {
+        transmuxToMp4: unavailable
+    });
+    let converter = fs.readFileSync(converterPath, 'utf8');
+    converter = converter.replace("const ensureMuxJsLoaded = () => ensureOptionalLibraryLoaded('libraries/mux.js', 'muxjs');\n", '');
+    converter = replaceNamedFunction(converter, 'updateProgressStatus', '').source;
+    fs.writeFileSync(converterPath, converter, 'utf8');
+
+    const backgroundPath = path.join(outDir, 'network_detector.js');
+    replaceSection(
+        backgroundPath,
+        'function uploadToDropbox',
+        'async function assembleBlobFromCache',
+        `async function uploadToDropbox() { ${unavailable} }\nasync function uploadFromCacheToDropbox() { ${unavailable} }\nasync function uploadFromCacheToGDrive() { ${unavailable} }`
+    );
+    replaceSection(backgroundPath, 'class CloudUploadController', 'async function handleFetchDownload', backgroundCloudStubs);
+    stripDisabledFunctionBodies(backgroundPath, {
+        maybeAutoDownloadMedia: 'return false;',
+        scheduleExistingMediaAutoDownload: 'return;',
+        showMediaNotification: 'return;'
+    });
+
+    replaceSection(path.join(outDir, 'download.js'), 'class CloudUploadController', 'async function getStoredDownloads', cloudStubs);
+    replaceSection(
+        path.join(outDir, 'settings.js'),
+        "    const gdriveBtn = document.getElementById('gdrive-login-btn');\n    const gdriveText = document.getElementById('gdrive-login-text');",
+        "    const layoutResult = await browser.storage.local.get('settings-layout');",
+        ''
+    );
+
+    const removeIfPresent = (filePath, functionNames) => {
+        let source = fs.readFileSync(filePath, 'utf8');
+        for (const functionName of functionNames) {
+            const occurrences = source.match(new RegExp(`\\b${functionName}\\b`, 'g'))?.length || 0;
+            if (occurrences !== 1) continue;
+            source = replaceNamedFunction(source, functionName, '').source;
+        }
+        fs.writeFileSync(filePath, source, 'utf8');
+    };
+    removeIfPresent(backgroundPath, [
+        'getM3U8VariantsBg',
+        'restoreActiveDownloadsFromSession',
+        'injectNotificationScript',
+        'autoUpdateHistoryLink',
+        'showSimpleToast',
+        'normalizeAutoDownloadDomain',
+        'assembleBlobFromCache'
+    ]);
+    removeIfPresent(converterPath, ['normalizeVttForMux']);
+}
+
+function stripLightFeatures(outDir) {
+    removeMarkedSections(path.join(outDir, 'popup.html'), 'SPEED_TEST');
+    removeMarkedSections(path.join(outDir, 'popup.html'), 'CLOUD_SETTINGS');
+    removeMarkedSections(path.join(outDir, 'popup.html'), 'DEVICE_NOTIFICATIONS');
+    removeMarkedSections(path.join(outDir, 'popup.html'), 'AUTO_DOWNLOAD');
+    removeMarkedSections(path.join(outDir, 'popup.html'), 'MEDIA_PROCESSING_OPTIONS');
+    removeMarkedSections(path.join(outDir, 'popup.html'), 'STREAM_MP4');
+    removeMarkedSections(path.join(outDir, 'popup.html'), 'MP3_CONVERSION');
+    removeMarkedSections(path.join(outDir, 'settings.js'), 'SPEED_TEST');
+    stripLibAvCode(outDir);
+    stripMp3Conversion(outDir);
+    stripDisabledIntegrations(outDir);
+
+    const backgroundPath = path.join(outDir, 'network_detector.js');
+    const background = fs.readFileSync(backgroundPath, 'utf8');
+    const disabledCloudSettings = Object.fromEntries(
+        LIGHT_CLOUD_SETTING_KEYS.filter(key => !key.endsWith('_token') && !key.endsWith('_user')).map(key => [key, '0'])
+    );
+    const cloudTokens = LIGHT_CLOUD_SETTING_KEYS.filter(key => key.endsWith('_token') || key.endsWith('_user'));
+    const cloudGuard = `\n// Light edition: removed integrations and optional background features stay disabled.\nbrowser.storage.local.set(${JSON.stringify({ ...disabledCloudSettings, 'media-system-notification': '0', 'fetch-notification': '0', 'auto-download-media': '0', 'auto-download-all-domains': '0', 'mpd-to-mp4': '0', 'mux-all-audios': '0', 'embed-subtitles-mkv': '0', 'embed-subtitles-nonyt': '0', 'stream-to-mp4': '0', 'audio-to-mp3': '0' })});\nbrowser.storage.local.remove(${JSON.stringify([...cloudTokens, 'mp3-bitrate'])});\n`;
+    fs.writeFileSync(backgroundPath, background + cloudGuard, 'utf8');
+
+    const localesDir = path.join(outDir, '_locales');
+    for (const locale of fs.readdirSync(localesDir)) {
+        const messagesPath = path.join(localesDir, locale, 'messages.json');
+        if (!fs.existsSync(messagesPath)) continue;
+        const messages = JSON.parse(fs.readFileSync(messagesPath, 'utf8'));
+        for (const key of LIGHT_SPEED_TEST_MESSAGES) delete messages[key];
+        for (const key of LIGHT_DEVICE_NOTIFICATION_MESSAGES) delete messages[key];
+        for (const key of Object.keys(messages)) {
+            if (/gdrive|dropbox|cloudsave|settingscloud/i.test(key)) delete messages[key];
+            if (/^(?:autoDownload|autoSkipDownload|autoIgnoreExcludedMedia|settingsAutoSectionTitle$)/i.test(key)) delete messages[key];
+            if (/^(?:mpdToMp4|muxAllAudios|embedSubtitlesMkv|embedSubtitlesNonYt)/i.test(key)) delete messages[key];
+            if (/^(?:streamToMp4|manualTs)/i.test(key)) delete messages[key];
+            if (/^(?:audioToMp3|mp3Bitrate|convertingToMp3)/i.test(key)) delete messages[key];
+        }
+        fs.writeFileSync(messagesPath, JSON.stringify(messages, null, 2) + '\n', 'utf8');
+    }
+}
+
 function finalizeManifest(target, outDir) {
     const manifestPath = path.join(outDir, 'manifest.json');
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 
-    if (target === 'firefox') {
+    if (FIREFOX_BASED_TARGETS.has(target)) {
         manifest.permissions = (manifest.permissions || []).filter(permission => permission !== 'offscreen');
         if (manifest.background) delete manifest.background.service_worker;
+    }
+    if (LIGHT_TARGETS.has(target)) {
+        manifest.permissions = (manifest.permissions || []).filter(permission => permission !== 'identity');
+        delete manifest.oauth2;
     }
 
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 4) + '\n', 'utf8');
@@ -157,15 +524,117 @@ function validateTarget(target, outDir) {
     }
 
     const manifest = JSON.parse(fs.readFileSync(path.join(outDir, 'manifest.json'), 'utf8'));
-    if (target === 'firefox') {
+    if (FIREFOX_BASED_TARGETS.has(target)) {
         if (manifest.permissions?.includes('offscreen')) {
-            throw new Error('[firefox] Chrome-only "offscreen" permission leaked into manifest');
+            throw new Error(`[${target}] Chrome-only "offscreen" permission leaked into manifest`);
         }
         if (manifest.background?.service_worker) {
-            throw new Error('[firefox] Chrome-only background service worker leaked into manifest');
+            throw new Error(`[${target}] Chrome-only background service worker leaked into manifest`);
         }
         if (!manifest.background?.scripts?.length) {
-            throw new Error('[firefox] Missing background scripts');
+            throw new Error(`[${target}] Missing background scripts`);
+        }
+    }
+
+    if (LIGHT_TARGETS.has(target) && !manifest.name.startsWith('Website Media Downloader Light')) {
+        throw new Error(`[${target}] Light manifest override was not applied`);
+    }
+    if (CHROME_LIGHT_TARGETS.has(target)) {
+        if (manifest.developer || manifest.browser_specific_settings) {
+            throw new Error(`[${target}] Firefox-only manifest keys leaked into Chrome build`);
+        }
+        if (manifest.background?.scripts || !manifest.background?.service_worker) {
+            throw new Error(`[${target}] Chrome MV3 build must use a background service worker`);
+        }
+        for (const permission of ['webRequestBlocking', 'webRequestFilterResponse']) {
+            if (manifest.permissions?.includes(permission)) {
+                throw new Error(`[${target}] Firefox-only permission leaked into Chrome build: ${permission}`);
+            }
+        }
+    }
+    if (target === 'firefox-light') {
+        const standardId = JSON.parse(fs.readFileSync(path.join(SRC_DIR, 'manifest.json'), 'utf8')).browser_specific_settings?.gecko?.id;
+        const lightId = manifest.browser_specific_settings?.gecko?.id;
+        if (!lightId || lightId === standardId) {
+            throw new Error('[firefox-light] A dedicated Firefox extension ID is required');
+        }
+    }
+    if (LIGHT_TARGETS.has(target)) {
+        const popup = fs.readFileSync(path.join(outDir, 'popup.html'), 'utf8');
+        const settings = fs.readFileSync(path.join(outDir, 'settings.js'), 'utf8');
+        if (popup.includes('start-speed-test') || settings.includes('setupSpeedTest') || settings.includes('speed.cloudflare.com')) {
+            throw new Error(`[${target}] Speed Test code leaked into build`);
+        }
+        if (popup.includes('cloud-save-location') || popup.includes('gdrive-login-btn') || popup.includes('dropbox-login-btn')) {
+            throw new Error(`[${target}] Cloud settings UI leaked into build`);
+        }
+        if (manifest.permissions?.includes('identity') || manifest.oauth2) {
+            throw new Error(`[${target}] Cloud authentication capability leaked into manifest`);
+        }
+        if (fs.existsSync(path.join(outDir, 'libraries', 'libav.js'))) {
+            throw new Error(`[${target}] LibAV library leaked into Light build`);
+        }
+        for (const removedMp3File of LIGHT_MP3_FILES) {
+            const removedPath = removedMp3File === 'mp3_worker.js'
+                ? path.join(outDir, removedMp3File)
+                : path.join(outDir, 'libraries', removedMp3File);
+            if (fs.existsSync(removedPath)) throw new Error(`[${target}] Removed MP3 encoder leaked into Light build: ${removedMp3File}`);
+        }
+        for (const removedStreamFile of LIGHT_STREAM_CONVERSION_FILES) {
+            const removedPath = removedStreamFile.endsWith('.js') && removedStreamFile !== 'mp4_duration.js'
+                ? path.join(outDir, 'libraries', removedStreamFile)
+                : path.join(outDir, removedStreamFile);
+            if (fs.existsSync(removedPath)) {
+                throw new Error(`[${target}] Disabled stream converter leaked into Light build: ${removedStreamFile}`);
+            }
+        }
+        const lightSourceFiles = ['offlineStreamConvert.js', 'network_detector.js', 'download.js', 'settings.js']
+            .filter(file => fs.existsSync(path.join(outDir, file)))
+            .map(file => fs.readFileSync(path.join(outDir, file), 'utf8'))
+            .join('\n');
+        if (/googleapis\.com|dropboxapi\.com|launchWebAuthFlow/.test(lightSourceFiles)) {
+            throw new Error(`[${target}] Disabled cloud integration code leaked into Light build`);
+        }
+        if (/libraries\/mux\.js|mp4_duration\.js/.test(lightSourceFiles)) {
+            throw new Error(`[${target}] Disabled stream conversion references leaked into Light build`);
+        }
+        if (CHROME_LIGHT_TARGETS.has(target)) {
+            for (const firefoxFallbackFile of ['download_recovery.js', 'audio_processor.html']) {
+                if (fs.existsSync(path.join(outDir, firefoxFallbackFile))) {
+                    throw new Error(`[${target}] Firefox fallback leaked into Chrome Light build: ${firefoxFallbackFile}`);
+                }
+            }
+        }
+        if (popup.includes('audio-to-mp3') || popup.includes('mp3-bitrate')) {
+            throw new Error(`[${target}] MP3 conversion settings UI leaked into build`);
+        }
+        const converterUsesMediabunny = fs.readFileSync(path.join(outDir, 'offlineStreamConvert.js'), 'utf8').includes('Mediabunny');
+        const hasMediabunny = fs.existsSync(path.join(outDir, 'libraries', 'mediabunny.min.js'));
+        if (converterUsesMediabunny && !hasMediabunny) {
+            throw new Error(`[${target}] Mediabunny library is missing from Light build`);
+        }
+        if (!converterUsesMediabunny && hasMediabunny) {
+            throw new Error(`[${target}] Unused Mediabunny library leaked into Light build`);
+        }
+        const libavLeaks = [];
+        const auditLibAv = dir => {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+                const entryPath = path.join(dir, entry.name);
+                if (entry.isDirectory()) auditLibAv(entryPath);
+                else if (/\.(?:js|html|json|md)$/i.test(entry.name) && /libav/i.test(fs.readFileSync(entryPath, 'utf8'))) {
+                    libavLeaks.push(path.relative(outDir, entryPath));
+                }
+            }
+        };
+        auditLibAv(outDir);
+        if (libavLeaks.length) throw new Error(`[${target}] LibAV references leaked into: ${libavLeaks.join(', ')}`);
+        for (const locale of fs.readdirSync(path.join(outDir, '_locales'))) {
+            const messagesPath = path.join(outDir, '_locales', locale, 'messages.json');
+            if (!fs.existsSync(messagesPath)) continue;
+            const messages = JSON.parse(fs.readFileSync(messagesPath, 'utf8'));
+            if (LIGHT_SPEED_TEST_MESSAGES.some(key => Object.hasOwn(messages, key))) {
+                throw new Error(`[${target}] Speed Test translations leaked into locale: ${locale}`);
+            }
         }
     }
 }
@@ -182,6 +651,7 @@ function buildTarget(target) {
     }
 
     applyOverrides(target, outDir);
+    if (LIGHT_TARGETS.has(target)) stripLightFeatures(outDir);
     finalizeManifest(target, outDir);
     validateTarget(target, outDir);
 
@@ -202,10 +672,19 @@ switch (command) {
     case 'firefox':
         buildTarget('firefox');
         break;
+    case 'chrome-light':
+    case 'chrome-yt-light':
+    case 'firefox-light':
+        buildTarget(command);
+        break;
+    case 'light':
+        for (const target of LIGHT_TARGETS) buildTarget(target);
+        break;
     case 'all':
         buildTarget('chrome');
         buildTarget('chrome-yt');
         buildTarget('firefox');
+        for (const target of LIGHT_TARGETS) buildTarget(target);
         break;
     case 'clean':
         cleanDir(BUILD_DIR);
@@ -213,6 +692,6 @@ switch (command) {
         break;
     default:
         console.error(`[ERROR] Unknown command: ${command}`);
-        console.error('Usage: node src/build.js [chrome|chrome-yt|firefox|all|clean]');
+        console.error('Usage: node src/build.js [chrome|chrome-yt|firefox|chrome-light|chrome-yt-light|firefox-light|light|all|clean]');
         process.exit(1);
 }
