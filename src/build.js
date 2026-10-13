@@ -73,6 +73,10 @@ const LIGHT_SPEED_TEST_MESSAGES = [
     'settingsSpeedTestSectionTitle',
     'speedTestIntro',
     'runSpeedTestBtn',
+    'downloadNormal',
+    'downloadSpeedBoost',
+    'uploadNormal',
+    'uploadSpeedBoost',
     'downloadSpeed',
     'uploadSpeed',
     'speedTestStatusTestingDownload',
@@ -86,6 +90,14 @@ const LIGHT_DEVICE_NOTIFICATION_MESSAGES = [
     'fetchNotificationTitle',
     'fetchNotificationExplain'
 ];
+const LIGHT_DEAD_MESSAGES = [
+    'historyLinkUpdated',
+    'mediaNotificationTitle',
+    'mediaNotificationDownloadAction',
+    'streamDownloadCompleteTitle',
+    'streamDownloadSaved'
+];
+const LIGHT_DEAD_MESSAGE_PATTERN = /^(?:qualityModal|ytModal)/i;
 const LIGHT_CLOUD_SETTING_KEYS = [
     'save-to-gdrive',
     'gdrive-stream',
@@ -489,7 +501,9 @@ function stripLightFeatures(outDir) {
         const messages = JSON.parse(fs.readFileSync(messagesPath, 'utf8'));
         for (const key of LIGHT_SPEED_TEST_MESSAGES) delete messages[key];
         for (const key of LIGHT_DEVICE_NOTIFICATION_MESSAGES) delete messages[key];
+        for (const key of LIGHT_DEAD_MESSAGES) delete messages[key];
         for (const key of Object.keys(messages)) {
+            if (LIGHT_DEAD_MESSAGE_PATTERN.test(key)) delete messages[key];
             if (/gdrive|dropbox|cloudsave|settingscloud/i.test(key)) delete messages[key];
             if (/^(?:autoDownload|autoSkipDownload|autoIgnoreExcludedMedia|settingsAutoSectionTitle$)/i.test(key)) delete messages[key];
             if (/^(?:mpdToMp4|muxAllAudios|embedSubtitlesMkv|embedSubtitlesNonYt)/i.test(key)) delete messages[key];
@@ -634,6 +648,12 @@ function validateTarget(target, outDir) {
             const messages = JSON.parse(fs.readFileSync(messagesPath, 'utf8'));
             if (LIGHT_SPEED_TEST_MESSAGES.some(key => Object.hasOwn(messages, key))) {
                 throw new Error(`[${target}] Speed Test translations leaked into locale: ${locale}`);
+            }
+            const deadMessages = Object.keys(messages).filter(key =>
+                LIGHT_DEAD_MESSAGES.includes(key) || LIGHT_DEAD_MESSAGE_PATTERN.test(key)
+            );
+            if (deadMessages.length) {
+                throw new Error(`[${target}] Removed feature translations leaked into locale ${locale}: ${deadMessages.join(', ')}`);
             }
         }
     }

@@ -77,8 +77,11 @@ jobs:
           elif [ "${{ github.event.inputs.target_browser }}" = "chrome only" ]; then
             node src/build.js chrome
             node src/build.js chrome-yt
+            node src/build.js chrome-light
+            node src/build.js chrome-yt-light
           elif [ "${{ github.event.inputs.target_browser }}" = "firefox only" ]; then
             node src/build.js firefox
+            node src/build.js firefox-light
           fi
 
       - name: Minify Builds
@@ -98,6 +101,15 @@ jobs:
             # Package chrome-yt build
             cd build/chrome-yt
             zip -9 -r ../../website-media-downloader-chrome-yt-${{ github.event.inputs.tag_name }}.zip ./*
+            cd ../..
+
+            # Package Light builds
+            cd build/chrome-light
+            zip -9 -r ../../website-media-downloader-chrome-light-${{ github.event.inputs.tag_name }}.zip ./*
+            cd ../..
+
+            cd build/chrome-yt-light
+            zip -9 -r ../../website-media-downloader-chrome-yt-light-${{ github.event.inputs.tag_name }}.zip ./*
             cd ../..
 
             # Package Chrome clean source code (mirrors root: src/ folder with overrides applied, metadata in root)
@@ -129,6 +141,36 @@ jobs:
             zip -9 -r ../website-media-downloader-chrome-yt-source-${{ github.event.inputs.tag_name }}.zip ./*
             cd ..
             rm -rf chrome-yt-source-temp
+
+            # Package Chrome Light clean source code
+            mkdir -p chrome-light-source-temp/src
+            cp -r build/chrome-light/* chrome-light-source-temp/src/
+            cp LICENSE.md CONTRIBUTING.md chrome-light-source-temp/
+            if [ -f build/chrome-light/README.md ]; then
+              cp build/chrome-light/README.md chrome-light-source-temp/README.md
+            else
+              cp README.md chrome-light-source-temp/README.md
+            fi
+            cp -r licenses chrome-light-source-temp/
+            cd chrome-light-source-temp
+            zip -9 -r ../website-media-downloader-chrome-light-source-${{ github.event.inputs.tag_name }}.zip ./*
+            cd ..
+            rm -rf chrome-light-source-temp
+
+            # Package Chrome-YT Light clean source code
+            mkdir -p chrome-yt-light-source-temp/src
+            cp -r build/chrome-yt-light/* chrome-yt-light-source-temp/src/
+            cp LICENSE.md CONTRIBUTING.md chrome-yt-light-source-temp/
+            if [ -f build/chrome-yt-light/README.md ]; then
+              cp build/chrome-yt-light/README.md chrome-yt-light-source-temp/README.md
+            else
+              cp README.md chrome-yt-light-source-temp/README.md
+            fi
+            cp -r licenses chrome-yt-light-source-temp/
+            cd chrome-yt-light-source-temp
+            zip -9 -r ../website-media-downloader-chrome-yt-light-source-${{ github.event.inputs.tag_name }}.zip ./*
+            cd ..
+            rm -rf chrome-yt-light-source-temp
           fi
           
           # Package firefox build if selected
@@ -148,29 +190,40 @@ jobs:
             exit 1
           fi
 
-          mkdir -p signed-artifacts
-          npx --yes web-ext sign \
-            --source-dir build/firefox \
-            --artifacts-dir signed-artifacts \
-            --channel unlisted \
-            --api-key "$WEB_EXT_API_KEY" \
-            --api-secret "$WEB_EXT_API_SECRET"
+          sign_firefox_build() {
+            SOURCE_DIR="$1"
+            ARTIFACT_DIR="$2"
+            OUTPUT_FILE="$3"
 
-          SIGNED_XPI=$(find signed-artifacts -maxdepth 1 -type f -name '*.xpi' -print -quit)
-          if [ -z "$SIGNED_XPI" ]; then
-            echo "AMO did not return a signed XPI."
-            exit 1
-          fi
+            mkdir -p "$ARTIFACT_DIR"
+            npx --yes web-ext sign \
+              --source-dir "$SOURCE_DIR" \
+              --artifacts-dir "$ARTIFACT_DIR" \
+              --channel unlisted \
+              --api-key "$WEB_EXT_API_KEY" \
+              --api-secret "$WEB_EXT_API_SECRET"
 
-          cp "$SIGNED_XPI" "website-media-downloader-firefox-${{ github.event.inputs.tag_name }}.xpi"
+            SIGNED_XPI=$(find "$ARTIFACT_DIR" -maxdepth 1 -type f -name '*.xpi' -print -quit)
+            if [ -z "$SIGNED_XPI" ]; then
+              echo "AMO did not return a signed XPI for $SOURCE_DIR."
+              exit 1
+            fi
+            cp "$SIGNED_XPI" "$OUTPUT_FILE"
+          }
+
+          sign_firefox_build build/firefox signed-artifacts/firefox "website-media-downloader-firefox-${{ github.event.inputs.tag_name }}.xpi"
+          sign_firefox_build build/firefox-light signed-artifacts/firefox-light "website-media-downloader-firefox-light-${{ github.event.inputs.tag_name }}.xpi"
 
       - name: Verify Signed Firefox Artifact
         if: ${{ github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only' }}
         run: |
-          XPI="website-media-downloader-firefox-${{ github.event.inputs.tag_name }}.xpi"
-          test -s "$XPI"
-          unzip -t "$XPI"
-          unzip -Z1 "$XPI" | grep -Eq '^META-INF/(mozilla\.rsa|cose\.sig)$'
+          for XPI in \
+            "website-media-downloader-firefox-${{ github.event.inputs.tag_name }}.xpi" \
+            "website-media-downloader-firefox-light-${{ github.event.inputs.tag_name }}.xpi"; do
+            test -s "$XPI"
+            unzip -t "$XPI"
+            unzip -Z1 "$XPI" | grep -Eq '^META-INF/(mozilla\.rsa|cose\.sig)$'
+          done
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -180,9 +233,17 @@ jobs:
           body: ${{ steps.commit_info.outputs.body }}
           prerelease: ${{ github.event.inputs.prerelease == 'true' }}
           files: |
-            website-media-downloader-chrome-*.zip
-            website-media-downloader-firefox-*.xpi
-            website-media-downloader-firefox-source-*.zip
+            website-media-downloader-chrome-${{ github.event.inputs.tag_name }}.zip
+            website-media-downloader-chrome-yt-${{ github.event.inputs.tag_name }}.zip
+            website-media-downloader-chrome-light-${{ github.event.inputs.tag_name }}.zip
+            website-media-downloader-chrome-yt-light-${{ github.event.inputs.tag_name }}.zip
+            website-media-downloader-firefox-${{ github.event.inputs.tag_name }}.xpi
+            website-media-downloader-firefox-light-${{ github.event.inputs.tag_name }}.xpi
+            website-media-downloader-chrome-source-${{ github.event.inputs.tag_name }}.zip
+            website-media-downloader-chrome-yt-source-${{ github.event.inputs.tag_name }}.zip
+            website-media-downloader-chrome-light-source-${{ github.event.inputs.tag_name }}.zip
+            website-media-downloader-chrome-yt-light-source-${{ github.event.inputs.tag_name }}.zip
+            website-media-downloader-firefox-source-${{ github.event.inputs.tag_name }}.zip
           target_commitish: ${{ github.event.inputs.commit_sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
