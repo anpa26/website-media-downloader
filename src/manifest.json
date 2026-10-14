@@ -1,7 +1,7 @@
 {
     "name": "Website Media Downloader",
     "manifest_version": 3,
-    "version": "2.4.1",
+    "version": "2.4.3",
     "description": "__MSG_extensionDescription__",
     "author": "anpa26",
     "developer": {
@@ -85,6 +85,7 @@
             ],
             "js": [
                 "surgical_scrapers.js",
+                "media_compute_client.js",
                 "offlineStreamConvert.js",
                 "content_detector.js"
             ],
@@ -123,6 +124,17 @@
     "action": {
         "default_title": "__MSG_actionTitle__"
     },
+    "web_accessible_resources": [{
+        "resources": [
+            "media_compute_worker.js",
+            "libraries/mux.js",
+            "mp4_duration.js",
+            "libraries/client-zip.js",
+            "libraries/subsrt.bundle.js",
+            "libraries/libav.js"
+        ],
+        "matches": ["<all_urls>"]
+    }],
     "default_locale": "en",
     "options_page": "popup.html?options=true"
 }

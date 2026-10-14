@@ -284,6 +284,15 @@ cleanupStaleConversionChunks();
 
 async function transmuxToMp4(tsBlobs, onProgress = null) {
   console.log("Starting transmuxing with mux.js. Segments count:", tsBlobs.length);
+  if (globalThis.mediaCompute?.run) {
+    try {
+      onProgress?.(0);
+      const output = await globalThis.mediaCompute.run('transmux', { inputs: tsBlobs }, [], onProgress);
+      if (output) return { blob: new Blob([output], { type: 'video/mp4' }), ext: '.mp4' };
+    } catch (error) {
+      console.warn('Worker transmux failed; using the compatible fallback.', error);
+    }
+  }
   
   await ensureMuxJsLoaded();
   if (typeof muxjs === 'undefined') {
@@ -3386,8 +3395,9 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
                     }
                     
                     libavInstance = await window[libavVar].LibAV({
-                        noworker: true,
-                        base: browser.runtime.getURL('libraries')
+                        noworker: false,
+                        base: browser.runtime.getURL('libraries'),
+                        toImport: browser.runtime.getURL('libraries/libav.js')
                     });
 
                     if (vBlob) {
@@ -3728,8 +3738,9 @@ async function downloadAndMuxYoutube(videoUrl, audioUrl, filename, downloadMetho
 
         console.log("downloadAndMuxYoutube: Initializing LibAV instance...");
         libav = await window[libavVar].LibAV({
-            noworker: true,
-            base: browser.runtime.getURL('libraries')
+            noworker: false,
+            base: browser.runtime.getURL('libraries'),
+            toImport: browser.runtime.getURL('libraries/libav.js')
         });
         console.log("downloadAndMuxYoutube: LibAV instance ready.");
 
@@ -4298,8 +4309,9 @@ async function embedSubtitlesWithLibAV(videoBlob, subData, containerFormat, file
 
         console.log("embedSubtitlesWithLibAV: Initializing LibAV instance...");
         libav = await window[libavVar].LibAV({
-            noworker: true,
-            base: browser.runtime.getURL('libraries')
+            noworker: false,
+            base: browser.runtime.getURL('libraries'),
+            toImport: browser.runtime.getURL('libraries/libav.js')
         });
         console.log("embedSubtitlesWithLibAV: LibAV instance ready.");
 
@@ -4314,7 +4326,9 @@ async function embedSubtitlesWithLibAV(videoBlob, subData, containerFormat, file
 
         const ffmpegArgs = ["-y", "-i", videoFile];
 
-        const normalizedSubData = subData.map(item => ({ ...item, text: normalizeVttForMux(item.text) })).filter(item => item.text);
+        const normalizedSubData = globalThis.mediaCompute?.run
+            ? await globalThis.mediaCompute.run('subtitle-normalize', { items: subData })
+            : subData.map(item => ({ ...item, text: normalizeVttForMux(item.text) })).filter(item => item.text);
         if (!normalizedSubData.length) throw new Error('No valid subtitle cues to embed');
 
         for (let i = 0; i < normalizedSubData.length; i++) {
@@ -4352,7 +4366,7 @@ async function embedSubtitlesWithLibAV(videoBlob, subData, containerFormat, file
             const lang = toIso3(normalizedSubData[i].language);
             const name = normalizedSubData[i].displayName || `Subtitle ${i+1}`;
             ffmpegArgs.push(`-metadata:s:s:${i}`, `language=${lang}`);
-            ffmpegArgs.push(`-metadata:s:s:${i}`, `title=${name}`);
+            if (lang === 'und') ffmpegArgs.push(`-metadata:s:s:${i}`, `title=${name}`);
         }
 
         // YouTube captions can contain a final cue with an invalid/open-ended

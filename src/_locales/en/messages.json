@@ -1,4 +1,13 @@
 {
+  "installedType": {
+    "message": "Installed Type"
+  },
+  "installedTypeLight": {
+    "message": "Light"
+  },
+  "installedTypeFull": {
+    "message": "Full"
+  },
   "ignoreExcludedMediaTitle": {
     "message": "Do not detect excluded media"
   },
@@ -304,6 +313,12 @@
     "message": "Detects media from the URL link. This is very fast, but may miss media on websites that hide their links.",
     "description": "The explanation of the URL-based detection method."
   },
+  "documentScanTitle": { "message": "Enable document scanning" },
+  "documentScanExplain": { "message": "Find media available directly on the page and update results when the page content changes." },
+  "documentScanModeTitle": { "message": "Document scanning mode" },
+  "documentScanModeExplain": { "message": "Light scans once and uses fewer resources. Maximum keeps scanning page changes to find more media." },
+  "documentScanModeLight": { "message": "Light" },
+  "documentScanModeMaximal": { "message": "Maximum" },
   "urlDetectionCheckbox": {
     "message": "Detection via URL",
     "description": "The label of the checkbox to enable URL-based detection."
@@ -2084,12 +2099,12 @@
     "message": "Size (Smallest first)"
   },
   "optimizeLowEndTitle": {
-    "message": "Optimize for low-end devices",
-    "description": "Setting title for optimizing on low-end devices"
+    "message": "Resource-saving mode",
+    "description": "Setting title for resource-saving mode"
   },
   "optimizeLowEndExplain": {
-    "message": "Reduces CPU usage but may miss some media.",
-    "description": "Explanation for optimizing on low-end devices"
+    "message": "Reduces page scanning and displayed results, uses clean view, and disables media cache. Some media may not be found.",
+    "description": "Explanation for resource-saving mode"
   },
   "uploadResumedTitle": {
     "message": "Upload Resumed"

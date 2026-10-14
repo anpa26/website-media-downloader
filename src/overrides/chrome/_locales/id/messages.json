@@ -1,4 +1,13 @@
 {
+    "installedType": {
+        "message": "Tipe Instalasi"
+    },
+    "installedTypeLight": {
+        "message": "Ringan"
+    },
+    "installedTypeFull": {
+        "message": "Lengkap"
+    },
     "actionTitle": {
         "message": "Unduh media",
         "description": "The contents of the context menu when hovering over the extension icon."
@@ -220,6 +229,12 @@
         "message": "Mendeteksi media dari tautan URL. Cara ini sangat cepat, namun mungkin tidak bisa mendeteksi media di situs yang menyembunyikan tautan aslinya.",
         "description": "The explanation of the URL-based detection method."
     },
+    "documentScanTitle": { "message": "Hidupkan pemindaian dokumen" },
+    "documentScanExplain": { "message": "Temukan media yang tersedia langsung di halaman dan perbarui hasil saat isi halaman berubah." },
+    "documentScanModeTitle": { "message": "Mode pemindaian dokumen" },
+    "documentScanModeExplain": { "message": "Ringan memindai sekali dan lebih hemat sumber daya. Maksimal terus memindai perubahan halaman untuk menemukan lebih banyak media." },
+    "documentScanModeLight": { "message": "Ringan" },
+    "documentScanModeMaximal": { "message": "Maksimal" },
     "urlDetectionCheckbox": {
         "message": "Deteksi via URL",
         "description": "The label of the checkbox to enable URL-based detection."
@@ -1859,12 +1874,12 @@
         "message": "Ukuran (Terkecil dulu)"
     },
     "optimizeLowEndTitle": {
-        "message": "Optimalkan di perangkat spesifikasi rendah",
-        "description": "Setting title for optimizing on low-end devices"
+        "message": "Mode hemat sumber daya",
+        "description": "Setting title for resource-saving mode"
     },
     "optimizeLowEndExplain": {
-        "message": "Mengurangi penggunaan CPU tetapi mungkin melewatkan beberapa media.",
-        "description": "Explanation for optimizing on low-end devices"
+        "message": "Mengurangi pemindaian halaman dan jumlah hasil, memakai tampilan bersih, serta menonaktifkan cache media. Sebagian media mungkin tidak ditemukan.",
+        "description": "Explanation for resource-saving mode"
     },
     "uploadResumedTitle": {
         "message": "Unggahan Dilanjutkan"

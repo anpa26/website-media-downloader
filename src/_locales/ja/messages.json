@@ -1,4 +1,13 @@
 {
+  "installedType": {
+    "message": "インストールタイプ"
+  },
+  "installedTypeLight": {
+    "message": "ライト"
+  },
+  "installedTypeFull": {
+    "message": "フル"
+  },
   "ignoreExcludedMediaTitle": {
     "message": "除外したメディアを検出しない"
   },
@@ -299,6 +308,12 @@
     "message": "URLに既知のメディアタイプ（例：.mp4、.m3u8）が含まれているかどうかを確認して検出します。高速ですが、一部のサイトではこのようなURLでメディアを提供していないため、すべてを検出できない場合があります。",
     "description": "The explanation of the URL-based detection method."
   },
+  "documentScanTitle": { "message": "ドキュメントのスキャンを有効にする" },
+  "documentScanExplain": { "message": "ページ上で直接利用できるメディアを検出し、ページ内容の変更時に結果を更新します。" },
+  "documentScanModeTitle": { "message": "ドキュメントスキャンモード" },
+  "documentScanModeExplain": { "message": "軽量は1回だけスキャンし、使用するリソースを抑えます。最大はページの変化を継続的にスキャンし、より多くのメディアを検出します。" },
+  "documentScanModeLight": { "message": "軽量" },
+  "documentScanModeMaximal": { "message": "最大" },
   "urlDetectionCheckbox": {
     "message": "URLによる検出",
     "description": "The label of the checkbox to enable URL-based detection."
@@ -2079,12 +2094,12 @@
     "message": "サイズ (小さい順)"
   },
   "optimizeLowEndTitle": {
-    "message": "低スペックデバイス向けに最適化",
-    "description": "Setting title for optimizing on low-end devices"
+    "message": "省リソースモード",
+    "description": "Setting title for resource-saving mode"
   },
   "optimizeLowEndExplain": {
-    "message": "CPU使用率を下げますが、一部のメディアを見逃す可能性があります。",
-    "description": "Explanation for optimizing on low-end devices"
+    "message": "ページのスキャンと表示件数を減らし、シンプル表示を使用してメディアキャッシュを無効にします。一部のメディアを検出できない場合があります。",
+    "description": "Explanation for resource-saving mode"
   },
   "uploadResumedTitle": {
     "message": "アップロード再開"

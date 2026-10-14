@@ -1200,7 +1200,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 saveAllZipBtn.textContent = "Generating ZIP...";
-                const zipBlob = await downloadZip(zipEntries).blob();
+                const zipBlob = globalThis.mediaCompute?.createZip
+                    ? await globalThis.mediaCompute.createZip(zipEntries)
+                    : await downloadZip(zipEntries).blob();
                 const zipName = `downloads_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`;
                 
                 const blobUrl = URL.createObjectURL(zipBlob);

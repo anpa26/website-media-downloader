@@ -51,8 +51,9 @@ async function fetchProcessorSubtitle(track) {
     return response.text();
 }
 
-function convertProcessorSubtitle(text, format) {
+async function convertProcessorSubtitle(text, format) {
     if (format === 'srt') {
+        if (globalThis.mediaCompute?.run) return globalThis.mediaCompute.run('subtitle-convert', { text, format: 'srt' });
         if (globalThis.subsrt?.convert) return globalThis.subsrt.convert(text, { format: 'srt' });
         return text.replace(/^WEBVTT[^\n]*\n+/i, '').replace(/(\d{2}:\d{2}:\d{2})\.(\d{3})/g, '$1,$2');
     }
@@ -64,15 +65,6 @@ function convertProcessorSubtitle(text, format) {
 
 async function processYoutubeTrackBundle(job, jobId, loadingBar, report) {
     const bundle = job.youtubeTracks || {};
-    let videoBlob;
-    if (job.audioUrl) {
-        report('Downloading and muxing video tracks...', 0, true);
-        videoBlob = await downloadAndMuxYoutube(job.url, job.audioUrl, job.filename, job.downloadMethod || 'browser', loadingBar, true);
-    } else {
-        report('Downloading video...', 0, true);
-        videoBlob = await fetchProcessorBlob(job.url, jobId, job.request);
-    }
-
     const subtitles = [];
     for (let i = 0; i < (bundle.subtitles || []).length; i++) {
         const track = bundle.subtitles[i];
@@ -81,7 +73,20 @@ async function processYoutubeTrackBundle(job, jobId, loadingBar, report) {
         subtitles.push({ ...track, text });
     }
 
-    if (bundle.embedSubtitles && subtitles.length) {
+    const inlineSubtitles = bundle.embedSubtitles && downloadAndMuxYoutube.supportsInlineSubtitles
+        ? subtitles : [];
+    let videoBlob;
+    if (job.audioUrl) {
+        report(inlineSubtitles.length ? 'Muxing video, audio, and subtitles...' : 'Downloading and muxing video tracks...', 0, true);
+        videoBlob = await downloadAndMuxYoutube(
+            job.url, job.audioUrl, job.filename, job.downloadMethod || 'browser', loadingBar, true, inlineSubtitles
+        );
+    } else {
+        report('Downloading video...', 0, true);
+        videoBlob = await fetchProcessorBlob(job.url, jobId, job.request);
+    }
+
+    if (bundle.embedSubtitles && subtitles.length && !inlineSubtitles.length) {
         report('Embedding subtitle tracks...', undefined, true);
         videoBlob = await embedSubtitlesWithLibAV(videoBlob, subtitles, 'mp4', job.filename, job.downloadMethod || 'browser', loadingBar, true);
     }
@@ -107,12 +112,15 @@ async function processYoutubeTrackBundle(job, jobId, loadingBar, report) {
             const track = subtitles[i];
             entries.push({
                 name: `${base} - ${safeTrackName(track.displayName || track.language, `Subtitle ${i + 1}`)}.${subFormat}`,
-                input: convertProcessorSubtitle(track.text, subFormat)
+                input: await convertProcessorSubtitle(track.text, subFormat)
             });
         }
     }
     report('Generating ZIP archive...', undefined, true);
-    return { blob: await downloadZip(entries).blob(), filename: `${base}.zip` };
+    const zipBlob = globalThis.mediaCompute?.createZip
+        ? await globalThis.mediaCompute.createZip(entries)
+        : await downloadZip(entries).blob();
+    return { blob: zipBlob, filename: `${base}.zip` };
 }
 
 async function runPersistentAudioJob(jobId, options = {}) {

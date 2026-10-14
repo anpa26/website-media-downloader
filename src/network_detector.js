@@ -2348,7 +2348,7 @@ async function ensureAudioOffscreenDocument() {
 async function startPersistentAudioJobDirect(message) {
     const jobId = 'audio_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
     const job = { ...message, action: undefined, jobId, percent: 0, text: 'Starting...', status: 'running', recoveryState: 'running' };
-    activeDownloads.set(jobId, { id: jobId, url: message.url, audioUrl: message.audioUrl, youtubeTracks: message.youtubeTracks, filename: message.filename, loaded: 0, total: 100, percent: 0, status: 'Starting...', mediaType: message.audioOnly ? 'audio' : 'video', isAudioJob: true });
+    activeDownloads.set(jobId, { id: jobId, url: message.url, audioUrl: message.audioUrl, youtubeTracks: message.youtubeTracks, filename: message.filename, loaded: 0, total: 0, percent: 0, status: 'Starting...', mediaType: message.audioOnly ? 'audio' : 'video', isAudioJob: true });
     try {
         await browser.storage.local.set({ [`audioJob_${jobId}`]: job });
         let processor;
@@ -2386,7 +2386,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         message.percent = normalized.percent;
         let item = activeDownloads.get(message.jobId);
         if (!item) {
-            item = { id: message.jobId, url: message.url, filename: message.filename, loaded: 0, total: 100, percent: 0, status: 'Starting...', mediaType: 'audio', isAudioJob: true };
+            item = { id: message.jobId, url: message.url, filename: message.filename, loaded: 0, total: 0, percent: 0, status: 'Starting...', mediaType: 'audio', isAudioJob: true };
             activeDownloads.set(message.jobId, item);
         }
         if (item) {
@@ -2425,8 +2425,6 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
             if (message.percent !== undefined) {
                 item.percent = message.percent;
-                item.loaded = message.percent;
-                item.total = 100;
             }
             if (message.text) {
                 item.status = message.text;
@@ -3957,6 +3955,72 @@ async function triggerHiddenDownload(id, filename) {
 }
 
 
+function createMediaFetchOptions(url, originalRequest = null, signal = null) {
+    const fetchOptions = {
+        method: (originalRequest && originalRequest.method) ? originalRequest.method : 'GET',
+        headers: (originalRequest && originalRequest.headers && !Array.isArray(originalRequest.headers)) ? { ...originalRequest.headers } : {},
+        credentials: (originalRequest && originalRequest.credentials) ? originalRequest.credentials : 'include'
+    };
+    if (signal) fetchOptions.signal = signal;
+
+    if (originalRequest && originalRequest.requestHeaders && Array.isArray(originalRequest.requestHeaders)) {
+        originalRequest.requestHeaders.forEach(h => {
+            const name = h.name.toLowerCase();
+            if (name !== 'cookie' && name !== 'referer' && name !== 'range' && name !== 'host') {
+                fetchOptions.headers[h.name] = h.value;
+            }
+        });
+    }
+
+    const storedHeaders = urlToHeaderMap.get(url);
+    if (storedHeaders) {
+        for (const [name, value] of Object.entries(storedHeaders)) {
+            if (name === 'cookie') {
+                fetchOptions.headers.Cookie = value;
+            } else if (name === 'referer') {
+                fetchOptions.referrer = value;
+                fetchOptions.headers.Referer = value;
+            } else if (name !== 'host' && name !== 'content-length') {
+                fetchOptions.headers[name] = value;
+            }
+        }
+        if (storedHeaders.referer && !fetchOptions.headers.Origin) {
+            try {
+                const refUrl = new URL(storedHeaders.referer);
+                if (refUrl.protocol.startsWith('http')) fetchOptions.headers.Origin = refUrl.origin;
+            } catch (e) {}
+        }
+    }
+
+    const manualReferer = originalRequest?.requestHeaders?.find(h => h.name.toLowerCase() === 'referer')?.value;
+    if (manualReferer) {
+        fetchOptions.referrer = manualReferer;
+        fetchOptions.headers.Referer = manualReferer;
+        if (!fetchOptions.headers.Origin) {
+            try {
+                const refUrl = new URL(manualReferer);
+                if (refUrl.protocol.startsWith('http')) fetchOptions.headers.Origin = refUrl.origin;
+            } catch (e) {}
+        }
+    }
+
+    if (originalRequest && originalRequest.method !== 'GET' && originalRequest.requestBody) {
+        if (originalRequest.requestBody.type === 'formData') {
+            const formData = new FormData();
+            for (const key in originalRequest.requestBody.data) {
+                originalRequest.requestBody.data[key].forEach(val => formData.append(key, val));
+            }
+            fetchOptions.body = formData;
+        } else if (originalRequest.requestBody.type === 'base64') {
+            const bin = atob(originalRequest.requestBody.data);
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            fetchOptions.body = bytes;
+        }
+    }
+    return fetchOptions;
+}
+
 function uploadToDropbox(blob, filename, onProgress, controller, isRetry = false) {
     return new Promise(async (resolve, reject) => {
         try {
@@ -5034,72 +5098,6 @@ async function uploadStreamChunk(sessionUri, chunk, offset, totalSize) {
         throw e;
     }
 }
-function createMediaFetchOptions(url, originalRequest = null, signal = null) {
-    const fetchOptions = {
-        method: (originalRequest && originalRequest.method) ? originalRequest.method : 'GET',
-        headers: (originalRequest && originalRequest.headers && !Array.isArray(originalRequest.headers)) ? { ...originalRequest.headers } : {},
-        credentials: (originalRequest && originalRequest.credentials) ? originalRequest.credentials : 'include'
-    };
-    if (signal) fetchOptions.signal = signal;
-
-    if (originalRequest && originalRequest.requestHeaders && Array.isArray(originalRequest.requestHeaders)) {
-        originalRequest.requestHeaders.forEach(h => {
-            const name = h.name.toLowerCase();
-            if (name !== 'cookie' && name !== 'referer' && name !== 'range' && name !== 'host') {
-                fetchOptions.headers[h.name] = h.value;
-            }
-        });
-    }
-
-    const storedHeaders = urlToHeaderMap.get(url);
-    if (storedHeaders) {
-        for (const [name, value] of Object.entries(storedHeaders)) {
-            if (name === 'cookie') {
-                fetchOptions.headers.Cookie = value;
-            } else if (name === 'referer') {
-                fetchOptions.referrer = value;
-                fetchOptions.headers.Referer = value;
-            } else if (name !== 'host' && name !== 'content-length') {
-                fetchOptions.headers[name] = value;
-            }
-        }
-        if (storedHeaders.referer && !fetchOptions.headers.Origin) {
-            try {
-                const refUrl = new URL(storedHeaders.referer);
-                if (refUrl.protocol.startsWith('http')) fetchOptions.headers.Origin = refUrl.origin;
-            } catch (e) {}
-        }
-    }
-
-    const manualReferer = originalRequest?.requestHeaders?.find(h => h.name.toLowerCase() === 'referer')?.value;
-    if (manualReferer) {
-        fetchOptions.referrer = manualReferer;
-        fetchOptions.headers.Referer = manualReferer;
-        if (!fetchOptions.headers.Origin) {
-            try {
-                const refUrl = new URL(manualReferer);
-                if (refUrl.protocol.startsWith('http')) fetchOptions.headers.Origin = refUrl.origin;
-            } catch (e) {}
-        }
-    }
-
-    if (originalRequest && originalRequest.method !== 'GET' && originalRequest.requestBody) {
-        if (originalRequest.requestBody.type === 'formData') {
-            const formData = new FormData();
-            for (const key in originalRequest.requestBody.data) {
-                originalRequest.requestBody.data[key].forEach(val => formData.append(key, val));
-            }
-            fetchOptions.body = formData;
-        } else if (originalRequest.requestBody.type === 'base64') {
-            const bin = atob(originalRequest.requestBody.data);
-            const bytes = new Uint8Array(bin.length);
-            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-            fetchOptions.body = bytes;
-        }
-    }
-    return fetchOptions;
-}
-
 async function handleFetchDownload(url, filename, originalRequest = null, providedId = null, isResuming = false, isManualResume = false, providedResumeOffset = null, providedMediaType = null, providedDropboxSessionId = null) {
     providedResumeOffset = parseInt(providedResumeOffset) || 0;
     const settings = await browser.storage.local.get(['speed-boost', 'speed-boost-resume', 'connections', 'save-to-gdrive', 'gdrive-stream', 'gdrive_token', 'save-to-dropbox', 'dropbox-stream', 'dropbox_token', 'fetch-notification']);

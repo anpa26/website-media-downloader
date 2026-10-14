@@ -1,4 +1,13 @@
 {
+    "installedType": {
+        "message": "Type d’installation"
+    },
+    "installedTypeLight": {
+        "message": "Légère"
+    },
+    "installedTypeFull": {
+        "message": "Complète"
+    },
     "actionTitle": {
         "message": "Télécharger les médias",
         "description": "The contents of the context menu when hovering over the extension icon."
@@ -200,6 +209,12 @@
         "message": "Détection en se basant sur l'URL du média (par exemple .mp4, .m3u8, .mpd). Rapide mais moins fiable car certains sites utilisent des URL personnalisées sans extension.",
         "description": "The explanation of the URL-based detection method."
     },
+    "documentScanTitle": { "message": "Activer l’analyse du document" },
+    "documentScanExplain": { "message": "Détecte les médias disponibles directement sur la page et actualise les résultats lorsque son contenu change." },
+    "documentScanModeTitle": { "message": "Mode d’analyse du document" },
+    "documentScanModeExplain": { "message": "Léger analyse une fois et utilise moins de ressources. Maximum continue d’analyser les changements pour trouver plus de médias." },
+    "documentScanModeLight": { "message": "Léger" },
+    "documentScanModeMaximal": { "message": "Maximum" },
     "urlDetectionCheckbox": {
         "message": "Détection via l'URL",
         "description": "The label of the checkbox to enable URL-based detection."
@@ -1819,12 +1834,12 @@
         "message": "Numéro (0-9)"
     },
     "optimizeLowEndTitle": {
-        "message": "Optimiser pour les appareils bas de gamme",
-        "description": "Setting title for optimizing on low-end devices"
+        "message": "Mode économie de ressources",
+        "description": "Setting title for resource-saving mode"
     },
     "optimizeLowEndExplain": {
-        "message": "Réduit l'utilisation du processeur mais peut manquer certains médias.",
-        "description": "Explanation for optimizing on low-end devices"
+        "message": "Réduit l’analyse des pages et les résultats affichés, utilise la vue épurée et désactive le cache média. Certains médias peuvent ne pas être trouvés.",
+        "description": "Explanation for resource-saving mode"
     },
     "limitMediaListTitle": {
         "message": "Limiter la liste des médias détectés"

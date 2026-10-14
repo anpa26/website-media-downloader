@@ -147,7 +147,7 @@ async function startPersistentStreamJobDirect(message) {
     if (typeof activeDownloads !== 'undefined') {
         activeDownloads.set(jobId, {
             id: jobId, url: job.url, filename: job.filename,
-            loaded: 0, total: 100, percent: 0, status: 'Preparing stream...',
+            loaded: 0, total: 0, percent: 0, status: 'Preparing stream...',
             mediaType: 'stream', isStreamJob: true
         });
     }
@@ -342,15 +342,13 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 if (!item) {
                     item = {
                         id: message.jobId, url: job.url, filename: job.filename,
-                        loaded: 0, total: 100, percent: 0, status: 'Preparing stream...',
+                        loaded: 0, total: 0, percent: 0, status: 'Preparing stream...',
                         mediaType: 'stream', isStreamJob: true
                     };
                 }
                 if (item) {
                     if (message.text !== undefined) item.status = message.text;
                     if (message.percent !== undefined) item.percent = message.percent;
-                    item.loaded = message.percent !== undefined ? message.percent : item.loaded;
-                    item.total = message.indeterminate ? 0 : 100;
                     activeDownloads.set(message.jobId, item);
                 }
             }

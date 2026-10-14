@@ -33,27 +33,43 @@ jobs:
 
       - name: Create Extension Archives
         run: |
-          # Chrome Extension Build
           cd build/chrome
           zip -9 -r ../../website-media-downloader-chrome-${{ steps.get_version.outputs.version }}.zip ./*
           cd ../..
 
-          # Chrome-YT Extension Build
           cd build/chrome-yt
           zip -9 -r ../../website-media-downloader-chrome-yt-${{ steps.get_version.outputs.version }}.zip ./*
           cd ../..
 
-          # Firefox Extension Build (XPI)
+          cd build/chrome-light
+          zip -9 -r ../../website-media-downloader-chrome-light-${{ steps.get_version.outputs.version }}.zip ./*
+          cd ../..
+
+          cd build/chrome-yt-light
+          zip -9 -r ../../website-media-downloader-chrome-yt-light-${{ steps.get_version.outputs.version }}.zip ./*
+          cd ../..
+
           cd build/firefox
           zip -9 -r ../../website-media-downloader-firefox-${{ steps.get_version.outputs.version }}.xpi ./*
           cd ../..
 
+          cd build/firefox-light
+          zip -9 -r ../../website-media-downloader-firefox-light-${{ steps.get_version.outputs.version }}.xpi ./*
+          cd ../..
+
       - name: Create Source Code Archives
         run: |
-          # Firefox clean source code (mirrors root: src/ folder, metadata in root)
           zip -9 -r website-media-downloader-firefox-source-${{ steps.get_version.outputs.version }}.zip src README.md LICENSE.md CONTRIBUTING.md licenses -x "src/overrides/*" "src/build.js" "src/minify.js" "src/chrome_audio_jobs.js" "src/offscreen.html" "src/offscreen.js"
 
-          # Chrome clean source code (mirrors root: src/ folder with overrides applied, metadata in root)
+          mkdir -p firefox-light-source-temp/src
+          cp -r build/firefox-light/* firefox-light-source-temp/src/
+          cp README.md LICENSE.md CONTRIBUTING.md firefox-light-source-temp/
+          cp -r licenses firefox-light-source-temp/
+          cd firefox-light-source-temp
+          zip -9 -r ../website-media-downloader-firefox-light-source-${{ steps.get_version.outputs.version }}.zip ./*
+          cd ..
+          rm -rf firefox-light-source-temp
+
           mkdir -p chrome-source-temp/src
           cp -r build/chrome/* chrome-source-temp/src/
           cp README.md LICENSE.md CONTRIBUTING.md chrome-source-temp/
@@ -63,7 +79,6 @@ jobs:
           cd ..
           rm -rf chrome-source-temp
 
-          # Chrome-YT clean source code (mirrors root: src/ folder with overrides applied, metadata in root)
           mkdir -p chrome-yt-source-temp/src
           cp -r build/chrome-yt/* chrome-yt-source-temp/src/
           cp README.md LICENSE.md CONTRIBUTING.md chrome-yt-source-temp/
@@ -73,6 +88,24 @@ jobs:
           cd ..
           rm -rf chrome-yt-source-temp
 
+          mkdir -p chrome-light-source-temp/src
+          cp -r build/chrome-light/* chrome-light-source-temp/src/
+          cp README.md LICENSE.md CONTRIBUTING.md chrome-light-source-temp/
+          cp -r licenses chrome-light-source-temp/
+          cd chrome-light-source-temp
+          zip -9 -r ../website-media-downloader-chrome-light-source-${{ steps.get_version.outputs.version }}.zip ./*
+          cd ..
+          rm -rf chrome-light-source-temp
+
+          mkdir -p chrome-yt-light-source-temp/src
+          cp -r build/chrome-yt-light/* chrome-yt-light-source-temp/src/
+          cp README.md LICENSE.md CONTRIBUTING.md chrome-yt-light-source-temp/
+          cp -r licenses chrome-yt-light-source-temp/
+          cd chrome-yt-light-source-temp
+          zip -9 -r ../website-media-downloader-chrome-yt-light-source-${{ steps.get_version.outputs.version }}.zip ./*
+          cd ..
+          rm -rf chrome-yt-light-source-temp
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -81,7 +114,13 @@ jobs:
             website-media-downloader-chrome-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-chrome-yt-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-firefox-${{ steps.get_version.outputs.version }}.xpi
+            website-media-downloader-chrome-light-${{ steps.get_version.outputs.version }}.zip
+            website-media-downloader-chrome-yt-light-${{ steps.get_version.outputs.version }}.zip
+            website-media-downloader-firefox-light-${{ steps.get_version.outputs.version }}.xpi
             website-media-downloader-chrome-source-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-chrome-yt-source-${{ steps.get_version.outputs.version }}.zip
+            website-media-downloader-chrome-light-source-${{ steps.get_version.outputs.version }}.zip
+            website-media-downloader-chrome-yt-light-source-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-firefox-source-${{ steps.get_version.outputs.version }}.zip
+            website-media-downloader-firefox-light-source-${{ steps.get_version.outputs.version }}.zip
           if-no-files-found: error

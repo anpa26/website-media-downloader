@@ -2180,8 +2180,6 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
             if (message.percent !== undefined) {
                 item.percent = message.percent;
-                item.loaded = message.percent;
-                item.total = 100;
             }
             if (message.text) {
                 item.status = message.text;

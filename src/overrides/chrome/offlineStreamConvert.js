@@ -269,6 +269,15 @@ cleanupStaleConversionChunks();
 
 async function transmuxToMp4(tsBlobs, onProgress = null) {
   console.log("Starting transmuxing with mux.js. Segments count:", tsBlobs.length);
+  if (globalThis.mediaCompute?.run) {
+    try {
+      onProgress?.(0);
+      const output = await globalThis.mediaCompute.run('transmux', { inputs: tsBlobs }, [], onProgress);
+      if (output) return { blob: new Blob([output], { type: 'video/mp4' }), ext: '.mp4' };
+    } catch (error) {
+      console.warn('Worker transmux failed; using the compatible fallback.', error);
+    }
+  }
   
   await ensureMuxJsLoaded();
   if (typeof muxjs === 'undefined') {
@@ -3305,8 +3314,9 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
                     }
                     
                     libavInstance = await window[libavVar].LibAV({
-                        noworker: true,
-                        base: browser.runtime.getURL('libraries')
+                        noworker: false,
+                        base: browser.runtime.getURL('libraries'),
+                        toImport: browser.runtime.getURL('libraries/libav.js')
                     });
 
                     if (vBlob) {

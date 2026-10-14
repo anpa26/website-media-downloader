@@ -1,4 +1,13 @@
 {
+  "installedType": {
+    "message": "Tipo de instalação"
+  },
+  "installedTypeLight": {
+    "message": "Leve"
+  },
+  "installedTypeFull": {
+    "message": "Completa"
+  },
   "ignoreExcludedMediaTitle": {
     "message": "Não detectar mídias excluídas"
   },
@@ -299,6 +308,12 @@
     "message": "Detecção por verificar se a URL contém um tipo de mídia conhecido (por exemplo, .mp4, .m3u8). É rápido, mas alguns sites não disponibilizam mídias por meio desse tipo de URL, então pode tidak detectar tudo.",
     "description": "The explanation of the URL-based detection method."
   },
+  "documentScanTitle": { "message": "Ativar verificação do documento" },
+  "documentScanExplain": { "message": "Encontra mídia disponível diretamente na página e atualiza os resultados quando o conteúdo muda." },
+  "documentScanModeTitle": { "message": "Modo de verificação do documento" },
+  "documentScanModeExplain": { "message": "Leve verifica uma vez e usa menos recursos. Máximo continua verificando alterações para encontrar mais mídia." },
+  "documentScanModeLight": { "message": "Leve" },
+  "documentScanModeMaximal": { "message": "Máximo" },
   "urlDetectionCheckbox": {
     "message": "Detecção via URL",
     "description": "The label of the checkbox to enable URL-based detection."
@@ -2079,12 +2094,12 @@
     "message": "Tamanho (Menor primeiro)"
   },
   "optimizeLowEndTitle": {
-    "message": "Otimizar para dispositivos de baixo desempenho",
-    "description": "Setting title for optimizing on low-end devices"
+    "message": "Modo de economia de recursos",
+    "description": "Setting title for resource-saving mode"
   },
   "optimizeLowEndExplain": {
-    "message": "Reduz o uso da CPU, mas pode perder algumas mídias.",
-    "description": "Explanation for optimizing on low-end devices"
+    "message": "Reduz a verificação da página e os resultados exibidos, usa a visualização limpa e desativa o cache de mídia. Algumas mídias podem não ser encontradas.",
+    "description": "Explanation for resource-saving mode"
   },
   "uploadResumedTitle": {
     "message": "Upload retomado"

@@ -1,66 +1,84 @@
 {
   "require_uninstall": false,
   "en": {
-    "headline": "What's New (v2.4.1)",
+    "headline": "What's New (v2.4.3)",
     "changes": [
-      "Improved redirect and ad blocking to work more intelligently.",
-      "Fixed detection processes continuing to run after detection was disabled."
+      "Website Media Downloader Light is now available with a smaller package size for Chrome and Firefox.",
+      "Edition information is now available on the About page.",
+      "Document scanning can now be enabled or disabled, with a choice of scanning modes.",
+      "Improved extension performance and popup interface."
     ]
   },
   "id": {
-    "headline": "Yang Baru (v2.4.1)",
+    "headline": "Yang Baru (v2.4.3)",
     "changes": [
-      "Memperbaiki pemblokir redirect dan iklan agar bekerja lebih pintar.",
-      "Memperbaiki proses deteksi agar benar-benar berhenti saat deteksi dimatikan."
+      "Hadir Website Media Downloader Light dengan ukuran lebih ringan mendukung Chrome dan Firefox.",
+      "Informasi edisi kini tersedia di halaman Tentang.",
+      "Opsi aktif/nonaktif dan mode pemindaian dokumen kini tersedia.",
+      "Peningkatan performa ekstensi dan tampilan popup."
     ]
   },
   "de": {
-    "headline": "Was gibt's Neues (v2.4.1)",
+    "headline": "Was gibt's Neues (v2.4.3)",
     "changes": [
-      "Die Weiterleitungs- und Werbeblockierung wurde intelligenter gestaltet.",
-      "Erkennungsprozesse werden nun vollständig beendet, wenn die Erkennung deaktiviert wird."
+      "Website Media Downloader Light ist jetzt mit kleinerer Paketgröße für Chrome und Firefox verfügbar.",
+      "Informationen zur Edition sind jetzt auf der Seite „Über“ verfügbar.",
+      "Die Dokumentensuche kann jetzt aktiviert oder deaktiviert und der Scanmodus ausgewählt werden.",
+      "Leistung der Erweiterung und Benutzeroberfläche des Popups wurden verbessert."
     ]
   },
   "fr": {
-    "headline": "Nouveautés (v2.4.1)",
+    "headline": "Nouveautés (v2.4.3)",
     "changes": [
-      "Amélioration du blocage des redirections et des publicités pour un fonctionnement plus intelligent.",
-      "Correction des processus de détection qui continuaient après la désactivation de la détection."
+      "Website Media Downloader Light est désormais disponible dans un format plus léger pour Chrome et Firefox.",
+      "Les informations sur l’édition sont désormais disponibles sur la page À propos.",
+      "L’analyse des documents peut désormais être activée ou désactivée, avec un choix de modes d’analyse.",
+      "Amélioration des performances de l’extension et de l’interface de la fenêtre contextuelle."
     ]
   },
   "ja": {
-    "headline": "新機能 (v2.4.1)",
+    "headline": "新機能 (v2.4.3)",
     "changes": [
-      "リダイレクトと広告のブロックをよりスマートに改善しました。",
-      "検出を無効にした後も検出処理が続く問題を修正しました。"
+      "ChromeとFirefox向けに、より軽量なWebsite Media Downloader Lightが登場しました。",
+      "エディション情報が「概要」ページで確認できるようになりました。",
+      "ドキュメントスキャンの有効化・無効化とスキャンモードの選択が可能になりました。",
+      "拡張機能のパフォーマンスとポップアップの表示を改善しました。"
     ]
   },
   "ko": {
-    "headline": "새로운 기능 (v2.4.1)",
+    "headline": "새로운 기능 (v2.4.3)",
     "changes": [
-      "리디렉션 및 광고 차단이 더 스마트하게 작동하도록 개선했습니다.",
-      "감지를 비활성화한 후에도 감지 프로세스가 계속 실행되는 문제를 수정했습니다."
+      "Chrome과 Firefox를 지원하는 더 가벼운 Website Media Downloader Light가 출시되었습니다.",
+      "에디션 정보가 이제 정보 페이지에 표시됩니다.",
+      "문서 스캔을 켜거나 끄고 스캔 모드를 선택할 수 있습니다.",
+      "확장 프로그램 성능과 팝업 화면을 개선했습니다."
     ]
   },
   "pt": {
-    "headline": "Novidades (v2.4.1)",
+    "headline": "Novidades (v2.4.3)",
     "changes": [
-      "Melhorado o bloqueio de redirecionamentos e anúncios para funcionar de forma mais inteligente.",
-      "Corrigidos os processos de detecção que continuavam após a detecção ser desativada."
+      "O Website Media Downloader Light já está disponível com um tamanho menor para Chrome e Firefox.",
+      "As informações da edição agora estão disponíveis na página Sobre.",
+      "A verificação de documentos agora pode ser ativada ou desativada, com opção de escolher o modo de verificação.",
+      "Melhorias no desempenho da extensão e na interface do popup."
     ]
   },
   "ru": {
-    "headline": "Что нового (v2.4.1)",
+    "headline": "Что нового (v2.4.3)",
     "changes": [
-      "Улучшена интеллектуальная блокировка перенаправлений и рекламы.",
-      "Исправлена работа процессов обнаружения, которые продолжались после отключения обнаружения."
+      "Website Media Downloader Light теперь доступен в облегчённом варианте для Chrome и Firefox.",
+      "Информация о редакции теперь доступна на странице «О программе».",
+      "Сканирование документов теперь можно включать и отключать, а также выбирать режим сканирования.",
+      "Улучшены производительность расширения и интерфейс всплывающего окна."
     ]
   },
   "ar": {
-    "headline": "ما الجديد (v2.4.1)",
+    "headline": "ما الجديد (v2.4.3)",
     "changes": [
-      "تحسين حظر عمليات إعادة التوجيه والإعلانات ليعمل بذكاء أكبر.",
-      "إصلاح استمرار عمليات الاكتشاف بعد تعطيل ميزة الاكتشاف."
+      "يتوفر الآن Website Media Downloader Light بحجم أخف لمتصفحي Chrome وFirefox.",
+      "أصبحت معلومات الإصدار متاحة الآن في صفحة حول.",
+      "يمكن الآن تفعيل فحص المستندات أو تعطيله مع اختيار وضع الفحص.",
+      "تحسين أداء الإضافة وواجهة النافذة المنبثقة."
     ]
   }
 }

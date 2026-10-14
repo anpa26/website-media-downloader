@@ -290,7 +290,9 @@ async function runPersistentZipJob(jobId, options = {}) {
 
         throwIfCancelled();
         report('generating', { loaded: items.length, total: items.length });
-        const zipBlob = await downloadZip(entries).blob();
+        const zipBlob = globalThis.mediaCompute?.createZip
+            ? await globalThis.mediaCompute.createZip(entries)
+            : await downloadZip(entries).blob();
         throwIfCancelled();
         if (zipBlob.size < 100) throw new Error('Generated ZIP is empty');
         const zipName = job.filename || `downloads_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`;

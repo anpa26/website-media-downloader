@@ -61,7 +61,7 @@ const SETTINGS_EXPORT_FORMAT = 'website-media-downloader-settings';
 const SETTINGS_EXPORT_VERSION = 1;
 const SETTINGS_KEYS = [
     'auto-download-media', 'auto-download-quality', 'auto-download-youtube-mode', 'auto-download-all-domains', 'auto-download-domains', 'auto-skip-download-names', 'auto-skip-download-names-only', 'auto-skip-download-domains', 'auto-ignore-excluded-media', 'auto-download-video', 'auto-download-stream',
-    'url-detection', 'youtube-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components', 'disable-deduplication', 'optimize-low-end', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom',
+    'document-scan', 'document-scan-mode', 'url-detection', 'youtube-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components', 'disable-deduplication', 'optimize-low-end', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom',
     'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'ignore-disabled-types',
     'media-notification', 'audio-process-notification', 'media-system-notification', 'stack-notifications', 'download-method', 'fetch-notification', 'media-cache', 'speed-boost', 'speed-boost-resume', 'connections', 'stream-download',
     'stream-quality', 'subtitle-conversion', 'mpd-fix', 'background-download', 'stream-to-mp4', 'audio-to-mp3', 'mp3-bitrate', 'open-preference', 'mux-all-audios', 'mpd-to-mp4',
@@ -305,7 +305,9 @@ window.initializeSettingsPage = function initializeSettingsPage() {
     ]);
     await initializeSettings();
     setupConfirmationBar();
+    // LIGHT_EXCLUDE_SPEED_TEST_START
     setupSpeedTest();
+    // LIGHT_EXCLUDE_SPEED_TEST_END
     setupIndexedDBCacheControls();
     setupSettingsConfigurationControls();
 
@@ -383,7 +385,7 @@ async function initializeSettings() {
 
     const settings = [
         'auto-download-media', 'auto-download-quality', 'auto-download-youtube-mode', 'auto-download-all-domains', 'auto-download-domains', 'auto-skip-download-names', 'auto-skip-download-names-only', 'auto-skip-download-domains', 'auto-ignore-excluded-media', 'auto-download-video', 'auto-download-stream',
-        'url-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components', 'disable-deduplication', 'optimize-low-end', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom',
+        'document-scan', 'document-scan-mode', 'url-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components', 'disable-deduplication', 'optimize-low-end', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom',
         'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'ignore-disabled-types',
         'media-notification', 'media-system-notification', 'stack-notifications', 'download-method', 'fetch-notification', 'media-cache', 'speed-boost', 'speed-boost-resume', 'connections', 'stream-download',
         'stream-quality', 'subtitle-conversion', 'mpd-fix', 'background-download', 'stream-to-mp4', 'audio-to-mp3', 'mp3-bitrate', 'open-preference', 'embed-subtitles-nonyt', 'mpd-to-mp4', 'block-incoming-popups', 'redirect-guard-clicks', 'redirect-guard-hide-content',
@@ -392,46 +394,50 @@ async function initializeSettings() {
     ];
 
     const storedSettings = await browser.storage.local.get(settings);
+    const defaultSettings = {};
     for (const setting of settings) {
         let value = storedSettings[setting];
 
         if (setting === 'auto-download-youtube-mode' && !['video', 'audio'].includes(value)) {
             value = 'video';
-            await browser.storage.local.set({ [setting]: value });
+            defaultSettings[setting] = value;
         }
         if (value === undefined) {
             const defaultsEnabled = [
                 'auto-download-video', 'auto-download-stream', 'auto-ignore-excluded-media',
                 'ignore-excluded-media',
-                'url-detection', 'mime-detection', 'hide-page-components', 'hide-segments',
+                'document-scan', 'url-detection', 'mime-detection', 'hide-page-components', 'hide-segments',
                 'media-notification', 'media-system-notification', 'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle',
                 'background-download', 'only-file', 'stream-to-mp4', 'audio-to-mp3', 'auto-check-update', 'badge-counter',
                 'detect-download-links', 'disable-deduplication', 'fetch-notification', 'group-by-type'
             ];
             if (defaultsEnabled.includes(setting)) {
                 value = '1';
-                browser.storage.local.set({ [setting]: value });
+                defaultSettings[setting] = value;
             } else if (['auto-download-media', 'auto-download-all-domains', 'ignore-disabled-types', 'history-page', 'save-to-gdrive', 'gdrive-stream', 'save-to-dropbox', 'dropbox-stream', 'stack-notifications', 'embed-subtitles-nonyt', 'mpd-to-mp4', 'block-incoming-popups', 'redirect-guard-hide-content'].includes(setting)) {
                 value = '0';
-                browser.storage.local.set({ [setting]: value });
+                defaultSettings[setting] = value;
             } else if (setting === 'speed-boost' || setting === 'speed-boost-resume' || setting === 'disable-rename-dialog') {
                 value = '0';
-                browser.storage.local.set({ [setting]: value });
+                defaultSettings[setting] = value;
             } else if (setting === 'connections') {
                 value = '4';
-                browser.storage.local.set({ [setting]: value });
+                defaultSettings[setting] = value;
             } else if (setting === 'mp3-bitrate') {
                 value = '320';
-                browser.storage.local.set({ [setting]: value });
+                defaultSettings[setting] = value;
             } else if (setting === 'auto-download-quality') {
                 value = 'highest';
-                browser.storage.local.set({ [setting]: value });
+                defaultSettings[setting] = value;
             } else if (setting === 'auto-download-youtube-mode') {
                 value = 'video';
-                browser.storage.local.set({ [setting]: value });
+                defaultSettings[setting] = value;
             } else if (setting === 'theme-mode') {
                 value = 'auto';
-                browser.storage.local.set({ [setting]: value });
+                defaultSettings[setting] = value;
+            } else if (setting === 'document-scan-mode') {
+                value = 'light';
+                defaultSettings[setting] = value;
             }
         }
 
@@ -447,6 +453,13 @@ async function initializeSettings() {
                 const connections = document.getElementById('connections');
                 const gdriveStream = document.getElementById('gdrive-stream');
                 const onlyFile = document.getElementById('only-file');
+
+                if (setting === 'document-scan') {
+                    const mode = document.getElementById('document-scan-mode');
+                    const item = mode?.closest('.setting-item');
+                    if (mode) mode.disabled = !element.checked;
+                    if (item) item.style.display = element.checked ? 'flex' : 'none';
+                }
 
                 if (setting === 'redirect-guard-hide-content') {
                     const clicks = document.getElementById('redirect-guard-clicks');
@@ -820,6 +833,7 @@ async function initializeSettings() {
 
         if (element.tagName === 'MDUI-SELECT' || element.tagName === 'SELECT' || element.tagName === 'MDUI-SEGMENTED-BUTTON-GROUP') {
             const defaultValue = setting === 'limit-media-list' ? 'custom' :
+                                (setting === 'document-scan-mode' ? 'light' :
                                 (setting === 'settings-layout' ? 'tabs-icons' :
                                 (setting === 'theme-mode' ? 'auto' :
                                 (setting === 'open-preference' ? 'popup' :
@@ -832,7 +846,7 @@ async function initializeSettings() {
                                 (setting === 'mp3-bitrate' ? '320' :
                                 (setting === 'min-file-size' ? '0' :
                                 (setting === 'ui-scale' ? '85%' :
-                                (setting === 'stream-download' ? 'offline' : 'stream'))))))))))))) ;
+                                (setting === 'stream-download' ? 'offline' : 'stream')))))))))))))) ;
 
             element.value = value || defaultValue;
             element.addEventListener('change', () => {
@@ -892,6 +906,10 @@ async function initializeSettings() {
             });
             continue;
         }
+    }
+
+    if (Object.keys(defaultSettings).length) {
+        await browser.storage.local.set(defaultSettings);
     }
 
     const backgroundDownloadForAuto = document.getElementById('background-download');
@@ -1348,64 +1366,139 @@ async function initializeSettings() {
         };
     }
 
-    const presets = document.querySelectorAll('.color-preset');
+    const colorWheel = document.getElementById('theme-color-wheel');
+    const brightnessInput = document.getElementById('theme-color-brightness');
     const hexInput = document.getElementById('color-hex-input');
-    const openSettingsTabBtn = document.getElementById('open-settings-tab');
+
+    const hsvToRgb = (h, s, v) => {
+        const c = v * s;
+        const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+        const m = v - c;
+        let rgb = [c, x, 0];
+        if (h < 60) rgb = [c, x, 0];
+        else if (h < 120) rgb = [x, c, 0];
+        else if (h < 180) rgb = [0, c, x];
+        else if (h < 240) rgb = [0, x, c];
+        else if (h < 300) rgb = [x, 0, c];
+        else rgb = [c, 0, x];
+        return rgb.map(channel => Math.round((channel + m) * 255));
+    };
+    const hsvToHex = (h, s, v) => '#' + hsvToRgb(h, s, v)
+        .map(channel => channel.toString(16).padStart(2, '0')).join('');
+    const hexToHsv = (color) => {
+        let hex = color.replace('#', '');
+        if (hex.length === 3) hex = hex.split('').map(char => char + char).join('');
+        if (!/^[0-9a-f]{6}$/i.test(hex)) return null;
+        const [r, g, b] = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const delta = max - min;
+        let h = 0;
+        if (delta) {
+            if (max === r) h = 60 * (((g - b) / delta) % 6);
+            else if (max === g) h = 60 * ((b - r) / delta + 2);
+            else h = 60 * ((r - g) / delta + 4);
+        }
+        return { h: (h + 360) % 360, s: max ? delta / max : 0, v: max };
+    };
 
     const activeColor = colorResult['theme-color'] || '#bbdefb';
+    let selectedHsv = hexToHsv(activeColor) || hexToHsv('#bbdefb');
     mdui.setColorScheme(activeColor);
     if (hexInput) hexInput.value = activeColor;
+    if (brightnessInput) brightnessInput.value = Math.round(selectedHsv.v * 100);
 
-    const updateActivePreset = (color) => {
-        presets.forEach(p => {
-            if (p.dataset.color && p.dataset.color.toLowerCase() === color.toLowerCase()) {
-                p.classList.add('active');
-            } else {
-                p.classList.remove('active');
+    const drawColorWheel = () => {
+        if (!colorWheel) return;
+        const context = colorWheel.getContext('2d');
+        const size = colorWheel.width;
+        const radius = size / 2;
+        const image = context.createImageData(size, size);
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                const dx = x + 0.5 - radius;
+                const dy = y + 0.5 - radius;
+                const saturation = Math.sqrt(dx * dx + dy * dy) / radius;
+                const offset = (y * size + x) * 4;
+                if (saturation > 1) {
+                    image.data[offset + 3] = 0;
+                    continue;
+                }
+                const hue = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360;
+                const [r, g, b] = hsvToRgb(hue, saturation, 1);
+                image.data.set([r, g, b, 255], offset);
             }
-        });
+        }
+        context.putImageData(image, 0, 0);
+        const angle = selectedHsv.h * Math.PI / 180;
+        const markerX = radius + Math.cos(angle) * selectedHsv.s * radius;
+        const markerY = radius + Math.sin(angle) * selectedHsv.s * radius;
+        context.beginPath();
+        context.arc(markerX, markerY, 6, 0, Math.PI * 2);
+        context.lineWidth = 3;
+        context.strokeStyle = selectedHsv.s < 0.35 ? '#000000' : '#ffffff';
+        context.stroke();
+        if (brightnessInput) {
+            const brightColor = hsvToHex(selectedHsv.h, selectedHsv.s, 1);
+            const darkColor = hsvToHex(selectedHsv.h, selectedHsv.s, 0.15);
+            brightnessInput.style.background = `linear-gradient(to right, ${darkColor}, ${brightColor})`;
+            brightnessInput.style.setProperty('--brightness-thumb-color', hsvToHex(selectedHsv.h, selectedHsv.s, selectedHsv.v));
+        }
     };
-    updateActivePreset(activeColor);
 
-    const stageColor = (newColor) => {
-        let val = newColor.trim();
-        if (!val.startsWith('#') && !val.startsWith('rgb')) val = '#' + val;
-        pendingChanges['theme-color'] = val;
+    const stageWheelColor = () => {
+        const color = hsvToHex(selectedHsv.h, selectedHsv.s, selectedHsv.v);
+        pendingChanges['theme-color'] = color;
         showApplyBar();
-        mdui.setColorScheme(val);
-        updateActivePreset(val);
+        mdui.setColorScheme(color);
+        if (hexInput) hexInput.value = color.toUpperCase();
+        drawColorWheel();
     };
+
+    const updateWheelFromPointer = (event) => {
+        if (!colorWheel) return;
+        const rect = colorWheel.getBoundingClientRect();
+        const dx = (event.clientX - rect.left) / rect.width * colorWheel.width - colorWheel.width / 2;
+        const dy = (event.clientY - rect.top) / rect.height * colorWheel.height - colorWheel.height / 2;
+        const radius = colorWheel.width / 2;
+        selectedHsv.h = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360;
+        selectedHsv.s = Math.min(1, Math.sqrt(dx * dx + dy * dy) / radius);
+        stageWheelColor();
+    };
+
+    if (colorWheel) {
+        colorWheel.addEventListener('pointerdown', event => {
+            colorWheel.setPointerCapture(event.pointerId);
+            updateWheelFromPointer(event);
+        });
+        colorWheel.addEventListener('pointermove', event => {
+            if (colorWheel.hasPointerCapture(event.pointerId)) updateWheelFromPointer(event);
+        });
+    }
+
+    if (brightnessInput) {
+        brightnessInput.oninput = event => {
+            selectedHsv.v = Number(event.target.value) / 100;
+            stageWheelColor();
+        };
+    }
 
     if (hexInput) {
-        hexInput.oninput = (e) => {
-            let val = e.target.value.trim();
-            if (val && !val.startsWith('#') && !val.startsWith('rgb')) val = '#' + val;
-
-            pendingChanges['theme-color'] = val;
+        hexInput.oninput = event => {
+            let value = event.target.value.trim();
+            if (value && !value.startsWith('#')) value = '#' + value;
+            pendingChanges['theme-color'] = value;
             showApplyBar();
-
-            if (/^#[0-9A-F]{3,6}$/i.test(val)) {
-                mdui.setColorScheme(val);
-                updateActivePreset(val);
+            const hsv = hexToHsv(value);
+            if (hsv) {
+                selectedHsv = hsv;
+                if (brightnessInput) brightnessInput.value = Math.round(hsv.v * 100);
+                mdui.setColorScheme(value);
+                drawColorWheel();
             }
         };
     }
-
-    presets.forEach(preset => {
-        preset.onclick = () => {
-            const color = preset.dataset.color;
-            if (color) {
-                if (hexInput) hexInput.value = color;
-                stageColor(color);
-            }
-        };
-    });
-
-    if (openSettingsTabBtn) {
-        openSettingsTabBtn.addEventListener('click', () => {
-            browser.tabs.create({ url: 'popup.html?options=true' });
-        });
-    }
+    drawColorWheel();
 
     const bgDlSwitch = document.getElementById('background-download');
     if (bgDlSwitch) {
@@ -1604,6 +1697,7 @@ function setupCollapsibleLogic() {
     });
 }
 
+// LIGHT_EXCLUDE_SPEED_TEST_START
 function setupSpeedTest() {
     const startBtn = document.getElementById('start-speed-test');
     if (!startBtn) return;
@@ -1887,3 +1981,4 @@ function runUploadTest(onProgress) {
 function runParallelUploadTest(concurrency, onProgress) {
     return runTransferSpeedTest('upload', concurrency, onProgress);
 }
+// LIGHT_EXCLUDE_SPEED_TEST_END

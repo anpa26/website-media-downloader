@@ -16,7 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
-<html lang="en" class="mdui-theme-auto" style="width: 550px; height: 600px;">
+<html lang="en" class="mdui-theme-auto is-popup" style="width: 550px; height: 600px; zoom: 85%;">
 
 <head>
   <meta charset="UTF-8">
@@ -24,11 +24,12 @@
   <title data-translate="extensionName">Website Media Downloader</title>
   <link rel="stylesheet" href="styles/mdui.css">
   <script src="libraries/mdui.global.js"></script>
+  <script src="media_compute_client.js"></script>
   <script src="offlineStreamConvert.js"></script>
   <link rel="stylesheet" href="styles/style.css">
 </head>
 
-<body>
+<body class="is-popup">
   <div id="loading">
     <mdui-circular-progress></mdui-circular-progress>
   </div>
@@ -133,6 +134,7 @@
       <mdui-tab-panel slot="panel" value="settings">
         <div id="settings-container">
 
+          <!-- LIGHT_EXCLUDE_AUTO_DOWNLOAD_START -->
           <div class="settings-group">
             <h2 class="settings-section-title collapsible-header">
               <mdui-icon><svg viewBox="0 0 24 24"><path fill="currentColor" d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66s.06-.11.08-.15L13 3h1l-1 7h3.5c.49 0 .56.34.42.61l-6 10.39z"/></svg></mdui-icon>
@@ -203,6 +205,7 @@
                 </div>
             </div>
           </div>
+          <!-- LIGHT_EXCLUDE_AUTO_DOWNLOAD_END -->
           <div class="settings-group">
             <h2 class="settings-section-title collapsible-header">
               <mdui-icon>
@@ -239,14 +242,15 @@
                 <mdui-switch id="mime-detection"></mdui-switch>
               </div>
               
-              <div class="setting-item">
-                <div class="setting-text">
-                  <h3 data-translate="detectDownloadLinksCheckbox">Detect download links</h3>
-                  <p data-translate="detectDownloadLinksExplain">Detect links that have a download attribute or point to files.</p>
-                </div>
-                <mdui-switch id="detect-download-links"></mdui-switch>
-              </div>
-              
+            </div>
+
+            <div class="settings-items-container">
+              <div class="setting-item"><div class="setting-text"><h3 data-translate="documentScanTitle">Enable document scanning</h3><p data-translate="documentScanExplain">Find media available directly on the page and update results when the page content changes.</p></div><mdui-switch id="document-scan"></mdui-switch></div>
+              <div class="setting-item"><div class="setting-text"><h3 data-translate="documentScanModeTitle">Document scanning mode</h3><p data-translate="documentScanModeExplain">Light scans once and uses fewer resources. Maximum keeps scanning page changes to find more media.</p></div><div class="pill-select-wrapper"><select id="document-scan-mode" class="pill-select"><option value="light" data-translate="documentScanModeLight">Light</option><option value="maximal" data-translate="documentScanModeMaximal">Maximum</option></select></div></div>
+              <div class="setting-item"><div class="setting-text"><h3 data-translate="detectDownloadLinksCheckbox">Detect download links</h3><p data-translate="detectDownloadLinksExplain">Detect links that have a download attribute or point to files.</p></div><mdui-switch id="detect-download-links"></mdui-switch></div>
+            </div>
+
+            <div class="settings-items-container">
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="hideSegmentsTitle">Hide segments</h3>
@@ -317,7 +321,6 @@
             </div>
           </div>
 
-          
           <div class="settings-group">
             <h2 class="settings-section-title collapsible-header">
               <mdui-icon>
@@ -342,6 +345,7 @@
                 </div>
                 <mdui-switch id="audio-process-notification"></mdui-switch>
               </div>
+              <!-- LIGHT_EXCLUDE_DEVICE_NOTIFICATIONS_START -->
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="mediaSystemNotificationCheckbox">Enable system detection notification</h3>
@@ -349,6 +353,7 @@
                 </div>
                 <mdui-switch id="media-system-notification"></mdui-switch>
               </div>
+              <!-- LIGHT_EXCLUDE_DEVICE_NOTIFICATIONS_END -->
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="stackNotificationsCheckbox">Stack notifications</h3>
@@ -356,6 +361,7 @@
                 </div>
                 <mdui-switch id="stack-notifications"></mdui-switch>
               </div>
+              <!-- LIGHT_EXCLUDE_DEVICE_NOTIFICATIONS_START -->
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="fetchNotificationTitle">Download notifications</h3>
@@ -363,6 +369,7 @@
                 </div>
                 <mdui-switch id="fetch-notification"></mdui-switch>
               </div>
+              <!-- LIGHT_EXCLUDE_DEVICE_NOTIFICATIONS_END -->
             </div>
           </div>
 
@@ -471,7 +478,6 @@
               </div>
             </div>
           </div>
-
           <div class="settings-group">
             <h2 class="settings-section-title collapsible-header">
               <mdui-icon>
@@ -615,6 +621,7 @@
             </div>
           </div>
 
+          <!-- LIGHT_EXCLUDE_CLOUD_SETTINGS_START -->
           <div class="settings-group">
             <h2 class="settings-section-title collapsible-header">
               <mdui-icon>
@@ -684,6 +691,7 @@
               </div>
             </div>
           </div>
+          <!-- LIGHT_EXCLUDE_CLOUD_SETTINGS_END -->
 
           <div class="settings-group">
             <h2 class="settings-section-title collapsible-header">
@@ -732,6 +740,7 @@
                  </div>
                  <mdui-switch id="mpd-fix"></mdui-switch>
                </div>
+              <!-- LIGHT_EXCLUDE_MEDIA_PROCESSING_OPTIONS_START -->
               <div class="setting-item">
                  <div class="setting-text">
                    <h3 data-translate="mpdToMp4Checkbox">Merge MPD audio and video into MP4</h3>
@@ -739,9 +748,11 @@
                  </div>
                  <mdui-switch id="mpd-to-mp4"></mdui-switch>
                </div>
+              <!-- LIGHT_EXCLUDE_MEDIA_PROCESSING_OPTIONS_END -->
             </div>
 
             <div class="settings-items-container">
+              <!-- LIGHT_EXCLUDE_MEDIA_PROCESSING_OPTIONS_START -->
               <div class="setting-item">
                  <div class="setting-text">
                    <h3 data-translate="muxAllAudiosCheckbox">Mux all audio tracks (YouTube)</h3>
@@ -749,6 +760,7 @@
                  </div>
                  <mdui-switch id="mux-all-audios"></mdui-switch>
                </div>
+              <!-- LIGHT_EXCLUDE_MEDIA_PROCESSING_OPTIONS_END -->
               <div class="setting-item">
                   <div class="setting-text">
                     <h3 data-translate="embedSubtitlesMkvTitle">Embed all subtitles into video (YouTube)</h3>
@@ -759,6 +771,7 @@
             </div>
 
             <div class="settings-items-container">
+              <!-- LIGHT_EXCLUDE_MP3_CONVERSION_START -->
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="audioToMp3Setting">Convert audio to MP3</h3>
@@ -777,7 +790,8 @@
                   </select>
                 </div>
               </div>
-              <div class="setting-item">
+              <!-- LIGHT_EXCLUDE_MP3_CONVERSION_END -->
+                <div class="setting-item">
                    <div class="setting-text">
                      <h3 data-translate="embedSubtitlesNonYtTitle">Embed subtitles into video (Standard video)</h3>
                      <p data-translate="embedSubtitlesNonYtExplain">When enabled, shows subtitle selector card for standard video downloads to embed selected subtitles.</p>
@@ -794,6 +808,7 @@
                </div>
             </div>
 
+            <!-- LIGHT_EXCLUDE_STREAM_MP4_START -->
             <div class="settings-items-container">
               <div class="setting-item">
                 <div class="setting-text">
@@ -818,13 +833,14 @@
                 </div>
               </div>
             </div>
+            <!-- LIGHT_EXCLUDE_STREAM_MP4_END -->
 
             <div class="settings-items-container">
 
               <div class="setting-item">
                 <div class="setting-text">
-                  <h3 data-translate="optimizeLowEndTitle">Optimize for low-end devices</h3>
-                  <p data-translate="optimizeLowEndExplain">Reduces CPU usage but may miss some media.</p>
+                  <h3 data-translate="optimizeLowEndTitle">Resource-saving mode</h3>
+                  <p data-translate="optimizeLowEndExplain">Reduces page scanning and displayed results, uses clean view, and disables media cache. Some media may not be found.</p>
                 </div>
                 <mdui-switch id="optimize-low-end"></mdui-switch>
               </div>
@@ -993,32 +1009,12 @@
               </div>
               <div class="setting-item vertical">
                 <h3 data-translate="colorPickerTitle">Theme color</h3>
-                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; width: 100%;">
-                  <div class="color-presets">
-                    <div class="color-preset" style="background-color: #bbdefb;" data-color="#bbdefb"></div>
-                    <div class="color-preset" style="background-color: #ffc107;" data-color="#ffc107"></div>
-                    <div class="color-preset" style="background-color: #ff9800;" data-color="#ff9800"></div>
-                    <div class="color-preset" style="background-color: #ff5722;" data-color="#ff5722"></div>
-                    <div class="color-preset" style="background-color: #f44336;" data-color="#f44336"></div>
-                    <div class="color-preset" style="background-color: #e91e63;" data-color="#e91e63"></div>
-                    <div class="color-preset" style="background-color: #9c27b0;" data-color="#9c27b0"></div>
-                    <div class="color-preset" style="background-color: #673ab7;" data-color="#673ab7"></div>
-                    <div class="color-preset" style="background-color: #3f51b5;" data-color="#3f51b5"></div>
-                    <div class="color-preset" style="background-color: #2196f3;" data-color="#2196f3"></div>
-                    <div class="color-preset" style="background-color: #03a9f4;" data-color="#03a9f4"></div>
-                    <div class="color-preset" style="background-color: #00bcd4;" data-color="#00bcd4"></div>
-                    <div class="color-preset" style="background-color: #009688;" data-color="#009688"></div>
-                    <div class="color-preset" style="background-color: #4caf50;" data-color="#4caf50"></div>
-                    <div class="color-preset" style="background-color: #8bc34a;" data-color="#8bc34a"></div>
-                  </div>
-                  <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="theme-color-controls">
+                    <canvas id="theme-color-wheel" class="theme-color-wheel" width="180" height="180" aria-label="Theme color wheel"></canvas>
+                    <input type="range" id="theme-color-brightness" class="theme-color-brightness" min="15" max="100" value="100" aria-label="Color brightness">
+                    <div class="theme-color-value-row">
                     <input type="text" id="color-hex-input" class="pill-input" placeholder="#BBDEFB" style="width: 90px; text-align: center; font-family: monospace; text-transform: uppercase; font-weight: 800; font-size: 0.8rem;">
-                    <mdui-button-icon id="open-settings-tab" data-helper-translate="openInNewTabHelper">
-                      <mdui-icon>
-                        <svg viewBox="0 -960 960 960"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 312-312H520v-80h240v240h-80v-124L388-332Z"/></svg>
-                      </mdui-icon>
-                    </mdui-button-icon>
-                  </div>
+                    </div>
                 </div>
               </div>
             </div>
@@ -1050,6 +1046,7 @@
             </div>
           </div>
 
+          <!-- LIGHT_EXCLUDE_SPEED_TEST_START -->
           <div class="settings-group">
             <h2 class="settings-section-title collapsible-header">
               <mdui-icon>
@@ -1119,6 +1116,7 @@
               </div>
             </div>
         </div>
+        <!-- LIGHT_EXCLUDE_SPEED_TEST_END -->
         </div>
       </mdui-tab-panel>
 

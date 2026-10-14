@@ -22,6 +22,7 @@
 
     window.mdu_optimize_low_end = false;
     window.mdu_detection_enabled = true;
+    window.mdu_document_scan_enabled = true;
     const shadowObservers = new Set();
     const websocketListeners = new Map();
 
@@ -43,12 +44,12 @@
         if (originalAttachShadow && !Element.prototype.mdu_hooked) {
             Element.prototype.attachShadow = function(init) {
                 const shadowRoot = originalAttachShadow.apply(this, arguments);
-                if (window.mdu_optimize_low_end || !window.mdu_detection_enabled) return shadowRoot;
+                if (window.mdu_optimize_low_end || !window.mdu_detection_enabled || !window.mdu_document_scan_enabled) return shadowRoot;
                 
                 window.postMessage({ type: 'MDU_DOM_CHANGED' }, '*');
                 try {
                     const observer = new MutationObserver(() => {
-                        if (window.mdu_detection_enabled) window.postMessage({ type: 'MDU_DOM_CHANGED' }, '*');
+                        if (window.mdu_detection_enabled && window.mdu_document_scan_enabled) window.postMessage({ type: 'MDU_DOM_CHANGED' }, '*');
                     });
                     observer.observe(shadowRoot, { childList: true, subtree: true });
                     shadowObservers.add(observer);
@@ -106,7 +107,7 @@
 
     // 4. Deep scan function
     window.mdu_deep_scan = function() {
-        if (!window.mdu_detection_enabled) return;
+        if (!window.mdu_detection_enabled || !window.mdu_document_scan_enabled) return;
         const urls = [];
         try {
             if (window.__additionalData) {
@@ -144,9 +145,12 @@
         } else if (event.data.type === 'MDU_UPDATE_SETTINGS') {
             window.mdu_optimize_low_end = !!event.data.optimizeLowEnd;
             window.mdu_detection_enabled = event.data.detectionEnabled !== false;
-            if (!window.mdu_detection_enabled) {
+            window.mdu_document_scan_enabled = event.data.documentScanEnabled !== false;
+            if (!window.mdu_detection_enabled || !window.mdu_document_scan_enabled) {
                 for (const observer of shadowObservers) observer.disconnect();
                 shadowObservers.clear();
+            }
+            if (!window.mdu_detection_enabled) {
                 for (const [socket, listener] of websocketListeners) socket.removeEventListener('message', listener);
                 websocketListeners.clear();
             }
