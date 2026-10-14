@@ -1,66 +1,102 @@
 {
   "require_uninstall": false,
   "en": {
-    "headline": "What's New (v2.4.1)",
+    "headline": "What's New (v2.4.2)",
     "changes": [
-      "Improved redirect and ad blocking to work more intelligently.",
-      "Fixed detection processes continuing to run after detection was disabled."
+      "Introducing Website Media Downloader Light, a new lightweight edition focused on essential media detection and downloading.",
+      "Smaller package size.",
+      "Available for Chrome, Chrome YT, and Firefox.",
+      "The installed edition type is now shown on the About page.",
+      "Added an option to enable or disable document scanning.",
+      "Improved popup performance and interface."
     ]
   },
   "id": {
-    "headline": "Yang Baru (v2.4.1)",
+    "headline": "Yang Baru (v2.4.2)",
     "changes": [
-      "Memperbaiki pemblokir redirect dan iklan agar bekerja lebih pintar.",
-      "Memperbaiki proses deteksi agar benar-benar berhenti saat deteksi dimatikan."
+      "Memperkenalkan Website Media Downloader Light, edisi ringan baru yang berfokus pada deteksi dan pengunduhan media.",
+      "Ukuran paket lebih kecil.",
+      "Tersedia untuk Chrome, Chrome YT, dan Firefox.",
+      "Jenis edisi yang terpasang kini ditampilkan di halaman Tentang.",
+      "Menambahkan opsi untuk mengaktifkan atau menonaktifkan pemindaian dokumen.",
+      "Meningkatkan performa dan tampilan popup."
     ]
   },
   "de": {
-    "headline": "Was gibt's Neues (v2.4.1)",
+    "headline": "Was gibt's Neues (v2.4.2)",
     "changes": [
-      "Die Weiterleitungs- und Werbeblockierung wurde intelligenter gestaltet.",
-      "Erkennungsprozesse werden nun vollständig beendet, wenn die Erkennung deaktiviert wird."
+      "Wir stellen Website Media Downloader Light vor, eine neue leichtgewichtige Edition für die grundlegende Medienerkennung und das Herunterladen.",
+      "Kleinere Paketgröße.",
+      "Verfügbar für Chrome, Chrome YT und Firefox.",
+      "Der installierte Editionstyp wird jetzt auf der Seite „Über“ angezeigt.",
+      "Eine Option zum Aktivieren oder Deaktivieren der Dokumentensuche wurde hinzugefügt.",
+      "Leistung und Benutzeroberfläche des Popups wurden verbessert."
     ]
   },
   "fr": {
-    "headline": "Nouveautés (v2.4.1)",
+    "headline": "Nouveautés (v2.4.2)",
     "changes": [
-      "Amélioration du blocage des redirections et des publicités pour un fonctionnement plus intelligent.",
-      "Correction des processus de détection qui continuaient après la désactivation de la détection."
+      "Présentation de Website Media Downloader Light, une nouvelle édition légère axée sur la détection et le téléchargement essentiels des médias.",
+      "Taille du paquet réduite.",
+      "Disponible pour Chrome, Chrome YT et Firefox.",
+      "Le type d’édition installé est désormais affiché sur la page À propos.",
+      "Ajout d’une option permettant d’activer ou de désactiver l’analyse des documents.",
+      "Amélioration des performances et de l’interface de la fenêtre contextuelle."
     ]
   },
   "ja": {
-    "headline": "新機能 (v2.4.1)",
+    "headline": "新機能 (v2.4.2)",
     "changes": [
-      "リダイレクトと広告のブロックをよりスマートに改善しました。",
-      "検出を無効にした後も検出処理が続く問題を修正しました。"
+      "基本的なメディア検出とダウンロードに特化した新しい軽量版、Website Media Downloader Lightを導入しました。",
+      "パッケージサイズを縮小しました。",
+      "Chrome、Chrome YT、Firefoxで利用できます。",
+      "インストールされているエディションの種類が「概要」ページに表示されるようになりました。",
+      "ドキュメントスキャンを有効または無効にするオプションを追加しました。",
+      "ポップアップのパフォーマンスとインターフェースを改善しました。"
     ]
   },
   "ko": {
-    "headline": "새로운 기능 (v2.4.1)",
+    "headline": "새로운 기능 (v2.4.2)",
     "changes": [
-      "리디렉션 및 광고 차단이 더 스마트하게 작동하도록 개선했습니다.",
-      "감지를 비활성화한 후에도 감지 프로세스가 계속 실행되는 문제를 수정했습니다."
+      "필수 미디어 감지 및 다운로드에 초점을 맞춘 새로운 경량 에디션 Website Media Downloader Light를 소개합니다.",
+      "패키지 크기를 줄였습니다.",
+      "Chrome, Chrome YT 및 Firefox에서 사용할 수 있습니다.",
+      "설치된 에디션 유형이 이제 정보 페이지에 표시됩니다.",
+      "문서 스캔을 활성화하거나 비활성화하는 옵션을 추가했습니다.",
+      "팝업 성능과 인터페이스를 개선했습니다."
     ]
   },
   "pt": {
-    "headline": "Novidades (v2.4.1)",
+    "headline": "Novidades (v2.4.2)",
     "changes": [
-      "Melhorado o bloqueio de redirecionamentos e anúncios para funcionar de forma mais inteligente.",
-      "Corrigidos os processos de detecção que continuavam após a detecção ser desativada."
+      "Apresentamos o Website Media Downloader Light, uma nova edição leve focada na detecção e no download essenciais de mídia.",
+      "Tamanho do pacote reduzido.",
+      "Disponível para Chrome, Chrome YT e Firefox.",
+      "O tipo de edição instalada agora é exibido na página Sobre.",
+      "Adicionada uma opção para ativar ou desativar a verificação de documentos.",
+      "Melhorias no desempenho e na interface do popup."
     ]
   },
   "ru": {
-    "headline": "Что нового (v2.4.1)",
+    "headline": "Что нового (v2.4.2)",
     "changes": [
-      "Улучшена интеллектуальная блокировка перенаправлений и рекламы.",
-      "Исправлена работа процессов обнаружения, которые продолжались после отключения обнаружения."
+      "Представляем Website Media Downloader Light — новую облегчённую редакцию для основных функций обнаружения и загрузки медиафайлов.",
+      "Уменьшен размер пакета.",
+      "Доступно для Chrome, Chrome YT и Firefox.",
+      "Тип установленной редакции теперь отображается на странице «О программе».",
+      "Добавлена возможность включать и отключать сканирование документа.",
+      "Улучшены производительность и интерфейс всплывающего окна."
     ]
   },
   "ar": {
-    "headline": "ما الجديد (v2.4.1)",
+    "headline": "ما الجديد (v2.4.2)",
     "changes": [
-      "تحسين حظر عمليات إعادة التوجيه والإعلانات ليعمل بذكاء أكبر.",
-      "إصلاح استمرار عمليات الاكتشاف بعد تعطيل ميزة الاكتشاف."
+      "نقدم Website Media Downloader Light، إصدارًا خفيفًا جديدًا يركز على اكتشاف الوسائط وتنزيلها بالوظائف الأساسية.",
+      "حجم حزمة أصغر.",
+      "متاح لمتصفحات Chrome وChrome YT وFirefox.",
+      "يظهر الآن نوع الإصدار المثبت في صفحة حول.",
+      "تمت إضافة خيار لتفعيل فحص المستندات أو تعطيله.",
+      "تحسين أداء النافذة المنبثقة وواجهتها."
     ]
   }
 }
