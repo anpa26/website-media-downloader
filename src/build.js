@@ -443,7 +443,7 @@ function stripDisabledIntegrations(outDir) {
         showMediaNotification: 'return;'
     });
 
-    replaceSection(path.join(outDir, 'download.js'), 'class CloudUploadController', 'async function getStoredDownloads', cloudStubs);
+    replaceSection(path.join(outDir, 'download.js'), 'class CloudUploadController', 'const activeJobs', cloudStubs);
     replaceSection(
         path.join(outDir, 'settings.js'),
         "    const gdriveBtn = document.getElementById('gdrive-login-btn');\n    const gdriveText = document.getElementById('gdrive-login-text');",
@@ -473,13 +473,19 @@ function stripDisabledIntegrations(outDir) {
 }
 
 function stripLightFeatures(outDir) {
-    removeMarkedSections(path.join(outDir, 'popup.html'), 'SPEED_TEST');
-    removeMarkedSections(path.join(outDir, 'popup.html'), 'CLOUD_SETTINGS');
-    removeMarkedSections(path.join(outDir, 'popup.html'), 'DEVICE_NOTIFICATIONS');
-    removeMarkedSections(path.join(outDir, 'popup.html'), 'AUTO_DOWNLOAD');
-    removeMarkedSections(path.join(outDir, 'popup.html'), 'MEDIA_PROCESSING_OPTIONS');
-    removeMarkedSections(path.join(outDir, 'popup.html'), 'STREAM_MP4');
-    removeMarkedSections(path.join(outDir, 'popup.html'), 'MP3_CONVERSION');
+    const popupPath = path.join(outDir, 'popup.html');
+    removeMarkedSections(popupPath, 'SPEED_TEST');
+    removeMarkedSections(popupPath, 'CLOUD_SETTINGS');
+    removeMarkedSections(popupPath, 'DEVICE_NOTIFICATIONS');
+    removeMarkedSections(popupPath, 'AUTO_DOWNLOAD');
+    removeMarkedSections(popupPath, 'MEDIA_PROCESSING_OPTIONS');
+    removeMarkedSections(popupPath, 'STREAM_MP4');
+    removeMarkedSections(popupPath, 'MP3_CONVERSION');
+    const popup = fs.readFileSync(popupPath, 'utf8').replace(
+        /\s*<div class="settings-items-container">\s*<\/div>/g,
+        ''
+    );
+    fs.writeFileSync(popupPath, popup, 'utf8');
     removeMarkedSections(path.join(outDir, 'settings.js'), 'SPEED_TEST');
     stripLibAvCode(outDir);
     stripMp3Conversion(outDir);
@@ -576,6 +582,10 @@ function validateTarget(target, outDir) {
     if (LIGHT_TARGETS.has(target)) {
         const popup = fs.readFileSync(path.join(outDir, 'popup.html'), 'utf8');
         const settings = fs.readFileSync(path.join(outDir, 'settings.js'), 'utf8');
+        const download = fs.readFileSync(path.join(outDir, 'download.js'), 'utf8');
+        if (!download.includes('const activeJobs = new Map();')) {
+            throw new Error(`[${target}] Download manager state was removed from Light build`);
+        }
         if (popup.includes('start-speed-test') || settings.includes('setupSpeedTest') || settings.includes('speed.cloudflare.com')) {
             throw new Error(`[${target}] Speed Test code leaked into build`);
         }

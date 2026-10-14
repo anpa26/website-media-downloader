@@ -1,4 +1,13 @@
 {
+    "installedType": {
+        "message": "Type d’installation"
+    },
+    "installedTypeLight": {
+        "message": "Légère"
+    },
+    "installedTypeFull": {
+        "message": "Complète"
+    },
     "actionTitle": {
         "message": "Télécharger les médias",
         "description": "The contents of the context menu when hovering over the extension icon."
@@ -200,6 +209,8 @@
         "message": "Détection en se basant sur l'URL du média (par exemple .mp4, .m3u8, .mpd). Rapide mais moins fiable car certains sites utilisent des URL personnalisées sans extension.",
         "description": "The explanation of the URL-based detection method."
     },
+    "documentScanTitle": { "message": "Activer l’analyse du document" },
+    "documentScanExplain": { "message": "Détecte les médias disponibles directement sur la page et actualise les résultats lorsque son contenu change." },
     "urlDetectionCheckbox": {
         "message": "Détection via l'URL",
         "description": "The label of the checkbox to enable URL-based detection."

@@ -27,7 +27,7 @@
     }
 
     const contentStorageKeys = [
-        'url-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components',
+        'document-scan', 'url-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components',
         'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file',
         'ignore-disabled-types', 'optimize-low-end'
     ];
@@ -37,6 +37,7 @@
     const settingEnabled = (value, defaultValue = true) => value == null ? defaultValue : value === '1' || value === true;
     const contentDetectionEnabled = (settings = cachedContentSettings) =>
         settingEnabled(settings['url-detection']) || settingEnabled(settings['mime-detection']) || settingEnabled(settings['detect-download-links']);
+    const documentScanEnabled = (settings = cachedContentSettings) => settingEnabled(settings['document-scan']);
     async function safeStorageGet(keys) {
         try {
             if (typeof browser !== 'undefined' && browser.storage && browser.storage.local) {
@@ -65,7 +66,7 @@
                     browser.runtime.sendMessage({ action: 'drmDetected' });
                 } catch (e) {}
             } else if (event.data.type === 'MDU_DOM_CHANGED') {
-                if (!isGlobalOpt) {
+                if (documentScanEnabled() && !isGlobalOpt) {
                     if (window.mdu_scan) window.mdu_scan();
                 }
             } else if (event.data.type === 'MDU_WS_STREAM_DETECTED') {
@@ -81,6 +82,7 @@
                     }
                 }
             } else if (event.data.type === 'MDU_DEEP_URLS_DETECTED') {
+                if (!documentScanEnabled()) return;
                 if (event.data.urls && Array.isArray(event.data.urls)) {
                     event.data.urls.forEach(url => {
                         const absolute = getAbsoluteUrl(url);
@@ -323,7 +325,7 @@
         const selector = isOpt ? 'img, video, audio, source, track, a, iframe, object, embed, [data-src], [data-url], [data-href], [data-original], [style*="background"]' : '*';
         const elements = container.querySelectorAll(selector);
         for (const el of elements) {
-            if (!contentDetectionEnabled()) break;
+            if (!contentDetectionEnabled() || !documentScanEnabled()) break;
             await processElement(el, result, detectDownloads, extraExts);
         }
     }
@@ -331,10 +333,10 @@
     let scanPending = false;
     let fullScanTimeout = null;
     window.mdu_scan = function() {
-        if (!contentDetectionEnabled()) return;
+        if (!contentDetectionEnabled() || !documentScanEnabled()) return;
         if (fullScanTimeout) clearTimeout(fullScanTimeout);
         fullScanTimeout = setTimeout(async () => {
-            if (!contentDetectionEnabled()) return;
+            if (!contentDetectionEnabled() || !documentScanEnabled()) return;
             if (scanPending) return;
             scanPending = true;
 
@@ -344,7 +346,7 @@
             const extraExts = detectDownloads ? downloadExtensions : [];
 
             await scanContainer(document, result, detectDownloads, extraExts);
-            if (!contentDetectionEnabled()) {
+            if (!contentDetectionEnabled() || !documentScanEnabled()) {
                 scanPending = false;
                 return;
             }
@@ -375,7 +377,7 @@
     let pendingNodesToScan = new Set();
 
     async function processPendingNodes() {
-        if (!contentDetectionEnabled()) {
+        if (!contentDetectionEnabled() || !documentScanEnabled()) {
             pendingNodesToScan.clear();
             return;
         }
@@ -389,7 +391,7 @@
         const extraExts = detectDownloads ? downloadExtensions : [];
 
         for (const node of nodes) {
-            if (!contentDetectionEnabled()) return;
+            if (!contentDetectionEnabled() || !documentScanEnabled()) return;
             if (!node.isConnected) continue;
             await processElement(node, result, detectDownloads, extraExts);
             try {
@@ -397,7 +399,7 @@
                 const selector = isOpt ? 'img, video, audio, source, track, a, iframe, object, embed, [data-src], [data-url], [data-href], [data-original], [style*="background"]' : '*';
                 const elements = node.querySelectorAll(selector);
                 for (const el of elements) {
-                    if (!contentDetectionEnabled()) break;
+                    if (!contentDetectionEnabled() || !documentScanEnabled()) break;
                     await processElement(el, result, detectDownloads, extraExts);
                 }
             } catch (e) {}
@@ -429,7 +431,7 @@
     }
 
     const observer = new MutationObserver((mutations) => {
-        if (!contentDetectionEnabled()) return;
+        if (!contentDetectionEnabled() || !documentScanEnabled()) return;
         const addedElements = [];
         for (const mutation of mutations) {
             for (const node of mutation.addedNodes) {
@@ -446,14 +448,15 @@
     let isObserving = false;
     function syncDetectionState() {
         const enabled = contentDetectionEnabled();
+        const scanEnabled = documentScanEnabled();
         const isOpt = cachedContentSettings['optimize-low-end'] === '1' || cachedContentSettings['optimize-low-end'] === true;
         isGlobalOpt = isOpt;
-        window.postMessage({ type: 'MDU_UPDATE_SETTINGS', optimizeLowEnd: isOpt, detectionEnabled: enabled }, '*');
-        if ((!enabled || isOpt) && isObserving) {
+        window.postMessage({ type: 'MDU_UPDATE_SETTINGS', optimizeLowEnd: isOpt, detectionEnabled: enabled, documentScanEnabled: scanEnabled }, '*');
+        if ((!enabled || !scanEnabled || isOpt) && isObserving) {
             observer.disconnect();
             isObserving = false;
             pendingNodesToScan.clear();
-        } else if (enabled && !isOpt && !isObserving && document.body) {
+        } else if (enabled && scanEnabled && !isOpt && !isObserving && document.body) {
             observer.observe(document.body, { childList: true, subtree: true });
             isObserving = true;
         }
@@ -465,7 +468,7 @@
         isGlobalOpt = isOpt;
 
         syncDetectionState();
-        if (contentDetectionEnabled(result)) window.mdu_scan();
+        if (contentDetectionEnabled(result) && documentScanEnabled(result)) window.mdu_scan();
     }).catch(() => {});
 
     try {
@@ -473,7 +476,7 @@
             if (area === 'local' && contentStorageKeys.some(key => Object.prototype.hasOwnProperty.call(changes, key))) {
                 for (const [key, change] of Object.entries(changes)) cachedContentSettings[key] = change.newValue;
                 syncDetectionState();
-                if (contentDetectionEnabled()) window.mdu_scan();
+                if (contentDetectionEnabled() && documentScanEnabled()) window.mdu_scan();
             }
         });
     } catch(e) {}

@@ -1,4 +1,13 @@
 {
+    "installedType": {
+        "message": "Installed Type"
+    },
+    "installedTypeLight": {
+        "message": "Light"
+    },
+    "installedTypeFull": {
+        "message": "Full"
+    },
     "actionTitle": {
         "message": "Download media",
         "description": "The contents of the context menu when hovering over the extension icon."
@@ -220,6 +229,8 @@
         "message": "Detects media from the URL link. This is very fast, but may miss media on websites that hide their links.",
         "description": "The explanation of the URL-based detection method."
     },
+    "documentScanTitle": { "message": "Enable document scanning" },
+    "documentScanExplain": { "message": "Find media available directly on the page and update results when the page content changes." },
     "urlDetectionCheckbox": {
         "message": "Detection via URL",
         "description": "The label of the checkbox to enable URL-based detection."

@@ -4123,6 +4123,10 @@ async function loadAboutPage() {
   try {
     const response = await fetch(browser.runtime.getURL('about.json?t=' + Date.now()));
     const data = await response.json();
+    const manifest = browser.runtime.getManifest();
+    const installedType = manifest.name.startsWith('Website Media Downloader Light')
+      ? (browser.i18n.getMessage('installedTypeLight') || 'Light')
+      : (browser.i18n.getMessage('installedTypeFull') || 'Full');
 
     const isFirefox = navigator.userAgent.includes('Firefox') || (typeof browser !== 'undefined' && browser.runtime.getURL && browser.runtime.getURL('').startsWith('moz-extension://'));
     const reinstallUrl = isFirefox 
@@ -4210,8 +4214,9 @@ async function loadAboutPage() {
 
         <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; background: var(--surface-low); border-radius: var(--app-border-radius); border: 1px solid rgb(var(--mdui-color-outline-variant));">
           <div style="display: flex; align-items: center; justify-content: space-between;">
-            <div style="font-size: 0.85rem; font-weight: 600; color: var(--on-surface-variant); padding-left: 4px;">
-              ${browser.i18n.getMessage("installedVersion") || "Version"} ${browser.runtime.getManifest().version}
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--on-surface-variant); padding-left: 4px; display: flex; flex-direction: column; gap: 3px;">
+              <span>${browser.i18n.getMessage("installedVersion") || "Version"} ${manifest.version}</span>
+              <span style="font-size: 0.75rem; font-weight: 500; opacity: 0.8;">${browser.i18n.getMessage('installedType') || 'Installed Type'}: ${installedType}</span>
             </div>
             <mdui-button id="manual-check-update" style="--mdui-shape-corner-extra-small: 16px; height: 32px; font-size: 12px; background: linear-gradient(135deg, rgba(var(--mdui-color-primary), 0.15), rgba(var(--mdui-color-on-surface), 0.08)); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1), inset -2px -2px 4px rgba(255, 255, 255, 0.05); border: 1px solid rgba(var(--mdui-color-primary), 0.15); color: var(--primary);">
               <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></mdui-icon>
@@ -4239,7 +4244,7 @@ async function loadAboutPage() {
 
     const lead = data.authors[0];
     html += `
-        <mdui-card variant="filled" style="padding: 20px !important; background: linear-gradient(135deg, rgba(var(--mdui-color-primary), 0.1), rgba(var(--mdui-color-on-surface), 0.05)); backdrop-filter: blur(30px) saturate(160%); -webkit-backdrop-filter: blur(30px) saturate(160%); box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.1), inset -4px -4px 8px rgba(255, 255, 255, 0.03); border: 1px solid rgba(var(--mdui-color-primary), 0.12); overflow: visible; border-radius: 24px;">
+        <mdui-card variant="outlined" style="padding: 20px !important; background: transparent; box-shadow: none; border: 1px solid rgb(var(--mdui-color-outline-variant)); overflow: visible; border-radius: var(--app-border-radius);">
           <div style="display: flex; gap: 16px; align-items: center; position: relative;">
             <mdui-avatar src="${lead.avatar}" style="width: 56px; height: 56px; border: 2px solid rgba(255,255,255,0.1); box-shadow: 0 4px 12px rgba(0,0,0,0.15);"></mdui-avatar>
             <div style="flex-grow: 1;">
@@ -4247,7 +4252,6 @@ async function loadAboutPage() {
               <p style="margin: 8px 0 0; font-size: 0.85rem; line-height: 1.5; color: var(--on-surface-variant);">${browser.i18n.getMessage("leadDeveloperDescription") || lead.description}</p>
             </div>
             <div style="display: flex; flex-direction: column; align-items: flex-end; align-self: stretch; justify-content: center; min-width: 80px;">
-              <span style="font-size: 0.65rem; color: var(--primary); opacity: 0.8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; position: absolute; top: -4px; right: 0;">${browser.i18n.getMessage("leadDeveloperRole") || lead.role}</span>
               <mdui-button-icon variant="filled" style="--mdui-color-primary: var(--primary); --mdui-color-on-primary: var(--surface-low); flex-shrink: 0;" href="${lead.github}" target="_blank">
                 <svg viewBox="0 0 24 24" style="fill: currentColor;"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
               </mdui-button-icon>
@@ -4268,7 +4272,6 @@ async function loadAboutPage() {
             <mdui-avatar slot="icon" src="${author.avatar}" style="width: 32px; height: 32px;"></mdui-avatar>
             <div style="font-weight: 600; font-size: 0.9rem;">${author.name}</div>
             <div slot="description" style="font-size: 0.8rem; opacity: 0.7;">${browser.i18n.getMessage("legacyContributorDescription") || author.description}</div>
-            <span slot="description" style="font-size: 0.7rem; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-top: 4px; display: block;">${browser.i18n.getMessage("legacyContributorRole") || author.role}</span>
             <mdui-button-icon slot="end-icon" href="${author.github}" target="_blank">
               <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: currentColor;"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
             </mdui-button-icon>
@@ -4300,7 +4303,7 @@ async function loadAboutPage() {
       const transKey = linkTranslationMap[officialLink.label];
       const localizedLabel = transKey ? (browser.i18n.getMessage(transKey) || officialLink.label) : officialLink.label;
       html += `
-        <mdui-card href="${officialLink.url}" target="_blank" clickable style="background: linear-gradient(135deg, rgba(var(--mdui-color-primary), 0.15), rgba(var(--mdui-color-primary), 0.05)); border: 1px solid rgba(var(--mdui-color-primary), 0.3); border-radius: 14px; transition: var(--transition); width: 100%; box-sizing: border-box;">
+        <mdui-card variant="outlined" href="${officialLink.url}" target="_blank" clickable style="background: transparent; box-shadow: none; border: 1px solid rgb(var(--mdui-color-outline-variant)); border-radius: var(--app-border-radius); transition: var(--transition); width: 100%; box-sizing: border-box;">
           <div style="padding: 14px 16px; display: flex; align-items: center; gap: 14px; box-sizing: border-box; width: 100%;">
             <div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: rgba(var(--mdui-color-primary), 0.15); color: var(--primary); border-radius: 10px; flex-shrink: 0;">
               <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: currentColor;"><path d="${officialLink.icon}"/></svg>
@@ -4322,7 +4325,7 @@ async function loadAboutPage() {
       const transKey = linkTranslationMap[link.label];
       const localizedLabel = transKey ? (browser.i18n.getMessage(transKey) || link.label) : link.label;
       html += `
-        <mdui-card href="${link.url}" target="_blank" clickable style="background: var(--surface-low); border: 1px solid rgb(var(--mdui-color-outline-variant)); border-radius: 12px; transition: var(--transition); height: 100%;">
+        <mdui-card variant="outlined" href="${link.url}" target="_blank" clickable style="background: transparent; box-shadow: none; border: 1px solid rgb(var(--mdui-color-outline-variant)); border-radius: var(--app-border-radius); transition: var(--transition); height: 100%;">
           <div style="padding: 12px; display: flex; align-items: center; gap: 12px; height: 100%; box-sizing: border-box;">
             <div style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: rgba(var(--mdui-color-primary), 0.1); color: var(--primary); border-radius: 10px; flex-shrink: 0;">
               <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; fill: currentColor;"><path d="${link.icon}"/></svg>

@@ -16,7 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
-<html lang="en" class="mdui-theme-auto" style="width: 550px; height: 600px;">
+<html lang="en" class="mdui-theme-auto is-popup" style="width: 550px; height: 600px; zoom: 85%;">
 
 <head>
   <meta charset="UTF-8">
@@ -28,7 +28,7 @@
   <link rel="stylesheet" href="styles/style.css">
 </head>
 
-<body>
+<body class="is-popup">
   <div id="loading">
     <mdui-circular-progress></mdui-circular-progress>
   </div>
@@ -219,6 +219,15 @@
 
               <div class="setting-item">
                 <div class="setting-text">
+                  <h3 data-translate="documentScanTitle">Enable document scanning</h3>
+                  <p data-translate="documentScanExplain">Find media available directly on the page and update results when the page content changes.</p>
+                </div>
+                <mdui-switch id="document-scan"></mdui-switch>
+              </div>
+
+
+              <div class="setting-item">
+                <div class="setting-text">
                   <h3 data-translate="urlDetectionCheckbox">Detection via URL</h3>
                   <p data-translate="urlDetectionExplain">Fast, but might miss some media types.</p>
                 </div>
@@ -248,7 +257,9 @@
                 </div>
                 <mdui-switch id="detect-download-links"></mdui-switch>
               </div>
-              
+            </div>
+
+            <div class="settings-items-container">
               <div class="setting-item">
                 <div class="setting-text">
                   <h3 data-translate="hideSegmentsTitle">Hide segments</h3>
@@ -800,7 +811,6 @@
                    </div>
                    <mdui-switch id="embed-subtitles-nonyt"></mdui-switch>
                  </div>
-                <!-- LIGHT_EXCLUDE_MEDIA_PROCESSING_OPTIONS_END -->
               <div class="setting-item" id="setting-embed-subtitles-container" style="display: none !important;">
                   <h3 data-translate="embedSubtitlesContainerTitle">Subtitle embed container</h3>
                   <div class="pill-select-wrapper">
@@ -809,6 +819,7 @@
                     </select>
                   </div>
                </div>
+                <!-- LIGHT_EXCLUDE_MEDIA_PROCESSING_OPTIONS_END -->
             </div>
 
             <!-- LIGHT_EXCLUDE_STREAM_MP4_START -->

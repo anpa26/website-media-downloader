@@ -1,4 +1,13 @@
 {
+    "installedType": {
+        "message": "Installationstyp"
+    },
+    "installedTypeLight": {
+        "message": "Leicht"
+    },
+    "installedTypeFull": {
+        "message": "Vollständig"
+    },
     "actionTitle": {
         "message": "Medien herunterladen",
         "description": "The contents of the context menu when hovering over the extension icon."
@@ -200,6 +209,8 @@
         "message": "Erkennung durch Überprüfung, ob die URL einen bekannten Medientyp enthält (z.B. .mp4, .m3u8). Schnell, aber einige Websites verwenden andere Methoden bei denen sich der Medientyp nicht direkt vorhersagen lässt und werden daher eventuell nicht erkannt.",
         "description": "The explanation of the URL-based detection method."
     },
+    "documentScanTitle": { "message": "Dokumentensuche aktivieren" },
+    "documentScanExplain": { "message": "Findet Medien direkt auf der Seite und aktualisiert die Ergebnisse, wenn sich der Seiteninhalt ändert." },
     "urlDetectionCheckbox": {
         "message": "Erkennung anhand der URL",
         "description": "The label of the checkbox to enable URL-based detection."

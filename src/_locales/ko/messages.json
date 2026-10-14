@@ -1,4 +1,13 @@
 {
+  "installedType": {
+    "message": "설치 유형"
+  },
+  "installedTypeLight": {
+    "message": "라이트"
+  },
+  "installedTypeFull": {
+    "message": "전체"
+  },
   "ignoreExcludedMediaTitle": {
     "message": "제외된 미디어 감지 안 함"
   },
@@ -299,6 +308,8 @@
     "message": "URL에 알려진 미디어 유형(예: .mp4, .m3u8)이 포함되어 있는지 확인하여 감지합니다. 속도는 빠르지만 일부 사이트는 이러한 URL을 통해 미디어를 제공하지 않으므로 모든 미디어를 감지하지 못할 수도 있습니다.",
     "description": "The explanation of the URL-based detection method."
   },
+  "documentScanTitle": { "message": "문서 검색 활성화" },
+  "documentScanExplain": { "message": "페이지에서 직접 제공되는 미디어를 찾고 페이지 내용이 변경되면 결과를 업데이트합니다." },
   "urlDetectionCheckbox": {
     "message": "URL을 통한 감지",
     "description": "The label of the checkbox to enable URL-based detection."

@@ -1,4 +1,13 @@
 {
+  "installedType": {
+    "message": "نوع التثبيت"
+  },
+  "installedTypeLight": {
+    "message": "خفيف"
+  },
+  "installedTypeFull": {
+    "message": "كامل"
+  },
   "ignoreExcludedMediaTitle": {
     "message": "عدم اكتشاف الوسائط المستثناة"
   },
@@ -299,6 +308,8 @@
     "message": "الاكتشاف عن طريق التحقق مما إذا كان الرابط يحتوي على نوع وسائط معروف (على سبيل المثال .mp4، .m3u8). إنه سريع، لكن بعض المواقع لا تقدم الوسائط عبر هذه الروابط، لذا قد لا يكتشف كل شيء.",
     "description": "The explanation of the URL-based detection method."
   },
+  "documentScanTitle": { "message": "تمكين فحص المستند" },
+  "documentScanExplain": { "message": "يعثر على الوسائط المتاحة مباشرة في الصفحة ويحدّث النتائج عند تغيّر محتوى الصفحة." },
   "urlDetectionCheckbox": {
     "message": "الاكتشاف عبر الرابط (URL)",
     "description": "The label of the checkbox to enable URL-based detection."

@@ -1,4 +1,13 @@
 {
+    "installedType": {
+        "message": "Tipe Instalasi"
+    },
+    "installedTypeLight": {
+        "message": "Ringan"
+    },
+    "installedTypeFull": {
+        "message": "Lengkap"
+    },
     "actionTitle": {
         "message": "Unduh media",
         "description": "The contents of the context menu when hovering over the extension icon."
@@ -220,6 +229,8 @@
         "message": "Mendeteksi media dari tautan URL. Cara ini sangat cepat, namun mungkin tidak bisa mendeteksi media di situs yang menyembunyikan tautan aslinya.",
         "description": "The explanation of the URL-based detection method."
     },
+    "documentScanTitle": { "message": "Hidupkan pemindaian dokumen" },
+    "documentScanExplain": { "message": "Temukan media yang tersedia langsung di halaman dan perbarui hasil saat isi halaman berubah." },
     "urlDetectionCheckbox": {
         "message": "Deteksi via URL",
         "description": "The label of the checkbox to enable URL-based detection."

@@ -20,13 +20,13 @@ if (typeof browser === 'undefined') {
     var browser = chrome;
 }
 
-const DB_NAME = "MediaCacheDB";
-const STORE_NAME = "network-cache";
-const CHUNK_STORE_NAME = "download-chunks";
+const OFFSCREEN_DB_NAME = "MediaCacheDB";
+const OFFSCREEN_STORE_NAME = "network-cache";
+const OFFSCREEN_CHUNK_STORE_NAME = "download-chunks";
 
-function openCacheDB() {
+function openOffscreenCacheDB() {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, 3);
+        const request = indexedDB.open(OFFSCREEN_DB_NAME, 3);
         request.onerror = (event) => reject(event.target.error || browser.i18n.getMessage("idbOpenError") || "IDB Open Error");
         request.onsuccess = (event) => resolve(event.target.result);
     });
@@ -49,11 +49,11 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 async function handleOffscreenDownload(id, filename) {
     try {
-        const db = await openCacheDB();
+        const db = await openOffscreenCacheDB();
 
         const item = await new Promise((resolve, reject) => {
-            const tx = db.transaction([STORE_NAME], "readonly");
-            const store = tx.objectStore(STORE_NAME);
+            const tx = db.transaction([OFFSCREEN_STORE_NAME], "readonly");
+            const store = tx.objectStore(OFFSCREEN_STORE_NAME);
             const req = store.get(id);
             req.onsuccess = () => resolve(req.result);
             req.onerror = () => reject(req.error);
@@ -63,8 +63,8 @@ async function handleOffscreenDownload(id, filename) {
 
         const chunks = [];
         await new Promise((resolve, reject) => {
-            const tx = db.transaction([CHUNK_STORE_NAME], "readonly");
-            const store = tx.objectStore(CHUNK_STORE_NAME);
+            const tx = db.transaction([OFFSCREEN_CHUNK_STORE_NAME], "readonly");
+            const store = tx.objectStore(OFFSCREEN_CHUNK_STORE_NAME);
             const range = IDBKeyRange.bound([id, 0], [id, Infinity]);
             const request = store.openCursor(range);
 

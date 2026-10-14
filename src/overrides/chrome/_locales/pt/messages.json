@@ -1,4 +1,13 @@
 {
+    "installedType": {
+        "message": "Tipo de instalação"
+    },
+    "installedTypeLight": {
+        "message": "Leve"
+    },
+    "installedTypeFull": {
+        "message": "Completa"
+    },
     "actionTitle": {
         "message": "Baixar mídia",
         "description": "The contents of the context menu when hovering over the extension icon."
@@ -200,6 +209,8 @@
         "message": "Detecção por verificar se a URL contém um tipo de mídia conhecido (por exemplo, .mp4, .m3u8). É rápido, mas alguns sites não disponibilizam mídias por meio desse tipo de URL, então pode tidak detectar tudo.",
         "description": "The explanation of the URL-based detection method."
     },
+    "documentScanTitle": { "message": "Ativar verificação do documento" },
+    "documentScanExplain": { "message": "Encontra mídia disponível diretamente na página e atualiza os resultados quando o conteúdo muda." },
     "urlDetectionCheckbox": {
         "message": "Detecção via URL",
         "description": "The label of the checkbox to enable URL-based detection."

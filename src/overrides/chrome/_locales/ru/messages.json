@@ -1,4 +1,13 @@
 {
+    "installedType": {
+        "message": "Тип установки"
+    },
+    "installedTypeLight": {
+        "message": "Облегчённая"
+    },
+    "installedTypeFull": {
+        "message": "Полная"
+    },
     "actionTitle": {
         "message": "Скачать медиа",
         "description": "The contents of the context menu when hovering over the extension icon."
@@ -200,6 +209,8 @@
         "message": "Обнаружение путем проверки того, содержит ли URL-адрес известный тип медиа (например, .mp4, .m3u8). Это быстро, но некоторые сайты не отдают медиа через такие URL-адреса, поэтому метод может обнаружить не все.",
         "description": "The explanation of the URL-based detection method."
     },
+    "documentScanTitle": { "message": "Включить сканирование документа" },
+    "documentScanExplain": { "message": "Находит медиафайлы непосредственно на странице и обновляет результаты при изменении её содержимого." },
     "urlDetectionCheckbox": {
         "message": "Обнаружение по URL",
         "description": "The label of the checkbox to enable URL-based detection."

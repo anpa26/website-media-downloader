@@ -61,7 +61,7 @@ const SETTINGS_EXPORT_FORMAT = 'website-media-downloader-settings';
 const SETTINGS_EXPORT_VERSION = 1;
 const SETTINGS_KEYS = [
     'auto-download-media', 'auto-download-quality', 'auto-download-youtube-mode', 'auto-download-all-domains', 'auto-download-domains', 'auto-skip-download-names', 'auto-skip-download-names-only', 'auto-skip-download-domains', 'auto-ignore-excluded-media', 'auto-download-video', 'auto-download-stream',
-    'url-detection', 'youtube-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components', 'disable-deduplication', 'optimize-low-end', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom',
+    'document-scan', 'url-detection', 'youtube-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components', 'disable-deduplication', 'optimize-low-end', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom',
     'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'ignore-disabled-types',
     'media-notification', 'audio-process-notification', 'media-system-notification', 'stack-notifications', 'download-method', 'fetch-notification', 'media-cache', 'speed-boost', 'speed-boost-resume', 'connections', 'stream-download',
     'stream-quality', 'subtitle-conversion', 'mpd-fix', 'background-download', 'stream-to-mp4', 'audio-to-mp3', 'mp3-bitrate', 'open-preference', 'mux-all-audios', 'mpd-to-mp4',
@@ -385,7 +385,7 @@ async function initializeSettings() {
 
     const settings = [
         'auto-download-media', 'auto-download-quality', 'auto-download-youtube-mode', 'auto-download-all-domains', 'auto-download-domains', 'auto-skip-download-names', 'auto-skip-download-names-only', 'auto-skip-download-domains', 'auto-ignore-excluded-media', 'auto-download-video', 'auto-download-stream',
-        'url-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components', 'disable-deduplication', 'optimize-low-end', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom',
+        'document-scan', 'url-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components', 'disable-deduplication', 'optimize-low-end', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom',
         'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'ignore-disabled-types',
         'media-notification', 'media-system-notification', 'stack-notifications', 'download-method', 'fetch-notification', 'media-cache', 'speed-boost', 'speed-boost-resume', 'connections', 'stream-download',
         'stream-quality', 'subtitle-conversion', 'mpd-fix', 'background-download', 'stream-to-mp4', 'audio-to-mp3', 'mp3-bitrate', 'open-preference', 'embed-subtitles-nonyt', 'mpd-to-mp4', 'block-incoming-popups', 'redirect-guard-clicks', 'redirect-guard-hide-content',
@@ -394,46 +394,47 @@ async function initializeSettings() {
     ];
 
     const storedSettings = await browser.storage.local.get(settings);
+    const defaultSettings = {};
     for (const setting of settings) {
         let value = storedSettings[setting];
 
         if (setting === 'auto-download-youtube-mode' && !['video', 'audio'].includes(value)) {
             value = 'video';
-            await browser.storage.local.set({ [setting]: value });
+            defaultSettings[setting] = value;
         }
         if (value === undefined) {
             const defaultsEnabled = [
                 'auto-download-video', 'auto-download-stream', 'auto-ignore-excluded-media',
                 'ignore-excluded-media',
-                'url-detection', 'mime-detection', 'hide-page-components', 'hide-segments',
+                'document-scan', 'url-detection', 'mime-detection', 'hide-page-components', 'hide-segments',
                 'media-notification', 'media-system-notification', 'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle',
                 'background-download', 'only-file', 'stream-to-mp4', 'audio-to-mp3', 'auto-check-update', 'badge-counter',
                 'detect-download-links', 'disable-deduplication', 'fetch-notification', 'group-by-type'
             ];
             if (defaultsEnabled.includes(setting)) {
                 value = '1';
-                browser.storage.local.set({ [setting]: value });
+                defaultSettings[setting] = value;
             } else if (['auto-download-media', 'auto-download-all-domains', 'ignore-disabled-types', 'history-page', 'save-to-gdrive', 'gdrive-stream', 'save-to-dropbox', 'dropbox-stream', 'stack-notifications', 'embed-subtitles-nonyt', 'mpd-to-mp4', 'block-incoming-popups', 'redirect-guard-hide-content'].includes(setting)) {
                 value = '0';
-                browser.storage.local.set({ [setting]: value });
+                defaultSettings[setting] = value;
             } else if (setting === 'speed-boost' || setting === 'speed-boost-resume' || setting === 'disable-rename-dialog') {
                 value = '0';
-                browser.storage.local.set({ [setting]: value });
+                defaultSettings[setting] = value;
             } else if (setting === 'connections') {
                 value = '4';
-                browser.storage.local.set({ [setting]: value });
+                defaultSettings[setting] = value;
             } else if (setting === 'mp3-bitrate') {
                 value = '320';
-                browser.storage.local.set({ [setting]: value });
+                defaultSettings[setting] = value;
             } else if (setting === 'auto-download-quality') {
                 value = 'highest';
-                browser.storage.local.set({ [setting]: value });
+                defaultSettings[setting] = value;
             } else if (setting === 'auto-download-youtube-mode') {
                 value = 'video';
-                browser.storage.local.set({ [setting]: value });
+                defaultSettings[setting] = value;
             } else if (setting === 'theme-mode') {
                 value = 'auto';
-                browser.storage.local.set({ [setting]: value });
+                defaultSettings[setting] = value;
             }
         }
 
@@ -894,6 +895,10 @@ async function initializeSettings() {
             });
             continue;
         }
+    }
+
+    if (Object.keys(defaultSettings).length) {
+        await browser.storage.local.set(defaultSettings);
     }
 
     const backgroundDownloadForAuto = document.getElementById('background-download');

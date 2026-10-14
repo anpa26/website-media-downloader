@@ -46,6 +46,7 @@ body {
     color: rgb(var(--mdui-color-on-surface));
     overflow-x: hidden;
     overflow-y: auto;
+    scrollbar-gutter: stable;
 }
 
 html.is-tab,
@@ -771,6 +772,15 @@ mdui-segmented-button[selected]::part(button) {
     margin-top: 0;
 }
 
+.clean-view-enabled .settings-group.collapsed {
+    gap: 0;
+}
+
+.clean-view-enabled .settings-group.collapsed .settings-items-container {
+    border-width: 0 !important;
+    margin: 0 !important;
+}
+
 .clean-view-enabled .settings-group:not(.collapsed) .settings-items-container {
     max-height: 2000px !important;
     opacity: 1 !important;
@@ -899,7 +909,7 @@ mdui-segmented-button[selected]::part(button) {
     display: flex !important;
     flex-direction: column !important;
     gap: 16px;
-    padding-top: 60px !important;
+    padding-top: 0 !important;
 }
 
 .settings-tabs-header {
@@ -912,10 +922,8 @@ mdui-segmented-button[selected]::part(button) {
     padding: 8px 16px;
     margin: 0;
     scrollbar-width: none;
-    position: fixed;
+    position: sticky;
     top: 48px;
-    left: 0;
-    right: 0;
     z-index: 99;
     background-color: rgb(var(--mdui-color-surface));
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
@@ -998,9 +1006,10 @@ mdui-card {
 }
 
 .media-item {
-    background: linear-gradient(135deg, rgba(var(--mdui-color-primary), 0.08) 0%, rgba(var(--mdui-color-primary), 0.02) 100%), rgb(var(--mdui-color-surface-container-lowest)) !important;
-    border: 1px solid rgba(var(--mdui-color-outline-variant), 0.6) !important;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18) !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: 1px solid rgb(var(--mdui-color-outline-variant)) !important;
+    box-shadow: none !important;
     contain: layout paint style;
 }
 
@@ -1016,14 +1025,39 @@ mdui-card {
 
 #settings-container mdui-card,
 #about-container mdui-card {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: 1px solid rgb(var(--mdui-color-outline-variant)) !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18) !important;
+    box-shadow: none !important;
     contain: layout paint style;
 }
 
 #settings-container .settings-items-container {
-    box-shadow: none;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: 1px solid rgb(var(--mdui-color-outline-variant)) !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+#settings-container .setting-item {
+    background: transparent !important;
+    box-shadow: none !important;
+    transition: none !important;
+}
+
+#settings-container mdui-card {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: 1px solid rgb(var(--mdui-color-outline-variant)) !important;
+    box-shadow: none !important;
+}
+
+#settings-container:not(.clean-view-enabled) .settings-items-container {
+    transition: none !important;
 }
 
 #about-container .about-content > * {
