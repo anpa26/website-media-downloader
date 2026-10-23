@@ -1,12 +1,20 @@
 # Website Media Downloader
 
-[![Version](https://img.shields.io/badge/version-2.4.3-blue.svg)](src/manifest.json)
+[![Version](https://img.shields.io/badge/version-2.4.4-blue.svg)](src/manifest.json)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE.md)
 [![Platform](https://img.shields.io/badge/platform-Chrome%20%7C%20Firefox%20%7C%20Android-orange.svg)](#installation)
 
-Website Media Downloader is a professional-grade browser extension designed to detect and download digital media assets across the modern web. It integrates advanced network interception and Deep DOM analysis to easily capture videos, audio tracks, images, and complex streaming protocols.
+Website Media Downloader detects media on websites and helps you download videos, audio, images, streams, subtitles, and other files. It combines network request monitoring with page scanning to find media that may not have a direct link in the page.
 
-Designed with a strict focus on privacy and technical transparency, all operations, including stream reconstruction and local decryption, are executed entirely within the client's browser environment. No external processing servers are utilized, ensuring data integrity and absolute user privacy.
+The project aims to put useful detection, download, filtering, stream, and page-protection tools in one extension while giving users control over which features are enabled. Media processing runs in your browser; optional integrations such as cloud saving communicate with the service you choose.
+
+## User Control and Resource Use
+
+This extension prioritizes a broad, configurable feature set over the smallest possible package. That means it can use more storage, memory, and processing time than a basic downloader, especially on media-heavy pages or when running parallel downloads, stream conversion, or batch operations. Actual usage depends on the page, media, device, and enabled settings.
+
+You can control detection methods and media types, automatic downloads, image filters, download behavior, speed boost, redirect protection, and other features in Settings. Features such as conversion and batch downloads do their heavier work when you start those actions. Media detection itself runs on supported pages while enabled.
+
+If you prefer a smaller installation or use a lower-powered device, choose a Light edition and turn off detection or features you do not use. Light editions omit selected integrations and tools, so they may not include every feature of the full edition.
 
 ---
 
@@ -17,7 +25,7 @@ Designed with a strict focus on privacy and technical transparency, all operatio
 - **Media Grouping**: Organize detected assets into dedicated categories (Videos, Audio, Streams, Images, Subtitles, Files) for a clean overview.
 - **Manual URL Entry**: Directly enter file download links on the Home tab to start downloads immediately without waiting for auto-detection.
 - **Material Design 3**: A modern, responsive, and intuitive interface powered by MDUI components with multiple layout choices (Collapsible, Sidebar, Tabs).
-- **Universal Detection**: Captures real-time network requests and performs deep DOM scanning to identify hidden media assets.
+- **Universal Detection**: Monitors network requests and scans page elements to identify media assets, including lazy-loaded images.
 - **Header Spoofing**: Automatically replicates Referer, Origin, and Cookies to bypass hotlinking and server-side access restrictions.
 - **Offline Stream Conversion**: Merges HLS and DASH segments locally, with automatic MP4 conversion and TS fallback when conversion fails.
 - **Manual TS to MP4 Conversion**: Converts a downloaded `.ts` file to MP4 from Settings when automatic conversion cannot finish.
@@ -27,6 +35,7 @@ Designed with a strict focus on privacy and technical transparency, all operatio
 - **Download History**: Keep track of your previously detected and downloaded media for easy access later.
 - **Background Downloading**: Supports background processes, allowing downloads to continue even after closing the extension popup.
 - **Speed Boost**: Utilizes multi-threaded fetching and parallel acquisition to maximize download speeds and efficiency.
+- **Image Filtering**: Filter images by minimum dimensions or file size, and optionally hide images whose file size is unknown.
 - **Intelligent Deduplication**: Automatically hides redundant entries based on filename and metadata.
 - **Dual Update Detection**: Combines native browser update checking with a GitHub fallback, ensuring you always know when updates are available on the official store or GitHub.
 - **Multi-language Support**: Fully localized for English, Indonesian, German, French, Portuguese, Japanese, Korean, Arabic, and Russian.
@@ -49,10 +58,11 @@ Designed with a strict focus on privacy and technical transparency, all operatio
 
 ---
 
-## What's New in v2.4.3
+## What's New in v2.4.4
 
-- Improved redirect and ad blocking to work more intelligently.
-- Fixed detection processes continuing to run after detection was disabled.
+- Added image filtering by file size.
+- Fixed Chrome popup sizing to remain consistent across views.
+- Improved the extension UI in Chrome.
 
 ---
 
@@ -246,9 +256,10 @@ If you want to develop this project further, please don't forget to include me i
 
 ## Security and Privacy Model
 
-- **Local Execution**: All media processing, merging, and decryption are performed client-side.
-- **Zero Telemetry**: No browsing data, media URLs, or user history are transmitted to external servers.
-- **Permission Scope**: Requires `webRequest` for discovery, `storage` for configuration, and `downloads` for file acquisition.
+- **Local Media Processing**: Detection, stream handling, and conversions run in the browser. The project does not use a remote server to process media.
+- **No Analytics Telemetry**: The extension does not send browsing history or media lists to an analytics service.
+- **User-Selected Integrations**: Update checks contact the relevant store or project release source. If you enable Google Drive or Dropbox features, files are sent to the account and service you selected.
+- **Permissions**: Access to websites is used for media detection and page features. Storage keeps settings and session data, while the downloads permission saves files through the browser.
 
 ---
 

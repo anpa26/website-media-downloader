@@ -2166,7 +2166,7 @@
     "description": "Original format option"
   },
   "supportedFormats": {
-    "message": "この拡張機能は、以下の {type} 形式の自動検出とダウンロードをサポートしています：",
+    "message": "対応する{type}形式：",
     "description": "Title for the list of supported file formats, {type} is the media type (e.g. Video, Audio)"
   },
   "youtubeDetectionCheckbox": {
@@ -2532,5 +2532,52 @@
   "startingDownload": {
     "message": "ダウンロードを開始中...",
     "description": "Status when initiating download"
+  },
+  "imageMinSideTitle": {
+    "message": "小さい画像を非表示",
+    "description": "Title for the minimum image dimension filter"
+  },
+  "imageMinSideOff": { "message": "オフ", "description": "Disables the minimum image dimension filter" },
+  "imageMinSideExplain": {
+    "message": "ドロップダウンから最小サイズを選択します。短辺が選択したサイズ未満の画像は非表示になり、寸法が不明な画像は表示されます。",
+    "description": "Explains the minimum image dimension filter"
+  },
+  "imageMinSideCustom": {
+    "message": "カスタム (px)",
+    "description": "Custom minimum image side dropdown option"
+  },
+  "imageMinSideCustomTitle": {
+    "message": "最小辺を指定 (px)",
+    "description": "Title for the custom minimum image dimension setting"
+  },
+  "imageMinSideCustomExplain": {
+    "message": "画像の短辺の最小サイズをピクセルで入力 (1～10000)。",
+    "description": "Explains the custom minimum image dimension setting"
+  },
+  "imageMinFileSizeTitle": {
+    "message": "画像ファイルの最小サイズ",
+    "description": "imageMinFileSizeTitle"
+  },
+  "hideImageWithoutSizeTitle": { "message": "サイズ不明の画像を非表示", "description": "Title for hiding images whose file size is unknown" },
+  "hideImageWithoutSizeExplain": { "message": "ファイルサイズが不明な画像を非表示にします。", "description": "Explains the unknown image size filter" },
+  "imageMinFileSizeExplain": {
+    "message": "選択したサイズより小さい画像を非表示にします。サイズ不明の画像は表示します。",
+    "description": "imageMinFileSizeExplain"
+  },
+  "imageMinFileSizeOff": {
+    "message": "オフ",
+    "description": "imageMinFileSizeOff"
+  },
+  "imageMinFileSizeCustom": {
+    "message": "カスタム (KB)",
+    "description": "imageMinFileSizeCustom"
+  },
+  "imageMinFileSizeCustomTitle": {
+    "message": "画像ファイルの最小サイズ (KB)",
+    "description": "imageMinFileSizeCustomTitle"
+  },
+  "imageMinFileSizeCustomExplain": {
+    "message": "画像ファイルの最小サイズをKBで入力してください (0 = 無効)。",
+    "description": "imageMinFileSizeCustomExplain"
   }
 }

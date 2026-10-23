@@ -2166,7 +2166,7 @@
     "description": "Original format option"
   },
   "supportedFormats": {
-    "message": "Это расширение автоматически обнаруживает и поддерживает загрузку следующих форматов {type}:",
+    "message": "Поддерживаемые форматы {type}:",
     "description": "Title for the list of supported file formats, {type} is the media type (e.g. Video, Audio)"
   },
   "youtubeDetectionCheckbox": {
@@ -2532,5 +2532,52 @@
   "startingDownload": {
     "message": "Запуск загрузки...",
     "description": "Status when initiating download"
+  },
+  "imageMinSideTitle": {
+    "message": "Скрывать маленькие изображения",
+    "description": "Title for the minimum image dimension filter"
+  },
+  "imageMinSideOff": { "message": "Выкл.", "description": "Disables the minimum image dimension filter" },
+  "imageMinSideExplain": {
+    "message": "Выберите минимальный размер изображения в списке. Изображения с короткой стороной меньше выбранного размера будут скрыты, изображения с неизвестными размерами останутся видимыми.",
+    "description": "Explains the minimum image dimension filter"
+  },
+  "imageMinSideCustom": {
+    "message": "Свой вариант (px)",
+    "description": "Custom minimum image side dropdown option"
+  },
+  "imageMinSideCustomTitle": {
+    "message": "Минимальная сторона (px)",
+    "description": "Title for the custom minimum image dimension setting"
+  },
+  "imageMinSideCustomExplain": {
+    "message": "Укажите минимальную длину короткой стороны изображения в пикселях (1–10000).",
+    "description": "Explains the custom minimum image dimension setting"
+  },
+  "imageMinFileSizeTitle": {
+    "message": "Минимальный размер файла изображения",
+    "description": "imageMinFileSizeTitle"
+  },
+  "hideImageWithoutSizeTitle": { "message": "Скрывать изображения без определённого размера", "description": "Title for hiding images whose file size is unknown" },
+  "hideImageWithoutSizeExplain": { "message": "Скрывать изображения, размер файла которых неизвестен.", "description": "Explains the unknown image size filter" },
+  "imageMinFileSizeExplain": {
+    "message": "Скрывать изображения меньше выбранного размера. Изображения с неизвестным размером остаются видимыми.",
+    "description": "imageMinFileSizeExplain"
+  },
+  "imageMinFileSizeOff": {
+    "message": "Выкл.",
+    "description": "imageMinFileSizeOff"
+  },
+  "imageMinFileSizeCustom": {
+    "message": "Свой вариант (КБ)",
+    "description": "imageMinFileSizeCustom"
+  },
+  "imageMinFileSizeCustomTitle": {
+    "message": "Минимальный размер файла изображения (КБ)",
+    "description": "imageMinFileSizeCustomTitle"
+  },
+  "imageMinFileSizeCustomExplain": {
+    "message": "Укажите минимальный размер файла изображения в КБ (0 = отключено).",
+    "description": "imageMinFileSizeCustomExplain"
   }
 }

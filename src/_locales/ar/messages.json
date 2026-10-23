@@ -2166,7 +2166,7 @@
     "description": "Original format option"
   },
   "supportedFormats": {
-    "message": "تدعم هذه الإضافة اكتشاف وتنزيل صيغ {type} التالية تلقائيًا:",
+    "message": "صيغ {type} المدعومة:",
     "description": "Title for the list of supported file formats, {type} is the media type (e.g. Video, Audio)"
   },
   "youtubeDetectionCheckbox": {
@@ -2532,5 +2532,52 @@
   "startingDownload": {
     "message": "جاري بدء التنزيل...",
     "description": "Status when initiating download"
+  },
+  "imageMinSideTitle": {
+    "message": "إخفاء الصور الصغيرة",
+    "description": "Title for the minimum image dimension filter"
+  },
+  "imageMinSideOff": { "message": "إيقاف", "description": "Disables the minimum image dimension filter" },
+  "imageMinSideExplain": {
+    "message": "اختر الحد الأدنى لحجم الصورة من القائمة. تُخفى الصور التي يقل ضلعها الأقصر عن الحجم المحدد، وتبقى الصور ذات الأبعاد غير المعروفة ظاهرة.",
+    "description": "Explains the minimum image dimension filter"
+  },
+  "imageMinSideCustom": {
+    "message": "مخصص (بكسل)",
+    "description": "Custom minimum image side dropdown option"
+  },
+  "imageMinSideCustomTitle": {
+    "message": "الحد الأدنى المخصص للضلع (بكسل)",
+    "description": "Title for the custom minimum image dimension setting"
+  },
+  "imageMinSideCustomExplain": {
+    "message": "أدخل الحد الأدنى لطول أقصر ضلع للصورة بالبكسل (1–10000).",
+    "description": "Explains the custom minimum image dimension setting"
+  },
+  "imageMinFileSizeTitle": {
+    "message": "الحد الأدنى لحجم ملف الصورة",
+    "description": "imageMinFileSizeTitle"
+  },
+  "hideImageWithoutSizeTitle": { "message": "إخفاء الصور التي لم يُكتشف حجمها", "description": "Title for hiding images whose file size is unknown" },
+  "hideImageWithoutSizeExplain": { "message": "إخفاء الصور التي لا يُعرف حجم ملفها.", "description": "Explains the unknown image size filter" },
+  "imageMinFileSizeExplain": {
+    "message": "إخفاء الصور الأصغر من الحجم المحدد. تبقى الصور ذات الحجم غير المعروف ظاهرة.",
+    "description": "imageMinFileSizeExplain"
+  },
+  "imageMinFileSizeOff": {
+    "message": "إيقاف",
+    "description": "imageMinFileSizeOff"
+  },
+  "imageMinFileSizeCustom": {
+    "message": "مخصص (KB)",
+    "description": "imageMinFileSizeCustom"
+  },
+  "imageMinFileSizeCustomTitle": {
+    "message": "الحد الأدنى المخصص لحجم الصورة (KB)",
+    "description": "imageMinFileSizeCustomTitle"
+  },
+  "imageMinFileSizeCustomExplain": {
+    "message": "أدخل الحد الأدنى لحجم ملف الصورة بالكيلوبايت (0 = تعطيل).",
+    "description": "imageMinFileSizeCustomExplain"
   }
 }

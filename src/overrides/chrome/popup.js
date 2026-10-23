@@ -1065,7 +1065,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const mediaFilterSettings = [
       'only-video', 'only-audio', 'only-stream', 'only-image',
       'only-subtitle', 'only-file', 'ignore-disabled-types', 'hide-segments', 'disable-deduplication',
-      'min-file-size', 'min-file-size-custom'
+      'min-file-size', 'min-file-size-custom', 'image-min-side', 'image-min-side-custom', 'image-min-file-size', 'image-min-file-size-custom', 'hide-image-without-size'
     ];
 
     if (mediaFilterSettings.some(s => Object.prototype.hasOwnProperty.call(changes, s))) {
@@ -1191,7 +1191,36 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+async function updateMissingImageSizes(urls) {
+  if (!Array.isArray(urls) || !urls.length) return;
+  const mediaRequests = await browser.runtime.sendMessage({ action: 'getMediaRequests' });
+  const settings = await browser.storage.local.get('hide-image-without-size');
+  let hiddenImageBecameVisible = false;
+  for (const url of new Set(urls)) {
+    const item = Array.from(document.querySelectorAll('.media-item[data-type="image"]'))
+      .find(element => element.dataset.originalUrl === url);
+    if (!item) {
+      hiddenImageBecameVisible = isFlagEnabled(settings['hide-image-without-size'], false);
+      continue;
+    }
+    if (parseInt(item.dataset.size, 10) > 0) continue;
+    const requests = mediaRequests?.[url];
+    if (!Array.isArray(requests)) continue;
+    const size = requests.reduce((largest, request) => Math.max(largest, parseInt(request.size, 10) || 0), 0);
+    if (size <= 0) continue;
+    item.dataset.size = String(size);
+    const description = item.querySelector('.media-description');
+    if (!description) continue;
+    description.textContent = `${description.dataset.mediaHost || ''} • ${getHumanReadableSize(size)}${description.dataset.mediaResolution || ''} • ${description.dataset.mediaTime || ''}`;
+  }
+  if (hiddenImageBecameVisible) loadMediaList().catch(() => {});
+}
+
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'imageMetadataUpdated') {
+    if (document.getElementById('navbar')?.value === 'home') updateMissingImageSizes(message.urls).catch(() => {});
+    return;
+  }
   if (message.action === 'audioJobUpdate' && message.complete) {
     finishDownloadUI(message.jobId, !!message.success);
     sendResponse({ success: true });
@@ -2184,7 +2213,8 @@ function renderInitialList() {
 
     if (!hasItems) {
       mediaContainer.innerHTML = getNoMediaDetectedHTML();
-      if (mediaControls) mediaControls.style.display = 'none';
+      if (selectedInfoBar) selectedInfoBar.style.display = 'none';
+      if (mediaControls) mediaControls.style.display = 'flex';
       return;
     }
 
@@ -2278,8 +2308,9 @@ function renderInitialList() {
       } else {
         mediaContainer.innerHTML = getNoMediaDetectedHTML();
       }
-      if (mediaControls && !query) mediaControls.style.display = 'none';
     }
+    if (selectedInfoBar) selectedInfoBar.style.display = 'none';
+    if (mediaControls) mediaControls.style.display = 'flex';
     updateSelectedCount();
     return;
   }
@@ -2746,6 +2777,9 @@ function createMediaItem(item) {
   if (hlsFormats && hlsFormats.length > 0 && hlsFormats[0].label) {
     resLabel = ` • ${hlsFormats[0].label}`;
   }
+  description.dataset.mediaHost = mediaURL.hostname;
+  description.dataset.mediaTime = timeStr;
+  description.dataset.mediaResolution = resLabel;
   description.textContent = `${mediaURL.hostname} • ${humanSize}${resLabel} • ${timeStr}`;
   info.appendChild(description);
   header.appendChild(info);
@@ -3450,7 +3484,7 @@ async function loadMediaListOnce() {
     const activeDownloadsPromise = getActiveDownloadSnapshot();
     const [mediaRequests, settings] = await Promise.all([
       browser.runtime.sendMessage({ action: "getMediaRequests" }),
-      browser.storage.local.get(["filename-template", "only-video", "only-audio", "only-stream", "only-image", "only-subtitle", "only-file", "hide-segments", "hide-page-components", "media-sort-order", "limit-media-list", "limit-media-list-custom", "min-file-size", "min-file-size-custom", "optimize-low-end", "group-by-type", "disable-deduplication"])
+      browser.storage.local.get(["filename-template", "only-video", "only-audio", "only-stream", "only-image", "only-subtitle", "only-file", "hide-segments", "hide-page-components", "media-sort-order", "limit-media-list", "limit-media-list-custom", "min-file-size", "min-file-size-custom", "image-min-side", "image-min-side-custom", "image-min-file-size", "image-min-file-size-custom", "hide-image-without-size", "optimize-low-end", "group-by-type", "disable-deduplication"])
     ]);
     let activeDownloads = activeDownloadSnapshot || {};
     const quickActiveDownloads = await Promise.race([activeDownloadsPromise, new Promise(resolve => setTimeout(() => resolve(null), 100))]);
@@ -3463,6 +3497,14 @@ async function loadMediaListOnce() {
     isGroupingEnabled = settings['group-by-type'] === '1' || settings['group-by-type'] === true;
 
     const minFileSizeSetting = settings['min-file-size'] || '0';
+    const imageMinSideSelection = String(settings['image-min-side'] ?? '0');
+    const imageMinSide = imageMinSideSelection === 'custom'
+      ? Math.min(10000, Math.max(0, parseInt(settings['image-min-side-custom'], 10) || 0))
+      : Math.max(0, parseInt(imageMinSideSelection, 10) || 0);
+    const imageMinFileSizeSetting = String(settings['image-min-file-size'] ?? '0');
+    const imageMinFileSizeBytes = (imageMinFileSizeSetting === 'custom'
+      ? parseInt(settings['image-min-file-size-custom'], 10) || 0
+      : parseInt(imageMinFileSizeSetting, 10) || 0) * 1024;
     let minSizeBytes = 0;
     if (minFileSizeSetting === 'custom') {
       const customKB = parseInt(settings['min-file-size-custom']) || 0;
@@ -3510,6 +3552,19 @@ async function loadMediaListOnce() {
           type = 'file';
       }
       if (!type) continue;
+
+      if (type === 'image' && imageMinSide > 0) {
+        const imageRequest = requests.find(request =>
+          Number.isInteger(Number(request.imageWidth)) && Number(request.imageWidth) > 0 &&
+          Number.isInteger(Number(request.imageHeight)) && Number(request.imageHeight) > 0
+        );
+        if (imageRequest && Math.min(Number(imageRequest.imageWidth), Number(imageRequest.imageHeight)) < imageMinSide) continue;
+      }
+      if (type === 'image' && imageMinFileSizeBytes > 0) {
+        const imageSize = requests.reduce((max, request) => Math.max(max, parseInt(request.size, 10) || 0), 0);
+        if (imageSize > 0 && imageSize < imageMinFileSizeBytes) continue;
+      }
+      if (type === 'image' && isFlagEnabled(settings['hide-image-without-size'], false) && !requests.some(request => parseInt(request.size, 10) > 0)) continue;
 
       const showVideo = isFlagEnabled(settings['only-video'], true);
       const showAudio = isFlagEnabled(settings['only-audio'], true);
@@ -5477,16 +5532,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 let existingList = parentItem.querySelector('.inline-extension-list');
                 if (existingList) {
                     existingList.remove();
+                    parentItem.classList.remove('extension-list-open');
+                    btn.setAttribute('aria-expanded', 'false');
                 } else {
                     const titleStr = type.charAt(0).toUpperCase() + type.slice(1);
                     const listDiv = document.createElement('div');
                     listDiv.className = 'inline-extension-list';
-                    listDiv.style.cssText = 'width: 100%; margin-top: 12px; padding: 12px; background: rgba(128,128,128,0.1); border-radius: 8px; font-size: 13px; line-height: 1.5; word-break: break-all;';
+                    listDiv.setAttribute('role', 'note');
                     let titleText = browser.i18n.getMessage("supportedFormats");
                     if (titleText) titleText = titleText.replace('{type}', titleStr);
-                    else titleText = `This extension automatically detects and supports downloading the following ${titleStr} formats:`;
-                    listDiv.innerHTML = `<span style="opacity: 0.9; margin-bottom: 6px; display: block;">${titleText}</span><span style="opacity: 0.75;">${extensionsMap[type].join(', ')}</span>`;
-                    parentItem.style.flexWrap = 'wrap';
+                    else titleText = `Supported ${titleStr} formats:`;
+                    const title = document.createElement('span');
+                    title.className = 'inline-extension-title';
+                    title.textContent = titleText;
+                    const formats = document.createElement('div');
+                    formats.className = 'inline-extension-formats';
+                    formats.textContent = extensionsMap[type].join(', ');
+                    listDiv.append(title, formats);
+                    parentItem.classList.add('extension-list-open');
+                    btn.setAttribute('aria-expanded', 'true');
                     parentItem.appendChild(listDiv);
                 }
             }

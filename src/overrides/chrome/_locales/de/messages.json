@@ -1921,7 +1921,7 @@
         "description": "Original format option"
     },
     "supportedFormats": {
-        "message": "Diese Erweiterung erkennt und unterstützt automatisch das Herunterladen der folgenden {type}-Formate:",
+        "message": "Unterstützte {type}-Formate:",
         "description": "Title for the list of supported file formats, {type} is the media type (e.g. Video, Audio)"
     },
     "sortSizeDesc": {
@@ -2124,5 +2124,41 @@
     },
     "streamConversionFallbackTs": {
         "message": "MP4-Konvertierung fehlgeschlagen. Wird als TS gespeichert…"
-    }
+    },
+  "imageMinSideCustom": {
+    "message": "Benutzerdefiniert (px)",
+    "description": "Custom minimum image side dropdown option"
+  },
+  "imageMinSideCustomTitle": {
+    "message": "Benutzerdefinierte Mindestseite (px)",
+    "description": "Title for the custom minimum image dimension setting"
+  },
+  "imageMinSideCustomExplain": {
+    "message": "Gib die Mindestlänge der kürzeren Bildseite in Pixeln ein (1–10000).",
+    "description": "Explains the custom minimum image dimension setting"
+  },
+  "imageMinFileSizeTitle": {
+    "message": "Mindestdateigröße für Bilder",
+    "description": "imageMinFileSizeTitle"
+  },
+  "imageMinFileSizeExplain": {
+    "message": "Bilder unter der gewählten Dateigröße ausblenden. Bilder ohne bekannte Größe bleiben sichtbar.",
+    "description": "imageMinFileSizeExplain"
+  },
+  "imageMinFileSizeOff": {
+    "message": "Aus",
+    "description": "imageMinFileSizeOff"
+  },
+  "imageMinFileSizeCustom": {
+    "message": "Benutzerdefiniert (KB)",
+    "description": "imageMinFileSizeCustom"
+  },
+  "imageMinFileSizeCustomTitle": {
+    "message": "Benutzerdefinierte Mindestdateigröße für Bilder (KB)",
+    "description": "imageMinFileSizeCustomTitle"
+  },
+  "imageMinFileSizeCustomExplain": {
+    "message": "Gib die Mindestdateigröße für Bilder in KB ein (0 = deaktiviert).",
+    "description": "imageMinFileSizeCustomExplain"
+  }
 }

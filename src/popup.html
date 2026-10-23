@@ -114,10 +114,12 @@
 
         </div>
         <mdui-bottom-app-bar>
-          <div class="history-actions">
-            <mdui-button variant="tonal" id="export-history" data-translate="exportHistoryButton">Export</mdui-button>
-            <mdui-button variant="tonal" id="clear-history" data-translate="clearHistoryButton">Clear</mdui-button>
-            <mdui-button variant="tonal" id="import-history" data-translate="importHistoryButton">Import</mdui-button>
+          <div class="bottom-content" style="justify-content: center;">
+            <div class="history-actions">
+              <mdui-button variant="tonal" id="export-history" data-translate="exportHistoryButton">Export</mdui-button>
+              <mdui-button variant="tonal" id="clear-history" data-translate="clearHistoryButton">Clear</mdui-button>
+              <mdui-button variant="tonal" id="import-history" data-translate="importHistoryButton">Import</mdui-button>
+            </div>
           </div>
         </mdui-bottom-app-bar>
       </mdui-tab-panel>
@@ -424,19 +426,6 @@
               
               <div class="setting-item">
                 <div class="setting-text">
-                  <h3 data-translate="onlyImageTitle">Show images</h3>
-                  <p data-translate="onlyImageExplain">Show detected image files (WebP, PNG, JPG, GIF).</p>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <mdui-button-icon class="info-extensions" data-type="image" style="opacity: 0.7; transform: scale(0.8);">
-                    <mdui-icon><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></mdui-icon>
-                  </mdui-button-icon>
-                  <mdui-switch id="only-image"></mdui-switch>
-                </div>
-              </div>
-              
-              <div class="setting-item">
-                <div class="setting-text">
                   <h3 data-translate="onlySubtitleTitle">Show subtitles</h3>
                   <p data-translate="onlySubtitleExplain">Show detected subtitle and caption files.</p>
                 </div>
@@ -475,6 +464,79 @@
                   <p data-translate="groupByTypeExplain">Groups detected media into folders on the Home tab.</p>
                 </div>
                 <mdui-switch id="group-by-type"></mdui-switch>
+              </div>
+            </div>
+            <div class="settings-items-container">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="onlyImageTitle">Show images</h3>
+                  <p data-translate="onlyImageExplain">Show detected image files (WebP, PNG, JPG, GIF).</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <mdui-button-icon class="info-extensions" data-type="image" style="opacity: 0.7; transform: scale(0.8);">
+                    <mdui-icon><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></mdui-icon>
+                  </mdui-button-icon>
+                  <mdui-switch id="only-image"></mdui-switch>
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="setting-text" style="flex: 1 1 auto; min-width: 0; text-align: left;">
+                  <h3><label for="image-min-side" data-translate="imageMinSideTitle">Hide small images</label></h3>
+                  <p data-translate="imageMinSideExplain">Hide images whose shorter side is below this size. Set to 0 to show all sizes.</p>
+                </div>
+                <div class="pill-select-wrapper" style="flex: 0 0 auto; margin-left: auto;">
+                  <select id="image-min-side" class="pill-select">
+                    <option value="0" data-translate="imageMinSideOff">Off</option>
+                    <option value="128">128 px</option>
+                    <option value="256">256 px</option>
+                    <option value="512">512 px</option>
+                    <option value="1024">1024 px</option>
+                    <option value="custom" data-translate="imageMinSideCustom">Custom</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-item" id="setting-image-min-side-custom" style="display: none;">
+                <div class="setting-text">
+                  <h3 data-translate="imageMinSideCustomTitle">Custom minimum side (px)</h3>
+                  <p data-translate="imageMinSideCustomExplain">Set the minimum length of an image's shorter side in pixels.</p>
+                </div>
+                <div>
+                  <input type="number" id="image-min-side-custom" class="pill-input" min="1" max="10000" value="512" style="min-width: 60px; width: 80px; text-align: center; padding: 6px 16px; font-size: 0.85rem;">
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="setting-text" style="flex: 1 1 auto; min-width: 0; text-align: left;">
+                  <h3><label for="image-min-file-size" data-translate="imageMinFileSizeTitle">Minimum image file size</label></h3>
+                  <p data-translate="imageMinFileSizeExplain">Hide images smaller than the selected file size.</p>
+                </div>
+                <div class="pill-select-wrapper" style="flex: 0 0 auto; margin-left: auto;">
+                  <select id="image-min-file-size" class="pill-select">
+                    <option value="0" data-translate="imageMinFileSizeOff">Off</option>
+                    <option value="100">100 KB</option>
+                    <option value="256">256 KB</option>
+                    <option value="512">512 KB</option>
+                    <option value="1024">1 MB</option>
+                    <option value="2048">2 MB</option>
+                    <option value="5120">5 MB</option>
+                    <option value="custom" data-translate="imageMinFileSizeCustom">Custom</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-item" id="setting-image-min-file-size-custom" style="display: none;">
+                <div class="setting-text">
+                  <h3 data-translate="imageMinFileSizeCustomTitle">Custom minimum image file size (KB)</h3>
+                  <p data-translate="imageMinFileSizeCustomExplain">Enter the minimum image file size in KB (0 = disable).</p>
+                </div>
+                <div>
+                  <input type="number" id="image-min-file-size-custom" class="pill-input" min="0" max="102400" value="0" style="min-width: 60px; width: 80px; text-align: center; padding: 6px 16px; font-size: 0.85rem;">
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="hideImageWithoutSizeTitle">Hide images without a detected size</h3>
+                  <p data-translate="hideImageWithoutSizeExplain">Hide images whose file size is unknown.</p>
+                </div>
+                <mdui-switch id="hide-image-without-size"></mdui-switch>
               </div>
             </div>
           </div>
@@ -902,6 +964,7 @@
                   <input type="number" id="min-file-size-custom" class="pill-input" min="0" value="0" style="min-width: 60px; width: 80px; text-align: center; padding: 6px 16px; font-size: 0.85rem;">
                 </div>
               </div>
+
               
 
             </div>

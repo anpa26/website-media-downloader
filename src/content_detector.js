@@ -250,7 +250,32 @@
     }
 
     const detected = new Set();
+    const detectedImageDimensions = new Map();
+    const detectedImageSizes = new Map();
+    const watchedImageDimensions = new WeakSet();
     let reportTimeout = null;
+
+    function getImageResourceSize(url, imageElement = null) {
+        const candidates = [imageElement?.currentSrc, url].filter(Boolean);
+        let bestSize = 0;
+        for (const candidate of candidates) {
+            try {
+                const entries = performance.getEntriesByName(candidate, 'resource');
+                for (const entry of entries) {
+                    const encodedSize = Number(entry.encodedBodySize) || Number(entry.decodedBodySize) || 0;
+                    const transferredSize = Number(entry.transferSize) || 0;
+                    const size = encodedSize || transferredSize;
+                    if (Number.isFinite(size) && size > bestSize) bestSize = Math.round(size);
+                }
+            } catch (e) {}
+        }
+        return bestSize;
+    }
+
+    function recordImageResourceSize(url, imageElement = null) {
+        const size = getImageResourceSize(url, imageElement);
+        if (size > 0 && size > (detectedImageSizes.get(url) || 0)) detectedImageSizes.set(url, size);
+    }
 
     function report() {
         if (detected.size === 0) return;
@@ -258,6 +283,8 @@
             chrome.runtime.sendMessage({
                 action: 'reportDetectedMedia',
                 urls: Array.from(detected),
+                imageDimensions: Object.fromEntries(detectedImageDimensions),
+                imageSizes: Object.fromEntries(detectedImageSizes),
                 pageTitle: getPageTitle(),
                 pageUrl: window.location.href
             });
@@ -267,7 +294,7 @@
     async function processElement(el, result, detectDownloads, extraExts) {
         if (!el || el.nodeType !== Node.ELEMENT_NODE) return;
 
-        let url = el.src || el.href || el.getAttribute('data-src') || el.getAttribute('data-url') || el.getAttribute('data-href') || el.getAttribute('data-original');
+        let url = (el.tagName === 'IMG' && el.currentSrc) || el.src || el.href || el.getAttribute('data-src') || el.getAttribute('data-url') || el.getAttribute('data-href') || el.getAttribute('data-original');
         if (el.tagName === 'SOURCE' || el.tagName === 'TRACK') {
             url = el.src || el.srcset;
         }
@@ -280,10 +307,28 @@
                     const isAudioTag = el.tagName === 'AUDIO' && !isTypeDisabled('audio', result);
                     const isAllowedDownload = isDownloadAttr && !isTypeDisabled('file', result);
 
-                    if (await isMediaUrl(absolute, extraExts, result) || isVideoTag || isAudioTag || isAllowedDownload) {
-                        const type = getUrlType(absolute);
+                    const isImageElement = el.tagName === 'IMG' && /^https?:/i.test(absolute);
+                    if (isImageElement || await isMediaUrl(absolute, extraExts, result) || isVideoTag || isAudioTag || isAllowedDownload) {
+                        const type = isImageElement ? 'image' : getUrlType(absolute);
                         if (!isTypeDisabled(type, result)) {
                             detected.add(absolute);
+                            if (type === 'image') recordImageResourceSize(absolute, el.tagName === 'IMG' ? el : null);
+                            if (el.tagName === 'IMG' && el.naturalWidth > 0 && el.naturalHeight > 0) {
+                                detectedImageDimensions.set(absolute, { width: el.naturalWidth, height: el.naturalHeight });
+                            }
+                            if (el.tagName === 'IMG' && !watchedImageDimensions.has(el)) {
+                                watchedImageDimensions.add(el);
+                                el.addEventListener('load', () => {
+                                    if (el.naturalWidth <= 0 || el.naturalHeight <= 0) return;
+                                    const loadedUrl = getAbsoluteUrl(el.currentSrc || el.src || absolute);
+                                    if (!loadedUrl || !/^https?:/i.test(loadedUrl)) return;
+                                    detected.add(loadedUrl);
+                                    detectedImageDimensions.set(loadedUrl, { width: el.naturalWidth, height: el.naturalHeight });
+                                    recordImageResourceSize(loadedUrl, el);
+                                    if (reportTimeout) clearTimeout(reportTimeout);
+                                    reportTimeout = setTimeout(report, 500);
+                                });
+                            }
                         }
                     }
                 }
@@ -303,6 +348,7 @@
                                 const type = getUrlType(absolute) || 'image';
                                 if (!isTypeDisabled(type, result)) {
                                     detected.add(absolute);
+                                    if (type === 'image') recordImageResourceSize(absolute);
                                 }
                             }
                         }

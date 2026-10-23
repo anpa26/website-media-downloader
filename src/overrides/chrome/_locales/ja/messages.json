@@ -1921,7 +1921,7 @@
         "description": "Original format option"
     },
     "supportedFormats": {
-        "message": "この拡張機能は、以下の {type} 形式の自動検出とダウンロードをサポートしています：",
+        "message": "対応する{type}形式：",
         "description": "Title for the list of supported file formats, {type} is the media type (e.g. Video, Audio)"
     },
     "sortSizeDesc": {
@@ -2124,5 +2124,41 @@
     },
     "streamConversionFallbackTs": {
         "message": "MP4への変換に失敗しました。TSとして保存しています…"
-    }
+    },
+  "imageMinSideCustom": {
+    "message": "カスタム (px)",
+    "description": "Custom minimum image side dropdown option"
+  },
+  "imageMinSideCustomTitle": {
+    "message": "最小辺を指定 (px)",
+    "description": "Title for the custom minimum image dimension setting"
+  },
+  "imageMinSideCustomExplain": {
+    "message": "画像の短辺の最小サイズをピクセルで入力 (1～10000)。",
+    "description": "Explains the custom minimum image dimension setting"
+  },
+  "imageMinFileSizeTitle": {
+    "message": "画像ファイルの最小サイズ",
+    "description": "imageMinFileSizeTitle"
+  },
+  "imageMinFileSizeExplain": {
+    "message": "選択したサイズより小さい画像を非表示にします。サイズ不明の画像は表示します。",
+    "description": "imageMinFileSizeExplain"
+  },
+  "imageMinFileSizeOff": {
+    "message": "オフ",
+    "description": "imageMinFileSizeOff"
+  },
+  "imageMinFileSizeCustom": {
+    "message": "カスタム (KB)",
+    "description": "imageMinFileSizeCustom"
+  },
+  "imageMinFileSizeCustomTitle": {
+    "message": "画像ファイルの最小サイズ (KB)",
+    "description": "imageMinFileSizeCustomTitle"
+  },
+  "imageMinFileSizeCustomExplain": {
+    "message": "画像ファイルの最小サイズをKBで入力してください (0 = 無効)。",
+    "description": "imageMinFileSizeCustomExplain"
+  }
 }

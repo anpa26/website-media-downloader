@@ -62,7 +62,7 @@ const SETTINGS_EXPORT_VERSION = 1;
 const SETTINGS_KEYS = [
     'auto-download-media', 'auto-download-quality', 'auto-download-youtube-mode', 'auto-download-all-domains', 'auto-download-domains', 'auto-skip-download-names', 'auto-skip-download-names-only', 'auto-skip-download-domains', 'auto-ignore-excluded-media', 'auto-download-video', 'auto-download-stream',
     'document-scan', 'document-scan-mode', 'url-detection', 'youtube-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components', 'disable-deduplication', 'optimize-low-end', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom',
-    'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'ignore-disabled-types',
+    'only-video', 'only-audio', 'only-stream', 'only-image', 'image-min-side', 'image-min-side-custom', 'image-min-file-size', 'image-min-file-size-custom', 'hide-image-without-size', 'only-subtitle', 'only-file', 'ignore-disabled-types',
     'media-notification', 'audio-process-notification', 'media-system-notification', 'stack-notifications', 'download-method', 'fetch-notification', 'media-cache', 'speed-boost', 'speed-boost-resume', 'connections', 'stream-download',
     'stream-quality', 'subtitle-conversion', 'mpd-fix', 'background-download', 'stream-to-mp4', 'audio-to-mp3', 'mp3-bitrate', 'open-preference', 'mux-all-audios', 'mpd-to-mp4',
     'embed-subtitles-mkv', 'embed-subtitles-container', 'embed-subtitles-nonyt', 'block-incoming-popups', 'redirect-guard-clicks', 'redirect-guard-hide-content',
@@ -460,6 +460,27 @@ function showApplyBar() {
     if (bar) bar.style.display = 'flex';
 }
 
+function fitPillSelectToSelectedOption(select) {
+    if (!(select instanceof HTMLSelectElement) || !select.classList.contains('pill-select') || select.closest('.dynamic-resolution-row')) return;
+    const selectedOption = select.selectedOptions[0];
+    if (!selectedOption) return;
+
+    const style = getComputedStyle(select);
+    const canvas = fitPillSelectToSelectedOption.canvas || (fitPillSelectToSelectedOption.canvas = document.createElement('canvas'));
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    context.font = style.font;
+    const textWidth = context.measureText(selectedOption.textContent.trim()).width;
+    const horizontalSpace = ['paddingLeft', 'paddingRight', 'borderLeftWidth', 'borderRightWidth']
+        .reduce((total, property) => total + (parseFloat(style[property]) || 0), 0);
+    const minimumWidth = parseFloat(style.minWidth) || 0;
+    select.style.width = `${Math.ceil(Math.max(minimumWidth, textWidth + horizontalSpace))}px`;
+}
+
+document.addEventListener('change', event => {
+    if (event.target instanceof HTMLSelectElement) fitPillSelectToSelectedOption(event.target);
+});
+
 async function initializeSettings() {
     isInitializing = true;
 
@@ -471,7 +492,7 @@ async function initializeSettings() {
     const settings = [
         'auto-download-media', 'auto-download-quality', 'auto-download-youtube-mode', 'auto-download-all-domains', 'auto-download-domains', 'auto-skip-download-names', 'auto-skip-download-names-only', 'auto-skip-download-domains', 'auto-ignore-excluded-media', 'auto-download-video', 'auto-download-stream',
         'document-scan', 'document-scan-mode', 'url-detection', 'youtube-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components', 'disable-deduplication', 'optimize-low-end', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom',
-        'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'ignore-disabled-types',
+        'only-video', 'only-audio', 'only-stream', 'only-image', 'image-min-side', 'image-min-side-custom', 'image-min-file-size', 'image-min-file-size-custom', 'hide-image-without-size', 'only-subtitle', 'only-file', 'ignore-disabled-types',
         'media-notification', 'audio-process-notification', 'media-system-notification', 'stack-notifications', 'download-method', 'fetch-notification', 'media-cache', 'speed-boost', 'speed-boost-resume', 'connections', 'stream-download',
         'stream-quality', 'subtitle-conversion', 'mpd-fix', 'background-download', 'stream-to-mp4', 'audio-to-mp3', 'mp3-bitrate', 'open-preference', 'mux-all-audios', 'mpd-to-mp4',
         'embed-subtitles-mkv', 'embed-subtitles-container', 'embed-subtitles-nonyt', 'block-incoming-popups', 'redirect-guard-clicks', 'redirect-guard-hide-content',
@@ -500,7 +521,7 @@ async function initializeSettings() {
             if (defaultsEnabled.includes(setting)) {
                 value = '1';
                 defaultSettings[setting] = value;
-            } else if (['auto-download-media', 'auto-download-all-domains', 'ignore-disabled-types', 'history-page', 'save-to-gdrive', 'gdrive-stream', 'save-to-dropbox', 'dropbox-stream', 'stack-notifications', 'mux-all-audios', 'embed-subtitles-mkv', 'embed-subtitles-nonyt', 'mpd-to-mp4', 'block-incoming-popups', 'redirect-guard-hide-content'].includes(setting)) {
+            } else if (['auto-download-media', 'auto-download-all-domains', 'ignore-disabled-types', 'hide-image-without-size', 'history-page', 'save-to-gdrive', 'gdrive-stream', 'save-to-dropbox', 'dropbox-stream', 'stack-notifications', 'mux-all-audios', 'embed-subtitles-mkv', 'embed-subtitles-nonyt', 'mpd-to-mp4', 'block-incoming-popups', 'redirect-guard-hide-content'].includes(setting)) {
                 value = '0';
                 defaultSettings[setting] = value;
             } else if (setting === 'speed-boost' || setting === 'speed-boost-resume' || setting === 'disable-rename-dialog') {
@@ -523,6 +544,15 @@ async function initializeSettings() {
                 defaultSettings[setting] = value;
             } else if (setting === 'document-scan-mode') {
                 value = 'light';
+                defaultSettings[setting] = value;
+            } else if (setting === 'image-min-side') {
+                value = '0';
+                defaultSettings[setting] = value;
+            } else if (setting === 'image-min-side-custom') {
+                value = '512';
+                defaultSettings[setting] = value;
+            } else if (setting === 'image-min-file-size' || setting === 'image-min-file-size-custom') {
+                value = '0';
                 defaultSettings[setting] = value;
             }
         }
@@ -924,13 +954,30 @@ async function initializeSettings() {
         }
 
         if (element.tagName === 'TEXTAREA' || element.tagName === 'MDUI-TEXT-FIELD' || (element.tagName === 'INPUT' && (element.type === 'text' || element.type === 'number'))) {
-            const defVal = setting === 'limit-media-list-custom' ? '0' : '';
+            const defVal = ['limit-media-list-custom', 'image-min-file-size-custom'].includes(setting) ? '0' : (setting === 'image-min-side-custom' ? '512' : '');
             element.value = (value !== undefined && value !== null && value !== '') ? value : defVal;
             element.oninput = () => {
                 pendingChanges[setting] = element.value;
                 showApplyBar();
             };
             if (setting === 'limit-media-list-custom') {
+                element.addEventListener('blur', () => {
+                    if (element.value.trim() === '') {
+                        element.value = '0';
+                        pendingChanges[setting] = '0';
+                        if (!isInitializing) showApplyBar();
+                    }
+                });
+            }
+            if (setting === 'image-min-side-custom') {
+                element.addEventListener('blur', () => {
+                    const value = Math.min(10000, Math.max(1, parseInt(element.value, 10) || 512));
+                    element.value = String(value);
+                    pendingChanges[setting] = element.value;
+                    if (!isInitializing) showApplyBar();
+                });
+            }
+            if (setting === 'image-min-file-size-custom') {
                 element.addEventListener('blur', () => {
                     if (element.value.trim() === '') {
                         element.value = '0';
@@ -956,7 +1003,7 @@ async function initializeSettings() {
                                 (setting === 'connections' ? '4' :
                                 (setting === 'media-sort-order' ? 'newest' :
                                 (setting === 'mp3-bitrate' ? '320' :
-                                (setting === 'min-file-size' ? '0' :
+                                (setting === 'min-file-size' || setting === 'image-min-side' ? '0' :
                                 (setting === 'ui-scale' ? '85%' :
                                 (setting === 'stream-download' ? 'offline' : 'stream'))))))))))))))) ;
 
@@ -992,6 +1039,14 @@ async function initializeSettings() {
                         if (item) item.style.display = element.value === 'custom' ? 'flex' : 'none';
                     }
                 }
+                if (setting === 'image-min-file-size') {
+                    const maxCustom = document.getElementById('setting-image-min-file-size-custom');
+                    if (maxCustom) maxCustom.style.display = element.value === 'custom' ? 'flex' : 'none';
+                }
+                if (setting === 'image-min-side') {
+                    const custom = document.getElementById('setting-image-min-side-custom');
+                    if (custom) custom.style.display = element.value === 'custom' ? 'flex' : 'none';
+                }
                 if (setting === 'settings-layout') {
                     applySettingsLayout(element.value);
                 }
@@ -1023,6 +1078,8 @@ async function initializeSettings() {
     if (Object.keys(defaultSettings).length) {
         await browser.storage.local.set(defaultSettings);
     }
+
+    document.querySelectorAll('select.pill-select').forEach(fitPillSelectToSelectedOption);
 
     const backgroundDownloadForAuto = document.getElementById('background-download');
     const autoDownloadMediaInitial = document.getElementById('auto-download-media');
@@ -1067,6 +1124,18 @@ async function initializeSettings() {
         if (item) {
             item.style.display = minSelectInitial.value === 'custom' ? 'flex' : 'none';
         }
+    }
+
+    const imageFileSizeSelectInitial = document.getElementById('image-min-file-size');
+    const imageFileSizeCustomInitial = document.getElementById('setting-image-min-file-size-custom');
+    if (imageFileSizeSelectInitial && imageFileSizeCustomInitial) {
+        imageFileSizeCustomInitial.style.display = imageFileSizeSelectInitial.value === 'custom' ? 'flex' : 'none';
+    }
+
+    const imageMinSelectInitial = document.getElementById('image-min-side');
+    const imageMinCustomInitial = document.getElementById('setting-image-min-side-custom');
+    if (imageMinSelectInitial && imageMinCustomInitial) {
+        imageMinCustomInitial.style.display = imageMinSelectInitial.value === 'custom' ? 'flex' : 'none';
     }
 
 

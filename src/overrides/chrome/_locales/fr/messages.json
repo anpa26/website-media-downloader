@@ -1921,7 +1921,7 @@
         "description": "Original format option"
     },
     "supportedFormats": {
-        "message": "Cette extension détecte et prend en charge automatiquement le téléchargement des formats {type} suivants :",
+        "message": "Formats {type} pris en charge :",
         "description": "Title for the list of supported file formats, {type} is the media type (e.g. Video, Audio)"
     },
     "sortSizeDesc": {
@@ -2124,5 +2124,41 @@
     },
     "streamConversionFallbackTs": {
         "message": "Échec de la conversion MP4. Enregistrement en TS…"
-    }
+    },
+  "imageMinSideCustom": {
+    "message": "Personnalisé (px)",
+    "description": "Custom minimum image side dropdown option"
+  },
+  "imageMinSideCustomTitle": {
+    "message": "Côté minimum personnalisé (px)",
+    "description": "Title for the custom minimum image dimension setting"
+  },
+  "imageMinSideCustomExplain": {
+    "message": "Saisissez la longueur minimale du côté le plus court de l’image en pixels (1–10000).",
+    "description": "Explains the custom minimum image dimension setting"
+  },
+  "imageMinFileSizeTitle": {
+    "message": "Taille minimale des fichiers image",
+    "description": "imageMinFileSizeTitle"
+  },
+  "imageMinFileSizeExplain": {
+    "message": "Masquer les images dont le fichier est plus petit. Celles dont la taille est inconnue restent visibles.",
+    "description": "imageMinFileSizeExplain"
+  },
+  "imageMinFileSizeOff": {
+    "message": "Désactivé",
+    "description": "imageMinFileSizeOff"
+  },
+  "imageMinFileSizeCustom": {
+    "message": "Personnalisé (Ko)",
+    "description": "imageMinFileSizeCustom"
+  },
+  "imageMinFileSizeCustomTitle": {
+    "message": "Taille minimale personnalisée des images (Ko)",
+    "description": "imageMinFileSizeCustomTitle"
+  },
+  "imageMinFileSizeCustomExplain": {
+    "message": "Saisissez la taille minimale du fichier image en Ko (0 = désactivé).",
+    "description": "imageMinFileSizeCustomExplain"
+  }
 }

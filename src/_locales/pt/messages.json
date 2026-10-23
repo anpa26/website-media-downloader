@@ -2166,7 +2166,7 @@
     "description": "Original format option"
   },
   "supportedFormats": {
-    "message": "Esta extensão detecta e suporta automaticamente o download dos seguintes formatos de {type}:",
+    "message": "Formatos de {type} compatíveis:",
     "description": "Title for the list of supported file formats, {type} is the media type (e.g. Video, Audio)"
   },
   "youtubeDetectionCheckbox": {
@@ -2532,5 +2532,52 @@
   "startingDownload": {
     "message": "Iniciando download...",
     "description": "Status when initiating download"
+  },
+  "imageMinSideTitle": {
+    "message": "Ocultar imagens pequenas",
+    "description": "Title for the minimum image dimension filter"
+  },
+  "imageMinSideOff": { "message": "Desativado", "description": "Disables the minimum image dimension filter" },
+  "imageMinSideExplain": {
+    "message": "Escolha um tamanho mínimo no menu. Imagens cujo lado mais curto seja menor que o tamanho escolhido serão ocultadas; imagens sem dimensões conhecidas continuam visíveis.",
+    "description": "Explains the minimum image dimension filter"
+  },
+  "imageMinSideCustom": {
+    "message": "Personalizado (px)",
+    "description": "Custom minimum image side dropdown option"
+  },
+  "imageMinSideCustomTitle": {
+    "message": "Lado mínimo personalizado (px)",
+    "description": "Title for the custom minimum image dimension setting"
+  },
+  "imageMinSideCustomExplain": {
+    "message": "Defina o comprimento mínimo do lado mais curto da imagem em pixels (1–10000).",
+    "description": "Explains the custom minimum image dimension setting"
+  },
+  "imageMinFileSizeTitle": {
+    "message": "Tamanho mínimo do arquivo de imagem",
+    "description": "imageMinFileSizeTitle"
+  },
+  "hideImageWithoutSizeTitle": { "message": "Ocultar imagens sem tamanho detectado", "description": "Title for hiding images whose file size is unknown" },
+  "hideImageWithoutSizeExplain": { "message": "Ocultar imagens cujo tamanho do arquivo é desconhecido.", "description": "Explains the unknown image size filter" },
+  "imageMinFileSizeExplain": {
+    "message": "Ocultar imagens menores que o tamanho escolhido. Imagens sem tamanho conhecido continuam visíveis.",
+    "description": "imageMinFileSizeExplain"
+  },
+  "imageMinFileSizeOff": {
+    "message": "Desativado",
+    "description": "imageMinFileSizeOff"
+  },
+  "imageMinFileSizeCustom": {
+    "message": "Personalizado (KB)",
+    "description": "imageMinFileSizeCustom"
+  },
+  "imageMinFileSizeCustomTitle": {
+    "message": "Tamanho mínimo personalizado da imagem (KB)",
+    "description": "imageMinFileSizeCustomTitle"
+  },
+  "imageMinFileSizeCustomExplain": {
+    "message": "Insira o tamanho mínimo do arquivo de imagem em KB (0 = desativado).",
+    "description": "imageMinFileSizeCustomExplain"
   }
 }

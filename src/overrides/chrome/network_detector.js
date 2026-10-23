@@ -1486,9 +1486,8 @@ async function maybeAutoDownloadMedia(details, settings, requestItem = null) {
     const responseHeaders = details.responseHeaders || requestItem?.responseHeaders || [];
     const contentType = responseHeaders.find(h => h.name?.toLowerCase() === 'content-type')?.value || '';
     const mediaType = getMediaType(details.url, contentType);
-    const isYoutubeAutoAudio = mediaType === 'audio' && !!requestItem?.autoYoutubeAudioOnly && !!requestItem?.ytFormats?.length;
-    if (!mediaType || (!['video', 'stream'].includes(mediaType) && !isYoutubeAutoAudio)) return;
-    if (!isYoutubeAutoAudio && !settings[`autoDownload${mediaType[0].toUpperCase()}${mediaType.slice(1)}`]) return;
+    if (!mediaType || !['video', 'stream'].includes(mediaType)) return;
+    if (!settings[`autoDownload${mediaType[0].toUpperCase()}${mediaType.slice(1)}`]) return;
 
     let pageUrl = requestItem?.pageUrl || details.pageUrl || tabMetadata.get(details.tabId)?.url || '';
     let pageTitle = requestItem?.pageTitle || details.pageTitle || tabMetadata.get(details.tabId)?.title || '';
@@ -1498,6 +1497,10 @@ async function maybeAutoDownloadMedia(details, settings, requestItem = null) {
     if (pageUrl.startsWith('chrome-extension://') || pageUrl.startsWith('moz-extension://')) return;
     let pageHost = '';
     try { pageHost = new URL(pageUrl).hostname.toLowerCase().replace(/^www\./, ''); } catch (_) { return; }
+    let mediaHost = '';
+    try { mediaHost = new URL(details.url).hostname.toLowerCase().replace(/^www\./, ''); } catch (_) {}
+    const isYoutubeHost = host => ['youtube.com', 'youtu.be', 'youtube-nocookie.com', 'googlevideo.com'].some(domain => host === domain || host.endsWith(`.${domain}`));
+    if (requestItem?.ytFormats?.length || requestItem?.autoYoutubeAudioOnly || isYoutubeHost(pageHost) || isYoutubeHost(mediaHost)) return;
     const domains = String(settings.autoDownloadDomains || '').split(/[\n,]+/).map(normalizeAutoDownloadDomain).filter(Boolean);
     if (!settings.autoDownloadAllDomains && !domains.some(domain => pageHost === domain || pageHost.endsWith(`.${domain}`))) return;
     if (settings.autoIgnoreExcludedMedia) {
@@ -1552,7 +1555,7 @@ async function maybeAutoDownloadMedia(details, settings, requestItem = null) {
 }
 
 const AUTO_DOWNLOAD_RESCAN_KEYS = new Set([
-    'auto-download-media', 'auto-download-quality', 'auto-download-youtube-mode',
+    'auto-download-media', 'auto-download-quality',
     'auto-download-all-domains', 'auto-download-domains', 'auto-skip-download-names-only', 'auto-download-video', 'auto-download-stream'
 ]);
 let autoDownloadRescanTimer = null;
@@ -2018,7 +2021,7 @@ function initListener(skipCacheReset = false) {
                     let updated = false;
                     for (let request of existingRequests) {
 
-                        if (!request.size && (!request.responseHeaders || request.responseHeaders === null)) {
+                        if (!(parseInt(request.size, 10) > 0) && (!request.responseHeaders || request.responseHeaders === null)) {
                             request.size = size;
                             request.responseHeaders = responseHeaders;
                             request.timeStamp = details.timeStamp;
@@ -2090,7 +2093,11 @@ function initListener(skipCacheReset = false) {
                         } else {
                             let requestsObj = {};
                             requestsObj[details.url] = existingRequests;
-                            browser.storage.session.set(requestsObj);
+                            browser.storage.session.set(requestsObj).then(() => {
+                                if (mType === 'image' && parseInt(size, 10) > 0 && (shouldSaveNow || updated)) {
+                                    browser.runtime.sendMessage({ action: 'imageMetadataUpdated', urls: [details.url] }).catch(() => {});
+                                }
+                            }).catch(() => {});
                         }
 
                         if (shouldSaveNow && !isDrmMedia) maybeAutoDownloadMedia(details, currentSettings, existingRequests[existingRequests.length - 1]);
@@ -2360,7 +2367,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     if (message.action === 'reportDetectedMedia') {
         getSettings(async function(settings) {
-            let { urls, pageTitle, pageUrl } = message;
+            let { urls, pageTitle, pageUrl, imageDimensions, imageSizes } = message;
             if (!urls || !Array.isArray(urls)) return;
             const exclusionContext = {
                 pageTitle: pageTitle || sender.tab?.title,
@@ -2390,12 +2397,21 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
             browser.storage.session.get(null, (items) => {
                 const updates = {};
+                const imageMetadataUpdates = {};
                 let hasNew = false;
 
                 urls.forEach(url => {
                     const mType = getMediaType(url);
                     if (isMediaTypeDisabled(mType, settings)) return;
                     const isDrmMedia = isDrmTab && (mType === 'video' || mType === 'audio' || mType === 'stream');
+                    const dimensions = imageDimensions && imageDimensions[url];
+                    const imageWidth = Number(dimensions?.width);
+                    const imageHeight = Number(dimensions?.height);
+                    const imageSize = Number(imageSizes?.[url]);
+                    const validImageDimensions = mType === 'image' &&
+                        Number.isInteger(imageWidth) && Number.isInteger(imageHeight) &&
+                        imageWidth > 0 && imageHeight > 0 && imageWidth <= 30000 && imageHeight <= 30000;
+                    const validImageSize = mType === 'image' && Number.isSafeInteger(imageSize) && imageSize > 0 && imageSize <= 100 * 1024 * 1024 * 1024;
 
                     if (!items[url] && !isDrmMedia) {
                         updates[url] = [{
@@ -2405,18 +2421,41 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                             responseHeaders: null,
                             requestBody: null,
                             cookie: '',
-                            size: 'unknown',
+                            size: validImageSize ? imageSize : 'unknown',
                             timeStamp: Date.now(),
                             tabId: tabId,
                             pageTitle: pageTitle || sender.tab?.title || "",
-                            pageUrl: pageUrl || sender.tab?.url || ""
+                            pageUrl: pageUrl || sender.tab?.url || "",
+                            ...(validImageDimensions ? { imageWidth, imageHeight } : {})
                         }];
                         hasNew = true;
+                    } else if (items[url] && (validImageDimensions || validImageSize) && !isDrmMedia) {
+                        const existing = Array.isArray(items[url]) ? items[url] : [];
+                        if (existing.length) {
+                            let requestChanged = false;
+                            existing.forEach(request => {
+                                if (validImageDimensions && (request.imageWidth !== imageWidth || request.imageHeight !== imageHeight)) {
+                                    request.imageWidth = imageWidth;
+                                    request.imageHeight = imageHeight;
+                                    requestChanged = true;
+                                }
+                                if (validImageSize && !(parseInt(request.size, 10) > 0)) {
+                                    request.size = imageSize;
+                                    requestChanged = true;
+                                }
+                            });
+                            if (requestChanged) imageMetadataUpdates[url] = existing;
+                        }
                     }
                 });
 
+                if (Object.keys(updates).length) browser.storage.session.set(updates);
+                if (Object.keys(imageMetadataUpdates).length) {
+                    browser.storage.session.set(imageMetadataUpdates)
+                        .then(() => browser.runtime.sendMessage({ action: 'imageMetadataUpdated', urls: Object.keys(imageMetadataUpdates) }).catch(() => {}))
+                        .catch(() => {});
+                }
                 if (hasNew) {
-                    browser.storage.session.set(updates);
                     for (const url in updates) {
                         const req = updates[url][0];
                         const detectedType = getMediaType(url) || (url.includes('mime=audio') || url.includes('#audio') ? 'audio' : 'video');

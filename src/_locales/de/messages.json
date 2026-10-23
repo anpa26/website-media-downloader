@@ -2166,7 +2166,7 @@
     "description": "Original format option"
   },
   "supportedFormats": {
-    "message": "Diese Erweiterung erkennt und unterstützt automatisch das Herunterladen der folgenden {type}-Formate:",
+    "message": "Unterstützte {type}-Formate:",
     "description": "Title for the list of supported file formats, {type} is the media type (e.g. Video, Audio)"
   },
   "youtubeDetectionCheckbox": {
@@ -2532,5 +2532,52 @@
   "startingDownload": {
     "message": "Download wird gestartet...",
     "description": "Status when initiating download"
+  },
+  "imageMinSideTitle": {
+    "message": "Kleine Bilder ausblenden",
+    "description": "Title for the minimum image dimension filter"
+  },
+  "imageMinSideOff": { "message": "Aus", "description": "Disables the minimum image dimension filter" },
+  "imageMinSideExplain": {
+    "message": "Wähle im Dropdown eine Mindestgröße. Bilder, deren kürzere Seite kleiner ist, werden ausgeblendet; Bilder ohne bekannte Maße bleiben sichtbar.",
+    "description": "Explains the minimum image dimension filter"
+  },
+  "imageMinSideCustom": {
+    "message": "Benutzerdefiniert (px)",
+    "description": "Custom minimum image side dropdown option"
+  },
+  "imageMinSideCustomTitle": {
+    "message": "Benutzerdefinierte Mindestseite (px)",
+    "description": "Title for the custom minimum image dimension setting"
+  },
+  "imageMinSideCustomExplain": {
+    "message": "Gib die Mindestlänge der kürzeren Bildseite in Pixeln ein (1–10000).",
+    "description": "Explains the custom minimum image dimension setting"
+  },
+  "imageMinFileSizeTitle": {
+    "message": "Mindestdateigröße für Bilder",
+    "description": "imageMinFileSizeTitle"
+  },
+  "hideImageWithoutSizeTitle": { "message": "Bilder ohne erkannte Dateigröße ausblenden", "description": "Title for hiding images whose file size is unknown" },
+  "hideImageWithoutSizeExplain": { "message": "Bilder ausblenden, deren Dateigröße unbekannt ist.", "description": "Explains the unknown image size filter" },
+  "imageMinFileSizeExplain": {
+    "message": "Bilder unter der gewählten Dateigröße ausblenden. Bilder ohne bekannte Größe bleiben sichtbar.",
+    "description": "imageMinFileSizeExplain"
+  },
+  "imageMinFileSizeOff": {
+    "message": "Aus",
+    "description": "imageMinFileSizeOff"
+  },
+  "imageMinFileSizeCustom": {
+    "message": "Benutzerdefiniert (KB)",
+    "description": "imageMinFileSizeCustom"
+  },
+  "imageMinFileSizeCustomTitle": {
+    "message": "Benutzerdefinierte Mindestdateigröße für Bilder (KB)",
+    "description": "imageMinFileSizeCustomTitle"
+  },
+  "imageMinFileSizeCustomExplain": {
+    "message": "Gib die Mindestdateigröße für Bilder in KB ein (0 = deaktiviert).",
+    "description": "imageMinFileSizeCustomExplain"
   }
 }

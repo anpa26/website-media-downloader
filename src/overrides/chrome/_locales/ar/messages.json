@@ -1915,7 +1915,7 @@
         "description": "Original format option"
     },
     "supportedFormats": {
-        "message": "تدعم هذه الإضافة اكتشاف وتنزيل صيغ {type} التالية تلقائيًا:",
+        "message": "صيغ {type} المدعومة:",
         "description": "Title for the list of supported file formats, {type} is the media type (e.g. Video, Audio)"
     },
     "sortSizeDesc": {
@@ -2118,5 +2118,41 @@
     },
     "streamConversionFallbackTs": {
         "message": "فشل التحويل إلى MP4. جارٍ الحفظ بصيغة TS…"
-    }
+    },
+  "imageMinSideCustom": {
+    "message": "مخصص (بكسل)",
+    "description": "Custom minimum image side dropdown option"
+  },
+  "imageMinSideCustomTitle": {
+    "message": "الحد الأدنى المخصص للضلع (بكسل)",
+    "description": "Title for the custom minimum image dimension setting"
+  },
+  "imageMinSideCustomExplain": {
+    "message": "أدخل الحد الأدنى لطول أقصر ضلع للصورة بالبكسل (1–10000).",
+    "description": "Explains the custom minimum image dimension setting"
+  },
+  "imageMinFileSizeTitle": {
+    "message": "الحد الأدنى لحجم ملف الصورة",
+    "description": "imageMinFileSizeTitle"
+  },
+  "imageMinFileSizeExplain": {
+    "message": "إخفاء الصور الأصغر من الحجم المحدد. تبقى الصور ذات الحجم غير المعروف ظاهرة.",
+    "description": "imageMinFileSizeExplain"
+  },
+  "imageMinFileSizeOff": {
+    "message": "إيقاف",
+    "description": "imageMinFileSizeOff"
+  },
+  "imageMinFileSizeCustom": {
+    "message": "مخصص (KB)",
+    "description": "imageMinFileSizeCustom"
+  },
+  "imageMinFileSizeCustomTitle": {
+    "message": "الحد الأدنى المخصص لحجم الصورة (KB)",
+    "description": "imageMinFileSizeCustomTitle"
+  },
+  "imageMinFileSizeCustomExplain": {
+    "message": "أدخل الحد الأدنى لحجم ملف الصورة بالكيلوبايت (0 = تعطيل).",
+    "description": "imageMinFileSizeCustomExplain"
+  }
 }

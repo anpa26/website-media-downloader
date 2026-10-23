@@ -1946,7 +1946,7 @@
         "description": "Original format option"
     },
     "supportedFormats": {
-        "message": "This extension automatically detects and supports downloading the following {type} formats:",
+        "message": "Supported {type} formats:",
         "description": "Title for the list of supported file formats, {type} is the media type (e.g. Video, Audio)"
     },
     "downloadNormal": {
@@ -2139,5 +2139,41 @@
   ,"autoDownloadYoutubeModeTitle": { "message": "YouTube auto-download" }
   ,"autoDownloadYoutubeModeExplain": { "message": "Choose whether YouTube auto-download saves video or audio only." }
   ,"autoDownloadYoutubeModeVideo": { "message": "Video" }
-  ,"autoDownloadYoutubeModeAudio": { "message": "Audio only" }
+  ,"autoDownloadYoutubeModeAudio": { "message": "Audio only" },
+  "imageMinSideCustom": {
+    "message": "Custom (px)",
+    "description": "Custom minimum image side dropdown option"
+  },
+  "imageMinSideCustomTitle": {
+    "message": "Custom minimum side (px)",
+    "description": "Title for the custom minimum image dimension setting"
+  },
+  "imageMinSideCustomExplain": {
+    "message": "Enter the minimum length of the image shorter side in pixels (1–10000).",
+    "description": "Explains the custom minimum image dimension setting"
+  },
+  "imageMinFileSizeTitle": {
+    "message": "Minimum image file size",
+    "description": "imageMinFileSizeTitle"
+  },
+  "imageMinFileSizeExplain": {
+    "message": "Hide images smaller than the selected file size. Images with unknown sizes stay visible.",
+    "description": "imageMinFileSizeExplain"
+  },
+  "imageMinFileSizeOff": {
+    "message": "Off",
+    "description": "imageMinFileSizeOff"
+  },
+  "imageMinFileSizeCustom": {
+    "message": "Custom (KB)",
+    "description": "imageMinFileSizeCustom"
+  },
+  "imageMinFileSizeCustomTitle": {
+    "message": "Custom minimum image file size (KB)",
+    "description": "imageMinFileSizeCustomTitle"
+  },
+  "imageMinFileSizeCustomExplain": {
+    "message": "Enter the minimum image file size in KB (0 = disable).",
+    "description": "imageMinFileSizeCustomExplain"
+  }
 }

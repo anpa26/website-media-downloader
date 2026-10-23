@@ -1946,7 +1946,7 @@
         "description": "Original format option"
     },
     "supportedFormats": {
-        "message": "Ekstensi ini bisa mendeteksi dan mengunduh otomatis format {type} berikut:",
+        "message": "Format {type} yang didukung:",
         "description": "Title for the list of supported file formats, {type} is the media type (e.g. Video, Audio)"
     },
     "downloadNormal": {
@@ -2139,5 +2139,41 @@
   ,"autoDownloadYoutubeModeTitle": { "message": "Unduhan otomatis YouTube" }
   ,"autoDownloadYoutubeModeExplain": { "message": "Pilih apakah unduhan otomatis YouTube menyimpan video atau audio saja." }
   ,"autoDownloadYoutubeModeVideo": { "message": "Video" }
-  ,"autoDownloadYoutubeModeAudio": { "message": "Audio saja" }
+  ,"autoDownloadYoutubeModeAudio": { "message": "Audio saja" },
+  "imageMinSideCustom": {
+    "message": "Khusus (px)",
+    "description": "Custom minimum image side dropdown option"
+  },
+  "imageMinSideCustomTitle": {
+    "message": "Sisi minimum khusus (px)",
+    "description": "Title for the custom minimum image dimension setting"
+  },
+  "imageMinSideCustomExplain": {
+    "message": "Masukkan panjang minimum sisi terpendek gambar dalam piksel (1–10000).",
+    "description": "Explains the custom minimum image dimension setting"
+  },
+  "imageMinFileSizeTitle": {
+    "message": "Ukuran minimum file gambar",
+    "description": "imageMinFileSizeTitle"
+  },
+  "imageMinFileSizeExplain": {
+    "message": "Sembunyikan gambar yang ukuran filenya di bawah batas. Gambar tanpa informasi ukuran tetap ditampilkan.",
+    "description": "imageMinFileSizeExplain"
+  },
+  "imageMinFileSizeOff": {
+    "message": "Nonaktif",
+    "description": "imageMinFileSizeOff"
+  },
+  "imageMinFileSizeCustom": {
+    "message": "Khusus (KB)",
+    "description": "imageMinFileSizeCustom"
+  },
+  "imageMinFileSizeCustomTitle": {
+    "message": "Ukuran minimum khusus gambar (KB)",
+    "description": "imageMinFileSizeCustomTitle"
+  },
+  "imageMinFileSizeCustomExplain": {
+    "message": "Masukkan ukuran minimum file gambar dalam KB (0 = nonaktif).",
+    "description": "imageMinFileSizeCustomExplain"
+  }
 }

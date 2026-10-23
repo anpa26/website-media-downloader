@@ -70,6 +70,20 @@ body.is-mobile {
     }
 }
 
+html.is-popup:not(.is-tab):not(.is-mobile),
+body.is-popup:not(.is-tab):not(.is-mobile) {
+    width: 550px !important;
+    min-width: 550px !important;
+    max-width: 550px !important;
+    height: 600px !important;
+    min-height: 600px !important;
+    max-height: 600px !important;
+}
+
+html.is-popup:not(.is-tab):not(.is-mobile) {
+    overflow: hidden;
+}
+
 mdui-tabs {
     background-color: rgb(var(--mdui-color-surface));
     border-bottom: 1px solid rgb(var(--mdui-color-outline-variant));
@@ -126,6 +140,16 @@ mdui-tab-panel[value="settings"] {
     --mdui-shape-corner-extra-small: 28px;
     --mdui-shape-corner-small: 28px;
     --mdui-shape-corner-medium: 28px;
+    border-radius: 28px;
+}
+
+#search-bar::part(container) {
+    border: 1px solid #858b96 !important;
+    box-shadow: none !important;
+}
+
+#search-bar:focus-within::part(container) {
+    border: 2px solid #8ab4f8 !important;
 }
 
 #selected-info-bar {
@@ -244,6 +268,35 @@ mdui-card {
     font-size: 0.8rem;
     color: var(--on-surface-variant);
     line-height: 1.4;
+}
+
+.setting-item.extension-list-open {
+    flex-wrap: wrap;
+}
+
+.inline-extension-list {
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 0;
+    margin-top: 2px;
+    padding: 12px;
+    border: 1px solid rgba(var(--mdui-color-outline-variant), 0.45);
+    border-radius: 12px;
+    line-height: 1.45;
+}
+
+.inline-extension-title {
+    display: block;
+    margin-bottom: 9px;
+    color: rgb(var(--mdui-color-on-surface));
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.inline-extension-formats {
+    color: var(--on-surface-variant);
+    font-size: 0.78rem;
+    overflow-wrap: anywhere;
 }
 
 .media-item {
@@ -655,6 +708,7 @@ mdui-segmented-button[selected]::part(button) {
 
 .pill-select {
     width: auto;
+    max-width: 100%;
     min-width: 60px;
     field-sizing: content;
     appearance: none;

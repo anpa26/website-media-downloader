@@ -1915,7 +1915,7 @@
         "description": "Original format option"
     },
     "supportedFormats": {
-        "message": "이 확장 프로그램은 다음 {type} 형식의 자동 감지 및 다운로드를 지원합니다:",
+        "message": "지원하는 {type} 형식:",
         "description": "Title for the list of supported file formats, {type} is the media type (e.g. Video, Audio)"
     },
     "sortSizeDesc": {
@@ -2118,5 +2118,41 @@
     },
     "streamConversionFallbackTs": {
         "message": "MP4 변환에 실패했습니다. TS로 저장 중…"
-    }
+    },
+  "imageMinSideCustom": {
+    "message": "사용자 지정 (px)",
+    "description": "Custom minimum image side dropdown option"
+  },
+  "imageMinSideCustomTitle": {
+    "message": "최소 변 크기 (px)",
+    "description": "Title for the custom minimum image dimension setting"
+  },
+  "imageMinSideCustomExplain": {
+    "message": "이미지 짧은 변의 최소 길이를 픽셀로 입력하세요 (1–10000).",
+    "description": "Explains the custom minimum image dimension setting"
+  },
+  "imageMinFileSizeTitle": {
+    "message": "이미지 파일 최소 크기",
+    "description": "imageMinFileSizeTitle"
+  },
+  "imageMinFileSizeExplain": {
+    "message": "선택한 크기보다 작은 이미지를 숨깁니다. 크기를 알 수 없는 이미지는 계속 표시됩니다.",
+    "description": "imageMinFileSizeExplain"
+  },
+  "imageMinFileSizeOff": {
+    "message": "끄기",
+    "description": "imageMinFileSizeOff"
+  },
+  "imageMinFileSizeCustom": {
+    "message": "사용자 지정 (KB)",
+    "description": "imageMinFileSizeCustom"
+  },
+  "imageMinFileSizeCustomTitle": {
+    "message": "사용자 지정 이미지 최소 크기 (KB)",
+    "description": "imageMinFileSizeCustomTitle"
+  },
+  "imageMinFileSizeCustomExplain": {
+    "message": "이미지 파일의 최소 크기를 KB 단위로 입력하세요 (0 = 사용 안 함).",
+    "description": "imageMinFileSizeCustomExplain"
+  }
 }

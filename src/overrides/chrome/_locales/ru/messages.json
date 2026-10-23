@@ -1915,7 +1915,7 @@
         "description": "Original format option"
     },
     "supportedFormats": {
-        "message": "Это расширение автоматически обнаруживает и поддерживает загрузку следующих форматов {type}:",
+        "message": "Поддерживаемые форматы {type}:",
         "description": "Title for the list of supported file formats, {type} is the media type (e.g. Video, Audio)"
     },
     "sortSizeDesc": {
@@ -2118,5 +2118,41 @@
     },
     "streamConversionFallbackTs": {
         "message": "Не удалось конвертировать в MP4. Сохранение в формате TS…"
-    }
+    },
+  "imageMinSideCustom": {
+    "message": "Свой вариант (px)",
+    "description": "Custom minimum image side dropdown option"
+  },
+  "imageMinSideCustomTitle": {
+    "message": "Минимальная сторона (px)",
+    "description": "Title for the custom minimum image dimension setting"
+  },
+  "imageMinSideCustomExplain": {
+    "message": "Укажите минимальную длину короткой стороны изображения в пикселях (1–10000).",
+    "description": "Explains the custom minimum image dimension setting"
+  },
+  "imageMinFileSizeTitle": {
+    "message": "Минимальный размер файла изображения",
+    "description": "imageMinFileSizeTitle"
+  },
+  "imageMinFileSizeExplain": {
+    "message": "Скрывать изображения меньше выбранного размера. Изображения с неизвестным размером остаются видимыми.",
+    "description": "imageMinFileSizeExplain"
+  },
+  "imageMinFileSizeOff": {
+    "message": "Выкл.",
+    "description": "imageMinFileSizeOff"
+  },
+  "imageMinFileSizeCustom": {
+    "message": "Свой вариант (КБ)",
+    "description": "imageMinFileSizeCustom"
+  },
+  "imageMinFileSizeCustomTitle": {
+    "message": "Минимальный размер файла изображения (КБ)",
+    "description": "imageMinFileSizeCustomTitle"
+  },
+  "imageMinFileSizeCustomExplain": {
+    "message": "Укажите минимальный размер файла изображения в КБ (0 = отключено).",
+    "description": "imageMinFileSizeCustomExplain"
+  }
 }
