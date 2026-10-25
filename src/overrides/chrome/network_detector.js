@@ -20,7 +20,7 @@ if (typeof browser === 'undefined') {
     var browser = chrome;
 }
 
-if (typeof importScripts === 'function') importScripts('detection_exclusions.js', 'media_filename.js');
+if (typeof importScripts === 'function') importScripts('debug_logger.js', 'detection_exclusions.js', 'media_filename.js');
 
 const tabMetadata = new Map(); // tabId -> { title, url }
 
@@ -418,35 +418,27 @@ browser.storage.onChanged.addListener((changes, area) => {
 
 let savePersistentHeadersTimeout = null;
 async function savePersistentHeaders() {
+    while (urlToHeaderMap.size > 200) {
+        const oldestKey = urlToHeaderMap.keys().next().value;
+        if (oldestKey === undefined) break;
+        urlToHeaderMap.delete(oldestKey);
+        removeHeaderSpoofRules(oldestKey);
+    }
+
     const doSave = async () => {
         try {
-            const obj = Object.fromEntries(urlToHeaderMap);
-
-            const keys = Object.keys(obj);
-            if (keys.length > 200) {
-                const keysToRemove = keys.slice(0, keys.length - 200);
-                keysToRemove.forEach(k => {
-                    urlToHeaderMap.delete(k);
-                    removeHeaderSpoofRules(k);
-                });
-                await browser.storage.session.set({ 'urlToHeaderMap': Object.fromEntries(urlToHeaderMap) });
-            } else {
-                await browser.storage.session.set({ 'urlToHeaderMap': obj });
-            }
+            await browser.storage.session.set({ 'urlToHeaderMap': Object.fromEntries(urlToHeaderMap) });
         } catch (e) {
             console.warn("Failed to save persistent headers:", e);
         }
     };
 
-    if (isOptimizeLowEnd) {
-        if (savePersistentHeadersTimeout) return;
-        savePersistentHeadersTimeout = setTimeout(() => {
-            savePersistentHeadersTimeout = null;
-            doSave();
-        }, 1000);
-    } else {
+    if (savePersistentHeadersTimeout) return;
+    const debounceMs = isOptimizeLowEnd ? 1500 : 1000;
+    savePersistentHeadersTimeout = setTimeout(() => {
+        savePersistentHeadersTimeout = null;
         doSave();
-    }
+    }, debounceMs);
 }
 
 function isFlagEnabled(val, defaultVal = false) {
@@ -2679,7 +2671,9 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 currentFile: value.currentFile,
                 isStreamJob: !!value.isStreamJob,
                 isZip: !!value.isZip,
-                isPersistentZipJob: !!value.isPersistentZipJob
+                isPersistentZipJob: !!value.isPersistentZipJob,
+                finishedParts: value.finishedParts,
+                totalParts: value.totalParts
             };
         }
         sendResponse(downloadsObj);
@@ -3590,9 +3584,10 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
         await saveDownloadState(downloadId, activeDownloads.get(downloadId));
         const remainingSize = total - startOffset;
         const partSize = Math.ceil(remainingSize / connections);
-        const CHUNK_SIZE = 1024 * 1024; 
+        const CHUNK_SIZE = total >= 20 * 1024 * 1024 ? 4 * 1024 * 1024 : (total >= 5 * 1024 * 1024 ? 2 * 1024 * 1024 : 1024 * 1024);
         let totalLoaded = startOffset;
         let lastReportTime = 0;
+        let lastStateSaveTime = 0;
         const totalChunks = Math.ceil(total / CHUNK_SIZE);
         let savedChunks = Math.floor(startOffset / CHUNK_SIZE);
 
@@ -3631,18 +3626,37 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                         const reader = response.body.getReader();
                         let currentBuffer = [];
                         let currentBufferSize = 0;
+                        const partWriteQueue = [];
+                        const MAX_PART_WRITE_QUEUE = 3;
 
-                        async function flushPartBuffer() {
-                            if (currentBuffer.length === 0) return;
-                            
-                            const blob = new Blob(currentBuffer);
+                        async function flushPartBuffer(forceWait = false) {
+                            if (currentBuffer.length > 0) {
+                                const blob = new Blob(currentBuffer);
+                                const chunkOffset = currentPos - currentBufferSize;
+                                currentBuffer = [];
+                                currentBufferSize = 0;
 
-                            await storeChunkInCache(downloadId, currentPos - currentBufferSize, blob);
-                            savedChunks++;
+                                const writePromise = storeChunkInCache(downloadId, chunkOffset, blob).then(() => {
+                                    savedChunks++;
+                                    const now = Date.now();
+                                    if (now - lastStateSaveTime > 1500) {
+                                        lastStateSaveTime = now;
+                                        saveDownloadState(downloadId, activeDownloads.get(downloadId));
+                                    }
+                                });
+                                partWriteQueue.push(writePromise);
+                            }
 
-                            currentBuffer = [];
-                            currentBufferSize = 0;
-                            saveDownloadState(downloadId, activeDownloads.get(downloadId));
+                            if (forceWait) {
+                                if (partWriteQueue.length > 0) {
+                                    await Promise.all(partWriteQueue.splice(0));
+                                }
+                                saveDownloadState(downloadId, activeDownloads.get(downloadId));
+                            } else {
+                                while (partWriteQueue.length >= MAX_PART_WRITE_QUEUE) {
+                                    await partWriteQueue.shift();
+                                }
+                            }
                         }
 
                         while (true) {
@@ -3650,7 +3664,7 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                             try {
                                 readResult = await reader.read();
                             } catch (readError) {
-                                await flushPartBuffer();
+                                await flushPartBuffer(true);
                                 throw readError;
                             }
 
@@ -3676,6 +3690,10 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                             const now = Date.now();
                             if (now - lastReportTime > 200) {
                                 lastReportTime = now;
+                                if (currentItem) {
+                                    currentItem.finishedParts = savedChunks;
+                                    currentItem.totalParts = totalChunks;
+                                }
                                 browser.runtime.sendMessage({
                                     action: 'downloadProgress',
                                     id: downloadId,
@@ -3689,10 +3707,10 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                             }
 
                             if (currentBufferSize >= CHUNK_SIZE) {
-                                await flushPartBuffer();
+                                await flushPartBuffer(false);
                             }
                         }
-                        await flushPartBuffer();
+                        await flushPartBuffer(true);
                         break;
                     } catch (error) {
                         retries++;
@@ -4885,7 +4903,6 @@ browser.runtime.onInstalled.addListener(async (details) => {
             'download-method': 'fetch',
             'mime-detection': '1',
             'url-detection': '1',
-            'media-cache': '1',
             'history-page': '0',
             'detect-download-links': '1',
             'disable-deduplication': '1',
@@ -5020,134 +5037,6 @@ if (browser.runtime.setUninstallURL) {
     }
 }
 
-let cacheListener = null;
-let mediaCacheEnabled = false;
-
-function detachCacheListener() {
-    if (!cacheListener) return;
-    try {
-        browser.webRequest.onBeforeRequest.removeListener(cacheListener);
-    } catch (e) {  }
-    cacheListener = null;
-    console.debug("Cache listener detached.");
-}
-
-function attachCacheListener() {
-    if (cacheListener) return;
-
-    if (!browser.webRequest || !browser.webRequest.filterResponseData) {
-        
-        return;
-    }
-
-    const requestBuffers = new Map();
-
-    cacheListener = (details) => {
-        try {
-
-            if (details.incognito) return;
-            const mType = getMediaType(details.url);
-            if (isMediaTypeDisabled(mType, cachedSettings)) return;
-
-            if (!detectionRegex.test(details.url)) return;
-
-            let filter;
-            try {
-                filter = browser.webRequest.filterResponseData(details.requestId);
-            } catch (e) {
-                console.warn("filterResponseData failed for requestId", details.requestId, e);
-                return;
-            }
-
-            const downloadId = details.url;
-            requestBuffers.set(details.requestId, { chunks: [], size: 0, totalCached: 0, index: 0 });
-
-            const flushBuffer = async (reqId) => {
-                const state = requestBuffers.get(reqId);
-                if (!state || state.chunks.length === 0) return;
-
-                const blob = new Blob(state.chunks);
-                const currentIndex = state.index++;
-                state.chunks = [];
-                state.size = 0;
-
-                await storeChunkInCache(downloadId, currentIndex, blob);
-            };
-
-            filter.ondata = (event) => {
-                try {
-
-                    filter.write(event.data);
-
-                    const state = requestBuffers.get(details.requestId);
-                    if (state) {
-                        state.chunks.push(event.data);
-                        state.size += event.data.byteLength;
-                        state.totalCached += event.data.byteLength;
-
-                        let currentThreshold = 1024 * 1024; // 1MB
-                        if (state.totalCached > 50 * 1024 * 1024) {
-                            currentThreshold = 4 * 1024 * 1024; // 4MB
-                        } else if (state.totalCached > 10 * 1024 * 1024) {
-                            currentThreshold = 2 * 1024 * 1024; // 2MB
-                        }
-
-                        if (state.size >= currentThreshold) {
-                            flushBuffer(details.requestId).catch(err => console.error("Failed to flush buffer:", err));
-                        }
-                    }
-                } catch (e) {
-                    console.error("Error writing chunk back to filter:", e);
-                }
-            };
-            filter.onstop = async () => {
-                try {
-                    await flushBuffer(details.requestId);
-                    requestBuffers.delete(details.requestId);
-                    filter.disconnect();
-
-                    await storeInCache(downloadId, null, 'application/octet-stream');
-                } catch (e) {
-                    console.error("Failed to cache response body for", details.url, e);
-                }
-            };
-            filter.onerror = (err) => {
-                try { filter.disconnect(); } catch (e) {}
-                console.error("filter error:", err);
-            };
-        } catch (e) {
-            console.error("Error in cache listener:", e);
-        }
-    };
-
-    browser.webRequest.onBeforeRequest.addListener(
-        cacheListener,
-        { urls: ["<all_urls>"],  },
-        []
-    );
-
-    console.debug("Cache listener attached.");
-}
-
-async function initCacheState() {
-    try {
-        const res = await browser.storage.local.get(['media-cache', 'mime-detection', 'url-detection']);
-        const enabled = !!isFlagEnabled(res['media-cache']);
-        mediaCacheEnabled = enabled;
-        const detectionEnabled = isFlagEnabled(res['mime-detection'], true) || isFlagEnabled(res['url-detection'], true);
-        if (mediaCacheEnabled && detectionEnabled) {
-            attachCacheListener();
-        } else {
-            detachCacheListener();
-        }
-    } catch (e) {
-        console.error("Failed to read media-cache setting:", e);
-
-        mediaCacheEnabled = false;
-        detachCacheListener();
-    }
-}
-
 browser.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local') return;
 
@@ -5156,8 +5045,6 @@ browser.storage.onChanged.addListener((changes, area) => {
         if (Object.prototype.hasOwnProperty.call(changes, 'mime-detection') || Object.prototype.hasOwnProperty.call(changes, 'url-detection')) {
             initListener(true);
             if (newSettings.mimeDetection || newSettings.urlDetection) loadPersistentHeaders();
-            if (mediaCacheEnabled && (newSettings.mimeDetection || newSettings.urlDetection)) attachCacheListener();
-            else detachCacheListener();
         }
         if (Object.keys(changes).some(key => AUTO_DOWNLOAD_RESCAN_KEYS.has(key))) {
             scheduleExistingMediaAutoDownload(newSettings);
@@ -5181,18 +5068,6 @@ browser.storage.onChanged.addListener((changes, area) => {
         }
     });
 
-    if (Object.prototype.hasOwnProperty.call(changes, 'media-cache')) {
-        const newEnabled = !!isFlagEnabled(changes['media-cache'].newValue);
-        if (newEnabled !== mediaCacheEnabled) {
-            mediaCacheEnabled = newEnabled;
-            if (mediaCacheEnabled && (cachedSettings.mimeDetection || cachedSettings.urlDetection)) {
-                attachCacheListener();
-            } else {
-                detachCacheListener();
-            }
-        }
-    }
-
     if (Object.prototype.hasOwnProperty.call(changes, 'open-preference')) {
         const newVal = changes['open-preference'].newValue;
         if (newVal === 'popup') {
@@ -5203,7 +5078,6 @@ browser.storage.onChanged.addListener((changes, area) => {
     }
 });
 
-initCacheState();
 restoreActiveDownloadsFromSession();
 
 browser.storage.onChanged.addListener((changes, area) => {

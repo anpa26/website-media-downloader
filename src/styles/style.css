@@ -447,6 +447,8 @@ mdui-card {
     border: 1px solid rgba(var(--mdui-color-outline-variant), 0.5);
     border-radius: 100px;
     overflow: hidden;
+    clip-path: inset(0 round 100px);
+    isolation: isolate;
     gap: 0;
 }
 
@@ -455,8 +457,9 @@ mdui-card {
 }
 
 .yt-resolution-row .pill-select-wrapper {
-    flex: 1 1 0;
-    min-width: 0;
+    flex: 1 1 0 !important;
+    width: 0;
+    min-width: 0 !important;
     position: relative;
     display: flex;
 }
@@ -466,14 +469,22 @@ mdui-card {
 }
 
 .yt-resolution-row .pill-select {
-    width: 100%;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    flex: 1 1 100%;
+    display: block;
     box-sizing: border-box;
     border: none !important;
     background: transparent !important;
     border-radius: 0 !important;
     padding: 6px 12px;
     height: 100%;
-    field-sizing: normal !important;
+    field-sizing: fixed !important;
+    min-width: 0;
+    max-width: none;
     text-overflow: ellipsis;
     overflow: hidden;
     text-align: center;

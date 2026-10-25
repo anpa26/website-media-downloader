@@ -1659,7 +1659,7 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
           progressItem.statusInfo.textContent = text;
         }
       } else {
-        updateProgressUI(id, downloadData.loaded, downloadData.total, downloadData.isParallel, downloadData.isPaused, downloadData.status, downloadData.percent);
+        updateProgressUI(id, downloadData.loaded, downloadData.total, downloadData.isParallel, downloadData.isPaused, downloadData.status, downloadData.percent, downloadData.finishedParts ?? null, downloadData.totalParts ?? null);
       }
       
       if (!activeDownloadingElements.includes(item)) {
@@ -3188,7 +3188,6 @@ function createMediaItem(item) {
     const subWrapper = document.createElement('div');
     subWrapper.classList.add('pill-select-wrapper', 'yt-subtitle-select-wrapper');
     subWrapper.style.flex = '1';
-    subWrapper.style.marginLeft = '8px';
     subWrapper.style.display = 'none';
 
     const subSelect = document.createElement('select');
@@ -3259,7 +3258,7 @@ function createMediaItem(item) {
         let showLangRow = false;
 
         if (matchingFormats.length > 1 || matchingFormats.some(f => f.audioTrack)) {
-            langWrapper.style.display = 'block';
+            langWrapper.style.display = 'flex';
             showLangRow = true;
 
             const allOpt = document.createElement('option');
@@ -3301,7 +3300,7 @@ function createMediaItem(item) {
 
         const ytSubtitles = item.ytSubtitles || null;
         if (ytSubtitles && ytSubtitles.length > 0) {
-            subWrapper.style.display = 'block';
+            subWrapper.style.display = 'flex';
             showLangRow = true;
             if (subSelect.children.length === 0) {
                 const noneOpt = document.createElement('option');
@@ -4472,9 +4471,10 @@ async function loadAboutPage() {
     const response = await fetch(browser.runtime.getURL('about.json?t=' + Date.now()));
     const data = await response.json();
     const manifest = browser.runtime.getManifest();
-    const installedType = manifest.name.startsWith('Website Media Downloader Light')
+    const baseInstalledType = manifest.name.startsWith('Website Media Downloader Light')
       ? (browser.i18n.getMessage('installedTypeLight') || 'Light')
       : (browser.i18n.getMessage('installedTypeFull') || 'Full');
+    const installedType = window.WMDDebugLogger ? `${baseInstalledType} (Debug)` : baseInstalledType;
 
     const isFirefox = navigator.userAgent.includes('Firefox') || (typeof browser !== 'undefined' && browser.runtime.getURL && browser.runtime.getURL('').startsWith('moz-extension://'));
     const reinstallUrl = isFirefox 

@@ -1169,7 +1169,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   const mode = urlParams.get('mode');
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || isIPadOS;
   if (isMobile) {
     document.documentElement.classList.add('is-mobile');
     document.body.classList.add('is-mobile');
@@ -1628,7 +1629,7 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
       if (cancelBtn) cancelBtn.style.display = 'inline-flex';
       const audioBtn = item.querySelector('#audio-only-button');
       if (audioBtn) audioBtn.style.display = 'none';
-      updateProgressUI(id, downloadData.loaded, downloadData.total, downloadData.isParallel, downloadData.isPaused, downloadData.status, downloadData.percent);
+      updateProgressUI(id, downloadData.loaded, downloadData.total, downloadData.isParallel, downloadData.isPaused, downloadData.status, downloadData.percent, downloadData.finishedParts ?? null, downloadData.totalParts ?? null);
       
       if (!activeDownloadingElements.includes(item)) {
         prioritizeActiveDownload(item);
@@ -4194,9 +4195,10 @@ async function loadAboutPage() {
     const response = await fetch(browser.runtime.getURL('about.json?t=' + Date.now()));
     const data = await response.json();
     const manifest = browser.runtime.getManifest();
-    const installedType = manifest.name.startsWith('Website Media Downloader Light')
+    const baseInstalledType = manifest.name.startsWith('Website Media Downloader Light')
       ? (browser.i18n.getMessage('installedTypeLight') || 'Light')
       : (browser.i18n.getMessage('installedTypeFull') || 'Full');
+    const installedType = window.WMDDebugLogger ? `${baseInstalledType} (Debug)` : baseInstalledType;
 
     const isFirefox = navigator.userAgent.includes('Firefox') || (typeof browser !== 'undefined' && browser.runtime.getURL && browser.runtime.getURL('').startsWith('moz-extension://'));
     const reinstallUrl = isFirefox 

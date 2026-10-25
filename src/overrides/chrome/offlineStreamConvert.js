@@ -55,7 +55,9 @@ const DB_NAME = "MediaCacheDB";
 const STORE_NAME = "network-cache";
 const CHUNK_STORE_NAME = "download-chunks";
 
+let _cachedConverterDB = null;
 function openCacheDB() {
+  if (_cachedConverterDB) return Promise.resolve(_cachedConverterDB);
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, 3);
     request.onerror = (event) => reject(event.target.error);
@@ -69,28 +71,35 @@ function openCacheDB() {
         db.createObjectStore(CHUNK_STORE_NAME, { keyPath: ["downloadId", "chunkIndex"] });
       }
     };
-    request.onsuccess = (event) => resolve(event.target.result);
+    request.onsuccess = (event) => {
+      const db = event.target.result;
+      db.onversionchange = () => {
+        db.close();
+        _cachedConverterDB = null;
+      };
+      db.onclose = () => {
+        _cachedConverterDB = null;
+      };
+      _cachedConverterDB = db;
+      resolve(db);
+    };
   });
 }
 
 async function storeCompletedDownloadBlob(cacheId, blob, mime) {
   const db = await openCacheDB();
-  try {
-    await new Promise((resolve, reject) => {
-      const tx = db.transaction([STORE_NAME], "readwrite");
-      tx.objectStore(STORE_NAME).put({
-        url: cacheId,
-        mime: mime || blob.type || "application/octet-stream",
-        data: blob,
-        timestamp: Date.now()
-      });
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error || new Error("Completed download cache write failed"));
-      tx.onabort = () => reject(tx.error || new Error("Completed download cache write aborted"));
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction([STORE_NAME], "readwrite");
+    tx.objectStore(STORE_NAME).put({
+      url: cacheId,
+      mime: mime || blob.type || "application/octet-stream",
+      data: blob,
+      timestamp: Date.now()
     });
-  } finally {
-    db.close();
-  }
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error || new Error("Completed download cache write failed"));
+    tx.onabort = () => reject(tx.error || new Error("Completed download cache write aborted"));
+  });
 }
 
 async function storeConversionChunk(sessionId, index, data) {
@@ -161,7 +170,6 @@ async function cleanupStaleConversionChunks(maxAgeMs = 6 * 60 * 60 * 1000) {
       tx.onerror = () => reject(tx.error);
       tx.onabort = () => reject(tx.error || new Error("Cache cleanup aborted"));
     });
-    db.close();
   } catch (error) { console.warn("Failed to clean stale conversion chunks:", error); }
 }
 
@@ -353,9 +361,34 @@ async function transmuxToMp4(tsBlobs, onProgress = null) {
   });
 }
 
+const _spoofedHeadersCache = new Map();
+const SPOOFED_HEADERS_CACHE_TTL_MS = 30000;
+const SPOOFED_HEADERS_CACHE_MAX_SIZE = 500;
+
+async function getCachedSpoofedHeaders(url) {
+  const now = Date.now();
+  const cached = _spoofedHeadersCache.get(url);
+  if (cached && (now - cached.ts) < SPOOFED_HEADERS_CACHE_TTL_MS) {
+    return cached.headers;
+  }
+  const headers = await chrome.runtime.sendMessage({ action: 'getSpoofedHeaders', url: url });
+  if (_spoofedHeadersCache.size >= SPOOFED_HEADERS_CACHE_MAX_SIZE) {
+    const firstKey = _spoofedHeadersCache.keys().next().value;
+    if (firstKey !== undefined) _spoofedHeadersCache.delete(firstKey);
+  }
+  _spoofedHeadersCache.set(url, { headers: headers || null, ts: now });
+  return headers;
+}
+
 async function spoofedFetch(url, options = {}) {
   try {
-    const headers = await chrome.runtime.sendMessage({ action: 'getSpoofedHeaders', url: url });
+    const existingHeaders = options.headers || {};
+    const hasCustomHeaders = Boolean(
+      existingHeaders['Referer'] || existingHeaders['referer'] ||
+      existingHeaders['Cookie'] || existingHeaders['cookie'] ||
+      existingHeaders['Origin'] || existingHeaders['origin']
+    );
+    const headers = hasCustomHeaders ? null : await getCachedSpoofedHeaders(url);
     if (headers) {
       options.headers = options.headers || {};
       if (headers.cookie) options.headers['Cookie'] = headers.cookie;
@@ -373,72 +406,6 @@ async function spoofedFetch(url, options = {}) {
 }
 
 async function fetchWithCache(url, options = {}) {
-  const isIncognito = (typeof browser !== 'undefined' && browser.extension && browser.extension.inIncognitoContext) || false;
-  if (isIncognito || (await browser.storage.local.get("media-cache").then((result) => result["media-cache"])) !== "1") {
-
-    return spoofedFetch(url, options);
-  }
-
-  try {
-    const db = await openCacheDB();
-    const cachedItem = await new Promise((resolve, reject) => {
-      const tx = db.transaction([STORE_NAME], "readonly");
-      const store = tx.objectStore(STORE_NAME);
-      const req = store.get(url);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-
-    if (cachedItem) {
-      let responseData;
-      if (cachedItem.data) {
-          responseData = cachedItem.data;
-      } else {
-
-          const chunks = [];
-          const chunkTx = db.transaction([CHUNK_STORE_NAME], "readonly");
-          const chunkStore = chunkTx.objectStore(CHUNK_STORE_NAME);
-          const range = IDBKeyRange.bound([url, 0], [url, Infinity]);
-          const cursorRequest = chunkStore.openCursor(range);
-
-          await new Promise((resolveChunk, rejectChunk) => {
-              cursorRequest.onsuccess = (e) => {
-                  const cursor = e.target.result;
-                  if (cursor) {
-                      chunks.push(new Blob([cursor.value.data]));
-
-                      if (chunks.length % 50 === 0) {
-                          console.debug(`Reconstructing cached segments: ${chunks.length}...`);
-                      }
-
-                      cursor.continue();
-                  } else {
-                      resolveChunk();
-                  }
-              };
-              cursorRequest.onerror = (e) => rejectChunk(e.target.error);
-          });
-
-          if (chunks.length > 0) {
-              responseData = new Blob(chunks);
-          }
-      }
-
-      if (responseData) {
-        return new Response(responseData, {
-          status: 200,
-          statusText: "OK (Cached)",
-          headers: {
-            "Content-Type": cachedItem.mime || "application/octet-stream"
-          }
-        });
-      }
-    }
-
-  } catch (e) {
-    console.warn("Cache lookup failed/miss, fetching from network:", e);
-  }
-
   return spoofedFetch(url, options);
 }
 

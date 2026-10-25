@@ -1,6 +1,6 @@
 # Website Media Downloader
 
-[![Version](https://img.shields.io/badge/version-2.4.4-blue.svg)](src/manifest.json)
+[![Version](https://img.shields.io/badge/version-2.4.5-blue.svg)](src/manifest.json)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE.md)
 [![Platform](https://img.shields.io/badge/platform-Chrome%20%7C%20Firefox%20%7C%20Android-orange.svg)](#installation)
 
@@ -58,10 +58,13 @@ If you prefer a smaller installation or use a lower-powered device, choose a Lig
 
 ---
 
-## What's New in v2.4.4
+## What's New in v2.4.5
 
+- Removed dead and unsupported code.
+- Optimized download performance and parallel segment processing.
+- Fixed UI display and layout bugs across media cards.
 - Added image filtering by file size.
-- Fixed Chrome popup sizing to remain consistent across views.
+- Fixed Chrome popup sizing to remain consistent across views ([#3](https://github.com/anpa26/website-media-downloader/issues/3)).
 - Improved the extension UI in Chrome.
 
 ---

@@ -27,7 +27,9 @@
         node src/build.js firefox     - Build Firefox extension
         node src/build.js light       - Build all Light editions
         node src/build.js chrome-light|chrome-yt-light|firefox-light
-        node src/build.js all         - Build all targets (default)
+        node src/build.js debug       - Build all Debug editions
+        node src/build.js <target>-debug
+        node src/build.js all         - Build all targets including Debug (default)
         node src/build.js clean       - Remove build outputs
 */
 
@@ -64,6 +66,18 @@ const FORBIDDEN_PER_TARGET = {
 const FIREFOX_BASED_TARGETS = new Set(['firefox', 'firefox-light']);
 const CHROME_LIGHT_TARGETS = new Set(['chrome-light', 'chrome-yt-light']);
 const LIGHT_TARGETS = new Set(['chrome-light', 'chrome-yt-light', 'firefox-light']);
+const BASE_TARGETS = ['chrome', 'chrome-yt', 'firefox', 'chrome-light', 'chrome-yt-light', 'firefox-light'];
+const DEBUG_TARGETS = BASE_TARGETS.map(target => `${target}-debug`);
+const DEBUG_MESSAGE_KEYS = [
+    'debugLogTitle',
+    'debugLogExplain',
+    'downloadDebugLogButton',
+    'clearDebugLogButton',
+    'debugLogEntriesStatus',
+    'debugLogDownloaded',
+    'debugLogDownloadError',
+    'debugLogCleared'
+];
 const OVERRIDE_CHAIN_PER_TARGET = {
     'chrome-light': ['chrome', 'light'],
     'chrome-yt-light': ['chrome-yt', 'light'],
@@ -541,6 +555,101 @@ function stripLightFeatures(outDir) {
     }
 }
 
+function removeDebugSections(filePath) {
+    const startMarker = 'DEBUG_ONLY_START';
+    const endMarker = 'DEBUG_ONLY_END';
+    let content = fs.readFileSync(filePath, 'utf8');
+    let removed = 0;
+
+    while (content.includes(startMarker)) {
+        const start = content.lastIndexOf('\n', content.indexOf(startMarker)) + 1;
+        const endMarkerIndex = content.indexOf(endMarker, start);
+        if (endMarkerIndex === -1) {
+            throw new Error(`[debug-strip] Missing ${endMarker} in ${path.relative(SRC_DIR, filePath)}`);
+        }
+        const endLine = content.indexOf('\n', endMarkerIndex);
+        content = content.slice(0, start) + content.slice(endLine === -1 ? content.length : endLine + 1);
+        removed++;
+    }
+
+    if (removed === 0) {
+        throw new Error(`[debug-strip] Missing ${startMarker} in ${path.relative(SRC_DIR, filePath)}`);
+    }
+    fs.writeFileSync(filePath, content, 'utf8');
+}
+
+function stripDebugFeatures(outDir) {
+    for (const htmlName of ['popup.html', 'download.html', 'offscreen.html', 'stream_processor.html', 'audio_processor.html']) {
+        const htmlPath = path.join(outDir, htmlName);
+        if (!fs.existsSync(htmlPath)) continue;
+        let html = fs.readFileSync(htmlPath, 'utf8');
+        html = html.replace(/^[ \t]*<script\s+src=["']debug_logger\.js["']><\/script>\r?\n/gm, '');
+        html = html.replace(/<script\s+src=["']debug_logger\.js["']><\/script>/g, '');
+        fs.writeFileSync(htmlPath, html, 'utf8');
+    }
+
+    const popupPath = path.join(outDir, 'popup.html');
+    if (fs.existsSync(popupPath)) {
+        removeDebugSections(popupPath);
+    }
+
+    const settingsPath = path.join(outDir, 'settings.js');
+    if (fs.existsSync(settingsPath)) {
+        removeDebugSections(settingsPath);
+    }
+
+    const backgroundPath = path.join(outDir, 'network_detector.js');
+    if (fs.existsSync(backgroundPath)) {
+        let background = fs.readFileSync(backgroundPath, 'utf8');
+        background = background.replace(/importScripts\(\s*['"]debug_logger\.js['"]\s*,\s*/g, 'importScripts(');
+        fs.writeFileSync(backgroundPath, background, 'utf8');
+    }
+
+    const manifestPath = path.join(outDir, 'manifest.json');
+    if (fs.existsSync(manifestPath)) {
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        if (manifest.background && Array.isArray(manifest.background.scripts)) {
+            manifest.background.scripts = manifest.background.scripts.filter(script => script !== 'debug_logger.js');
+        }
+        fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 4) + '\n', 'utf8');
+    }
+
+    const localesDir = path.join(outDir, '_locales');
+    if (fs.existsSync(localesDir)) {
+        for (const locale of fs.readdirSync(localesDir)) {
+            const messagesPath = path.join(localesDir, locale, 'messages.json');
+            if (!fs.existsSync(messagesPath)) continue;
+            const messages = JSON.parse(fs.readFileSync(messagesPath, 'utf8'));
+            for (const key of DEBUG_MESSAGE_KEYS) delete messages[key];
+            fs.writeFileSync(messagesPath, JSON.stringify(messages, null, 2) + '\n', 'utf8');
+        }
+    }
+}
+
+function stripChromeUnsupportedMediaCache(outDir) {
+    const popupPath = path.join(outDir, 'popup.html');
+    if (fs.existsSync(popupPath)) {
+        const startMarker = 'FIREFOX_ONLY_MEDIA_CACHE_START';
+        const endMarker = 'FIREFOX_ONLY_MEDIA_CACHE_END';
+        let content = fs.readFileSync(popupPath, 'utf8');
+        while (content.includes(startMarker)) {
+            const start = content.lastIndexOf('\n', content.indexOf(startMarker)) + 1;
+            const endMarkerIndex = content.indexOf(endMarker, start);
+            if (endMarkerIndex === -1) break;
+            const endLine = content.indexOf('\n', endMarkerIndex);
+            content = content.slice(0, start) + content.slice(endLine === -1 ? content.length : endLine + 1);
+        }
+        fs.writeFileSync(popupPath, content, 'utf8');
+    }
+
+    const settingsPath = path.join(outDir, 'settings.js');
+    if (fs.existsSync(settingsPath)) {
+        let settings = fs.readFileSync(settingsPath, 'utf8');
+        settings = settings.replace(/'media-cache',\s*/g, '');
+        fs.writeFileSync(settingsPath, settings, 'utf8');
+    }
+}
+
 function finalizeManifest(target, outDir) {
     const manifestPath = path.join(outDir, 'manifest.json');
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
@@ -557,17 +666,48 @@ function finalizeManifest(target, outDir) {
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 4) + '\n', 'utf8');
 }
 
-function validateTarget(target, outDir) {
-    for (const relativePath of FORBIDDEN_PER_TARGET[target] || []) {
+function validateTarget(baseTarget, outDir, isDebug = false) {
+    const targetLabel = isDebug ? `${baseTarget}-debug` : baseTarget;
+    for (const relativePath of FORBIDDEN_PER_TARGET[baseTarget] || []) {
         if (fs.existsSync(path.join(outDir, relativePath))) {
-            throw new Error(`[${target}] Browser-specific file leaked into build: ${relativePath}`);
+            throw new Error(`[${targetLabel}] Browser-specific file leaked into build: ${relativePath}`);
         }
     }
+
+    if (!isDebug) {
+        if (fs.existsSync(path.join(outDir, 'debug_logger.js'))) {
+            throw new Error(`[${targetLabel}] debug_logger.js leaked into non-debug build`);
+        }
+        const popupHtml = fs.readFileSync(path.join(outDir, 'popup.html'), 'utf8');
+        const settingsJs = fs.readFileSync(path.join(outDir, 'settings.js'), 'utf8');
+        const bgJs = fs.readFileSync(path.join(outDir, 'network_detector.js'), 'utf8');
+        if (popupHtml.includes('debug_logger.js') || popupHtml.includes('download-debug-log')) {
+            throw new Error(`[${targetLabel}] Debug logger UI/script leaked into popup.html`);
+        }
+        if (settingsJs.includes('setupDebugLogControls') || settingsJs.includes('WMDDebugLogger')) {
+            throw new Error(`[${targetLabel}] Debug logger controls leaked into settings.js`);
+        }
+        if (bgJs.includes('debug_logger.js')) {
+            throw new Error(`[${targetLabel}] debug_logger.js import leaked into network_detector.js`);
+        }
+    } else {
+        if (!fs.existsSync(path.join(outDir, 'debug_logger.js'))) {
+            throw new Error(`[${targetLabel}] debug_logger.js is missing from debug build`);
+        }
+    }
+
+    const target = baseTarget;
 
     const manifest = JSON.parse(fs.readFileSync(path.join(outDir, 'manifest.json'), 'utf8'));
     const background = fs.readFileSync(path.join(outDir, 'network_detector.js'), 'utf8');
     if (background.includes('createMediaFetchOptions(') && !background.includes('function createMediaFetchOptions(')) {
         throw new Error(`[${target}] createMediaFetchOptions is used but not defined`);
+    }
+    if (!FIREFOX_BASED_TARGETS.has(target)) {
+        const popupHtml = fs.readFileSync(path.join(outDir, 'popup.html'), 'utf8');
+        if (popupHtml.includes('id="media-cache"')) {
+            throw new Error(`[${targetLabel}] Firefox-only media-cache toggle leaked into Chrome build`);
+        }
     }
     if (FIREFOX_BASED_TARGETS.has(target)) {
         if (manifest.permissions?.includes('offscreen')) {
@@ -713,22 +853,29 @@ function validateTarget(target, outDir) {
 }
 
 function buildTarget(target) {
+    const isDebug = target.endsWith('-debug');
+    const baseTarget = isDebug ? target.slice(0, -6) : target;
     const outDir = path.join(BUILD_DIR, target);
     cleanDir(outDir);
     fs.mkdirSync(outDir, { recursive: true });
 
-    const targetExcludes = EXCLUDE_PER_TARGET[target] || new Set();
+    const targetExcludes = new Set(EXCLUDE_PER_TARGET[baseTarget] || []);
+    if (!isDebug) {
+        targetExcludes.add('debug_logger.js');
+    }
     for (const entry of fs.readdirSync(SRC_DIR)) {
         if (EXCLUDE_FROM_BUILD.has(entry) || targetExcludes.has(entry)) continue;
         copyRecursive(path.join(SRC_DIR, entry), path.join(outDir, entry), targetExcludes);
     }
 
-    applyOverrides(target, outDir);
-    if (LIGHT_TARGETS.has(target)) stripLightFeatures(outDir);
-    finalizeManifest(target, outDir);
-    validateTarget(target, outDir);
+    applyOverrides(baseTarget, outDir);
+    if (!FIREFOX_BASED_TARGETS.has(baseTarget)) stripChromeUnsupportedMediaCache(outDir);
+    if (!isDebug) stripDebugFeatures(outDir);
+    if (LIGHT_TARGETS.has(baseTarget)) stripLightFeatures(outDir);
+    finalizeManifest(baseTarget, outDir);
+    validateTarget(baseTarget, outDir, isDebug);
 
-    const overrideCount = countOverrideFiles(target);
+    const overrideCount = countOverrideFiles(baseTarget);
     console.log(`[OK] ${target} build -> build/${target}/  (${overrideCount} override${overrideCount !== 1 ? 's' : ''} applied)`);
 }
 
@@ -737,27 +884,28 @@ const command = (args[0] || 'all').toLowerCase();
 
 switch (command) {
     case 'chrome':
-        buildTarget('chrome');
-        break;
     case 'chrome-yt':
-        buildTarget('chrome-yt');
-        break;
     case 'firefox':
-        buildTarget('firefox');
-        break;
     case 'chrome-light':
     case 'chrome-yt-light':
     case 'firefox-light':
+    case 'chrome-debug':
+    case 'chrome-yt-debug':
+    case 'firefox-debug':
+    case 'chrome-light-debug':
+    case 'chrome-yt-light-debug':
+    case 'firefox-light-debug':
         buildTarget(command);
         break;
     case 'light':
         for (const target of LIGHT_TARGETS) buildTarget(target);
         break;
+    case 'debug':
+        for (const target of DEBUG_TARGETS) buildTarget(target);
+        break;
     case 'all':
-        buildTarget('chrome');
-        buildTarget('chrome-yt');
-        buildTarget('firefox');
-        for (const target of LIGHT_TARGETS) buildTarget(target);
+        for (const target of BASE_TARGETS) buildTarget(target);
+        for (const target of DEBUG_TARGETS) buildTarget(target);
         break;
     case 'clean':
         cleanDir(BUILD_DIR);
@@ -765,6 +913,6 @@ switch (command) {
         break;
     default:
         console.error(`[ERROR] Unknown command: ${command}`);
-        console.error('Usage: node src/build.js [chrome|chrome-yt|firefox|chrome-light|chrome-yt-light|firefox-light|light|all|clean]');
+        console.error('Usage: node src/build.js [chrome|chrome-yt|firefox|chrome-light|chrome-yt-light|firefox-light|<target>-debug|light|debug|all|clean]');
         process.exit(1);
 }

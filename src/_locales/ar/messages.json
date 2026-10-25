@@ -2579,5 +2579,44 @@
   "imageMinFileSizeCustomExplain": {
     "message": "أدخل الحد الأدنى لحجم ملف الصورة بالكيلوبايت (0 = تعطيل).",
     "description": "imageMinFileSizeCustomExplain"
+  },
+  "debugLogTitle": {
+    "message": "سجل التصحيح الكامل",
+    "description": "Title of the debug log setting in Advanced settings"
+  },
+  "debugLogExplain": {
+    "message": "تنزيل سجل تشخيصي كامل لنشاط الإضافة، ومعلومات النظام والمتصفح، والإعدادات، وتقارير الأخطاء لاستكشاف المشكلات وإصلاحها.",
+    "description": "Explanation of the debug log setting in Advanced settings"
+  },
+  "downloadDebugLogButton": {
+    "message": "تنزيل السجل",
+    "description": "Button to download the debug log"
+  },
+  "clearDebugLogButton": {
+    "message": "مسح السجل",
+    "description": "Button to clear the debug log"
+  },
+  "debugLogEntriesStatus": {
+    "message": "$1 إدخالات السجل ($2)",
+    "description": "Status showing number of log entries and size",
+    "placeholders": {
+      "1": { "content": "$1" },
+      "2": { "content": "$2" }
+    }
+  },
+  "debugLogDownloaded": {
+    "message": "تم تنزيل سجل التصحيح بنجاح!",
+    "description": "Notification when debug log is downloaded"
+  },
+  "debugLogDownloadError": {
+    "message": "فشل تنزيل سجل التصحيح: $1",
+    "description": "Error notification when debug log download fails",
+    "placeholders": {
+      "1": { "content": "$1" }
+    }
+  },
+  "debugLogCleared": {
+    "message": "تم مسح سجل التصحيح.",
+    "description": "Notification when debug log is cleared"
   }
 }

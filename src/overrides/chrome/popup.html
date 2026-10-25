@@ -22,6 +22,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title data-translate="extensionName">Website Media Downloader</title>
+  <script src="debug_logger.js"></script>
   <link rel="stylesheet" href="styles/mdui.css">
   <script src="libraries/mdui.global.js"></script>
   <script src="media_compute_client.js"></script>
@@ -548,13 +549,6 @@
             <div class="settings-items-container">
               <div class="setting-item">
                 <div class="setting-text">
-                  <h3 data-translate="mediaCacheTitle">Media cache</h3>
-                  <p data-translate="mediaCacheExplain">Faster downloads, higher RAM usage.</p>
-                </div>
-                <mdui-switch id="media-cache"></mdui-switch>
-              </div>
-              <div class="setting-item">
-                <div class="setting-text">
                   <h3 data-translate="cacheStorageTitle">Cache storage</h3>
                   <p id="indexeddb-cache-status" data-translate="cacheStorageCalculating">Calculating cache usage...</p>
                 </div>
@@ -912,9 +906,23 @@
                 </div>
               </div>
 
-              
-
             </div>
+
+            <!-- DEBUG_ONLY_START -->
+            <div class="settings-items-container">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="debugLogTitle">Full debug log</h3>
+                  <p data-translate="debugLogExplain">Download a complete diagnostic log of extension activity, system &amp; browser information, settings, and error reports for troubleshooting.</p>
+                  <span id="debug-log-status" style="display: block; margin-top: 6px; font-size: 12px; color: rgb(var(--mdui-color-on-surface-variant));"></span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px; align-items: stretch; flex-shrink: 0;">
+                  <mdui-button id="download-debug-log" variant="tonal" data-translate="downloadDebugLogButton">Download log</mdui-button>
+                  <mdui-button id="clear-debug-log" variant="outlined" data-translate="clearDebugLogButton">Clear log</mdui-button>
+                </div>
+              </div>
+            </div>
+            <!-- DEBUG_ONLY_END -->
           </div>
 
           <div class="settings-group">
@@ -1174,7 +1182,7 @@
           box-shadow: 0 6px 24px rgba(0,0,0,0.22);
           overflow:hidden;
         ">
-          <img src="icons/icon.png" style="width:46px; height:46px; object-fit:contain;" alt="WMD Icon" onerror="this.style.display='none'; this.parentElement.innerHTML='<svg width=32 height=32 viewBox=&quot;0 0 24 24&quot; fill=&quot;white&quot;><path d=&quot;M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z&quot;/></svg>'">
+          <img id="welcome-icon-img" src="icons/icon.png" style="width:46px; height:46px; object-fit:contain;" alt="WMD Icon">
         </div>
       </div>
 

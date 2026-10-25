@@ -1,75 +1,102 @@
 {
   "require_uninstall": false,
   "en": {
-    "headline": "What's New (v2.4.4)",
+    "headline": "What's New (v2.4.5)",
     "changes": [
+      "Removed dead and unsupported code.",
+      "Optimized download performance and parallel segment processing.",
+      "Fixed UI display and layout bugs across media cards.",
       "Added image filtering by file size.",
-      "Fixed Chrome popup sizing to remain consistent across views.",
+      "Fixed Chrome popup sizing to remain consistent across views (#3).",
       "Improved the extension UI in Chrome."
     ]
   },
   "id": {
-    "headline": "Yang Baru (v2.4.4)",
+    "headline": "Yang Baru (v2.4.5)",
     "changes": [
-      "Menambahkan filter gambar berdasarkan ukuran.",
-      "Memperbaiki ukuran popup Chrome agar konsisten di berbagai tampilan.",
-      "Memperbaiki tampilan UI ekstensi di Chrome."
+      "Menghapus kode mati dan yang tidak didukung.",
+      "Optimalisasi performa unduhan dan pemrosesan segmen paralel.",
+      "Memperbaiki bug tampilan dan tata letak pada kartu media.",
+      "Menambahkan filter gambar berdasarkan ukuran file.",
+      "Memperbaiki ukuran popup Chrome agar konsisten di berbagai tampilan (#3).",
+      "Meningkatkan antarmuka ekstensi di Chrome."
     ]
   },
   "de": {
-    "headline": "Was gibt's Neues (v2.4.4)",
+    "headline": "Was gibt's Neues (v2.4.5)",
     "changes": [
-      "Bildfilter nach Dateigröße hinzugefügt.",
-      "Die Größe des Chrome-Popups bleibt beim Wechsel der Ansicht jetzt konstant.",
-      "Die Benutzeroberfläche der Erweiterung in Chrome verbessert."
+      "Toter Code entfernt.",
+      "Download-Leistung optimiert.",
+      "UI-Anzeigefehler behoben.",
+      "Added image filtering by file size.",
+      "Fixed Chrome popup sizing to remain consistent across views (#3).",
+      "Improved the extension UI in Chrome."
     ]
   },
   "fr": {
-    "headline": "Nouveautés (v2.4.4)",
+    "headline": "Nouveautés (v2.4.5)",
     "changes": [
-      "Ajout du filtrage des images par taille de fichier.",
-      "Correction de la taille de la fenêtre Chrome pour qu’elle reste constante lors du changement de vue.",
-      "Amélioration de l’interface de l’extension dans Chrome."
+      "Suppression du code mort.",
+      "Optimisation des performances de téléchargement.",
+      "Correction des bugs d'affichage de l'interface.",
+      "Added image filtering by file size.",
+      "Fixed Chrome popup sizing to remain consistent across views (#3).",
+      "Improved the extension UI in Chrome."
     ]
   },
   "ja": {
-    "headline": "新機能 (v2.4.4)",
+    "headline": "新機能 (v2.4.5)",
     "changes": [
-      "画像をファイルサイズで絞り込む機能を追加しました。",
-      "表示を切り替えてもChromeポップアップのサイズが一定になるよう修正しました。",
-      "Chromeでの拡張機能のUIを改善しました。"
+      "不要なコードを削除しました。",
+      "ダウンロードのパフォーマンスを最適化しました。",
+      "UIの表示バグを修正しました。",
+      "Added image filtering by file size.",
+      "Fixed Chrome popup sizing to remain consistent across views (#3).",
+      "Improved the extension UI in Chrome."
     ]
   },
   "ko": {
-    "headline": "새로운 기능 (v2.4.4)",
+    "headline": "새로운 기능 (v2.4.5)",
     "changes": [
-      "파일 크기별 이미지 필터링 기능을 추가했습니다.",
-      "화면을 전환해도 Chrome 팝업 크기가 일정하게 유지되도록 수정했습니다.",
-      "Chrome의 확장 프로그램 UI를 개선했습니다."
+      "사용되지 않는 코드를 삭제했습니다.",
+      "다운로드 성능을 최적화했습니다.",
+      "UI 표시 버그를 수정했습니다.",
+      "Added image filtering by file size.",
+      "Fixed Chrome popup sizing to remain consistent across views (#3).",
+      "Improved the extension UI in Chrome."
     ]
   },
   "pt": {
-    "headline": "Novidades (v2.4.4)",
+    "headline": "Novidades (v2.4.5)",
     "changes": [
-      "Adicionado filtro de imagens por tamanho do arquivo.",
-      "Corrigido o tamanho do popup do Chrome para permanecer consistente ao alternar entre telas.",
-      "Melhorada a interface da extensão no Chrome."
+      "Código morto removido.",
+      "Desempenho de download otimizado.",
+      "Correção de bugs visuais da interface.",
+      "Added image filtering by file size.",
+      "Fixed Chrome popup sizing to remain consistent across views (#3).",
+      "Improved the extension UI in Chrome."
     ]
   },
   "ru": {
-    "headline": "Что нового (v2.4.4)",
+    "headline": "Что нового (v2.4.5)",
     "changes": [
-      "Добавлена фильтрация изображений по размеру файла.",
-      "Исправлен размер окна Chrome, теперь он остаётся постоянным при переключении между разделами.",
-      "Улучшен интерфейс расширения в Chrome."
+      "Удалён неиспользуемый код.",
+      "Оптимизирована производительность скачивания.",
+      "Исправлены ошибки отображения интерфейса.",
+      "Added image filtering by file size.",
+      "Fixed Chrome popup sizing to remain consistent across views (#3).",
+      "Improved the extension UI in Chrome."
     ]
   },
   "ar": {
-    "headline": "ما الجديد (v2.4.4)",
+    "headline": "ما الجديد (v2.4.5)",
     "changes": [
-      "إضافة تصفية الصور حسب حجم الملف.",
-      "إصلاح حجم نافذة Chrome ليظل ثابتًا عند التبديل بين طرق العرض.",
-      "تحسين واجهة الإضافة في Chrome."
+      "إزالة الكود غير المستخدم.",
+      "تحسين أداء التنزيل.",
+      "إصلاح أخطاء واجهة المستخدم.",
+      "Added image filtering by file size.",
+      "Fixed Chrome popup sizing to remain consistent across views (#3).",
+      "Improved the extension UI in Chrome."
     ]
   }
 }

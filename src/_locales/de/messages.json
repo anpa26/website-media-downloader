@@ -2579,5 +2579,44 @@
   "imageMinFileSizeCustomExplain": {
     "message": "Gib die Mindestdateigröße für Bilder in KB ein (0 = deaktiviert).",
     "description": "imageMinFileSizeCustomExplain"
+  },
+  "debugLogTitle": {
+    "message": "Vollständiges Debug-Protokoll",
+    "description": "Title of the debug log setting in Advanced settings"
+  },
+  "debugLogExplain": {
+    "message": "Laden Sie ein vollständiges Diagnoseprotokoll mit Erweiterungsaktivitäten, System- und Browserinformationen, Einstellungen und Fehlerberichten zur Fehlerbehebung herunter.",
+    "description": "Explanation of the debug log setting in Advanced settings"
+  },
+  "downloadDebugLogButton": {
+    "message": "Protokoll herunterladen",
+    "description": "Button to download the debug log"
+  },
+  "clearDebugLogButton": {
+    "message": "Protokoll löschen",
+    "description": "Button to clear the debug log"
+  },
+  "debugLogEntriesStatus": {
+    "message": "$1 Protokolleinträge ($2)",
+    "description": "Status showing number of log entries and size",
+    "placeholders": {
+      "1": { "content": "$1" },
+      "2": { "content": "$2" }
+    }
+  },
+  "debugLogDownloaded": {
+    "message": "Debug-Protokoll erfolgreich heruntergeladen!",
+    "description": "Notification when debug log is downloaded"
+  },
+  "debugLogDownloadError": {
+    "message": "Fehler beim Herunterladen des Debug-Protokolls: $1",
+    "description": "Error notification when debug log download fails",
+    "placeholders": {
+      "1": { "content": "$1" }
+    }
+  },
+  "debugLogCleared": {
+    "message": "Debug-Protokoll gelöscht.",
+    "description": "Notification when debug log is cleared"
   }
 }

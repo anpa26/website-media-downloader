@@ -72,6 +72,16 @@
     }
   }
 
+  const welcomeIconImg = document.getElementById('welcome-icon-img');
+  if (welcomeIconImg) {
+    welcomeIconImg.addEventListener('error', function () {
+      this.style.display = 'none';
+      if (this.parentElement) {
+        this.parentElement.innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>';
+      }
+    });
+  }
+
   document.getElementById('welcome-learn-btn').addEventListener('click', () => {
     dismissWelcomePopup();
     _browser.tabs.create({ url: LEARN_URL });

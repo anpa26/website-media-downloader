@@ -2579,5 +2579,44 @@
   "imageMinFileSizeCustomExplain": {
     "message": "画像ファイルの最小サイズをKBで入力してください (0 = 無効)。",
     "description": "imageMinFileSizeCustomExplain"
+  },
+  "debugLogTitle": {
+    "message": "完全なデバッグログ",
+    "description": "Title of the debug log setting in Advanced settings"
+  },
+  "debugLogExplain": {
+    "message": "トラブルシューティングのために、拡張機能の動作履歴、システムとブラウザの情報、設定、エラーレポートを含む完全な診断ログをダウンロードします。",
+    "description": "Explanation of the debug log setting in Advanced settings"
+  },
+  "downloadDebugLogButton": {
+    "message": "ログをダウンロード",
+    "description": "Button to download the debug log"
+  },
+  "clearDebugLogButton": {
+    "message": "ログを消去",
+    "description": "Button to clear the debug log"
+  },
+  "debugLogEntriesStatus": {
+    "message": "$1 件のログエントリ ($2)",
+    "description": "Status showing number of log entries and size",
+    "placeholders": {
+      "1": { "content": "$1" },
+      "2": { "content": "$2" }
+    }
+  },
+  "debugLogDownloaded": {
+    "message": "デバッグログをダウンロードしました！",
+    "description": "Notification when debug log is downloaded"
+  },
+  "debugLogDownloadError": {
+    "message": "デバッグログのダウンロードに失敗しました: $1",
+    "description": "Error notification when debug log download fails",
+    "placeholders": {
+      "1": { "content": "$1" }
+    }
+  },
+  "debugLogCleared": {
+    "message": "デバッグログを消去しました。",
+    "description": "Notification when debug log is cleared"
   }
 }
