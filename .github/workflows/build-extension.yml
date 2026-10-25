@@ -57,9 +57,40 @@ jobs:
           zip -9 -r ../../website-media-downloader-firefox-light-${{ steps.get_version.outputs.version }}.xpi ./*
           cd ../..
 
+          cd build/chrome-debug
+          zip -9 -r ../../website-media-downloader-chrome-debug-${{ steps.get_version.outputs.version }}.zip ./*
+          cd ../..
+
+          cd build/chrome-yt-debug
+          zip -9 -r ../../website-media-downloader-chrome-yt-debug-${{ steps.get_version.outputs.version }}.zip ./*
+          cd ../..
+
+          cd build/chrome-light-debug
+          zip -9 -r ../../website-media-downloader-chrome-light-debug-${{ steps.get_version.outputs.version }}.zip ./*
+          cd ../..
+
+          cd build/chrome-yt-light-debug
+          zip -9 -r ../../website-media-downloader-chrome-yt-light-debug-${{ steps.get_version.outputs.version }}.zip ./*
+          cd ../..
+
+          cd build/firefox-debug
+          zip -9 -r ../../website-media-downloader-firefox-debug-${{ steps.get_version.outputs.version }}.xpi ./*
+          cd ../..
+
+          cd build/firefox-light-debug
+          zip -9 -r ../../website-media-downloader-firefox-light-debug-${{ steps.get_version.outputs.version }}.xpi ./*
+          cd ../..
+
       - name: Create Source Code Archives
         run: |
-          zip -9 -r website-media-downloader-firefox-source-${{ steps.get_version.outputs.version }}.zip src README.md LICENSE.md CONTRIBUTING.md licenses -x "src/overrides/*" "src/build.js" "src/minify.js" "src/chrome_audio_jobs.js" "src/offscreen.html" "src/offscreen.js"
+          mkdir -p firefox-source-temp/src
+          cp -r build/firefox/* firefox-source-temp/src/
+          cp README.md LICENSE.md CONTRIBUTING.md firefox-source-temp/
+          cp -r licenses firefox-source-temp/
+          cd firefox-source-temp
+          zip -9 -r ../website-media-downloader-firefox-source-${{ steps.get_version.outputs.version }}.zip ./*
+          cd ..
+          rm -rf firefox-source-temp
 
           mkdir -p firefox-light-source-temp/src
           cp -r build/firefox-light/* firefox-light-source-temp/src/
@@ -117,6 +148,12 @@ jobs:
             website-media-downloader-chrome-light-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-chrome-yt-light-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-firefox-light-${{ steps.get_version.outputs.version }}.xpi
+            website-media-downloader-chrome-debug-${{ steps.get_version.outputs.version }}.zip
+            website-media-downloader-chrome-yt-debug-${{ steps.get_version.outputs.version }}.zip
+            website-media-downloader-firefox-debug-${{ steps.get_version.outputs.version }}.xpi
+            website-media-downloader-chrome-light-debug-${{ steps.get_version.outputs.version }}.zip
+            website-media-downloader-chrome-yt-light-debug-${{ steps.get_version.outputs.version }}.zip
+            website-media-downloader-firefox-light-debug-${{ steps.get_version.outputs.version }}.xpi
             website-media-downloader-chrome-source-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-chrome-yt-source-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-chrome-light-source-${{ steps.get_version.outputs.version }}.zip

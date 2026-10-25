@@ -2579,5 +2579,44 @@
   "imageMinFileSizeCustomExplain": {
     "message": "Укажите минимальный размер файла изображения в КБ (0 = отключено).",
     "description": "imageMinFileSizeCustomExplain"
+  },
+  "debugLogTitle": {
+    "message": "Полный журнал отладки",
+    "description": "Title of the debug log setting in Advanced settings"
+  },
+  "debugLogExplain": {
+    "message": "Скачать полный диагностический журнал активности расширения, информации о системе и браузере, настроек и отчетов об ошибках для устранения неполадок.",
+    "description": "Explanation of the debug log setting in Advanced settings"
+  },
+  "downloadDebugLogButton": {
+    "message": "Скачать журнал",
+    "description": "Button to download the debug log"
+  },
+  "clearDebugLogButton": {
+    "message": "Очистить журнал",
+    "description": "Button to clear the debug log"
+  },
+  "debugLogEntriesStatus": {
+    "message": "Записей в журнале: $1 ($2)",
+    "description": "Status showing number of log entries and size",
+    "placeholders": {
+      "1": { "content": "$1" },
+      "2": { "content": "$2" }
+    }
+  },
+  "debugLogDownloaded": {
+    "message": "Журнал отладки успешно скачан!",
+    "description": "Notification when debug log is downloaded"
+  },
+  "debugLogDownloadError": {
+    "message": "Не удалось скачать журнал отладки: $1",
+    "description": "Error notification when debug log download fails",
+    "placeholders": {
+      "1": { "content": "$1" }
+    }
+  },
+  "debugLogCleared": {
+    "message": "Журнал отладки очищен.",
+    "description": "Notification when debug log is cleared"
   }
 }

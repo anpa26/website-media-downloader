@@ -2579,5 +2579,44 @@
   "imageMinFileSizeCustomExplain": {
     "message": "Masukkan ukuran minimum file gambar dalam KB (0 = nonaktif).",
     "description": "imageMinFileSizeCustomExplain"
+  },
+  "debugLogTitle": {
+    "message": "Log debug lengkap",
+    "description": "Title of the debug log setting in Advanced settings"
+  },
+  "debugLogExplain": {
+    "message": "Unduh log diagnostik lengkap yang berisi aktivitas ekstensi, informasi sistem & browser, pengaturan, serta laporan error untuk membantu pemecahan masalah.",
+    "description": "Explanation of the debug log setting in Advanced settings"
+  },
+  "downloadDebugLogButton": {
+    "message": "Unduh log",
+    "description": "Button to download the debug log"
+  },
+  "clearDebugLogButton": {
+    "message": "Hapus log",
+    "description": "Button to clear the debug log"
+  },
+  "debugLogEntriesStatus": {
+    "message": "$1 entri log ($2)",
+    "description": "Status showing number of log entries and size",
+    "placeholders": {
+      "1": { "content": "$1" },
+      "2": { "content": "$2" }
+    }
+  },
+  "debugLogDownloaded": {
+    "message": "Log debug berhasil diunduh!",
+    "description": "Notification when debug log is downloaded"
+  },
+  "debugLogDownloadError": {
+    "message": "Gagal mengunduh log debug: $1",
+    "description": "Error notification when debug log download fails",
+    "placeholders": {
+      "1": { "content": "$1" }
+    }
+  },
+  "debugLogCleared": {
+    "message": "Log debug dihapus.",
+    "description": "Notification when debug log is cleared"
   }
 }

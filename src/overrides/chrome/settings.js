@@ -63,7 +63,7 @@ const SETTINGS_KEYS = [
     'auto-download-media', 'auto-download-quality', 'auto-download-all-domains', 'auto-download-domains', 'auto-skip-download-names', 'auto-skip-download-names-only', 'auto-skip-download-domains', 'auto-ignore-excluded-media', 'auto-download-video', 'auto-download-stream',
     'document-scan', 'document-scan-mode', 'url-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components', 'disable-deduplication', 'optimize-low-end', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom',
     'only-video', 'only-audio', 'only-stream', 'only-image', 'image-min-side', 'image-min-side-custom', 'image-min-file-size', 'image-min-file-size-custom', 'hide-image-without-size', 'only-subtitle', 'only-file', 'ignore-disabled-types',
-    'media-notification', 'audio-process-notification', 'media-system-notification', 'stack-notifications', 'download-method', 'fetch-notification', 'media-cache', 'speed-boost', 'speed-boost-resume', 'connections', 'stream-download',
+    'media-notification', 'audio-process-notification', 'media-system-notification', 'stack-notifications', 'download-method', 'fetch-notification', 'speed-boost', 'speed-boost-resume', 'connections', 'stream-download',
     'stream-quality', 'subtitle-conversion', 'mpd-fix', 'background-download', 'stream-to-mp4', 'audio-to-mp3', 'mp3-bitrate', 'open-preference', 'mux-all-audios', 'mpd-to-mp4',
     'embed-subtitles-mkv', 'embed-subtitles-container', 'embed-subtitles-nonyt', 'block-incoming-popups', 'redirect-guard-clicks', 'redirect-guard-hide-content',
     'ignore-excluded-media', 'skip-detection-names', 'skip-detection-names-only', 'skip-detection-domains', 'filename-template', 'disable-rename-dialog', 'history-page', 'settings-layout', 'theme-mode', 'theme-color', 'group-by-type', 'save-to-gdrive', 'gdrive-stream', 'media-sort-order',
@@ -123,6 +123,90 @@ function setupSettingsConfigurationControls() {
     importButton.addEventListener('click', () => importInput.click());
     importInput.addEventListener('change', importSettingsConfiguration);
 }
+
+// DEBUG_ONLY_START
+function setupDebugLogControls() {
+    const downloadButton = document.getElementById('download-debug-log');
+    const clearButton = document.getElementById('clear-debug-log');
+    const statusLabel = document.getElementById('debug-log-status');
+    if (!downloadButton || downloadButton.dataset.ready === '1') return;
+    downloadButton.dataset.ready = '1';
+
+    const refreshDebugLogStatus = async () => {
+        if (!statusLabel) return;
+        try {
+            if (window.WMDDebugLogger && typeof window.WMDDebugLogger.getStats === 'function') {
+                const stats = await window.WMDDebugLogger.getStats();
+                const sizeText = typeof getHumanReadableSize === 'function'
+                    ? getHumanReadableSize(stats.bytes || 0)
+                    : `${Math.round((stats.bytes || 0) / 1024)} KB`;
+                const entriesLabel = browser.i18n.getMessage('debugLogEntriesStatus', [String(stats.count || 0), sizeText])
+                    || `${stats.count || 0} log entries (${sizeText})`;
+                statusLabel.textContent = entriesLabel;
+            }
+        } catch (_) {}
+    };
+
+    downloadButton.addEventListener('click', async () => {
+        downloadButton.loading = true;
+        downloadButton.disabled = true;
+        try {
+            let reportText = '';
+            if (window.WMDDebugLogger && typeof window.WMDDebugLogger.generateReport === 'function') {
+                const report = await window.WMDDebugLogger.generateReport();
+                reportText = report.text;
+            } else {
+                const stored = await browser.storage.local.get('wmd_debug_logs');
+                reportText = JSON.stringify({
+                    generatedAt: new Date().toISOString(),
+                    userAgent: navigator.userAgent,
+                    logs: stored.wmd_debug_logs || []
+                }, null, 2);
+            }
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            const blobUrl = URL.createObjectURL(new Blob([reportText], { type: 'text/plain;charset=utf-8' }));
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `wmd-debug-log-${timestamp}.log`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+            await refreshDebugLogStatus();
+            showSettingsMessage('debugLogDownloaded', 'Debug log downloaded successfully!');
+        } catch (error) {
+            console.error('Failed to download debug log:', error);
+            showSettingsMessage('debugLogDownloadError', `Failed to download debug log: ${error.message}`, [error.message]);
+        } finally {
+            downloadButton.loading = false;
+            downloadButton.disabled = false;
+        }
+    });
+
+    if (clearButton) {
+        clearButton.addEventListener('click', async () => {
+            clearButton.loading = true;
+            clearButton.disabled = true;
+            try {
+                if (window.WMDDebugLogger && typeof window.WMDDebugLogger.clear === 'function') {
+                    await window.WMDDebugLogger.clear();
+                } else {
+                    await browser.storage.local.remove('wmd_debug_logs');
+                }
+                await refreshDebugLogStatus();
+                showSettingsMessage('debugLogCleared', 'Debug log cleared.');
+            } catch (error) {
+                console.error('Failed to clear debug log:', error);
+            } finally {
+                clearButton.loading = false;
+                clearButton.disabled = false;
+            }
+        });
+    }
+
+    refreshDebugLogStatus();
+}
+// DEBUG_ONLY_END
 
 function cacheMessage(key, substitutions, fallback) {
     const message = substitutions == null
@@ -310,6 +394,9 @@ window.initializeSettingsPage = function initializeSettingsPage() {
     // LIGHT_EXCLUDE_SPEED_TEST_END
     setupIndexedDBCacheControls();
     setupSettingsConfigurationControls();
+    // DEBUG_ONLY_START
+    setupDebugLogControls();
+    // DEBUG_ONLY_END
 
     if (window.location.search.includes('startDropbox=true')) {
         const res = await browser.storage.local.get('dropbox_token');
@@ -408,7 +495,7 @@ async function initializeSettings() {
         'auto-download-media', 'auto-download-quality', 'auto-download-all-domains', 'auto-download-domains', 'auto-skip-download-names', 'auto-skip-download-names-only', 'auto-skip-download-domains', 'auto-ignore-excluded-media', 'auto-download-video', 'auto-download-stream',
         'document-scan', 'document-scan-mode', 'url-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components', 'disable-deduplication', 'optimize-low-end', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom',
         'only-video', 'only-audio', 'only-stream', 'only-image', 'image-min-side', 'image-min-side-custom', 'image-min-file-size', 'image-min-file-size-custom', 'hide-image-without-size', 'only-subtitle', 'only-file', 'ignore-disabled-types',
-        'media-notification', 'media-system-notification', 'stack-notifications', 'download-method', 'fetch-notification', 'media-cache', 'speed-boost', 'speed-boost-resume', 'connections', 'stream-download',
+        'media-notification', 'media-system-notification', 'stack-notifications', 'download-method', 'fetch-notification', 'speed-boost', 'speed-boost-resume', 'connections', 'stream-download',
         'stream-quality', 'subtitle-conversion', 'mpd-fix', 'background-download', 'stream-to-mp4', 'audio-to-mp3', 'mp3-bitrate', 'open-preference', 'embed-subtitles-nonyt', 'mpd-to-mp4', 'block-incoming-popups', 'redirect-guard-clicks', 'redirect-guard-hide-content',
         'ignore-excluded-media', 'skip-detection-names', 'skip-detection-names-only', 'skip-detection-domains', 'filename-template', 'disable-rename-dialog', 'history-page', 'settings-layout', 'theme-mode', 'group-by-type', 'save-to-gdrive', 'gdrive-stream', 'media-sort-order',
         'save-to-dropbox', 'dropbox-stream', 'auto-check-update', 'badge-counter', 'ui-scale', 'ui-scale-custom'
@@ -683,17 +770,9 @@ async function initializeSettings() {
                             cleanView.checked = true;
                             cleanView.dispatchEvent(new Event('change'));
                         }
-                        const mediaCache = document.getElementById('media-cache');
-                        if (mediaCache) {
-                            if (mediaCache.checked) {
-                                mediaCache.checked = false;
-                                pendingChanges['media-cache'] = '0';
-                            }
-                            mediaCache.disabled = true;
-                            try {
-                                browser.runtime.sendMessage({ action: 'clearStorage' });
-                            } catch(e) {}
-                        }
+                        try {
+                            browser.runtime.sendMessage({ action: 'clearStorage' });
+                        } catch(e) {}
                     } else {
                         if (limitSelect) {
                             limitSelect.disabled = false;
@@ -702,10 +781,6 @@ async function initializeSettings() {
                                 if (item) item.style.display = 'flex';
                                 limitCustom.disabled = false;
                             }
-                        }
-                        const mediaCache = document.getElementById('media-cache');
-                        if (mediaCache) {
-                            mediaCache.disabled = false;
                         }
                     }
                 }
@@ -1017,14 +1092,6 @@ async function initializeSettings() {
     const imageMinCustomInitial = document.getElementById('setting-image-min-side-custom');
     if (imageMinSelectInitial && imageMinCustomInitial) {
         imageMinCustomInitial.style.display = imageMinSelectInitial.value === 'custom' ? 'flex' : 'none';
-    }
-
-
-    if (optimizeLowEndInitial && optimizeLowEndInitial.checked) {
-        const mediaCache = document.getElementById('media-cache');
-        if (mediaCache) {
-            mediaCache.disabled = true;
-        }
     }
 
     const gdriveBtn = document.getElementById('gdrive-login-btn');

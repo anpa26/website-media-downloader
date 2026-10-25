@@ -2579,5 +2579,44 @@
   "imageMinFileSizeCustomExplain": {
     "message": "Insira o tamanho mínimo do arquivo de imagem em KB (0 = desativado).",
     "description": "imageMinFileSizeCustomExplain"
+  },
+  "debugLogTitle": {
+    "message": "Registro de depuração completo",
+    "description": "Title of the debug log setting in Advanced settings"
+  },
+  "debugLogExplain": {
+    "message": "Baixe um registro de diagnóstico completo com a atividade da extensão, informações do sistema e navegador, configurações e relatórios de erros para solução de problemas.",
+    "description": "Explanation of the debug log setting in Advanced settings"
+  },
+  "downloadDebugLogButton": {
+    "message": "Baixar registro",
+    "description": "Button to download the debug log"
+  },
+  "clearDebugLogButton": {
+    "message": "Limpar registro",
+    "description": "Button to clear the debug log"
+  },
+  "debugLogEntriesStatus": {
+    "message": "$1 entradas de registro ($2)",
+    "description": "Status showing number of log entries and size",
+    "placeholders": {
+      "1": { "content": "$1" },
+      "2": { "content": "$2" }
+    }
+  },
+  "debugLogDownloaded": {
+    "message": "Registro de depuração baixado com sucesso!",
+    "description": "Notification when debug log is downloaded"
+  },
+  "debugLogDownloadError": {
+    "message": "Falha ao baixar o registro de depuração: $1",
+    "description": "Error notification when debug log download fails",
+    "placeholders": {
+      "1": { "content": "$1" }
+    }
+  },
+  "debugLogCleared": {
+    "message": "Registro de depuração limpo.",
+    "description": "Notification when debug log is cleared"
   }
 }

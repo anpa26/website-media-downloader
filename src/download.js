@@ -46,7 +46,9 @@ const DB_NAME = "MediaCacheDB";
 const STORE_NAME = "network-cache";
 const CHUNK_STORE_NAME = "download-chunks";
 
+let _cachedDownloadDB = null;
 function openCacheDB() {
+    if (_cachedDownloadDB) return Promise.resolve(_cachedDownloadDB);
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, 3);
         request.onerror = (event) => reject(event.target.error || browser.i18n.getMessage("idbOpenError") || "IDB Open Error");
@@ -62,7 +64,18 @@ function openCacheDB() {
                 db.createObjectStore(CHUNK_STORE_NAME, { keyPath: ["downloadId", "chunkIndex"] });
             }
         };
-        request.onsuccess = (event) => resolve(event.target.result);
+        request.onsuccess = (event) => {
+            const db = event.target.result;
+            db.onversionchange = () => {
+                db.close();
+                _cachedDownloadDB = null;
+            };
+            db.onclose = () => {
+                _cachedDownloadDB = null;
+            };
+            _cachedDownloadDB = db;
+            resolve(db);
+        };
     });
 }
 

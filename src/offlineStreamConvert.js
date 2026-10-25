@@ -55,7 +55,9 @@ const DB_NAME = "MediaCacheDB";
 const STORE_NAME = "network-cache";
 const CHUNK_STORE_NAME = "download-chunks";
 
+let _cachedConverterDB = null;
 function openCacheDB() {
+  if (_cachedConverterDB) return Promise.resolve(_cachedConverterDB);
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, 3);
     request.onerror = (event) => reject(event.target.error);
@@ -69,28 +71,35 @@ function openCacheDB() {
         db.createObjectStore(CHUNK_STORE_NAME, { keyPath: ["downloadId", "chunkIndex"] });
       }
     };
-    request.onsuccess = (event) => resolve(event.target.result);
+    request.onsuccess = (event) => {
+      const db = event.target.result;
+      db.onversionchange = () => {
+        db.close();
+        _cachedConverterDB = null;
+      };
+      db.onclose = () => {
+        _cachedConverterDB = null;
+      };
+      _cachedConverterDB = db;
+      resolve(db);
+    };
   });
 }
 
 async function storeCompletedDownloadBlob(cacheId, blob, mime) {
   const db = await openCacheDB();
-  try {
-    await new Promise((resolve, reject) => {
-      const tx = db.transaction([STORE_NAME], "readwrite");
-      tx.objectStore(STORE_NAME).put({
-        url: cacheId,
-        mime: mime || blob.type || "application/octet-stream",
-        data: blob,
-        timestamp: Date.now()
-      });
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error || new Error("Completed download cache write failed"));
-      tx.onabort = () => reject(tx.error || new Error("Completed download cache write aborted"));
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction([STORE_NAME], "readwrite");
+    tx.objectStore(STORE_NAME).put({
+      url: cacheId,
+      mime: mime || blob.type || "application/octet-stream",
+      data: blob,
+      timestamp: Date.now()
     });
-  } finally {
-    db.close();
-  }
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error || new Error("Completed download cache write failed"));
+    tx.onabort = () => reject(tx.error || new Error("Completed download cache write aborted"));
+  });
 }
 
 async function storeConversionChunk(sessionId, index, data) {
@@ -163,7 +172,6 @@ async function cleanupStaleConversionChunks(maxAgeMs = 6 * 60 * 60 * 1000) {
       tx.onerror = () => reject(tx.error);
       tx.onabort = () => reject(tx.error || new Error("Cache cleanup aborted"));
     });
-    db.close();
   } catch (error) {
     console.warn("Failed to clean stale conversion chunks:", error);
   }
@@ -367,9 +375,34 @@ async function transmuxToMp4(tsBlobs, onProgress = null) {
   });
 }
 
+const _spoofedHeadersCache = new Map();
+const SPOOFED_HEADERS_CACHE_TTL_MS = 30000;
+const SPOOFED_HEADERS_CACHE_MAX_SIZE = 500;
+
+async function getCachedSpoofedHeaders(url) {
+  const now = Date.now();
+  const cached = _spoofedHeadersCache.get(url);
+  if (cached && (now - cached.ts) < SPOOFED_HEADERS_CACHE_TTL_MS) {
+    return cached.headers;
+  }
+  const headers = await chrome.runtime.sendMessage({ action: 'getSpoofedHeaders', url: url });
+  if (_spoofedHeadersCache.size >= SPOOFED_HEADERS_CACHE_MAX_SIZE) {
+    const firstKey = _spoofedHeadersCache.keys().next().value;
+    if (firstKey !== undefined) _spoofedHeadersCache.delete(firstKey);
+  }
+  _spoofedHeadersCache.set(url, { headers: headers || null, ts: now });
+  return headers;
+}
+
 async function spoofedFetch(url, options = {}) {
   try {
-    const headers = await chrome.runtime.sendMessage({ action: 'getSpoofedHeaders', url: url });
+    const existingHeaders = options.headers || {};
+    const hasCustomHeaders = Boolean(
+      existingHeaders['Referer'] || existingHeaders['referer'] ||
+      existingHeaders['Cookie'] || existingHeaders['cookie'] ||
+      existingHeaders['Origin'] || existingHeaders['origin']
+    );
+    const headers = hasCustomHeaders ? null : await getCachedSpoofedHeaders(url);
     if (headers) {
       options.headers = options.headers || {};
       if (headers.cookie) options.headers['Cookie'] = headers.cookie;
@@ -386,9 +419,29 @@ async function spoofedFetch(url, options = {}) {
   return fetch(url, options);
 }
 
+let _mediaCacheSettingValue = null;
+if (typeof browser !== 'undefined' && browser.storage && browser.storage.onChanged) {
+  browser.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes['media-cache']) {
+      _mediaCacheSettingValue = changes['media-cache'].newValue;
+    }
+  });
+}
+
+async function isMediaCacheSettingEnabled() {
+  if (_mediaCacheSettingValue !== null) return _mediaCacheSettingValue === "1";
+  try {
+    const result = await browser.storage.local.get("media-cache");
+    _mediaCacheSettingValue = result["media-cache"] ?? "0";
+    return _mediaCacheSettingValue === "1";
+  } catch (_) {
+    return false;
+  }
+}
+
 async function fetchWithCache(url, options = {}) {
   const isIncognito = (typeof browser !== 'undefined' && browser.extension && browser.extension.inIncognitoContext) || false;
-  if (isIncognito || (await browser.storage.local.get("media-cache").then((result) => result["media-cache"])) !== "1") {
+  if (isIncognito || !(await isMediaCacheSettingEnabled())) {
 
     return spoofedFetch(url, options);
   }

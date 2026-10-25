@@ -2584,5 +2584,44 @@
   "imageMinFileSizeCustomExplain": {
     "message": "Enter the minimum image file size in KB (0 = disable).",
     "description": "imageMinFileSizeCustomExplain"
+  },
+  "debugLogTitle": {
+    "message": "Full debug log",
+    "description": "Title of the debug log setting in Advanced settings"
+  },
+  "debugLogExplain": {
+    "message": "Download a complete diagnostic log of extension activity, system & browser information, settings, and error reports for troubleshooting.",
+    "description": "Explanation of the debug log setting in Advanced settings"
+  },
+  "downloadDebugLogButton": {
+    "message": "Download log",
+    "description": "Button to download the debug log"
+  },
+  "clearDebugLogButton": {
+    "message": "Clear log",
+    "description": "Button to clear the debug log"
+  },
+  "debugLogEntriesStatus": {
+    "message": "$1 log entries ($2)",
+    "description": "Status showing number of log entries and size",
+    "placeholders": {
+      "1": { "content": "$1" },
+      "2": { "content": "$2" }
+    }
+  },
+  "debugLogDownloaded": {
+    "message": "Debug log downloaded successfully!",
+    "description": "Notification when debug log is downloaded"
+  },
+  "debugLogDownloadError": {
+    "message": "Failed to download debug log: $1",
+    "description": "Error notification when debug log download fails",
+    "placeholders": {
+      "1": { "content": "$1" }
+    }
+  },
+  "debugLogCleared": {
+    "message": "Debug log cleared.",
+    "description": "Notification when debug log is cleared"
   }
 }

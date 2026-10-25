@@ -2579,5 +2579,44 @@
   "imageMinFileSizeCustomExplain": {
     "message": "Saisissez la taille minimale du fichier image en Ko (0 = désactivé).",
     "description": "imageMinFileSizeCustomExplain"
+  },
+  "debugLogTitle": {
+    "message": "Journal de débogage complet",
+    "description": "Title of the debug log setting in Advanced settings"
+  },
+  "debugLogExplain": {
+    "message": "Téléchargez un journal de diagnostic complet contenant l'activité de l'extension, les informations sur le système et le navigateur, les paramètres et les rapports d'erreurs pour le dépannage.",
+    "description": "Explanation of the debug log setting in Advanced settings"
+  },
+  "downloadDebugLogButton": {
+    "message": "Télécharger le journal",
+    "description": "Button to download the debug log"
+  },
+  "clearDebugLogButton": {
+    "message": "Effacer le journal",
+    "description": "Button to clear the debug log"
+  },
+  "debugLogEntriesStatus": {
+    "message": "$1 entrées de journal ($2)",
+    "description": "Status showing number of log entries and size",
+    "placeholders": {
+      "1": { "content": "$1" },
+      "2": { "content": "$2" }
+    }
+  },
+  "debugLogDownloaded": {
+    "message": "Journal de débogage téléchargé avec succès !",
+    "description": "Notification when debug log is downloaded"
+  },
+  "debugLogDownloadError": {
+    "message": "Échec du téléchargement du journal de débogage : $1",
+    "description": "Error notification when debug log download fails",
+    "placeholders": {
+      "1": { "content": "$1" }
+    }
+  },
+  "debugLogCleared": {
+    "message": "Journal de débogage effacé.",
+    "description": "Notification when debug log is cleared"
   }
 }

@@ -1659,7 +1659,7 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
           progressItem.statusInfo.textContent = text;
         }
       } else {
-        updateProgressUI(id, downloadData.loaded, downloadData.total, downloadData.isParallel, downloadData.isPaused, downloadData.status, downloadData.percent);
+        updateProgressUI(id, downloadData.loaded, downloadData.total, downloadData.isParallel, downloadData.isPaused, downloadData.status, downloadData.percent, downloadData.finishedParts ?? null, downloadData.totalParts ?? null);
       }
       
       if (!activeDownloadingElements.includes(item)) {
@@ -3188,7 +3188,6 @@ function createMediaItem(item) {
     const subWrapper = document.createElement('div');
     subWrapper.classList.add('pill-select-wrapper', 'yt-subtitle-select-wrapper');
     subWrapper.style.flex = '1';
-    subWrapper.style.marginLeft = '8px';
     subWrapper.style.display = 'none';
 
     const subSelect = document.createElement('select');
@@ -3259,7 +3258,7 @@ function createMediaItem(item) {
         let showLangRow = false;
 
         if (matchingFormats.length > 1 || matchingFormats.some(f => f.audioTrack)) {
-            langWrapper.style.display = 'block';
+            langWrapper.style.display = 'flex';
             showLangRow = true;
 
             const allOpt = document.createElement('option');
@@ -3301,7 +3300,7 @@ function createMediaItem(item) {
 
         const ytSubtitles = item.ytSubtitles || null;
         if (ytSubtitles && ytSubtitles.length > 0) {
-            subWrapper.style.display = 'block';
+            subWrapper.style.display = 'flex';
             showLangRow = true;
             if (subSelect.children.length === 0) {
                 const noneOpt = document.createElement('option');
@@ -3648,9 +3647,13 @@ function getMediaType(url, responseHeaders) {
     const hasExt = (ext) => urlPath.endsWith(ext) || urlLower.includes(ext + '&') || urlLower.includes(ext + '?') || urlLower.includes(ext + '#') || urlLower.endsWith(ext);
     let decodedUrlLower = urlLower;
     try { decodedUrlLower = decodeURIComponent(urlLower); } catch (_) {}
-    const streamUrlHint = streamExtensions.some(hasExt) || hasExt('.m3u') ||
+    const isStaticNonStream = imageExtensions.some(hasExt) || subtitleExtensions.some(hasExt) || downloadExtensions.some(hasExt) ||
+        contentType.startsWith('image/') || contentType.includes('vtt') || contentType.includes('subrip') || contentType.includes('ass');
+    const streamUrlHint = !isStaticNonStream && (
+        streamExtensions.some(hasExt) || hasExt('.m3u') ||
         /[?&](?:format|type|output|protocol)=(?:m3u8?|mpd|hls|dash)(?:[&#]|$)/i.test(decodedUrlLower) ||
-        /(?:^|[/_.-])(?:master|playlist|manifest)(?:[/?#_.-]|$)/i.test(decodedUrlLower);
+        /(?:^|[/_.-])(?:master|playlist|manifest)(?:[/?#_.-]|$)/i.test(decodedUrlLower)
+    );
 
     if (streamUrlHint || contentType.includes('mpegurl') || contentType.includes('dash+xml') || urlLower.includes('#stream')) return 'stream';
     if (videoExtensions.some(hasExt) || contentType.startsWith('video/') || urlLower.includes('mime=video') || urlLower.includes('#video')) return 'video';
@@ -4472,9 +4475,10 @@ async function loadAboutPage() {
     const response = await fetch(browser.runtime.getURL('about.json?t=' + Date.now()));
     const data = await response.json();
     const manifest = browser.runtime.getManifest();
-    const installedType = manifest.name.startsWith('Website Media Downloader Light')
+    const baseInstalledType = manifest.name.startsWith('Website Media Downloader Light')
       ? (browser.i18n.getMessage('installedTypeLight') || 'Light')
       : (browser.i18n.getMessage('installedTypeFull') || 'Full');
+    const installedType = window.WMDDebugLogger ? `${baseInstalledType} (Debug)` : baseInstalledType;
 
     const isFirefox = navigator.userAgent.includes('Firefox') || (typeof browser !== 'undefined' && browser.runtime.getURL && browser.runtime.getURL('').startsWith('moz-extension://'));
     const reinstallUrl = isFirefox 

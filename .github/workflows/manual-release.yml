@@ -86,9 +86,15 @@ jobs:
             node src/build.js chrome-yt
             node src/build.js chrome-light
             node src/build.js chrome-yt-light
+            node src/build.js chrome-debug
+            node src/build.js chrome-yt-debug
+            node src/build.js chrome-light-debug
+            node src/build.js chrome-yt-light-debug
           elif [ "${{ github.event.inputs.target_browser }}" = "firefox only" ]; then
             node src/build.js firefox
             node src/build.js firefox-light
+            node src/build.js firefox-debug
+            node src/build.js firefox-light-debug
           fi
 
       - name: Minify Builds
@@ -113,6 +119,22 @@ jobs:
 
             cd build/chrome-yt-light
             zip -9 -r ../../website-media-downloader-chrome-yt-light-${{ github.event.inputs.tag_name }}.zip ./*
+            cd ../..
+
+            cd build/chrome-debug
+            zip -9 -r ../../website-media-downloader-chrome-debug-${{ github.event.inputs.tag_name }}.zip ./*
+            cd ../..
+
+            cd build/chrome-yt-debug
+            zip -9 -r ../../website-media-downloader-chrome-yt-debug-${{ github.event.inputs.tag_name }}.zip ./*
+            cd ../..
+
+            cd build/chrome-light-debug
+            zip -9 -r ../../website-media-downloader-chrome-light-debug-${{ github.event.inputs.tag_name }}.zip ./*
+            cd ../..
+
+            cd build/chrome-yt-light-debug
+            zip -9 -r ../../website-media-downloader-chrome-yt-light-debug-${{ github.event.inputs.tag_name }}.zip ./*
             cd ../..
 
             mkdir -p chrome-source-temp/src
@@ -181,7 +203,22 @@ jobs:
             zip -9 -r ../../website-media-downloader-firefox-light-${{ github.event.inputs.tag_name }}.xpi ./*
             cd ../..
 
-            zip -9 -r website-media-downloader-firefox-source-${{ github.event.inputs.tag_name }}.zip src README.md LICENSE.md CONTRIBUTING.md licenses -x "src/overrides/*" "src/build.js" "src/minify.js" "src/chrome_audio_jobs.js" "src/offscreen.html" "src/offscreen.js"
+            cd build/firefox-debug
+            zip -9 -r ../../website-media-downloader-firefox-debug-${{ github.event.inputs.tag_name }}.xpi ./*
+            cd ../..
+
+            cd build/firefox-light-debug
+            zip -9 -r ../../website-media-downloader-firefox-light-debug-${{ github.event.inputs.tag_name }}.xpi ./*
+            cd ../..
+
+            mkdir -p firefox-source-temp/src
+            cp -r build/firefox/* firefox-source-temp/src/
+            cp README.md LICENSE.md CONTRIBUTING.md firefox-source-temp/
+            cp -r licenses firefox-source-temp/
+            cd firefox-source-temp
+            zip -9 -r ../website-media-downloader-firefox-source-${{ github.event.inputs.tag_name }}.zip ./*
+            cd ..
+            rm -rf firefox-source-temp
 
             mkdir -p firefox-light-source-temp/src
             cp -r build/firefox-light/* firefox-light-source-temp/src/
@@ -255,6 +292,12 @@ jobs:
             website-media-downloader-chrome-yt-light-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-firefox-${{ github.event.inputs.tag_name }}.xpi
             website-media-downloader-firefox-light-${{ github.event.inputs.tag_name }}.xpi
+            website-media-downloader-chrome-debug-${{ github.event.inputs.tag_name }}.zip
+            website-media-downloader-chrome-yt-debug-${{ github.event.inputs.tag_name }}.zip
+            website-media-downloader-chrome-light-debug-${{ github.event.inputs.tag_name }}.zip
+            website-media-downloader-chrome-yt-light-debug-${{ github.event.inputs.tag_name }}.zip
+            website-media-downloader-firefox-debug-${{ github.event.inputs.tag_name }}.xpi
+            website-media-downloader-firefox-light-debug-${{ github.event.inputs.tag_name }}.xpi
             website-media-downloader-chrome-source-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-chrome-yt-source-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-chrome-light-source-${{ github.event.inputs.tag_name }}.zip

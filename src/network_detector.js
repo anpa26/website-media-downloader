@@ -20,7 +20,7 @@ if (typeof browser === 'undefined') {
     var browser = chrome;
 }
 
-if (typeof importScripts === 'function') importScripts('detection_exclusions.js', 'media_filename.js');
+if (typeof importScripts === 'function') importScripts('debug_logger.js', 'detection_exclusions.js', 'media_filename.js');
 
 const tabMetadata = new Map(); // tabId -> { title, url }
 
@@ -362,32 +362,26 @@ browser.storage.onChanged.addListener((changes, area) => {
 
 let savePersistentHeadersTimeout = null;
 async function savePersistentHeaders() {
+    while (urlToHeaderMap.size > 200) {
+        const oldestKey = urlToHeaderMap.keys().next().value;
+        if (oldestKey === undefined) break;
+        urlToHeaderMap.delete(oldestKey);
+    }
+
     const doSave = async () => {
         try {
-            const obj = Object.fromEntries(urlToHeaderMap);
-
-            const keys = Object.keys(obj);
-            if (keys.length > 200) {
-                const keysToRemove = keys.slice(0, keys.length - 200);
-                keysToRemove.forEach(k => urlToHeaderMap.delete(k));
-                await browser.storage.session.set({ 'urlToHeaderMap': Object.fromEntries(urlToHeaderMap) });
-            } else {
-                await browser.storage.session.set({ 'urlToHeaderMap': obj });
-            }
+            await browser.storage.session.set({ 'urlToHeaderMap': Object.fromEntries(urlToHeaderMap) });
         } catch (e) {
             console.warn("Failed to save persistent headers:", e);
         }
     };
 
-    if (isOptimizeLowEnd) {
-        if (savePersistentHeadersTimeout) return;
-        savePersistentHeadersTimeout = setTimeout(() => {
-            savePersistentHeadersTimeout = null;
-            doSave();
-        }, 1000);
-    } else {
+    if (savePersistentHeadersTimeout) return;
+    const debounceMs = isOptimizeLowEnd ? 1500 : 1000;
+    savePersistentHeadersTimeout = setTimeout(() => {
+        savePersistentHeadersTimeout = null;
         doSave();
-    }
+    }, debounceMs);
 }
 
 function isFlagEnabled(val, defaultVal = false) {
@@ -1356,9 +1350,13 @@ function getMediaType(url, contentType) {
     const hasExt = (ext) => urlPath.endsWith(ext) || urlLower.includes(ext + '&') || urlLower.includes(ext + '?') || urlLower.includes(ext + '#') || urlLower.endsWith(ext);
     let decodedUrlLower = urlLower;
     try { decodedUrlLower = decodeURIComponent(urlLower); } catch (_) {}
-    const streamUrlHint = streamExtensions.some(hasExt) || hasExt('.m3u') ||
+    const isStaticNonStream = imageExtensions.some(hasExt) || subtitleExtensions.some(hasExt) || downloadExtensions.some(hasExt) ||
+        mimeLower.startsWith('image/') || mimeLower.includes('vtt') || mimeLower.includes('subrip') || mimeLower.includes('ass');
+    const streamUrlHint = !isStaticNonStream && (
+        streamExtensions.some(hasExt) || hasExt('.m3u') ||
         /[?&](?:format|type|output|protocol)=(?:m3u8?|mpd|hls|dash)(?:[&#]|$)/i.test(decodedUrlLower) ||
-        /(?:^|[/_.-])(?:master|playlist|manifest)(?:[/?#_.-]|$)/i.test(decodedUrlLower);
+        /(?:^|[/_.-])(?:master|playlist|manifest)(?:[/?#_.-]|$)/i.test(decodedUrlLower)
+    );
 
     if (streamUrlHint || mimeLower.includes('mpegurl') || mimeLower.includes('dash+xml') || urlLower.includes('#stream')) return 'stream';
     if (videoExtensions.some(hasExt) || mimeLower.startsWith('video/') || urlLower.includes('mime=video') || urlLower.includes('#video')) return 'video';
@@ -3409,7 +3407,9 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     isAudioJob: !!value.isAudioJob,
                     isStreamJob: !!value.isStreamJob,
                     isZip: !!value.isZip,
-                    isPersistentZipJob: !!value.isPersistentZipJob
+                    isPersistentZipJob: !!value.isPersistentZipJob,
+                    finishedParts: value.finishedParts,
+                    totalParts: value.totalParts
                 };
             }
             sendResponse(downloadsObj);
@@ -4401,9 +4401,10 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
         await saveDownloadState(downloadId, activeDownloads.get(downloadId));
         const remainingSize = total - startOffset;
         const partSize = Math.ceil(remainingSize / connections);
-        const CHUNK_SIZE = 1024 * 1024; 
+        const CHUNK_SIZE = total >= 20 * 1024 * 1024 ? 4 * 1024 * 1024 : (total >= 5 * 1024 * 1024 ? 2 * 1024 * 1024 : 1024 * 1024);
         let totalLoaded = startOffset;
         let lastReportTime = 0;
+        let lastStateSaveTime = 0;
         const totalChunks = Math.ceil(total / CHUNK_SIZE);
         let savedChunks = Math.floor(startOffset / CHUNK_SIZE);
 
@@ -4442,18 +4443,37 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                         const reader = response.body.getReader();
                         let currentBuffer = [];
                         let currentBufferSize = 0;
+                        const partWriteQueue = [];
+                        const MAX_PART_WRITE_QUEUE = 3;
 
-                        async function flushPartBuffer() {
-                            if (currentBuffer.length === 0) return;
-                            
-                            const blob = new Blob(currentBuffer);
+                        async function flushPartBuffer(forceWait = false) {
+                            if (currentBuffer.length > 0) {
+                                const blob = new Blob(currentBuffer);
+                                const chunkOffset = currentPos - currentBufferSize;
+                                currentBuffer = [];
+                                currentBufferSize = 0;
 
-                            await storeChunkInCache(downloadId, currentPos - currentBufferSize, blob);
-                            savedChunks++;
+                                const writePromise = storeChunkInCache(downloadId, chunkOffset, blob).then(() => {
+                                    savedChunks++;
+                                    const now = Date.now();
+                                    if (now - lastStateSaveTime > 1500) {
+                                        lastStateSaveTime = now;
+                                        saveDownloadState(downloadId, activeDownloads.get(downloadId));
+                                    }
+                                });
+                                partWriteQueue.push(writePromise);
+                            }
 
-                            currentBuffer = [];
-                            currentBufferSize = 0;
-                            saveDownloadState(downloadId, activeDownloads.get(downloadId));
+                            if (forceWait) {
+                                if (partWriteQueue.length > 0) {
+                                    await Promise.all(partWriteQueue.splice(0));
+                                }
+                                saveDownloadState(downloadId, activeDownloads.get(downloadId));
+                            } else {
+                                while (partWriteQueue.length >= MAX_PART_WRITE_QUEUE) {
+                                    await partWriteQueue.shift();
+                                }
+                            }
                         }
 
                         while (true) {
@@ -4461,7 +4481,7 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                             try {
                                 readResult = await reader.read();
                             } catch (readError) {
-                                await flushPartBuffer();
+                                await flushPartBuffer(true);
                                 throw readError;
                             }
 
@@ -4487,6 +4507,10 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                             const now = Date.now();
                             if (now - lastReportTime > 200) {
                                 lastReportTime = now;
+                                if (currentItem) {
+                                    currentItem.finishedParts = savedChunks;
+                                    currentItem.totalParts = totalChunks;
+                                }
                                 browser.runtime.sendMessage({
                                     action: 'downloadProgress',
                                     id: downloadId,
@@ -4500,10 +4524,10 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                             }
 
                             if (currentBufferSize >= CHUNK_SIZE) {
-                                await flushPartBuffer();
+                                await flushPartBuffer(false);
                             }
                         }
-                        await flushPartBuffer();
+                        await flushPartBuffer(true);
                         break;
                     } catch (error) {
                         retries++;

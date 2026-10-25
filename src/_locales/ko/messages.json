@@ -2579,5 +2579,44 @@
   "imageMinFileSizeCustomExplain": {
     "message": "이미지 파일의 최소 크기를 KB 단위로 입력하세요 (0 = 사용 안 함).",
     "description": "imageMinFileSizeCustomExplain"
+  },
+  "debugLogTitle": {
+    "message": "전체 디버그 로그",
+    "description": "Title of the debug log setting in Advanced settings"
+  },
+  "debugLogExplain": {
+    "message": "문제 해결을 위해 확장 프로그램 활동, 시스템 및 브라우저 정보, 설정, 오류 보고서가 포함된 전체 진단 로그를 다운로드합니다.",
+    "description": "Explanation of the debug log setting in Advanced settings"
+  },
+  "downloadDebugLogButton": {
+    "message": "로그 다운로드",
+    "description": "Button to download the debug log"
+  },
+  "clearDebugLogButton": {
+    "message": "로그 지우기",
+    "description": "Button to clear the debug log"
+  },
+  "debugLogEntriesStatus": {
+    "message": "로그 항목 $1개 ($2)",
+    "description": "Status showing number of log entries and size",
+    "placeholders": {
+      "1": { "content": "$1" },
+      "2": { "content": "$2" }
+    }
+  },
+  "debugLogDownloaded": {
+    "message": "디버그 로그를 성공적으로 다운로드했습니다!",
+    "description": "Notification when debug log is downloaded"
+  },
+  "debugLogDownloadError": {
+    "message": "디버그 로그 다운로드 실패: $1",
+    "description": "Error notification when debug log download fails",
+    "placeholders": {
+      "1": { "content": "$1" }
+    }
+  },
+  "debugLogCleared": {
+    "message": "디버그 로그가 지워졌습니다.",
+    "description": "Notification when debug log is cleared"
   }
 }
