@@ -8,8 +8,13 @@
   ],
   "whats_new_title": "What's New:",
   "whats_new": [
-    "Now you can choose to display detected media only when manually scanning a website.",
-    "New option to enable automatically clear detected media from the list when its source tab is closed."
+    "Enjoy the new header design with extension branding and a dropdown menu for easier navigation.",
+    "You can now manually scan websites whenever you want, with media detection limited to the currently active tab.",
+    "You can also enable automatic removal of detected media when its source tab is closed to keep your media list clean.",
+    "The bottom action bar now adapts to available options, making it easier to access features, including the new Quick Add URL button.",
+    "The extension is now available in Spanish (es), making it accessible to more users.",
+    "Your download notifications are now more flexible! Minimize them, drag them anywhere, and they'll remember their last position.",
+    "You can now manage all your downloads in one place with unified progress tracking and convenient pause, resume, and cancel controls directly from the popup."
   ],
   "button_text": "OK"
 }
