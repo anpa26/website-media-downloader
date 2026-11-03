@@ -11,5 +11,6 @@
   "action_url": "https://github.com/anpa26/website-media-downloader/issues",
   "button_position": "right",
   "show_skip": true,
-  "storage_key": "wmd_bug_report_2.2.8"
+  "storage_key": "wmd_feature_2.4.8",
+  "version": "2.4.8"
 }
