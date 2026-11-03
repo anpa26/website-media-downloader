@@ -1,16 +1,15 @@
 {
   "enabled": true,
-  "title": "Found Something Wrong?",
-  "title_position": "left",
-  "slides": [
-    {
-      "description": "Found a bug or something not working as expected? Help us improve Website Media Downloader by reporting it on GitHub. Your feedback helps us fix issues and make the experience better for everyone."
-    }
+  "storage_key": "event_v248",
+  "version": "2.4.8",
+  "title": "New Update",
+  "images": [
+    "new1.png"
   ],
-  "button_text": "Report an Issue",
-  "action_url": "https://github.com/anpa26/website-media-downloader/issues",
-  "button_position": "right",
-  "show_skip": true,
-  "storage_key": "wmd_feature_2.4.8",
-  "version": "2.4.8"
+  "whats_new_title": "What's New:",
+  "whats_new": [
+    "Now you can choose to display detected media only when manually scanning a website.",
+    "New option to enable automatically clear detected media from the list when its source tab is closed."
+  ],
+  "button_text": "OK"
 }
