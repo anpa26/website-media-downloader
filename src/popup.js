@@ -1229,6 +1229,9 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message.action === 'audioJobUpdate' && message.complete) {
     finishDownloadUI(message.jobId, !!message.success);
+    // WMD-es: hide the popup's global progress bar when the job completes.
+    const gc = document.getElementById('global-progress-container');
+    if (gc) gc.style.display = 'none';
     sendResponse({ success: true });
     return;
   }
@@ -1289,6 +1292,41 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             item.loadingBar.setAttribute('indeterminate', 'true');
         }
     }
+    // WMD-es: also mirror audio/stream/conversion progress into the popup's global bar
+    // (top of Home), so a minimized/active download is visible as soon as you open the AddOn.
+    try {
+      const gC = document.getElementById('global-progress-container');
+      const gB = document.getElementById('global-progress-bar');
+      const gT = document.getElementById('global-progress-text');
+      if (gC && gB && gT) {
+        const pct = (message.percent !== undefined && message.percent !== null) ? Math.min(100, Math.round(message.percent)) : null;
+        gC.style.display = 'flex';
+        if (pct !== null) { gB.indeterminate = false; gB.max = 100; gB.value = pct; }
+        else { gB.indeterminate = true; }
+        gT.textContent = (message.text || 'Downloading...') + (pct !== null ? ` (${pct}%)` : '');
+        // WMD-es: cancel (×) and pause/resume (⏸/▶) controls on the popup's global bar.
+        const ctlId = message.jobId || message.id;
+        const gCancel = document.getElementById('cancel-global-operation');
+        const gPause = document.getElementById('pause-global-operation');
+        if (ctlId && gCancel) {
+          gCancel.style.display = 'inline-flex';
+          gCancel.onclick = () => { browser.runtime.sendMessage({ action: 'cancelDownload', id: ctlId }).catch(() => {}); gC.style.display = 'none'; };
+        }
+        if (ctlId && gPause) {
+          gPause.style.display = 'inline-flex';
+          if (gC.dataset.activeId !== String(ctlId)) { gC.dataset.activeId = String(ctlId); gC.dataset.paused = '0'; setGlobalPauseIcon(gPause, false); }
+          gPause.onclick = () => {
+            const paused = gC.dataset.paused === '1';
+            browser.runtime.sendMessage({ action: paused ? 'resumeActiveDownload' : 'pauseDownload', id: ctlId }).catch(() => {});
+            gC.dataset.paused = paused ? '0' : '1';
+            setGlobalPauseIcon(gPause, !paused);
+          };
+        }
+        const done = (pct !== null && pct >= 100) || /complete|done|saved|finished/i.test(message.text || '');
+        clearTimeout(window.__wmdGlobalHide);
+        if (done) window.__wmdGlobalHide = setTimeout(() => { gC.style.display = 'none'; }, 1500);
+      }
+    } catch (e) {}
     sendResponse({ success: true });
     return;
   }
@@ -1412,6 +1450,11 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   }
 });
+
+function setGlobalPauseIcon(btn, paused) {
+  const p = btn && btn.querySelector('svg path');
+  if (p) p.setAttribute('d', paused ? 'M8 5v14l11-7z' : 'M6 19h4V5H6v14zm8-14v14h4V5h-4z');
+}
 
 function updateProgressUI(id, loaded, total, isParallel = false, isPaused = false, status = 'downloading', percent = null, finishedParts = null, totalParts = null) {
   let item = uiCache.get(id);

@@ -756,7 +756,7 @@
             color: rgba(255,255,255,0.5) !important;
             font-size: 11px !important;
         }
-        .wmd-toast-close {
+        .wmd-toast-close, .wmd-toast-min {
             background: none !important;
             border: none !important;
             color: rgba(255,255,255,0.4) !important;
@@ -768,7 +768,7 @@
             justify-content: center !important;
             flex-shrink: 0 !important;
         }
-        .wmd-toast-close:hover {
+        .wmd-toast-close:hover, .wmd-toast-min:hover {
             color: #fff !important;
             background: rgba(255,255,255,0.1) !important;
         }
@@ -825,6 +825,18 @@
         }
     }
 
+    function applyToastPosition(el, left, top) {
+        const w = el.offsetWidth || 320, h = el.offsetHeight || 60;
+        left = Math.min(Math.max(0, left), Math.max(0, window.innerWidth - w));
+        top = Math.min(Math.max(0, top), Math.max(0, window.innerHeight - h));
+        el.style.setProperty('left', left + 'px', 'important');
+        el.style.setProperty('top', top + 'px', 'important');
+        el.style.setProperty('bottom', 'auto', 'important');
+        el.style.setProperty('right', 'auto', 'important');
+        el.style.setProperty('transform', 'none', 'important');
+        el.style.setProperty('animation', 'none', 'important');
+    }
+
     function getOrCreateToast() {
         if (_toastEl && document.body.contains(_toastEl)) {
             applyToastTheme();
@@ -844,6 +856,9 @@
                         <span class="wmd-toast-pct" id="wmd-pct">0%</span>
                     </div>
                 </div>
+                <button class="wmd-toast-min" id="wmd-min" title="Minimize (download continues)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
                 <button class="wmd-toast-close" id="wmd-close" title="Cancel">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
@@ -855,6 +870,11 @@
         _toastBarEl = _toastEl.querySelector('#wmd-bar');
         _toastStatusEl = _toastEl.querySelector('#wmd-status');
         _toastPctEl = _toastEl.querySelector('#wmd-pct');
+        _toastEl.querySelector('#wmd-min').addEventListener('click', () => {
+            // Minimize: hide the toast but keep the download running in the background.
+            // The download list (panel) still tracks it and offers Cancel/Pause there.
+            hideToast(true);
+        });
         _toastEl.querySelector('#wmd-close').addEventListener('click', () => {
             if (_toastCurrentTaskId) {
                 if (_toastCurrentTaskId.startsWith('audio_') || _toastCurrentTaskId.startsWith('stream_') || _toastCurrentTaskId.startsWith('zip_')) {
@@ -865,6 +885,46 @@
             }
             hideToast(true);
         });
+        // WMD-es: make the toast draggable so the user can move the download bubble anywhere,
+        // and remember where they leave it (persisted per browser via storage.local).
+        (function enableDrag(el) {
+            el.style.cursor = 'move';
+            let dragging = false, moved = false, sx = 0, sy = 0, sLeft = 0, sTop = 0;
+            try {
+                browser.storage.local.get('toast-position').then(r => {
+                    const p = r && r['toast-position'];
+                    if (p && p.left != null && p.top != null && !dragging) applyToastPosition(el, p.left, p.top);
+                }).catch(() => {});
+            } catch (e) {}
+            el.addEventListener('pointerdown', (e) => {
+                if (e.target.closest('#wmd-min, #wmd-close')) return; // let the buttons work
+                if (e.button) return; // left click only
+                dragging = true; moved = false;
+                const r = el.getBoundingClientRect();
+                sLeft = r.left; sTop = r.top; sx = e.clientX; sy = e.clientY;
+                el.style.setProperty('transition', 'none', 'important');
+                try { el.setPointerCapture(e.pointerId); } catch (err) {}
+                e.preventDefault();
+            });
+            el.addEventListener('pointermove', (e) => {
+                if (!dragging) return;
+                const dx = e.clientX - sx, dy = e.clientY - sy;
+                if (Math.abs(dx) > 2 || Math.abs(dy) > 2) moved = true;
+                applyToastPosition(el, sLeft + dx, sTop + dy);
+            });
+            const end = (e) => {
+                if (!dragging) return;
+                dragging = false;
+                el.style.removeProperty('transition');
+                try { el.releasePointerCapture(e.pointerId); } catch (err) {}
+                if (moved) {
+                    const r = el.getBoundingClientRect();
+                    try { browser.storage.local.set({ 'toast-position': { left: r.left, top: r.top } }); } catch (err) {}
+                }
+            };
+            el.addEventListener('pointerup', end);
+            el.addEventListener('pointercancel', end);
+        })(_toastEl);
         return _toastEl;
     }
 

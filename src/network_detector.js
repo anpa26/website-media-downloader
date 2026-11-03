@@ -2395,7 +2395,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             if (message.text !== undefined) item.status = message.text;
             if (message.percent !== undefined) item.percent = message.percent;
             broadcastAudioJob({ action: 'audioJobUpdate', jobId: message.jobId, filename: item.filename, text: item.status, percent: item.percent, loaded: item.loaded, total: item.total, indeterminate: message.indeterminate });
-            browser.runtime.sendMessage({ action: 'audioPopupStatus', id: item.url, text: formatAudioJobStatus(item), percent: item.percent, indeterminate: message.indeterminate }).catch(() => {});
+            browser.runtime.sendMessage({ action: 'audioPopupStatus', id: item.url, jobId: message.jobId, text: formatAudioJobStatus(item), percent: item.percent, indeterminate: message.indeterminate }).catch(() => {});
         }
         return;
     }
@@ -2470,7 +2470,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                         const percent = total > 0 ? (loaded / total) * 100 : undefined;
                         if (item) { item.loaded = loaded; item.total = total; item.percent = percent; item.status = 'Downloading...'; }
                         broadcastAudioJob({ action: 'audioJobUpdate', jobId: message.jobId, filename: item?.filename, text: item?.status, percent, loaded, total, indeterminate: total === 0 });
-                        if (item) browser.runtime.sendMessage({ action: 'audioPopupStatus', id: item.url, text: formatAudioJobStatus(item), percent, indeterminate: total === 0 }).catch(() => {});
+                        if (item) browser.runtime.sendMessage({ action: 'audioPopupStatus', id: item.url, jobId: message.jobId, text: formatAudioJobStatus(item), percent, indeterminate: total === 0 }).catch(() => {});
                     } else if (tabId !== undefined) {
                         browser.tabs.sendMessage(tabId, {
                             action: 'audioFetchProgress',
@@ -5515,6 +5515,18 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
                     isPaused: false,
                     status: (gdriveSessionUri || dropboxSessionId) ? 'uploading' : 'downloading'
                 }).catch(() => {});
+                // WMD-es: also show/update the floating in-page toast for video (and any type),
+                // reusing the audio-job toast machinery so progress is visible for every download.
+                broadcastAudioJob({
+                    action: 'audioJobUpdate',
+                    jobId: downloadId,
+                    filename: filename || getFileName(url),
+                    text: (gdriveSessionUri || dropboxSessionId) ? 'Uploading...' : 'Downloading...',
+                    percent: total > 0 ? (loaded / total) * 100 : undefined,
+                    loaded: parseInt(loaded) || 0,
+                    total: parseInt(total) || 0,
+                    indeterminate: !(total > 0)
+                });
             }
 
             if (currentBufferSize >= BUFFER_THRESHOLD) {
@@ -5555,6 +5567,18 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
             percent: 100,
             status: ((gdriveSessionUri || dropboxSessionId) && activeDownloads.get(downloadId)?.isStreamUploaded) ? 'uploading' : 'downloading'
         }).catch(() => {});
+        // WMD-es: close out the floating toast for this video/any-type download.
+        broadcastAudioJob({
+            action: 'audioJobUpdate',
+            jobId: downloadId,
+            filename: filename || getFileName(url),
+            text: 'Done!',
+            percent: 100,
+            loaded: parseInt(loaded) || 0,
+            total: parseInt(total) || 0,
+            complete: true,
+            success: true
+        });
 
         const currentItem = activeDownloads.get(downloadId);
         if (currentItem) {
