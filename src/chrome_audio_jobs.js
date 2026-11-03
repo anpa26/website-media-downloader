@@ -34,18 +34,38 @@ async function ensureChromeAudioOffscreen() {
     await chromeAudioOffscreenCreating;
 }
 
+function broadcastChromeAudioJob(message) {
+    chrome.tabs.query({}).then(tabs => {
+        for (const tab of tabs) {
+            if (tab.id !== undefined && /^https?:/i.test(tab.url || '')) {
+                chrome.tabs.sendMessage(tab.id, message).catch(() => {});
+            }
+        }
+    }).catch(() => {});
+}
+
 async function startPersistentAudioJobDirect(message) {
     const jobId = 'audio_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
     const job = { ...message, action: undefined, jobId };
     chromeAudioJobs.set(jobId, { ...job, controller: null, percent: 0, isPaused: false });
+    if (typeof activeDownloads !== 'undefined') {
+        activeDownloads.set(jobId, {
+            id: jobId, url: message.url, audioUrl: message.audioUrl,
+            youtubeTracks: message.youtubeTracks, filename: message.filename,
+            loaded: 0, total: 0, percent: 0, status: 'Starting...',
+            mediaType: message.audioOnly ? 'audio' : 'video', isAudioJob: true
+        });
+    }
     try {
         await chrome.storage.local.set({ [`audioJob_${jobId}`]: job });
         await ensureChromeAudioOffscreen();
         await chrome.runtime.sendMessage({ action: 'startOffscreenAudioJob', jobId });
         return { success: true, jobId };
     } catch (error) {
+        broadcastChromeAudioJob({ action: 'audioJobUpdate', jobId, filename: message.filename, text: error.message, complete: true, success: false });
         chrome.runtime.sendMessage({ action: 'downloadError', id: job.url, url: job.url, error: error.message }).catch(() => {});
         chromeAudioJobs.delete(jobId);
+        if (typeof activeDownloads !== 'undefined') activeDownloads.delete(jobId);
         await chrome.storage.local.remove(`audioJob_${jobId}`);
         return { success: false, error: error.message };
     }
@@ -78,7 +98,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     if (done) break;
                     chunks.push(value); loaded += value.byteLength;
                     const percent = total ? loaded / total * 100 : undefined;
-                    chrome.runtime.sendMessage({ action: 'customStatus', id: message.url, text: total ? `Downloading ${(loaded / 1048576).toFixed(1)} MB / ${(total / 1048576).toFixed(1)} MB` : `Downloaded ${(loaded / 1048576).toFixed(1)} MB`, percent, indeterminate: !total }).catch(() => {});
+                    if (typeof activeDownloads !== 'undefined') {
+                        const item = activeDownloads.get(message.jobId);
+                        if (item) { item.loaded = loaded; item.total = total; item.percent = percent; item.status = 'Downloading...'; }
+                    }
+                    broadcastChromeAudioJob({ action: 'audioJobUpdate', jobId: message.jobId, filename: job?.filename, text: 'Downloading...', percent, loaded, total, indeterminate: !total });
+                    chrome.runtime.sendMessage({ action: 'customStatus', id: message.url, jobId: message.jobId, text: total ? `Downloading ${(loaded / 1048576).toFixed(1)} MB / ${(total / 1048576).toFixed(1)} MB` : `Downloaded ${(loaded / 1048576).toFixed(1)} MB`, percent, indeterminate: !total }).catch(() => {});
                 }
                 const bytes = new Uint8Array(loaded); let offset = 0;
                 for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
@@ -90,12 +115,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'audioJobProgress' && chromeAudioJobs.has(message.jobId)) {
         const job = chromeAudioJobs.get(message.jobId);
         if (message.percent !== undefined) job.percent = message.percent;
-        if (message.text) chrome.runtime.sendMessage({ action: 'customStatus', id: job.url, text: String(message.text).replace(/\s*\(?\d+(?:\.\d+)?%\)?/g, '').trim(), percent: job.percent }).catch(() => {});
+        const cleanText = message.text ? String(message.text).replace(/\s*\(?\d+(?:\.\d+)?%\)?/g, '').trim() : undefined;
+        if (typeof activeDownloads !== 'undefined') {
+            const item = activeDownloads.get(message.jobId);
+            if (item) {
+                if (cleanText !== undefined) item.status = cleanText;
+                if (message.percent !== undefined) item.percent = message.percent;
+            }
+        }
+        broadcastChromeAudioJob({ action: 'audioJobUpdate', jobId: message.jobId, filename: job.filename, text: cleanText || 'Processing...', percent: job.percent, indeterminate: message.indeterminate });
+        if (message.text) chrome.runtime.sendMessage({ action: 'customStatus', id: job.url, jobId: message.jobId, text: cleanText, percent: job.percent, indeterminate: message.indeterminate }).catch(() => {});
     }
     if (message.action === 'audioJobComplete' && chromeAudioJobs.has(message.jobId)) {
         const job = chromeAudioJobs.get(message.jobId);
-        chrome.runtime.sendMessage({ action: message.success ? 'downloadComplete' : 'downloadError', id: job.url, url: job.url, error: message.error }).catch(() => {});
+        broadcastChromeAudioJob({ action: 'audioJobUpdate', jobId: message.jobId, filename: job.filename, text: message.success ? 'Complete!' : (message.error || 'Failed'), percent: message.success ? 100 : job.percent, complete: true, success: message.success });
+        chrome.runtime.sendMessage({ action: message.success ? 'downloadComplete' : 'downloadError', id: job.url, jobId: message.jobId, url: job.url, error: message.error }).catch(() => {});
         chromeAudioJobs.delete(message.jobId);
+        if (typeof activeDownloads !== 'undefined') activeDownloads.delete(message.jobId);
         chrome.storage.local.remove(`audioJob_${message.jobId}`);
     }
     if (message.action === 'pauseDownload' || message.action === 'resumeActiveDownload' ||
@@ -105,6 +141,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const job = chromeAudioJobs.get(id);
         if (job) {
             job.isPaused = paused;
+            if (typeof activeDownloads !== 'undefined') {
+                const item = activeDownloads.get(id);
+                if (item) item.isPaused = paused;
+            }
             chrome.storage.local.get(`audioJob_${id}`).then(stored => {
                 if (stored[`audioJob_${id}`]) chrome.storage.local.set({ [`audioJob_${id}`]: { ...stored[`audioJob_${id}`], isPaused: paused } });
             });
@@ -120,7 +160,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             if (message.id === id || message.url === job.url) {
                 job.controller?.abort();
                 chrome.runtime.sendMessage({ action: 'cancelPersistentAudioJob', jobId: id, url: job.url, audioUrl: job.audioUrl, youtubeTracks: job.youtubeTracks }).catch(() => {});
+                broadcastChromeAudioJob({ action: 'audioJobUpdate', jobId: id, filename: job.filename, text: 'Cancelled', percent: job.percent, complete: true, success: false });
+                chrome.runtime.sendMessage({ action: 'downloadError', id: job.url, jobId: id, url: job.url, error: 'USER_CANCELED' }).catch(() => {});
                 chromeAudioJobs.delete(id);
+                if (typeof activeDownloads !== 'undefined') activeDownloads.delete(id);
                 chrome.storage.local.remove(`audioJob_${id}`);
             }
         }

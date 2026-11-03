@@ -1229,9 +1229,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message.action === 'audioJobUpdate' && message.complete) {
     finishDownloadUI(message.jobId, !!message.success);
-    // WMD-es: hide the popup's global progress bar when the job completes.
-    const gc = document.getElementById('global-progress-container');
-    if (gc) gc.style.display = 'none';
+    hideGlobalProgressIfMatch(message.jobId);
     sendResponse({ success: true });
     return;
   }
@@ -1240,7 +1238,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!item) {
       const mediaItems = [...new Set([...document.querySelectorAll('.media-item'), ...activeDownloadingElements])];
       for (const el of mediaItems) {
-        if (el.dataset.downloadId === message.id || el.dataset.url === message.id) {
+        if (el.dataset.downloadId === message.id || el.dataset.url === message.id || (message.jobId && el.dataset.downloadId === message.jobId)) {
           let progressContainer = el.querySelector('.download-progress-container');
           if (!progressContainer) {
             progressContainer = document.createElement('div');
@@ -1268,6 +1266,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
           item = { loadingBar, statusInfo, element: el, progressContainer, dlBtn, audioBtn, prvBtn, cancelBtn };
           uiCache.set(message.id, item);
+          if (message.jobId) uiCache.set(message.jobId, item);
           if (el.dataset.downloadId) uiCache.set(el.dataset.downloadId, item);
           if (el.dataset.url) uiCache.set(el.dataset.url, item);
           break;
@@ -1275,6 +1274,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     }
     if (item) {
+        if (message.jobId) item.element.dataset.downloadId = message.jobId;
         if (!activeDownloadingElements.includes(item.element)) {
             prioritizeActiveDownload(item.element);
         }
@@ -1292,48 +1292,36 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             item.loadingBar.setAttribute('indeterminate', 'true');
         }
     }
-    // WMD-es: also mirror audio/stream/conversion progress into the popup's global bar
-    // (top of Home), so a minimized/active download is visible as soon as you open the AddOn.
-    try {
-      const gC = document.getElementById('global-progress-container');
-      const gB = document.getElementById('global-progress-bar');
-      const gT = document.getElementById('global-progress-text');
-      if (gC && gB && gT) {
-        const pct = (message.percent !== undefined && message.percent !== null) ? Math.min(100, Math.round(message.percent)) : null;
-        gC.style.display = 'flex';
-        if (pct !== null) { gB.indeterminate = false; gB.max = 100; gB.value = pct; }
-        else { gB.indeterminate = true; }
-        gT.textContent = (message.text || 'Downloading...') + (pct !== null ? ` (${pct}%)` : '');
-        // WMD-es: cancel (×) and pause/resume (⏸/▶) controls on the popup's global bar.
-        const ctlId = message.jobId || message.id;
-        const gCancel = document.getElementById('cancel-global-operation');
-        const gPause = document.getElementById('pause-global-operation');
-        if (ctlId && gCancel) {
-          gCancel.style.display = 'inline-flex';
-          gCancel.onclick = () => { browser.runtime.sendMessage({ action: 'cancelDownload', id: ctlId }).catch(() => {}); gC.style.display = 'none'; };
-        }
-        if (ctlId && gPause) {
-          gPause.style.display = 'inline-flex';
-          if (gC.dataset.activeId !== String(ctlId)) { gC.dataset.activeId = String(ctlId); gC.dataset.paused = '0'; setGlobalPauseIcon(gPause, false); }
-          gPause.onclick = () => {
-            const paused = gC.dataset.paused === '1';
-            browser.runtime.sendMessage({ action: paused ? 'resumeActiveDownload' : 'pauseDownload', id: ctlId }).catch(() => {});
-            gC.dataset.paused = paused ? '0' : '1';
-            setGlobalPauseIcon(gPause, !paused);
-          };
-        }
-        const done = (pct !== null && pct >= 100) || /complete|done|saved|finished/i.test(message.text || '');
-        clearTimeout(window.__wmdGlobalHide);
-        if (done) window.__wmdGlobalHide = setTimeout(() => { gC.style.display = 'none'; }, 1500);
-      }
-    } catch (e) {}
+    const ctlId = message.jobId || item?.element?.dataset?.downloadId || message.id;
+    updateGlobalOperationBar({
+      id: ctlId,
+      url: message.id,
+      text: message.text || 'Downloading...',
+      percent: message.percent,
+      indeterminate: message.indeterminate
+    });
     sendResponse({ success: true });
     return;
   }
   if (message.action === 'downloadProgress') {
     updateProgressUI(message.id || message.url, message.loaded, message.total, message.isParallel, message.isPaused, message.status, message.percent, message.finishedParts, message.totalParts);
+    const pct = message.percent !== undefined && message.percent !== null ? message.percent : (message.total > 0 ? (message.loaded / message.total) * 100 : null);
+    updateGlobalOperationBar({
+      id: message.id || message.url,
+      url: message.url,
+      text: message.status === 'uploading' ? (browser.i18n.getMessage("uploadingToGDriveShort") || "Uploading to Cloud...") : (browser.i18n.getMessage("downloadingTitle") || "Downloading..."),
+      percent: pct,
+      indeterminate: !(message.total > 0) && pct === null,
+      isPaused: !!message.isPaused
+    });
   } else if (message.action === 'downloadPaused') {
     updateProgressUI(message.id, message.loaded, message.total, false, true);
+    const gC = document.getElementById('global-progress-container');
+    const gPause = document.getElementById('pause-global-operation');
+    if (gC && gC.dataset.activeId === String(message.id)) {
+      gC.dataset.paused = '1';
+      if (gPause) setGlobalPauseIcon(gPause, true);
+    }
   } else if (message.action === 'zipProgress') {
     const progressContainer = document.getElementById('global-progress-container');
     const progressBar = document.getElementById('global-progress-bar');
@@ -1409,6 +1397,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.action === 'downloadComplete') {
     const dlId = message.id || message.url;
     finishDownloadUI(dlId, true);
+    hideGlobalProgressIfMatch(dlId, message.url);
 
     if (message.url && message.url !== dlId) {
       finishDownloadUI(message.url, true);
@@ -1423,6 +1412,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const itemData = uiCache.get(id);
 
     finishDownloadUI(id, false);
+    hideGlobalProgressIfMatch(id, message.url, message.jobId);
 
     if (!itemData && !document.querySelector(`.media-item[data-url="${message.url}"]`)) {
       console.debug("Ignored background download error for untracked item:", message.url);
@@ -1454,6 +1444,71 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 function setGlobalPauseIcon(btn, paused) {
   const p = btn && btn.querySelector('svg path');
   if (p) p.setAttribute('d', paused ? 'M8 5v14l11-7z' : 'M6 19h4V5H6v14zm8-14v14h4V5h-4z');
+}
+
+function hideGlobalProgressIfMatch(...ids) {
+  const gC = document.getElementById('global-progress-container');
+  if (!gC) return;
+  const activeId = gC.dataset.activeId;
+  const activeUrl = gC.dataset.activeUrl;
+  const candidates = ids.filter(Boolean).map(String);
+  if (!activeId || candidates.length === 0 || candidates.includes(activeId) || (activeUrl && candidates.includes(activeUrl))) {
+    clearTimeout(window.__wmdGlobalHide);
+    gC.style.display = 'none';
+    delete gC.dataset.activeId;
+    delete gC.dataset.activeUrl;
+  }
+}
+
+function updateGlobalOperationBar({ id, url, filename, text, percent, indeterminate, isPaused = false }) {
+  try {
+    const gC = document.getElementById('global-progress-container');
+    const gB = document.getElementById('global-progress-bar');
+    const gT = document.getElementById('global-progress-text');
+    if (!gC || !gB || !gT) return;
+    const ctlId = id || url;
+    const pct = (percent !== undefined && percent !== null && Number.isFinite(Number(percent))) ? Math.min(100, Math.round(Number(percent))) : null;
+    gC.style.display = 'flex';
+    if (pct !== null && !indeterminate) {
+      gB.indeterminate = false;
+      gB.max = 100;
+      gB.value = pct;
+    } else {
+      gB.indeterminate = true;
+    }
+    const pausedPrefix = isPaused ? `[${browser.i18n.getMessage("pausedStatus") || "Paused"}] ` : '';
+    const titlePrefix = filename ? `${filename} • ` : '';
+    const rawText = String(text || 'Downloading...').replace(/^\[Paused\]\s*/i, '');
+    const pctSuffix = (pct !== null && !/\(\d+%\)/.test(rawText)) ? ` (${pct}%)` : '';
+    gT.textContent = `${pausedPrefix}${titlePrefix}${rawText}${pctSuffix}`;
+    const gCancel = document.getElementById('cancel-global-operation');
+    const gPause = document.getElementById('pause-global-operation');
+    if (url) gC.dataset.activeUrl = String(url);
+    if (ctlId && gCancel) {
+      gCancel.style.display = 'inline-flex';
+      gCancel.onclick = () => {
+        browser.runtime.sendMessage({ action: 'cancelDownload', id: ctlId, url: url || undefined }).catch(() => {});
+        hideGlobalProgressIfMatch(ctlId);
+      };
+    }
+    if (ctlId && gPause) {
+      gPause.style.display = 'inline-flex';
+      if (gC.dataset.activeId !== String(ctlId)) {
+        gC.dataset.activeId = String(ctlId);
+      }
+      gC.dataset.paused = isPaused ? '1' : '0';
+      setGlobalPauseIcon(gPause, !!isPaused);
+      gPause.onclick = () => {
+        const paused = gC.dataset.paused === '1';
+        browser.runtime.sendMessage({ action: paused ? 'resumeActiveDownload' : 'pauseDownload', id: ctlId }).catch(() => {});
+        gC.dataset.paused = paused ? '0' : '1';
+        setGlobalPauseIcon(gPause, !paused);
+      };
+    }
+    const done = (pct !== null && pct >= 100) || /complete|done|saved|finished/i.test(rawText);
+    clearTimeout(window.__wmdGlobalHide);
+    if (done && !isPaused) window.__wmdGlobalHide = setTimeout(() => hideGlobalProgressIfMatch(ctlId), 1500);
+  } catch (e) {}
 }
 
 function updateProgressUI(id, loaded, total, isParallel = false, isPaused = false, status = 'downloading', percent = null, finishedParts = null, totalParts = null) {
@@ -1640,15 +1695,20 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
     }
   }
 
+  let hasZip = false;
+  let lastNonZipEntry = null;
+
   activeIds.forEach(id => {
     const downloadData = activeDownloads[id];
     const url = downloadData.url;
 
     if (downloadData.isZip) {
+      hasZip = true;
       const container = document.getElementById('global-progress-container');
       const bar = document.getElementById('global-progress-bar');
       const text = document.getElementById('global-progress-text');
       const cancel = document.getElementById('cancel-global-operation');
+      const pause = document.getElementById('pause-global-operation');
       if (container) container.style.display = 'flex';
       if (bar) {
         bar.max = downloadData.status === 'processingStream' ? 100 : Math.max(downloadData.total || 1, 1);
@@ -1659,6 +1719,8 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
         ? (browser.i18n.getMessage('zipGenerating') || 'Generating ZIP archive...')
         : (`${downloadData.currentFile || ''}${downloadData.currentFile ? ' • ' : ''}${downloadData.statusText || downloadData.status || browser.i18n.getMessage('zipPreparing') || 'Preparing ZIP...'}`);
       if (container) {
+        container.dataset.activeId = String(id);
+        container.dataset.paused = downloadData.isPaused ? '1' : '0';
         let resume = container.querySelector('#resume-recovered-zip');
         if (downloadData.isPaused) {
           if (!resume) {
@@ -1673,12 +1735,27 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
           };
         } else if (resume) resume.remove();
       }
+      if (pause) {
+        pause.style.display = 'inline-flex';
+        setGlobalPauseIcon(pause, !!downloadData.isPaused);
+        pause.onclick = () => {
+          const paused = container?.dataset.paused === '1';
+          browser.runtime.sendMessage({ action: paused ? 'resumeActiveDownload' : 'pauseDownload', id }).catch(() => {});
+          if (container) container.dataset.paused = paused ? '0' : '1';
+          setGlobalPauseIcon(pause, !paused);
+        };
+      }
       if (cancel) {
-        cancel.style.display = 'inline-block';
-        cancel.onclick = () => browser.runtime.sendMessage({ action: 'cancelDownload', id }).catch(() => {});
+        cancel.style.display = 'inline-flex';
+        cancel.onclick = () => {
+          browser.runtime.sendMessage({ action: 'cancelDownload', id }).catch(() => {});
+          hideGlobalProgressIfMatch(id);
+        };
       }
       return;
     }
+
+    lastNonZipEntry = { id, downloadData };
 
     const item = itemsById.get(String(id)) || itemsByUrl.get(url) ||
       (url ? itemsByUrl.get(url.split('?')[0]) : null);
@@ -1711,9 +1788,38 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
     }
   });
 
+  if (!hasZip && lastNonZipEntry) {
+    const { id, downloadData } = lastNonZipEntry;
+    const pct = downloadData.percent !== undefined && downloadData.percent !== null
+      ? downloadData.percent
+      : (downloadData.total > 0 ? (downloadData.loaded / downloadData.total) * 100 : null);
+    let statusText = downloadData.statusText || downloadData.status || 'Downloading...';
+    if (statusText === 'downloading') statusText = browser.i18n.getMessage("downloadingTitle") || 'Downloading...';
+    else if (statusText === 'uploading') statusText = browser.i18n.getMessage("uploadingToGDriveShort") || 'Uploading to Cloud...';
+    if (/^Downloading/i.test(statusText) && downloadData.total > 0) {
+      statusText += ` ${(downloadData.loaded / 1048576).toFixed(1)} MB / ${(downloadData.total / 1048576).toFixed(1)} MB`;
+    } else if (/^Downloading/i.test(statusText) && downloadData.loaded > 0) {
+      statusText += ` ${(downloadData.loaded / 1048576).toFixed(1)} MB`;
+    }
+    updateGlobalOperationBar({
+      id,
+      url: downloadData.url,
+      filename: downloadData.filename,
+      text: statusText,
+      percent: pct,
+      indeterminate: !(downloadData.total > 0) && pct === null,
+      isPaused: !!downloadData.isPaused
+    });
+  } else if (activeIds.length === 0) {
+    const gC = document.getElementById('global-progress-container');
+    if (gC && gC.dataset.activeId && !activeIdSet.has(gC.dataset.activeId)) {
+      hideGlobalProgressIfMatch(gC.dataset.activeId);
+    }
+  }
+
   mediaItems.forEach(item => {
     const jobId = item.dataset.downloadId || '';
-    if (jobId.startsWith('audio_') && !activeIdSet.has(jobId)) {
+    if ((jobId.startsWith('audio_') || jobId.startsWith('stream_') || jobId.startsWith('dl_')) && !activeIdSet.has(jobId)) {
       finishDownloadUI(jobId, false);
     }
   });

@@ -156,7 +156,7 @@ async function startPersistentStreamJobDirect(message) {
         text: 'Preparing stream...', percent: 0, indeterminate: true
     });
     browser.runtime.sendMessage({
-        action: 'streamPopupStatus', id: job.url,
+        action: 'streamPopupStatus', id: job.url, jobId,
         text: 'Preparing stream...', percent: undefined, indeterminate: true
     }).catch(() => {});
     try {
@@ -353,7 +353,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 }
             }
             browser.runtime.sendMessage({
-                action: 'streamPopupStatus', id: job.url, text: message.text,
+                action: 'streamPopupStatus', id: job.url, jobId: message.jobId, text: message.text,
                 percent: message.percent, indeterminate: message.indeterminate
             }).catch(() => {});
             broadcastStreamJob({

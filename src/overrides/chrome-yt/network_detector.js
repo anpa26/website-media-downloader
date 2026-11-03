@@ -2319,6 +2319,16 @@ browser.downloads.onChanged.addListener((delta) => {
 
 const cancelledZipDownloads = new Set();
 
+function broadcastAudioJob(message) {
+    browser.tabs.query({}).then(tabs => {
+        for (const tab of tabs) {
+            if (tab.id !== undefined && /^https?:/i.test(tab.url || '')) {
+                browser.tabs.sendMessage(tab.id, message).catch(() => {});
+            }
+        }
+    }).catch(() => {});
+}
+
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'customStatus') {
         const id = message.id;
@@ -3098,6 +3108,10 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             const item = activeDownloads.get(targetId);
             if (item) {
                 if (item.isZip) cancelledZipDownloads.add(targetId);
+                if (!item.isAudioJob) {
+                    broadcastAudioJob({ action: 'audioJobUpdate', jobId: targetId, filename: item.filename, text: 'Cancelled', percent: item.percent, loaded: item.loaded, total: item.total, complete: true, success: false });
+                    browser.runtime.sendMessage({ action: 'downloadError', id: targetId, url: item.url, error: 'USER_CANCELED' }).catch(() => {});
+                }
                 if (isNative || item.isNative) {
                     browser.downloads.cancel(targetId).catch(() => {});
                 } else if (item.abortController) {
@@ -3215,6 +3229,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 status: value.status,
                 statusText: value.statusText,
                 currentFile: value.currentFile,
+                isAudioJob: !!value.isAudioJob,
                 isStreamJob: !!value.isStreamJob,
                 isZip: !!value.isZip,
                 isPersistentZipJob: !!value.isPersistentZipJob,
@@ -4250,6 +4265,16 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                                     finishedParts: savedChunks,
                                     totalParts: totalChunks
                                 }).catch(() => {});
+                                broadcastAudioJob({
+                                    action: 'audioJobUpdate',
+                                    jobId: downloadId,
+                                    filename: filename || getFileName(url),
+                                    text: 'Downloading...',
+                                    percent: total > 0 ? (totalLoaded / total) * 100 : undefined,
+                                    loaded: parseInt(totalLoaded) || 0,
+                                    total: parseInt(total) || 0,
+                                    indeterminate: !(total > 0)
+                                });
                             }
 
                             if (currentBufferSize >= CHUNK_SIZE) {
@@ -4286,6 +4311,17 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
             finishedParts: totalChunks,
             totalParts: totalChunks
         }).catch(() => {});
+        broadcastAudioJob({
+            action: 'audioJobUpdate',
+            jobId: downloadId,
+            filename: filename || getFileName(url),
+            text: 'Done!',
+            percent: 100,
+            loaded: parseInt(total) || 0,
+            total: parseInt(total) || 0,
+            complete: true,
+            success: true
+        });
 
         const finalFilename = filename || getFileName(url);
         const contentType = providedContentType || 'application/octet-stream';
@@ -4310,11 +4346,27 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
             if (item && item.abortController !== abortController) return;
             if (item && item.isPaused) return; 
 
+            broadcastAudioJob({
+                action: 'audioJobUpdate',
+                jobId: downloadId,
+                filename: filename || getFileName(url),
+                text: 'Cancelled',
+                complete: true,
+                success: false
+            });
             activeDownloads.delete(downloadId);
             cleanupDownload(downloadId);
             return;
         }
         console.error("Parallel download error:", error);
+        broadcastAudioJob({
+            action: 'audioJobUpdate',
+            jobId: downloadId,
+            filename: filename || getFileName(url),
+            text: error.message || 'Failed',
+            complete: true,
+            success: false
+        });
         browser.runtime.sendMessage({ 
             action: 'downloadError', 
             id: downloadId, 
@@ -5327,6 +5379,16 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
                     isPaused: false,
                     status: (gdriveSessionUri || dropboxSessionId) ? 'uploading' : 'downloading'
                 }).catch(() => {});
+                broadcastAudioJob({
+                    action: 'audioJobUpdate',
+                    jobId: downloadId,
+                    filename: filename || getFileName(url),
+                    text: (gdriveSessionUri || dropboxSessionId) ? 'Uploading...' : 'Downloading...',
+                    percent: total > 0 ? (loaded / total) * 100 : undefined,
+                    loaded: parseInt(loaded) || 0,
+                    total: parseInt(total) || 0,
+                    indeterminate: !(total > 0)
+                });
             }
 
             if (currentBufferSize >= BUFFER_THRESHOLD) {
@@ -5367,6 +5429,17 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
             percent: 100,
             status: ((gdriveSessionUri || dropboxSessionId) && activeDownloads.get(downloadId)?.isStreamUploaded) ? 'uploading' : 'downloading'
         }).catch(() => {});
+        broadcastAudioJob({
+            action: 'audioJobUpdate',
+            jobId: downloadId,
+            filename: filename || getFileName(url),
+            text: 'Done!',
+            percent: 100,
+            loaded: parseInt(loaded) || 0,
+            total: parseInt(total) || 0,
+            complete: true,
+            success: true
+        });
 
         const currentItem = activeDownloads.get(downloadId);
         if (currentItem) {
@@ -5429,14 +5502,30 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
             const item = activeDownloads.get(downloadId);
             if (item && item.isPaused) return; 
             
+            broadcastAudioJob({
+                action: 'audioJobUpdate',
+                jobId: downloadId,
+                filename: filename || getFileName(url),
+                text: 'Cancelled',
+                complete: true,
+                success: false
+            });
             activeDownloads.delete(downloadId);
-            browser.runtime.sendMessage({ action: 'downloadError', url: url, error: 'USER_CANCELED' }).catch(() => {});
+            browser.runtime.sendMessage({ action: 'downloadError', id: downloadId, url: url, error: 'USER_CANCELED' }).catch(() => {});
             removeDownloadState(downloadId);
             return;
         }
 
         console.error("Background fetch download failed:", error);
-        browser.runtime.sendMessage({ action: 'downloadError', url: url, error: error.message }).catch(() => {});
+        broadcastAudioJob({
+            action: 'audioJobUpdate',
+            jobId: downloadId,
+            filename: filename || getFileName(url),
+            text: error.message || 'Failed',
+            complete: true,
+            success: false
+        });
+        browser.runtime.sendMessage({ action: 'downloadError', id: downloadId, url: url, error: error.message }).catch(() => {});
 
         activeDownloads.delete(downloadId);
         removeDownloadState(downloadId);

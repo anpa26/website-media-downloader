@@ -61,6 +61,11 @@
     if (typeof browser !== 'undefined' && browser.storage && browser.storage.onChanged) {
         browser.storage.onChanged.addListener((changes, area) => {
             if (area === 'local') {
+                if (changes['minimized-toast-tasks']) {
+                    const list = Array.isArray(changes['minimized-toast-tasks'].newValue) ? changes['minimized-toast-tasks'].newValue : [];
+                    _minimizedTasks = new Set(list);
+                    if (_toastCurrentTaskId && _minimizedTasks.has(_toastCurrentTaskId)) hideToast(true);
+                }
                 updateSettingsCache().then(() => {
                     if (changes['theme-color'] || changes['ui-scale']) applyToastTheme();
                     if (changes['audio-process-notification'] && !processNotificationsEnabled()) {
@@ -805,6 +810,7 @@
     let _toastHideTimer = null;
     let _toastCurrentTaskId = null;
     let _activeCancellations = new Set();
+    let _minimizedTasks = new Set();
     const _activeDownloads = new Map();
 
     function getToastThemeColor() {
@@ -818,6 +824,13 @@
         return cachedContentSettings['ui-scale'] || '85%';
     }
 
+    function getToastZoomFactor() {
+        const raw = String(getToastScale()).trim();
+        const num = parseFloat(raw);
+        if (!Number.isFinite(num) || num <= 0) return 0.85;
+        return raw.endsWith('%') ? num / 100 : num;
+    }
+
     function applyToastTheme() {
         if (_toastEl) {
             _toastEl.style.setProperty('--wmd-toast-theme', getToastThemeColor());
@@ -826,9 +839,15 @@
     }
 
     function applyToastPosition(el, left, top) {
+        const zoom = getToastZoomFactor();
+        const vw = window.innerWidth / zoom;
+        const vh = window.innerHeight / zoom;
         const w = el.offsetWidth || 320, h = el.offsetHeight || 60;
-        left = Math.min(Math.max(0, left), Math.max(0, window.innerWidth - w));
-        top = Math.min(Math.max(0, top), Math.max(0, window.innerHeight - h));
+        left = Math.min(Math.max(0, left), Math.max(0, vw - w));
+        top = Math.min(Math.max(0, top), Math.max(0, vh - h));
+        el.dataset.customPos = '1';
+        el.dataset.posLeft = String(left);
+        el.dataset.posTop = String(top);
         el.style.setProperty('left', left + 'px', 'important');
         el.style.setProperty('top', top + 'px', 'important');
         el.style.setProperty('bottom', 'auto', 'important');
@@ -873,14 +892,29 @@
         _toastEl.querySelector('#wmd-min').addEventListener('click', () => {
             // Minimize: hide the toast but keep the download running in the background.
             // The download list (panel) still tracks it and offers Cancel/Pause there.
+            if (_toastCurrentTaskId) {
+                _minimizedTasks.add(_toastCurrentTaskId);
+                try {
+                    browser.storage.local.get('minimized-toast-tasks').then(r => {
+                        const list = Array.isArray(r?.['minimized-toast-tasks']) ? r['minimized-toast-tasks'] : [];
+                        if (!list.includes(_toastCurrentTaskId)) {
+                            const updated = [...list.slice(-30), _toastCurrentTaskId];
+                            browser.storage.local.set({ 'minimized-toast-tasks': updated }).catch(() => {});
+                        }
+                    }).catch(() => {});
+                } catch (e) {}
+            }
             hideToast(true);
         });
         _toastEl.querySelector('#wmd-close').addEventListener('click', () => {
             if (_toastCurrentTaskId) {
-                if (_toastCurrentTaskId.startsWith('audio_') || _toastCurrentTaskId.startsWith('stream_') || _toastCurrentTaskId.startsWith('zip_')) {
+                if (_toastCurrentTaskId.startsWith('audio_') || _toastCurrentTaskId.startsWith('stream_') || _toastCurrentTaskId.startsWith('zip_') || _toastCurrentTaskId.startsWith('dl_')) {
                     browser.runtime.sendMessage({ action: 'cancelDownload', id: _toastCurrentTaskId }).catch(() => {});
+                } else {
+                    browser.runtime.sendMessage({ action: 'cancelDownload', url: _toastCurrentTaskId }).catch(() => {});
                 }
                 _activeCancellations.add(_toastCurrentTaskId);
+                _minimizedTasks.delete(_toastCurrentTaskId);
                 _activeDownloads.delete(_toastCurrentTaskId);
             }
             hideToast(true);
@@ -900,15 +934,19 @@
                 if (e.target.closest('#wmd-min, #wmd-close')) return; // let the buttons work
                 if (e.button) return; // left click only
                 dragging = true; moved = false;
+                const zoom = getToastZoomFactor();
                 const r = el.getBoundingClientRect();
-                sLeft = r.left; sTop = r.top; sx = e.clientX; sy = e.clientY;
+                sLeft = el.dataset.customPos === '1' ? parseFloat(el.dataset.posLeft) || (r.left / zoom) : (r.left / zoom);
+                sTop = el.dataset.customPos === '1' ? parseFloat(el.dataset.posTop) || (r.top / zoom) : (r.top / zoom);
+                sx = e.clientX; sy = e.clientY;
                 el.style.setProperty('transition', 'none', 'important');
                 try { el.setPointerCapture(e.pointerId); } catch (err) {}
                 e.preventDefault();
             });
             el.addEventListener('pointermove', (e) => {
                 if (!dragging) return;
-                const dx = e.clientX - sx, dy = e.clientY - sy;
+                const zoom = getToastZoomFactor();
+                const dx = (e.clientX - sx) / zoom, dy = (e.clientY - sy) / zoom;
                 if (Math.abs(dx) > 2 || Math.abs(dy) > 2) moved = true;
                 applyToastPosition(el, sLeft + dx, sTop + dy);
             });
@@ -918,12 +956,22 @@
                 el.style.removeProperty('transition');
                 try { el.releasePointerCapture(e.pointerId); } catch (err) {}
                 if (moved) {
-                    const r = el.getBoundingClientRect();
-                    try { browser.storage.local.set({ 'toast-position': { left: r.left, top: r.top } }); } catch (err) {}
+                    const left = parseFloat(el.dataset.posLeft);
+                    const top = parseFloat(el.dataset.posTop);
+                    if (Number.isFinite(left) && Number.isFinite(top)) {
+                        try { browser.storage.local.set({ 'toast-position': { left, top } }); } catch (err) {}
+                    }
                 }
             };
             el.addEventListener('pointerup', end);
             el.addEventListener('pointercancel', end);
+            window.addEventListener('resize', () => {
+                if (el.dataset.customPos === '1') {
+                    const left = parseFloat(el.dataset.posLeft);
+                    const top = parseFloat(el.dataset.posTop);
+                    if (Number.isFinite(left) && Number.isFinite(top)) applyToastPosition(el, left, top);
+                }
+            });
         })(_toastEl);
         return _toastEl;
     }
@@ -946,6 +994,7 @@
             isPaused: false,
             mediaType: audioOnly ? 'audio' : 'video'
         });
+        if (_minimizedTasks.has(taskId)) return;
         const toast = getOrCreateToast();
         toast.classList.remove('wmd-toast--success', 'wmd-toast--error');
         toast.classList.add('wmd-toast--show');
@@ -1055,9 +1104,26 @@
             if (_toastCurrentTaskId === message.jobId) hideToast(true);
             return;
         }
+        if (message.complete) {
+            _minimizedTasks.delete(message.jobId);
+            _activeDownloads.delete(message.jobId);
+            if (!_toastEl || _toastCurrentTaskId !== message.jobId) return;
+            _toastEl.classList.remove('wmd-toast--success', 'wmd-toast--error');
+            _toastEl.classList.add(message.success ? 'wmd-toast--success' : 'wmd-toast--error');
+            if (_toastStatusEl && message.text) _toastStatusEl.textContent = message.text;
+            if (message.success && _toastBarEl) _toastBarEl.style.width = '100%';
+            if (message.success && _toastPctEl) _toastPctEl.textContent = '100%';
+            _toastHideTimer = setTimeout(() => hideToast(false), 4000);
+            return;
+        }
+        if (_minimizedTasks.has(message.jobId)) {
+            if (_toastCurrentTaskId === message.jobId) hideToast(true);
+            return;
+        }
         if (!_toastEl || _toastCurrentTaskId !== message.jobId) {
             showToast(message.jobId, message.filename || 'Audio Only', true);
         }
+        if (!_toastEl) return;
         const title = _toastEl.querySelector('#wmd-title');
         if (title && message.filename) {
             title.textContent = message.total > 0
@@ -1081,12 +1147,6 @@
             }
         }
         if (message.indeterminate && _toastPctEl) _toastPctEl.textContent = '…';
-        if (message.complete) {
-            _toastEl.classList.remove('wmd-toast--success', 'wmd-toast--error');
-            _toastEl.classList.add(message.success ? 'wmd-toast--success' : 'wmd-toast--error');
-            _activeDownloads.delete(message.jobId);
-            _toastHideTimer = setTimeout(() => hideToast(false), 4000);
-        }
     }
 
     browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -1219,15 +1279,22 @@
         }
     });
 
-    browser.runtime.sendMessage({ action: 'getActiveDownloads' }).then(items => {
-        const jobs = Object.values(items || {}).filter(item => item.isAudioJob || item.isStreamJob || item.isPersistentZipJob);
+    Promise.all([
+        browser.storage?.local ? browser.storage.local.get('minimized-toast-tasks').catch(() => ({})) : Promise.resolve({}),
+        browser.runtime.sendMessage({ action: 'getActiveDownloads' }).catch(() => null)
+    ]).then(([stored, items]) => {
+        if (Array.isArray(stored?.['minimized-toast-tasks'])) {
+            _minimizedTasks = new Set(stored['minimized-toast-tasks']);
+        }
+        const jobs = Object.values(items || {}).filter(item => item.isAudioJob || item.isStreamJob || item.isPersistentZipJob || String(item.id || '').startsWith('dl_'));
         if (jobs.length) {
             const job = jobs[jobs.length - 1];
+            const pct = job.percent !== undefined ? job.percent : (job.total > 0 ? (job.loaded / job.total) * 100 : undefined);
             applyAudioJobUpdate({
                 action: job.isPersistentZipJob ? 'zipJobUpdate' : (job.isStreamJob ? 'streamJobUpdate' : 'audioJobUpdate'),
                 jobId: job.id, filename: job.filename,
-                text: job.statusText || job.status, percent: job.percent, indeterminate: !job.total
-                , loaded: job.loaded, total: job.total
+                text: job.statusText || job.status || 'Downloading...', percent: pct, indeterminate: !(job.total > 0) && pct === undefined,
+                loaded: job.loaded, total: job.total
             });
         }
     }).catch(() => {});
