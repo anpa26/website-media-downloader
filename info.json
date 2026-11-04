@@ -1,8 +1,8 @@
 {
   "enabled": true,
-  "storage_key": "event_v248",
-  "version": "2.4.8",
-  "title": "Version 2.4.8 Update",
+  "storage_key": "event_v249",
+  "version": "2.4.9",
+  "title": "Version 2.4.9 Update",
   "images": [
     "new1.jpg",
     "new2.jpg"
@@ -15,7 +15,7 @@
     "The bottom action bar now adapts to available options, making it easier to access features, including the new Quick Add URL button.",
     "The extension is now available in Spanish (es), making it accessible to more users.",
     "Your download notifications are now more flexible! Minimize them, drag them anywhere, and they'll remember their last position.",
-    "You can now manage all your downloads in one place with unified progress tracking and convenient pause, resume, and cancel controls directly from the popup."
+    "You can now receive download notifications and automatic updates without waiting for a new release on the AMO website."
   ],
   "button_text": "OK"
 }
