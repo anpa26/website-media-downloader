@@ -1,11 +1,12 @@
 {
   "enabled": true,
-  "storage_key": "event_v249",
-  "version": "2.4.9",
-  "title": "Version 2.4.9 Update",
+  "storage_key": "event_v251",
+  "version": "2.5.1",
+  "title": "Version 2.5.1 Update",
   "images": [
     "new1.jpg",
-    "new2.jpg"
+    "new2.jpg",
+    "new3.jpg"
   ],
   "whats_new_title": "What's New:",
   "whats_new": [
