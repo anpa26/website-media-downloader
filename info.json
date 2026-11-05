@@ -16,7 +16,7 @@
     "The bottom action bar now adapts to available options, making it easier to access features, including the new Quick Add URL button.",
     "The extension is now available in Spanish (es), making it accessible to more users.",
     "Your download notifications are now more flexible. Minimize them, drag them anywhere and they'll remember their last position.",
-    "You can now receive download notifications and automatic updates without waiting for a new release on the AMO website.",
+    "You can now receive download notifications and automatic updates without waiting for a new release on the AMO website. Automatic updates may take up to 24 hours to become available.",
     "You can now view, pause, resume and cancel download progress in group mode without opening the group media list."
   ],
   "button_text": "OK"
