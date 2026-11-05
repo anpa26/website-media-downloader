@@ -187,7 +187,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const jobId = 'zip_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
         const job = {
             jobId, items: message.items || [],
-            filename: `downloads_${new Date().toISOString().replace(/[:.]/g, "-")}.zip`, recoveryState: "running"
+            filename: `downloads_${new Date().toISOString().replace(/[:.]/g, "-")}.zip`,
+            groupType: message.groupType || null, recoveryState: "running"
         };
         persistentZipJobs.set(jobId, job);
         broadcastStreamJob({
@@ -204,7 +205,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             activeDownloads.set(jobId, {
                 id: jobId, url: `zip://${jobId}`, filename: job.filename,
                 loaded: 0, total: job.items.length, status: 'downloading',
-                mediaType: 'file', isZip: true, isPersistentZipJob: true
+                mediaType: 'file', isZip: true, isPersistentZipJob: true,
+                groupType: job.groupType
             });
         }
         browser.storage.local.set({ [`zipJob_${jobId}`]: job }).then(async () => {
@@ -231,7 +233,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         let job = persistentZipJobs.get(message.jobId);
         if (!job && typeof activeDownloads !== 'undefined' && activeDownloads.has(message.jobId)) {
             const item = activeDownloads.get(message.jobId);
-            job = { jobId: message.jobId, filename: item.filename };
+            job = { jobId: message.jobId, filename: item.filename, groupType: item.groupType || null };
             persistentZipJobs.set(message.jobId, job);
         }
         if (job) {
@@ -252,13 +254,15 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 loaded: message.loaded, total: message.total,
                 status: message.status, currentFile: message.currentFile,
                 text: message.text, percent: message.percent,
-                indeterminate: message.indeterminate
+                indeterminate: message.indeterminate,
+                isPaused: !!(typeof activeDownloads !== 'undefined' && activeDownloads.get(message.jobId)?.isPaused),
+                groupType: job.groupType
             }).catch(() => {});
             broadcastStreamJob({
                 action: 'zipJobUpdate', jobId: message.jobId, filename: job.filename,
                 text: message.text || message.currentFile || 'Creating ZIP...',
                 percent: message.percent, loaded: message.loaded, total: message.total,
-                indeterminate: message.indeterminate
+                indeterminate: message.indeterminate, groupType: job.groupType
             });
             const progress = message.percent !== undefined
                 ? `${Math.max(0, Math.min(100, Math.round(message.percent)))}%`
@@ -417,7 +421,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
         }
         for (const [jobId, job] of persistentStreamJobs) {
-            if (message.id === job.url || message.url === job.url || message.id === jobId) {
+            const urlMatches = message.url && (job.url === message.url || (job.url && job.url.split('?')[0] === message.url.split('?')[0]));
+            if (message.id === job.url || message.url === job.url || message.id === jobId || urlMatches) {
                 cancelledPersistentStreamJobs.add(jobId);
                 browser.runtime.sendMessage({ action: 'cancelOffscreenStreamJob', jobId }).catch(() => {});
                 if (job.processorTabId !== undefined) browser.tabs.remove(job.processorTabId).catch(() => {});

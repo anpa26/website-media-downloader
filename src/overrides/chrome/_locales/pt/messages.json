@@ -1218,7 +1218,7 @@
         "description": "Updated/Added during UI string localization audit."
     },
     "extensionDescriptionAbout": {
-        "message": "Sua ferramenta essencial para downloads de mídia. Detecta facilmente vídeos, músicas e transmissões ao vivo enquanto você navega. Suporta downloads em segundo plano e conversão automática de transmissões HLS/DASH para salvar o conteúdo diretamente em seu dispositivo.",
+        "message": "Detecte e baixe vídeos, áudios, imagens e transmissões ao vivo (HLS/DASH) facilmente pela web. Inclui verificação inteligente de abas, conversão automática de streams, downloads em segundo plano e controles interativos de download direto no seu dispositivo.",
         "description": "Updated/Added during UI string localization audit."
     },
     "confirmTitle": {
@@ -2160,5 +2160,98 @@
   "imageMinFileSizeCustomExplain": {
     "message": "Insira o tamanho mínimo do arquivo de imagem em KB (0 = desativado).",
     "description": "imageMinFileSizeCustomExplain"
-  }
+  },
+    "scanNowButton": {
+        "message": "Escanear"
+    },
+    "listActionsButton": {
+        "message": "Opções de lista"
+    },
+    "addShortButton": {
+        "message": "Adicionar"
+    },
+    "menuButton": {
+        "message": "Menu"
+    },
+    "manualScanTitle": {
+        "message": "Apenas verificação manual"
+    },
+    "manualScanExplain": {
+        "message": "A mídia ainda será detectada em segundo plano, mas exibida apenas para o site aberto ao clicar em Escanear."
+    },
+    "removeOnTabCloseTitle": {
+        "message": "Remover mídia detectada quando a aba for fechada"
+    },
+    "removeOnTabCloseExplain": {
+        "message": "Remover automaticamente os arquivos de mídia detectados da lista quando a aba onde foram encontrados for fechada."
+    },
+    "manualScanKeepTabsTitle": {
+        "message": "Manter mídias de outras abas"
+    },
+    "manualScanKeepTabsExplain": {
+        "message": "Continuar exibindo mídias detectadas de outras abas ao alternar entre abas. Quando desativado, apenas as mídias da aba ativa são exibidas."
+    },
+    "topHeaderDesignTitle": {
+        "message": "Design do cabeçalho superior"
+    },
+    "topHeaderDesignExplain": {
+        "message": "Escolha entre o novo cabeçalho com menu de navegação (v2) ou o clássico cabeçalho de abas (v1)."
+    },
+    "topHeaderV1": {
+        "message": "v1"
+    },
+    "topHeaderV2": {
+        "message": "v2"
+    },
+    "bottomBarDesignTitle": {
+        "message": "Design da barra de ação inferior"
+    },
+    "bottomBarDesignExplain": {
+        "message": "Escolha o estilo dos botões da barra de ações inferior da lista de mídia."
+    },
+    "bottomBarV1": {
+        "message": "v1"
+    },
+    "bottomBarV2": {
+        "message": "v2"
+    },
+    "bottomBarV3": {
+        "message": "v3"
+    },
+    "updateCardTitle": {
+        "message": "Atualização disponível",
+        "description": "Title of the update available card in the about page."
+    },
+    "updateCardFirefoxDesc": {
+        "message": "A versão de atualização $VERSION$ foi detectada no repositório oficial de lançamentos. Devido à arquitetura de segurança do navegador Firefox, o pacote de extensão assinado (.xpi) será verificado, baixado e aplicado automaticamente em segundo plano no prazo máximo de 24 horas sem a necessidade de intervenção manual.",
+        "description": "Detailed professional description for Firefox in update card.",
+        "placeholders": {
+          "VERSION": {
+            "content": "$1",
+            "example": "2.5.0"
+          }
+        }
+    },
+    "updateCardChromeDesc": {
+        "message": "A versão de atualização $VERSION$ foi detectada no repositório oficial de lançamentos. Você pode atualizar a extensão imediatamente para a versão mais recente baixando o pacote de atualização pelo botão abaixo.",
+        "description": "Detailed professional description for Chrome in update card.",
+        "placeholders": {
+          "VERSION": {
+            "content": "$1",
+            "example": "2.5.0"
+          }
+        }
+    },
+    "updateCardButton": {
+        "message": "Atualizar agora",
+        "description": "Action button in the update card to open update link."
+    },
+    "groupProgressTitle": {
+        "message": "Progresso de download nos grupos",
+        "description": "Title of download progress on groups setting."
+    },
+    "groupProgressExplain": {
+        "message": "Exibe a lista de progresso de downloads ativos com controles de pausa e cancelamento nos cartões de grupo.",
+        "description": "Explanation of download progress on groups setting."
+    }
 }

@@ -20,6 +20,30 @@ if (typeof browser === 'undefined') {
     var browser = chrome;
 }
 
+if (typeof browser !== 'undefined' && (!browser.storage || !browser.storage.local)) {
+    browser.storage = browser.storage || {};
+    browser.storage.local = {
+        get: (keys) => new Promise((resolve) => {
+            try {
+                browser.runtime.sendMessage({ action: 'wmdStorageBridge', method: 'get', keys }, (res) => {
+                    if (browser.runtime.lastError) resolve({});
+                    else resolve(res?.data || {});
+                });
+            } catch (e) { resolve({}); }
+        }),
+        set: (items) => new Promise((resolve) => {
+            try {
+                browser.runtime.sendMessage({ action: 'wmdStorageBridge', method: 'set', items }, () => resolve());
+            } catch (e) { resolve(); }
+        }),
+        remove: (keys) => new Promise((resolve) => {
+            try {
+                browser.runtime.sendMessage({ action: 'wmdStorageBridge', method: 'remove', keys }, () => resolve());
+            } catch (e) { resolve(); }
+        })
+    };
+}
+
 const OFFSCREEN_DB_NAME = "MediaCacheDB";
 const OFFSCREEN_STORE_NAME = "network-cache";
 const OFFSCREEN_CHUNK_STORE_NAME = "download-chunks";

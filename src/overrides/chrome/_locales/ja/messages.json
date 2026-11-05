@@ -1218,7 +1218,7 @@
         "description": "Updated/Added during UI string localization audit."
     },
     "extensionDescriptionAbout": {
-        "message": "メディアダウンロードに不可欠なツール。ブラウジング中に動画、音楽、ライブストリームを簡単に検出します。バックグラウンドダウンロードとHLS/DASHストリームの自動変換をサポートし、コンテンツをデバイスに直接保存します。",
+        "message": "Web上の動画、音声、画像、ライブ配信（HLS/DASH）を簡単に検出してダウンロード。スマートなタブスキャン、自動ストリーム変換、バックグラウンドダウンロード、インタラクティブなダウンロード操作機能を備え、端末に直接保存できます。",
         "description": "Updated/Added during UI string localization audit."
     },
     "confirmTitle": {
@@ -2160,5 +2160,98 @@
   "imageMinFileSizeCustomExplain": {
     "message": "画像ファイルの最小サイズをKBで入力してください (0 = 無効)。",
     "description": "imageMinFileSizeCustomExplain"
-  }
+  },
+    "scanNowButton": {
+        "message": "スキャン"
+    },
+    "listActionsButton": {
+        "message": "リストのオプション"
+    },
+    "addShortButton": {
+        "message": "追加"
+    },
+    "menuButton": {
+        "message": "メニュー"
+    },
+    "manualScanTitle": {
+        "message": "手動スキャンのみ"
+    },
+    "manualScanExplain": {
+        "message": "メディアはバックグラウンドで検出され続けますが、スキャンをクリックしたときに開いているウェブサイトのメディアのみが表示されます。"
+    },
+    "removeOnTabCloseTitle": {
+        "message": "タブが閉じられたときに検出されたメディアを削除する"
+    },
+    "removeOnTabCloseExplain": {
+        "message": "メディアが見つかったタブが閉じられたときに、検出されたメディアファイルをリストから自動的に削除します。"
+    },
+    "manualScanKeepTabsTitle": {
+        "message": "他のタブのメディアを保持する"
+    },
+    "manualScanKeepTabsExplain": {
+        "message": "タブを切り替える際、他のタブから検出されたメディアを引き続き表示します。無効にすると、アクティブなタブのメディアのみが表示されます。"
+    },
+    "topHeaderDesignTitle": {
+        "message": "トップヘッダーのデザイン"
+    },
+    "topHeaderDesignExplain": {
+        "message": "新しいナビゲーションメニューヘッダー（v2）または従来のタブヘッダー（v1）から選択します。"
+    },
+    "topHeaderV1": {
+        "message": "v1"
+    },
+    "topHeaderV2": {
+        "message": "v2"
+    },
+    "bottomBarDesignTitle": {
+        "message": "下部アクションバーのデザイン"
+    },
+    "bottomBarDesignExplain": {
+        "message": "メディアリストの下部アクションバーのボタンスタイルを選択します。"
+    },
+    "bottomBarV1": {
+        "message": "v1"
+    },
+    "bottomBarV2": {
+        "message": "v2"
+    },
+    "bottomBarV3": {
+        "message": "v3"
+    },
+    "updateCardTitle": {
+        "message": "アップデートが利用可能",
+        "description": "Title of the update available card in the about page."
+    },
+    "updateCardFirefoxDesc": {
+        "message": "公式リリースリポジトリでアップデートバージョン $VERSION$ が検出されました。Firefoxブラウザのセキュリティアーキテクチャに従い、署名済みアドオンパッケージ（.xpi）は手動操作を必要とせず、最大24時間以内にバックグラウンドで自動的に検証、ダウンロード、および適用されます。",
+        "description": "Detailed professional description for Firefox in update card.",
+        "placeholders": {
+          "VERSION": {
+            "content": "$1",
+            "example": "2.5.0"
+          }
+        }
+    },
+    "updateCardChromeDesc": {
+        "message": "公式リリースリポジトリでアップデートバージョン $VERSION$ が検出されました。下のボタンからアップデートパッケージをダウンロードして、すぐに拡張機能を最新バージョンに更新できます。",
+        "description": "Detailed professional description for Chrome in update card.",
+        "placeholders": {
+          "VERSION": {
+            "content": "$1",
+            "example": "2.5.0"
+          }
+        }
+    },
+    "updateCardButton": {
+        "message": "今すぐ更新",
+        "description": "Action button in the update card to open update link."
+    },
+    "groupProgressTitle": {
+        "message": "グループのダウンロード進行状況",
+        "description": "Title of download progress on groups setting."
+    },
+    "groupProgressExplain": {
+        "message": "グループカードに一時停止とキャンセルボタン付きのアクティブなダウンロード進行状況リストを表示します。",
+        "description": "Explanation of download progress on groups setting."
+    }
 }

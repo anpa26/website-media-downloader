@@ -1055,6 +1055,10 @@
     "message": "Cancelar todo",
     "description": "The label of the button to cancel all active downloads."
   },
+  "confirmCancelButton": {
+    "message": "Cancelar",
+    "description": "The label of the cancel button in the ZIP download error dialog."
+  },
   "zipPreparing": {
     "message": "Preparando $COUNT$ archivos...",
     "description": "The message when starting to prepare files for a ZIP archive.",
@@ -1208,6 +1212,10 @@
   "continueAllButton": {
     "message": "Continuar todo",
     "description": "The label of the button to continue all paused downloads."
+  },
+  "continueButton": {
+    "message": "Continuar",
+    "description": "The label of the button to continue with the next file after skipping one failed download."
   },
   "decodingAudio": {
     "message": "Decodificando audio... Espera por favor (puede tardar con archivos grandes).",
@@ -1477,7 +1485,7 @@
     "description": "Updated/Added during UI string localization audit."
   },
   "extensionDescriptionAbout": {
-    "message": "Tu herramienta esencial para descargar medios. Detecta sin esfuerzo videos, música y transmisiones en vivo mientras navegas. Admite descargas en segundo plano y conversión automática de transmisiones HLS/DASH para guardar el contenido directo en tu dispositivo.",
+    "message": "Detecte y descargue videos, audios, imágenes y transmisiones en vivo (HLS/DASH) de varios sitios web fácilmente. Cuenta con escaneo inteligente de pestañas, conversión automática de streams, descargas en segundo plano y controles interactivos de descarga directamente a su dispositivo.",
     "description": "Updated/Added during UI string localization audit."
   },
   "confirmTitle": {
@@ -1801,6 +1809,16 @@
   "updateDialogMessage": {
     "message": "La versión $VERSION$ está disponible. ¿Quieres actualizar ahora?",
     "description": "Message shown in the update dialog.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "1.7.9"
+      }
+    }
+  },
+  "updateDialogFirefoxMessage": {
+    "message": "Se ha detectado la versión $VERSION$. La extensión se actualizará automáticamente en segundo plano si las actualizaciones automáticas están habilitadas. Vuelva a abrir la extensión después de un momento.",
+    "description": "Message shown in Firefox update dialog.",
     "placeholders": {
       "VERSION": {
         "content": "$1",
@@ -2650,5 +2668,122 @@
   "debugLogCleared": {
     "message": "Registro de depuración limpiado.",
     "description": "Notification when debug log is cleared"
+  },
+  "scanNowButton": {
+    "message": "Escanear"
+  },
+  "listActionsButton": {
+    "message": "Opciones de lista"
+  },
+  "addShortButton": {
+    "message": "Añadir"
+  },
+  "menuButton": {
+    "message": "Menú"
+  },
+  "manualScanTitle": {
+    "message": "Solo escaneo manual"
+  },
+  "manualScanExplain": {
+    "message": "Los medios se seguirán detectando en segundo plano, pero solo se mostrarán para el sitio web abierto al hacer clic en Escanear."
+  },
+  "removeOnTabCloseTitle": {
+    "message": "Eliminar medios detectados al cerrar la pestaña"
+  },
+  "removeOnTabCloseExplain": {
+    "message": "Eliminar automáticamente los archivos multimedia detectados de la lista cuando se cierre la pestaña donde se encontraron."
+  },
+  "manualScanKeepTabsTitle": {
+    "message": "Conservar medios de otras pestañas"
+  },
+  "manualScanKeepTabsExplain": {
+    "message": "Seguir mostrando los medios detectados de otras pestañas al cambiar entre ellas. Si se desactiva, solo se muestran los medios de la pestaña activa."
+  },
+  "topHeaderDesignTitle": {
+    "message": "Diseño del encabezado superior"
+  },
+  "topHeaderDesignExplain": {
+    "message": "Elige entre el nuevo encabezado con menú de navegación (v2) y el encabezado de pestañas clásico (v1)."
+  },
+  "topHeaderV1": {
+    "message": "v1"
+  },
+  "topHeaderV2": {
+    "message": "v2"
+  },
+  "bottomBarDesignTitle": {
+    "message": "Diseño de la barra de acciones inferior"
+  },
+  "bottomBarDesignExplain": {
+    "message": "Elige el estilo de botones para la barra de acciones inferior de la lista de medios."
+  },
+  "bottomBarV1": {
+    "message": "v1"
+  },
+  "bottomBarV2": {
+    "message": "v2"
+  },
+  "bottomBarV3": {
+    "message": "v3"
+  },
+  "updateCardTitle": {
+    "message": "Actualización disponible",
+    "description": "Title of the update available card in the about page."
+  },
+  "updateCardFirefoxDesc": {
+    "message": "Se ha detectado la versión de actualización $VERSION$ en el repositorio oficial de lanzamientos. Debido a la arquitectura de seguridad del navegador Firefox, el paquete de complemento firmado (.xpi) se verificará, descargará y aplicará automáticamente en segundo plano en un plazo máximo de 24 horas sin requerir intervención manual.",
+    "description": "Detailed professional description for Firefox in update card.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardChromeDesc": {
+    "message": "Se ha detectado la versión de actualización $VERSION$ en el repositorio oficial de lanzamientos. Puede actualizar la extensión inmediatamente a la versión más reciente descargando el paquete de actualización mediante el botón a continuación.",
+    "description": "Detailed professional description for Chrome in update card.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardButton": {
+    "message": "Actualizar ahora",
+    "description": "Action button in the update card to open update link."
+  },
+  "updateCardGithubAheadDesc": {
+    "message": "La versión $VERSION$ ya está disponible en GitHub, mientras que AMO sigue en la v$AMO_VERSION$. Puedes descargarla ahora desde GitHub o esperar a AMO: una vez que AMO se actualice, se instalará automáticamente si las actualizaciones automáticas están activadas. Instalar desde GitHub cambia las futuras actualizaciones al canal de GitHub.",
+    "description": "Description shown in the update card when GitHub is ahead of AMO.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      },
+      "AMO_VERSION": {
+        "content": "$2",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardGithubButton": {
+    "message": "Descargar en GitHub",
+    "description": "Button label to download the update from GitHub."
+  },
+  "groupProgressTitle": {
+    "message": "Progreso de descarga en grupos",
+    "description": "Title of download progress on groups setting."
+  },
+  "groupProgressExplain": {
+    "message": "Muestra la lista de descargas activas con controles de pausa y cancelación en las tarjetas de grupo.",
+    "description": "Explanation of download progress on groups setting."
+  },
+  "skipHttpErrorsTitle": {
+    "message": "Omitir errores 403/404"
+  },
+  "skipHttpErrorsExplain": {
+    "message": "Omitir y eliminar automáticamente de la lista los medios que devuelvan un error 403 o 404 durante la descarga en lugar de fallar."
   }
 }

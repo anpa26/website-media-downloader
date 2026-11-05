@@ -18,12 +18,66 @@
 
 if (typeof browser === 'undefined') var browser = chrome;
 
+if (typeof browser !== 'undefined' && (!browser.storage || !browser.storage.local)) {
+    browser.storage = browser.storage || {};
+    browser.storage.local = {
+        get: (keys) => new Promise((resolve) => {
+            try {
+                browser.runtime.sendMessage({ action: 'wmdStorageBridge', method: 'get', keys }, (res) => {
+                    if (browser.runtime.lastError) resolve({});
+                    else resolve(res?.data || {});
+                });
+            } catch (e) { resolve({}); }
+        }),
+        set: (items) => new Promise((resolve) => {
+            try {
+                browser.runtime.sendMessage({ action: 'wmdStorageBridge', method: 'set', items }, () => resolve());
+            } catch (e) { resolve(); }
+        }),
+        remove: (keys) => new Promise((resolve) => {
+            try {
+                browser.runtime.sendMessage({ action: 'wmdStorageBridge', method: 'remove', keys }, () => resolve());
+            } catch (e) { resolve(); }
+        })
+    };
+}
+
 // An offscreen document cannot present an actionable confirmation dialog.
 // Fail visibly in the popup instead of leaving a DRM job waiting forever.
 if (typeof mdui !== 'undefined') {
     mdui.confirm = async () => {
         throw new Error('DRM-protected streams require an interactive download page');
     };
+}
+
+async function shouldSkipHttpError(status) {
+    if (status !== 403 && status !== 404) return false;
+    const setting = await browser.storage.local.get('skip-http-errors');
+    return setting['skip-http-errors'] === '1';
+}
+
+let zipConfirmResolver = null;
+
+async function askZipUserToContinue(filename, error) {
+    return new Promise((resolve) => {
+        zipConfirmResolver = resolve;
+        browser.runtime.sendMessage({
+            action: 'confirmZipSkip',
+            filename: filename,
+            error: error
+        }).catch(() => {
+            if (zipConfirmResolver === resolve) {
+                zipConfirmResolver = null;
+                resolve('continue');
+            }
+        });
+        setTimeout(() => {
+            if (zipConfirmResolver === resolve) {
+                zipConfirmResolver = null;
+                resolve('continue');
+            }
+        }, 30000);
+    });
 }
 
 const runningStreamJobs = new Map();
@@ -200,7 +254,7 @@ async function runPersistentZipJob(jobId, options = {}) {
         const claim = await browser.runtime.sendMessage({ action: 'claimProcessingJob', key });
         if (!claim?.allowed) return;
     }
-    const state = { cancelled: false, paused: !!job.isPaused, controller: null, currentUrl: null };
+    const state = { cancelled: false, paused: !!job.isPaused, controller: null, currentUrl: null, skipAllErrors: false };
     runningZipJobs.set(jobId, state);
     const report = (status, data = {}) => browser.runtime.sendMessage({
         action: 'zipProcessorProgress', jobId, status, ...data
@@ -271,7 +325,17 @@ async function runPersistentZipJob(jobId, options = {}) {
                 state.controller = new AbortController();
                 fetchOptions.signal = state.controller.signal;
                 const response = await fetch(item.url, fetchOptions);
-                if (!response.ok) throw new Error(`Server returned ${response.status}`);
+                if (!response.ok) {
+                    if (state.skipAllErrors) continue;
+                    if (await shouldSkipHttpError(response.status)) continue;
+                    const zipResult = await askZipUserToContinue(item.filename || 'file', `Server returned ${response.status}`);
+                    if (zipResult === 'continue-all') {
+                        state.skipAllErrors = true;
+                        continue;
+                    }
+                    if (zipResult === 'continue') continue;
+                    throw new Error("Cancelled by user after error");
+                }
                 const reader = response.body.getReader();
                 const chunks = [];
                 while (true) {
@@ -340,7 +404,14 @@ async function runPersistentZipJob(jobId, options = {}) {
 }
 
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === 'startOffscreenStreamJob') {
+    if (message.action === 'confirmZipSkipResponse') {
+        if (zipConfirmResolver) {
+            const resolve = zipConfirmResolver;
+            zipConfirmResolver = null;
+            resolve(message.result);
+        }
+        sendResponse({ success: true });
+    } else if (message.action === 'startOffscreenStreamJob') {
         streamJobQueue = streamJobQueue
             .then(() => runPersistentStreamJob(message.jobId, { offscreen: true }))
             .catch(error => console.error('Stream job queue failed:', error));

@@ -193,11 +193,52 @@ async function removeMediaRequest(url) {
     }
 }
 
+globalThis.staleDownloadStateCleanupReady ??= Promise.resolve();
+
+function processingJobInfo(key, job) {
+    const isAudioJob = key.startsWith('audioJob_');
+    const isZip = key.startsWith('zipJob_');
+    const isPopupJob = key.startsWith('popupJob_');
+    return {
+        id: job.jobId, url: isZip ? `zip://${job.jobId}` : job.url,
+        filename: job.filename, audioUrl: job.audioUrl,
+        loaded: 0, total: isZip ? (job.items || []).length : 100,
+        percent: job.percent ?? 0, isPaused: !!job.isPaused,
+        status: job.status || (job.isPaused ? 'Paused' : 'Preparing ZIP...'),
+        mediaType: isZip ? 'file' : (job.mediaType || (isAudioJob ? (job.audioOnly ? 'audio' : 'video') : 'stream')),
+        isAudioJob, isStreamJob: !isAudioJob && !isZip && !isPopupJob,
+        isZip, isPersistentZipJob: isZip, recoveryKey: key,
+        groupType: job.groupType || null
+    };
+}
+
+async function restorePersistentProcessingJobs() {
+    const stored = await browser.storage.local.get(null);
+    const staleKeys = [];
+    for (const [key, job] of Object.entries(stored)) {
+        if (!/^(audio|stream|zip|popup)Job_/.test(key) || !job?.jobId) continue;
+        if (job.recoveryState === 'completed' || job.recoveryState === 'cancelled' || job.status === 'Cancelled' || job.status === 'completed') {
+            staleKeys.push(key);
+            continue;
+        }
+        if (key.startsWith('popupJob_')) {
+            staleKeys.push(key);
+            continue;
+        }
+        if (!activeDownloads.has(job.jobId)) {
+            job.isPaused = true;
+            job.status = 'Paused';
+            activeDownloads.set(job.jobId, processingJobInfo(key, job));
+        }
+    }
+    if (staleKeys.length > 0) {
+        browser.storage.local.remove(staleKeys).catch(() => {});
+    }
+}
+
 async function discardStaleDownloadState() {
     const stored = await browser.storage.local.get(null);
-    const staleKeys = Object.keys(stored).filter(key => /^(audio|stream|zip|popup)Job_/.test(key));
-    staleKeys.push("pending-downloads");
-    await browser.storage.local.remove([...new Set(staleKeys)]);
+    if (stored['pending-downloads']) await browser.storage.local.remove('pending-downloads');
 }
 
 async function resumeSavedDownload(id) {
@@ -513,6 +554,7 @@ browser.webRequest.onBeforeSendHeaders.addListener(
 );
 
 let cachedSettings = {
+    manualScan: false,
     mimeDetection: true,
     urlDetection: true,
     youtubeDetection: true,
@@ -543,12 +585,14 @@ function networkDetectionEnabled(details, settings = cachedSettings) {
 
 function getSettings(callback) {
     browser.storage.local.get([
-        'mime-detection', 'url-detection', 'youtube-detection', 'detect-download-links', 'media-notification', 'media-system-notification', 'stack-notifications', 'hide-segments', 'hide-page-components',
+        'manual-scan', 'remove-on-tab-close', 'mime-detection', 'url-detection', 'youtube-detection', 'detect-download-links', 'media-notification', 'media-system-notification', 'stack-notifications', 'hide-segments', 'hide-page-components',
         'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'ignore-disabled-types', 'optimize-low-end',
         'auto-download-media', 'auto-download-quality', 'auto-download-youtube-mode', 'background-download', 'auto-download-all-domains', 'auto-download-domains', 'auto-skip-download-names', 'auto-skip-download-names-only', 'auto-skip-download-domains', 'auto-ignore-excluded-media', 'auto-download-video', 'auto-download-stream',
         'filename-template', 'theme-color', 'ui-scale'
     ], function (result) {
         const s = {
+            manualScan: isFlagEnabled(result['manual-scan'], false),
+            removeOnTabClose: isFlagEnabled(result['remove-on-tab-close'], false),
             mimeDetection: isFlagEnabled(result['mime-detection'], true),
             urlDetection: isFlagEnabled(result['url-detection'], true),
             youtubeDetection: isFlagEnabled(result['youtube-detection'], true),
@@ -606,17 +650,86 @@ const lastNotificationTime = new Map();
 const tabsWithDrm = new Set();
 
 browser.tabs.onRemoved.addListener((tabId) => {
+    const removedMeta = tabMetadata.get(tabId);
+    let removedHost = '';
+    try { if (removedMeta?.url) removedHost = new URL(removedMeta.url).hostname.toLowerCase().replace(/^www\./, ''); } catch (e) {}
     tabMetadata.delete(tabId);
     tabsWithDrm.delete(tabId);
     notifiedUrls.delete(tabId);
     lastNotificationTime.delete(tabId);
+
+    getSettings((settings) => {
+        if (!settings.removeOnTabClose) return;
+        browser.storage.session.get(null, async (items) => {
+            if (!items) return;
+            let otherSameHostOpen = false;
+            if (removedHost) {
+                try {
+                    const openTabs = await browser.tabs.query({}).catch(() => []);
+                    otherSameHostOpen = (openTabs || []).some(t => {
+                        if (!t || t.id === tabId || !t.url) return false;
+                        try {
+                            return new URL(t.url).hostname.toLowerCase().replace(/^www\./, '') === removedHost;
+                        } catch (e) { return false; }
+                    });
+                } catch (e) {}
+            }
+            const keysToRemove = [];
+            const updates = {};
+            for (const [url, reqs] of Object.entries(items)) {
+                if (!Array.isArray(reqs) || !reqs.length) continue;
+                const remaining = reqs.filter(r => {
+                    if (!r) return false;
+                    if (r.isManual) return true;
+                    if (r.tabId === tabId) return false;
+                    if (removedHost && !otherSameHostOpen && (r.tabId == null || r.tabId < 0) && r.pageUrl) {
+                        try {
+                            if (new URL(r.pageUrl).hostname.toLowerCase().replace(/^www\./, '') === removedHost) return false;
+                        } catch (e) {}
+                    }
+                    return true;
+                });
+                if (remaining.length === 0) {
+                    keysToRemove.push(url);
+                } else if (remaining.length !== reqs.length) {
+                    updates[url] = remaining;
+                }
+            }
+            const ops = [];
+            if (keysToRemove.length > 0) ops.push(browser.storage.session.remove(keysToRemove).catch(() => {}));
+            if (Object.keys(updates).length > 0) ops.push(browser.storage.session.set(updates).catch(() => {}));
+            if (ops.length > 0) {
+                Promise.all(ops).then(() => {
+                    browser.runtime.sendMessage({ action: 'mediaRemovedOnTabClose' }).catch(() => {});
+                });
+            }
+        });
+    });
 });
 
 browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
+    if (changeInfo.url) {
+        tabMetadata.set(tabId, { title: changeInfo.title || tabMetadata.get(tabId)?.title || '', url: changeInfo.url });
+    }
     if (changeInfo.status === 'loading') {
         notifiedUrls.delete(tabId);
         lastNotificationTime.delete(tabId);
         tabsWithDrm.delete(tabId);
+        browser.storage.session.get(null, (items) => {
+            const updates = {};
+            for (const [url, reqs] of Object.entries(items || {})) {
+                if (!Array.isArray(reqs) || !reqs.length) continue;
+                let changed = false;
+                reqs.forEach(r => {
+                    if (r && r.tabId === tabId && r.manualScanned && !r.isManual) {
+                        r.manualScanned = false;
+                        changed = true;
+                    }
+                });
+                if (changed) updates[url] = reqs;
+            }
+            if (Object.keys(updates).length > 0) browser.storage.session.set(updates).catch(() => {});
+        });
     }
 });
 
@@ -2054,6 +2167,8 @@ function initListener(skipCacheReset = false) {
 
                 const cachedBody = temporaryRequestBodyMap.get(details.requestId) || null;
                 const metadata = details.tabId >= 0 ? tabMetadata.get(details.tabId) : null;
+                const refererHeader = details.requestHeaders?.find(h => h.name && h.name.toLowerCase() === 'referer')?.value || '';
+                const fallbackPageUrl = (metadata && metadata.url) || details.documentUrl || details.originUrl || details.initiator || refererHeader || "";
 
                 let mediaRequest = {
                     url: details.url,
@@ -2066,7 +2181,7 @@ function initListener(skipCacheReset = false) {
                     timeStamp: null,
                     tabId: details.tabId,
                     pageTitle: metadata ? metadata.title : "",
-                    pageUrl: metadata ? metadata.url : ""
+                    pageUrl: fallbackPageUrl
                 };
 
                 browser.storage.session.get(details.url, function (result) {
@@ -2148,7 +2263,6 @@ function initListener(skipCacheReset = false) {
                         const mimeEnabledNow = !!currentSettings.mimeDetection;
                         const urlEnabledNow = !!currentSettings.urlDetection;
                         const mType = getMediaType(details.url, contentType);
-
                         const shouldSaveNow = (() => {
                             if (isMediaTypeDisabled(mType, currentSettings)) return false;
                             if (checkIsSegment(details.url, contentType, size, currentSettings)) return false;
@@ -2170,8 +2284,8 @@ function initListener(skipCacheReset = false) {
                             try {
                                 if (details.tabId >= 0) {
                                     let metadata = tabMetadata.get(details.tabId);
-                                    if (metadata && metadata.title) {
-                                        pageTitle = metadata.title;
+                                    if (metadata && metadata.url) {
+                                        pageTitle = metadata.title || "";
                                         pageUrl = metadata.url;
                                     } else {
                                         const tab = await browser.tabs.get(details.tabId);
@@ -2183,22 +2297,35 @@ function initListener(skipCacheReset = false) {
                                     }
                                 }
                             } catch (e) {}
+                            if (!pageUrl) {
+                                const refHdr = cachedHeaders?.find(h => h.name && h.name.toLowerCase() === 'referer')?.value || '';
+                                pageUrl = details.documentUrl || details.originUrl || details.initiator || refHdr || "";
+                            }
 
-                            let mediaRequest = {
-                                url: details.url,
-                                method: details.method || 'GET',
-                                requestHeaders: cachedHeaders,
-                                responseHeaders: responseHeaders,
-                                requestBody: cachedBody,
-                                cookie: temporaryCookieMap.get(details.requestId) || '',
-                                size: size,
-                                timeStamp: details.timeStamp,
-                                tabId: details.tabId,
-                                pageTitle: pageTitle,
-                                pageUrl: pageUrl
-                            };
-                            if (!isDrmMedia) {
-                                existingRequests.push(mediaRequest);
+                            if (updated && existingRequests.length > 0) {
+                                const lastUpdated = existingRequests.find(r => r.timeStamp === details.timeStamp) || existingRequests[existingRequests.length - 1];
+                                if (lastUpdated) {
+                                    if (!lastUpdated.pageUrl && pageUrl) lastUpdated.pageUrl = pageUrl;
+                                    if (!lastUpdated.pageTitle && pageTitle) lastUpdated.pageTitle = pageTitle;
+                                    if ((lastUpdated.tabId == null || lastUpdated.tabId < 0) && details.tabId >= 0) lastUpdated.tabId = details.tabId;
+                                }
+                            } else {
+                                let mediaRequest = {
+                                    url: details.url,
+                                    method: details.method || 'GET',
+                                    requestHeaders: cachedHeaders,
+                                    responseHeaders: responseHeaders,
+                                    requestBody: cachedBody,
+                                    cookie: temporaryCookieMap.get(details.requestId) || '',
+                                    size: size,
+                                    timeStamp: details.timeStamp,
+                                    tabId: details.tabId,
+                                    pageTitle: pageTitle,
+                                    pageUrl: pageUrl
+                                };
+                                if (!isDrmMedia) {
+                                    existingRequests.push(mediaRequest);
+                                }
                             }
                         }
 
@@ -2208,14 +2335,16 @@ function initListener(skipCacheReset = false) {
                             let requestsObj = {};
                             requestsObj[details.url] = existingRequests;
                             browser.storage.session.set(requestsObj).then(() => {
-                                if (mType === 'image' && parseInt(size, 10) > 0 && (shouldSaveNow || updated)) {
+                                if (!currentSettings.manualScan && mType === 'image' && parseInt(size, 10) > 0 && (shouldSaveNow || updated)) {
                                     browser.runtime.sendMessage({ action: 'imageMetadataUpdated', urls: [details.url] }).catch(() => {});
                                 }
                             }).catch(() => {});
                         }
 
-                        if (shouldSaveNow && !isDrmMedia) maybeAutoDownloadMedia(details, currentSettings, existingRequests[existingRequests.length - 1]);
-                        if (shouldSaveNow || updated) {
+                        if (shouldSaveNow && !isDrmMedia) {
+                            maybeAutoDownloadMedia(details, currentSettings, existingRequests[existingRequests.length - 1]);
+                        }
+                        if (!currentSettings.manualScan && (shouldSaveNow || updated)) {
                             showMediaNotification(details, currentSettings);
                         }
                     });
@@ -2403,8 +2532,9 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         finalizeProcessingRecovery(`audioJob_${message.jobId}`, message.success ? "completed" : "failed");
         const item = activeDownloads.get(message.jobId);
         broadcastAudioJob({ action: 'audioJobUpdate', jobId: message.jobId, filename: item?.filename, text: message.success ? 'Complete!' : (message.error || 'Failed'), percent: message.success ? 100 : item?.percent, complete: true, success: message.success });
-        if (item) browser.runtime.sendMessage({ action: message.success ? 'downloadComplete' : 'downloadError', id: item.url, url: item.url, error: message.error }).catch(() => {});
-        setTimeout(() => activeDownloads.delete(message.jobId), 5000);
+        if (item) browser.runtime.sendMessage({ action: message.success ? 'downloadComplete' : 'downloadError', id: item.url, jobId: message.jobId, url: item.url, error: message.error }).catch(() => {});
+        activeDownloads.delete(message.jobId);
+        browser.storage.local.remove(`audioJob_${message.jobId}`).catch(() => {});
         return;
     }
     if (message.action === 'customStatus') {
@@ -2449,7 +2579,13 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             try {
                 const response = await fetch(message.url, createMediaFetchOptions(message.url, message.request, controller.signal));
                 if (!response.ok && response.status !== 206) {
-                    throw new Error(browser.i18n.getMessage("serverErrorStatus", [response.status.toString()]) || (`Server error: ${response.status}`));
+                    const st = response.status;
+                    const skipSetting = await browser.storage.local.get('skip-http-errors');
+                    if (skipSetting['skip-http-errors'] === '1' && (st === 403 || st === 404)) {
+                        browser.runtime.sendMessage({ action: 'skipHttpError', url: message.url, status: st }).catch(() => {});
+                        return sendResponse({ error: 'SKIPPED_HTTP_ERROR' });
+                    }
+                    throw new Error(browser.i18n.getMessage("serverErrorStatus", [st.toString()]) || (`Server error: ${st}`));
                 }
 
                 const total = Number(response.headers.get('content-length')) || 0;
@@ -2467,7 +2603,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     loaded += value.byteLength;
                     if (message.jobId) {
                         const item = activeDownloads.get(message.jobId);
-                        const percent = total > 0 ? (loaded / total) * 100 : undefined;
+                        const percent = total > 0 ? Math.round((loaded / total) * 100) : undefined;
                         if (item) { item.loaded = loaded; item.total = total; item.percent = percent; item.status = 'Downloading...'; }
                         broadcastAudioJob({ action: 'audioJobUpdate', jobId: message.jobId, filename: item?.filename, text: item?.status, percent, loaded, total, indeterminate: total === 0 });
                         if (item) browser.runtime.sendMessage({ action: 'audioPopupStatus', id: item.url, jobId: message.jobId, text: formatAudioJobStatus(item), percent, indeterminate: total === 0 }).catch(() => {});
@@ -2913,9 +3049,95 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         } catch (err) {}
     }
 
+    if (message.action === 'performManualScan') {
+        const targetTabId = message.tabId;
+        const targetPageUrl = message.pageUrl || '';
+        let targetHost = '';
+        try { if (targetPageUrl) targetHost = new URL(targetPageUrl).hostname.toLowerCase(); } catch (e) {}
+        const stripWww = (h) => (h || '').replace(/^www\./, '');
+        const normTargetHost = stripWww(targetHost);
+        browser.storage.local.get('manual-scan-keep-tabs', (localRes) => {
+            const keepOtherTabs = localRes && (localRes['manual-scan-keep-tabs'] === '1' || localRes['manual-scan-keep-tabs'] === true);
+            browser.storage.session.get(null, (items) => {
+            const updates = {};
+            const allEntries = Object.entries(items || {}).filter(([, reqs]) => Array.isArray(reqs) && reqs.length > 0);
+            let matchedUrlsCount = 0;
+
+            for (const [url, reqs] of allEntries) {
+                const matchesTab = reqs.some(r => {
+                    if (!r) return false;
+                    if (r.isManual) return true;
+                    if (targetTabId != null && targetTabId >= 0 && r.tabId === targetTabId) return true;
+                    if (normTargetHost) {
+                        const candidates = [r.pageUrl];
+                        if (Array.isArray(r.requestHeaders)) {
+                            for (const h of r.requestHeaders) {
+                                const name = h?.name?.toLowerCase();
+                                if ((name === 'referer' || name === 'origin') && h.value) candidates.push(h.value);
+                            }
+                        }
+                        for (const cand of candidates) {
+                            if (!cand) continue;
+                            try {
+                                const candHost = stripWww(new URL(cand).hostname.toLowerCase());
+                                if (candHost && (candHost === normTargetHost || candHost.endsWith('.' + normTargetHost) || normTargetHost.endsWith('.' + candHost))) {
+                                    return true;
+                                }
+                            } catch (e) {}
+                        }
+                    }
+                    if ((r.tabId == null || r.tabId < 0) && !r.pageUrl) return true;
+                    return false;
+                });
+                if (matchesTab) {
+                    matchedUrlsCount++;
+                    let changed = false;
+                    reqs.forEach(r => {
+                        if (r && !r.manualScanned) {
+                            r.manualScanned = true;
+                            changed = true;
+                        }
+                    });
+                    if (changed) updates[url] = reqs;
+                } else if (!keepOtherTabs && (targetTabId != null || normTargetHost)) {
+                    let changed = false;
+                    reqs.forEach(r => {
+                        if (r && r.manualScanned && !r.isManual) {
+                            r.manualScanned = false;
+                            changed = true;
+                        }
+                    });
+                    if (changed) updates[url] = reqs;
+                }
+            }
+
+            if (matchedUrlsCount === 0 && allEntries.length > 0) {
+                for (const [url, reqs] of allEntries) {
+                    let changed = false;
+                    reqs.forEach(r => {
+                        if (r && !r.manualScanned) {
+                            r.manualScanned = true;
+                            changed = true;
+                        }
+                    });
+                    if (changed) updates[url] = reqs;
+                }
+            }
+
+            const finish = () => sendResponse({ success: true, markedCount: Object.keys(updates).length });
+            if (Object.keys(updates).length > 0) {
+                browser.storage.session.set(updates).then(finish).catch(finish);
+            } else {
+                finish();
+            }
+        });
+        });
+        return true;
+    }
+
     if (message.action === 'reportDetectedMedia') {
         getSettings(async function(settings) {
-            let { urls, pageTitle, pageUrl, is_youtube, ytFormats, ytSubtitles, imageDimensions, imageSizes } = message;
+            let { urls, pageTitle, pageUrl, is_youtube, ytFormats, ytSubtitles, imageDimensions, imageSizes, isManualScan } = message;
             if (!urls || !Array.isArray(urls)) return;
             const exclusionContext = {
                 pageTitle: pageTitle || sender.tab?.title,
@@ -2975,8 +3197,10 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
                         let mergedFormats = [...videoFormats];
                         let existingSubtitles = ytSubtitles || null;
+                        let prevManualScanned = false;
                         if (items[representativeUrl]) {
                             const existingItem = items[representativeUrl][0];
+                            if (existingItem && existingItem.manualScanned) prevManualScanned = true;
                             if (existingItem && existingItem.ytFormats) {
                                 const existingFormats = existingItem.ytFormats;
                                 existingFormats.forEach(oldFmt => {
@@ -3010,7 +3234,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                             pageTitle: pageTitle || sender.tab?.title || "",
                             pageUrl: pageUrl || sender.tab?.url || "",
                             ytFormats: mergedFormats,
-                            ytSubtitles: existingSubtitles
+                            ytSubtitles: existingSubtitles,
+                            ...((isManualScan || prevManualScanned) ? { manualScanned: true } : {})
                         }];
                         hasNew = true;
                     }
@@ -3034,9 +3259,14 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                                     timeStamp: Date.now(),
                                     tabId: tabId,
                                     pageTitle: pageTitle || sender.tab?.title || "",
-                                    pageUrl: pageUrl || sender.tab?.url || ""
+                                    pageUrl: pageUrl || sender.tab?.url || "",
+                                    ...(isManualScan ? { manualScanned: true } : {})
                                 }];
                                 hasNew = true;
+                            } else if (items[url] && isManualScan && !isDrmMedia) {
+                                const existing = Array.isArray(items[url]) ? items[url] : [];
+                                existing.forEach(req => { if (req) req.manualScanned = true; });
+                                updates[url] = existing;
                             }
                         });
                     }
@@ -3077,14 +3307,19 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                                 tabId: tabId,
                                 pageTitle: pageTitle || sender.tab?.title || "",
                                 pageUrl: pageUrl || sender.tab?.url || "",
-                                ...(validImageDimensions ? { imageWidth, imageHeight } : {})
+                                ...(validImageDimensions ? { imageWidth, imageHeight } : {}),
+                                ...(isManualScan ? { manualScanned: true } : {})
                             }];
                             hasNew = true;
-                        } else if (items[url] && (validImageDimensions || validImageSize) && !isDrmMedia) {
+                        } else if (items[url] && (validImageDimensions || validImageSize || isManualScan) && !isDrmMedia) {
                             const existing = Array.isArray(items[url]) ? items[url] : [];
                             if (existing.length) {
                                 let requestChanged = false;
                                 existing.forEach(request => {
+                                    if (isManualScan && !request.manualScanned) {
+                                        request.manualScanned = true;
+                                        requestChanged = true;
+                                    }
                                     if (validImageDimensions && (request.imageWidth !== imageWidth || request.imageHeight !== imageHeight)) {
                                         request.imageWidth = imageWidth;
                                         request.imageHeight = imageHeight;
@@ -3104,7 +3339,11 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 if (Object.keys(updates).length) browser.storage.session.set(updates);
                 if (Object.keys(imageMetadataUpdates).length) {
                     browser.storage.session.set(imageMetadataUpdates)
-                        .then(() => browser.runtime.sendMessage({ action: 'imageMetadataUpdated', urls: Object.keys(imageMetadataUpdates) }).catch(() => {}))
+                        .then(() => {
+                            if (!settings.manualScan || isManualScan) {
+                                browser.runtime.sendMessage({ action: 'imageMetadataUpdated', urls: Object.keys(imageMetadataUpdates) }).catch(() => {});
+                            }
+                        })
                         .catch(() => {});
                 }
                 if (hasNew) {
@@ -3128,7 +3367,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                         }
                     }
 
-                    if (settings.mediaNotification) {
+                    if (settings.mediaNotification && (!settings.manualScan || isManualScan)) {
                         for (const url in updates) {
                             const req = updates[url][0];
                             let type = 'video';
@@ -3220,6 +3459,38 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true;
     }
 
+    if (message.action === 'wmdStorageBridge') {
+        const storageLocal = (browser && browser.storage && browser.storage.local) || (chrome && chrome.storage && chrome.storage.local);
+        if (!storageLocal) {
+            sendResponse({ success: false, data: {} });
+            return;
+        }
+        if (message.method === 'get') {
+            storageLocal.get(message.keys).then(data => sendResponse({ success: true, data })).catch(() => sendResponse({ success: false, data: {} }));
+            return true;
+        }
+        if (message.method === 'set') {
+            storageLocal.set(message.items).then(() => sendResponse({ success: true })).catch(() => sendResponse({ success: false }));
+            return true;
+        }
+        if (message.method === 'remove') {
+            storageLocal.remove(message.keys).then(() => sendResponse({ success: true })).catch(() => sendResponse({ success: false }));
+            return true;
+        }
+    }
+
+    if (message.action === 'downloadOffscreenBlob') {
+        const downloadsApi = (browser && browser.downloads) || (chrome && chrome.downloads);
+        if (downloadsApi && downloadsApi.download) {
+            Promise.resolve(downloadsApi.download({ url: message.url, filename: message.filename, saveAs: false }))
+                .then(id => sendResponse({ success: true, downloadId: id }))
+                .catch(err => sendResponse({ success: false, error: err.message }));
+            return true;
+        }
+        sendResponse({ success: false, error: 'Downloads API not available' });
+        return;
+    }
+
     if (message.action === 'startFetchDownload') {
         const id = message.downloadId || `dl_${Date.now()}_${Math.random().toString(36).slice(2)}`;
         const item = { url: message.url, filename: message.filename,
@@ -3245,18 +3516,46 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === 'cancelDownload') {
-        let targetId = activeDownloads.has(message.id) ? message.id : (Number(message.id) || message.id);
+        let targetId = null;
+        if (message.id && activeDownloads.has(message.id)) {
+            targetId = message.id;
+        } else if (message.id && activeDownloads.has(Number(message.id))) {
+            targetId = Number(message.id);
+        }
         let isNative = false;
 
-        if (!targetId && message.url) {
+        if (!targetId) {
             for (let [id, val] of activeDownloads) {
-                if (val.url === message.url) {
+                const urlMatch = message.url && (
+                    val.url === message.url ||
+                    val.audioUrl === message.url ||
+                    (val.url && val.url.split('?')[0] === message.url.split('?')[0])
+                );
+                const idMatch = message.id && (
+                    val.id === message.id ||
+                    val.recoveryJobId === message.id ||
+                    String(id) === String(message.id)
+                );
+                if (urlMatch || idMatch) {
                     targetId = id;
                     isNative = !!val.isNative;
                     break;
                 }
             }
         }
+
+        const targetUrl = message.url;
+        const targetMsgId = message.id;
+        browser.storage.local.get(null).then(stored => {
+            const keysToRemove = [];
+            for (const [key, job] of Object.entries(stored || {})) {
+                if (!/^(audio|stream|zip|popup)Job_/.test(key) || !job) continue;
+                const matches = (targetMsgId && (job.jobId === targetMsgId || key === `popupJob_${targetMsgId}` || key === `streamJob_${targetMsgId}` || key === `audioJob_${targetMsgId}` || key === `zipJob_${targetMsgId}`)) ||
+                    (targetUrl && (job.url === targetUrl || job.audioUrl === targetUrl || (job.url && job.url.split('?')[0] === targetUrl.split('?')[0])));
+                if (matches) keysToRemove.push(key);
+            }
+            if (keysToRemove.length > 0) browser.storage.local.remove(keysToRemove).catch(() => {});
+        }).catch(() => {});
 
         if (targetId) {
             const item = activeDownloads.get(targetId);
@@ -3269,10 +3568,10 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     if (item.processorTabId !== undefined) browser.tabs.remove(item.processorTabId).catch(() => {});
                     browser.storage.local.remove(`audioJob_${targetId}`).catch(() => {});
                     broadcastAudioJob({ action: 'audioJobUpdate', jobId: targetId, filename: item.filename, text: 'Cancelled', percent: item.percent, loaded: item.loaded, total: item.total, complete: true, success: false });
-                    browser.runtime.sendMessage({ action: 'downloadError', id: item.url, url: item.url, error: 'USER_CANCELED' }).catch(() => {});
+                    browser.runtime.sendMessage({ action: 'downloadError', id: item.url, jobId: targetId, url: item.url, error: 'USER_CANCELED' }).catch(() => {});
                 } else {
                     broadcastAudioJob({ action: 'audioJobUpdate', jobId: targetId, filename: item.filename, text: 'Cancelled', percent: item.percent, loaded: item.loaded, total: item.total, complete: true, success: false });
-                    browser.runtime.sendMessage({ action: 'downloadError', id: targetId, url: item.url, error: 'USER_CANCELED' }).catch(() => {});
+                    browser.runtime.sendMessage({ action: 'downloadError', id: targetId, jobId: targetId, url: item.url, error: 'USER_CANCELED' }).catch(() => {});
                 }
                 if (isNative || item.isNative) {
                     browser.downloads.cancel(targetId).catch(() => {});
@@ -3293,7 +3592,12 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === 'pauseDownload') {
-        const id = activeDownloads.has(message.id) ? message.id : Number(message.id);
+        let id = activeDownloads.has(message.id) ? message.id : (activeDownloads.has(Number(message.id)) ? Number(message.id) : message.id);
+        if (!activeDownloads.has(id) && message.id) {
+          for (const [k, v] of activeDownloads) {
+            if (v.url === message.id || v.id === message.id) { id = k; break; }
+          }
+        }
         const item = activeDownloads.get(id);
         if (item) {
             if (item.isStreamJob || item.isAudioJob || item.isZip) {
@@ -3305,6 +3609,18 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     browser.runtime.sendMessage({ action, jobId: id }).catch(console.error);
                 }
                 browser.runtime.sendMessage({ action: "downloadPaused", id, loaded: item.loaded || 0, total: item.total || 0 }).catch(() => {});
+                if (item.isZip || item.isPersistentZipJob) {
+                    browser.runtime.sendMessage({
+                        action: 'zipProgress', id,
+                        loaded: item.loaded || 0, total: item.total || 0,
+                        status: item.status || 'downloading',
+                        currentFile: item.currentFile || '',
+                        text: item.statusText || '',
+                        percent: item.percent,
+                        isPaused: true
+                    }).catch(() => {});
+                }
+                activeDownloads.set(id, item);
                 return true;
             }
             if (item.recoveryKey) {
@@ -3351,7 +3667,12 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === 'resumeActiveDownload') {
-        const id = activeDownloads.has(message.id) ? message.id : Number(message.id);
+        let id = activeDownloads.has(message.id) ? message.id : (activeDownloads.has(Number(message.id)) ? Number(message.id) : message.id);
+        if (!activeDownloads.has(id) && message.id) {
+          for (const [k, v] of activeDownloads) {
+            if (v.url === message.id || v.id === message.id) { id = k; break; }
+          }
+        }
         const item = activeDownloads.get(id);
         if (item && item.isPaused) {
             if (item.isStreamJob || item.isAudioJob || item.isZip) {
@@ -3362,6 +3683,18 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                         item.isPersistentZipJob ? "resumePersistentZipJob" : "resumePersistentStreamJob";
                     browser.runtime.sendMessage({ action, jobId: id }).catch(console.error);
                 }
+                if (item.isZip || item.isPersistentZipJob) {
+                    browser.runtime.sendMessage({
+                        action: 'zipProgress', id,
+                        loaded: item.loaded || 0, total: item.total || 0,
+                        status: item.status || 'downloading',
+                        currentFile: item.currentFile || '',
+                        text: item.statusText || '',
+                        percent: item.percent,
+                        isPaused: false
+                    }).catch(() => {});
+                }
+                activeDownloads.set(id, item);
                 sendResponse?.({ success: true });
                 return true;
             }
@@ -3411,6 +3744,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     isStreamJob: !!value.isStreamJob,
                     isZip: !!value.isZip,
                     isPersistentZipJob: !!value.isPersistentZipJob,
+                    groupType: value.groupType || null,
                     finishedParts: value.finishedParts,
                     totalParts: value.totalParts
                 };
@@ -3459,33 +3793,35 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === 'confirmZipSkipResponse') {
-        if (window.zipConfirmResolver) {
-            window.zipConfirmResolver(message.result);
-            delete window.zipConfirmResolver;
+        if (zipConfirmResolver) {
+            zipConfirmResolver(message.result);
+            zipConfirmResolver = null;
         }
         return true;
     }
 });
 
+let zipConfirmResolver = null;
+
 async function askUserToContinue(filename, error) {
     return new Promise((resolve) => {
-        window.zipConfirmResolver = resolve;
+        zipConfirmResolver = resolve;
         browser.runtime.sendMessage({
             action: 'confirmZipSkip',
             filename: filename,
             error: error
         }).catch(() => {
 
-            if (window.zipConfirmResolver) {
-                window.zipConfirmResolver(false);
-                delete window.zipConfirmResolver;
+            if (zipConfirmResolver) {
+                zipConfirmResolver(false);
+                zipConfirmResolver = null;
             }
         });
 
         setTimeout(() => {
-            if (window.zipConfirmResolver === resolve) {
+            if (zipConfirmResolver === resolve) {
                 resolve(false);
-                delete window.zipConfirmResolver;
+                zipConfirmResolver = null;
             }
         }, 30000);
     });
@@ -3517,7 +3853,8 @@ async function handleDownloadAllAsZip(items, downloadId) {
                     loaded: i,
                     total: items.length,
                     status: 'downloading',
-                    currentFile: filename
+                    currentFile: filename,
+                    isPaused: !!(activeDownloads.get(downloadId)?.isPaused)
                 }).catch(() => {});
 
                 try {
@@ -3586,6 +3923,8 @@ async function handleDownloadAllAsZip(items, downloadId) {
                     if (!response.ok) {
                         console.warn(`Failed to download ${url} for ZIP. Status: ${response.status}`);
                         if (skipAllErrors) continue;
+                        const zipSkipSetting = await browser.storage.local.get('skip-http-errors');
+                        if (zipSkipSetting['skip-http-errors'] === '1' && (response.status === 403 || response.status === 404)) continue;
 
                         const result = await askUserToContinue(filename, `Server returned ${response.status}`);
                         if (result === 'continue-all') {
@@ -3650,7 +3989,8 @@ async function handleDownloadAllAsZip(items, downloadId) {
             id: downloadId,
             loaded: items.length,
             total: items.length,
-            status: 'generating'
+            status: 'generating',
+            isPaused: false
         }).catch(() => {});
 
         const zipResponse = downloadZip(zipEntriesGenerator());
@@ -4440,7 +4780,13 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
 
                         const response = await fetch(url, partOptions);
                         if (!response.ok && response.status !== 206) {
-                            throw new Error(`Part ${pIdx} failed with status ${response.status}`);
+                            const partSt = response.status;
+                            const skipPartSetting = await browser.storage.local.get('skip-http-errors');
+                            if (skipPartSetting['skip-http-errors'] === '1' && (partSt === 403 || partSt === 404)) {
+                                browser.runtime.sendMessage({ action: 'skipHttpError', url: url, status: partSt }).catch(() => {});
+                                return;
+                            }
+                            throw new Error(`Part ${pIdx} failed with status ${partSt}`);
                         }
 
                         const reader = response.body.getReader();
@@ -4529,7 +4875,7 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                                     jobId: downloadId,
                                     filename: filename || getFileName(url),
                                     text: 'Downloading...',
-                                    percent: total > 0 ? (totalLoaded / total) * 100 : undefined,
+                                    percent: total > 0 ? Math.round((totalLoaded / total) * 100) : undefined,
                                     loaded: parseInt(totalLoaded) || 0,
                                     total: parseInt(total) || 0,
                                     indeterminate: !(total > 0)
@@ -5298,7 +5644,15 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
             return;
         }
 
-        if (!response.ok && response.status !== 206) throw new Error(browser.i18n.getMessage("serverErrorStatus", [response.status.toString()]) || ("Server error: " + response.status));
+        if (!response.ok && response.status !== 206) {
+            const fetchSt = response.status;
+            const skipHttpSetting = await browser.storage.local.get('skip-http-errors');
+            if (skipHttpSetting['skip-http-errors'] === '1' && (fetchSt === 403 || fetchSt === 404)) {
+                browser.runtime.sendMessage({ action: 'skipHttpError', url: url, status: fetchSt }).catch(() => {});
+                return;
+            }
+            throw new Error(browser.i18n.getMessage("serverErrorStatus", [fetchSt.toString()]) || ("Server error: " + fetchSt));
+        }
 
         let currentResumeOffset = resumeOffset;
         let activeChunkIndex = nextChunkIndex;
@@ -5562,7 +5916,7 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
                     jobId: downloadId,
                     filename: filename || getFileName(url),
                     text: (gdriveSessionUri || dropboxSessionId) ? 'Uploading...' : 'Downloading...',
-                    percent: total > 0 ? (loaded / total) * 100 : undefined,
+                    percent: total > 0 ? Math.round((loaded / total) * 100) : undefined,
                     loaded: parseInt(loaded) || 0,
                     total: parseInt(total) || 0,
                     indeterminate: !(total > 0)
@@ -6047,6 +6401,8 @@ browser.storage.onChanged.addListener((changes, area) => {
 
 initCacheState();
 staleDownloadStateCleanupReady = discardStaleDownloadState().catch(error => console.error("Stale download cleanup failed:", error));
+staleDownloadStateCleanupReady.then(() => restorePersistentProcessingJobs())
+    .catch(error => console.error("Processing job restore failed:", error));
 
 browser.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && (changes['speed-boost-resume'] || changes['speed-boost'])) {

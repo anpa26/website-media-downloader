@@ -41,6 +41,7 @@ window.mdu_translate = function() {
         const translation = browser.i18n.getMessage(key);
         if (translation) {
             element.setAttribute('title', translation);
+            element.setAttribute('aria-label', translation);
         }
     });
 

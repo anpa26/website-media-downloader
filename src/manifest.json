@@ -1,7 +1,7 @@
 {
     "name": "Website Media Downloader",
     "manifest_version": 3,
-    "version": "2.4.5",
+    "version": "2.5.3",
     "description": "__MSG_extensionDescription__",
     "author": "anpa26",
     "developer": {
@@ -11,6 +11,7 @@
     "browser_specific_settings": {
         "gecko": {
             "id": "{924f7c81-8b1e-4b6e-9e7c-8e4a9e1d2c3f}",
+            "update_url": "https://raw.githubusercontent.com/anpa26/website-media-downloader/wmd-1/updates.json",
             "data_collection_permissions": {
                 "required": [
                     "none"

@@ -25,6 +25,8 @@
     Usage:
         node src/build.js chrome      - Build Chrome extension
         node src/build.js firefox     - Build Firefox extension
+        node src/build.js firefox-amo - Build Firefox extension for AMO listed distribution (no update_url)
+        node src/build.js firefox-light-amo - Build Firefox Light extension for AMO listed distribution (no update_url)
         node src/build.js light       - Build all Light editions
         node src/build.js chrome-light|chrome-yt-light|firefox-light
         node src/build.js debug       - Build all Debug editions
@@ -53,21 +55,29 @@ const EXCLUDE_PER_TARGET = {
     chrome: new Set(['yt_core.js', 'wymd.js', ...MEDIABUNNY_FILES]),
     'chrome-yt': new Set(MEDIABUNNY_FILES),
     firefox: new Set([...FIREFOX_EXCLUDES, ...MEDIABUNNY_FILES]),
+    'firefox-amo': new Set([...FIREFOX_EXCLUDES, ...MEDIABUNNY_FILES]),
     'chrome-light': new Set(['yt_core.js', 'wymd.js', 'download_recovery.js', 'audio_processor.html', 'libav.js', ...LIGHT_MP3_FILES, ...LIGHT_STREAM_CONVERSION_FILES]),
     'chrome-yt-light': new Set(['download_recovery.js', 'audio_processor.html', 'libav.js', ...LIGHT_MP3_FILES, ...LIGHT_STREAM_CONVERSION_FILES]),
-    'firefox-light': new Set([...FIREFOX_EXCLUDES, 'libav.js', ...LIGHT_MP3_FILES, ...LIGHT_STREAM_CONVERSION_FILES])
+    'firefox-light': new Set([...FIREFOX_EXCLUDES, 'libav.js', ...LIGHT_MP3_FILES, ...LIGHT_STREAM_CONVERSION_FILES]),
+    'firefox-light-amo': new Set([...FIREFOX_EXCLUDES, 'libav.js', ...LIGHT_MP3_FILES, ...LIGHT_STREAM_CONVERSION_FILES])
 };
 
 const FORBIDDEN_PER_TARGET = {
     firefox: [...FIREFOX_EXCLUDES],
-    'firefox-light': [...FIREFOX_EXCLUDES]
+    'firefox-amo': [...FIREFOX_EXCLUDES],
+    'firefox-light': [...FIREFOX_EXCLUDES],
+    'firefox-light-amo': [...FIREFOX_EXCLUDES]
 };
 
-const FIREFOX_BASED_TARGETS = new Set(['firefox', 'firefox-light']);
+const FIREFOX_BASED_TARGETS = new Set(['firefox', 'firefox-amo', 'firefox-light', 'firefox-light-amo']);
+const FIREFOX_DEBUG_IDS = {
+    firefox: '{1376a6d2-e07f-4015-af28-ca2acfef4e37}',
+    'firefox-light': '{d223cfe1-7d70-4ba2-a81c-3cc817d21cc7}'
+};
 const CHROME_LIGHT_TARGETS = new Set(['chrome-light', 'chrome-yt-light']);
-const LIGHT_TARGETS = new Set(['chrome-light', 'chrome-yt-light', 'firefox-light']);
-const BASE_TARGETS = ['chrome', 'chrome-yt', 'firefox', 'chrome-light', 'chrome-yt-light', 'firefox-light'];
-const DEBUG_TARGETS = BASE_TARGETS.map(target => `${target}-debug`);
+const LIGHT_TARGETS = new Set(['chrome-light', 'chrome-yt-light', 'firefox-light', 'firefox-light-amo']);
+const BASE_TARGETS = ['chrome', 'chrome-yt', 'firefox', 'firefox-amo', 'chrome-light', 'chrome-yt-light', 'firefox-light', 'firefox-light-amo'];
+const DEBUG_TARGETS = BASE_TARGETS.filter(target => !target.endsWith('-amo')).map(target => `${target}-debug`);
 const DEBUG_MESSAGE_KEYS = [
     'debugLogTitle',
     'debugLogExplain',
@@ -81,7 +91,8 @@ const DEBUG_MESSAGE_KEYS = [
 const OVERRIDE_CHAIN_PER_TARGET = {
     'chrome-light': ['chrome', 'light'],
     'chrome-yt-light': ['chrome-yt', 'light'],
-    'firefox-light': ['light', 'firefox-light']
+    'firefox-light': ['light', 'firefox-light'],
+    'firefox-light-amo': ['light', 'firefox-light']
 };
 const LIGHT_SPEED_TEST_MESSAGES = [
     'settingsSpeedTestSectionTitle',
@@ -650,13 +661,27 @@ function stripChromeUnsupportedMediaCache(outDir) {
     }
 }
 
-function finalizeManifest(target, outDir) {
+function finalizeManifest(target, outDir, isDebug = false) {
     const manifestPath = path.join(outDir, 'manifest.json');
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 
     if (FIREFOX_BASED_TARGETS.has(target)) {
         manifest.permissions = (manifest.permissions || []).filter(permission => permission !== 'offscreen');
         if (manifest.background) delete manifest.background.service_worker;
+        if (isDebug && FIREFOX_DEBUG_IDS[target]) {
+            manifest.browser_specific_settings = manifest.browser_specific_settings || {};
+            manifest.browser_specific_settings.gecko = manifest.browser_specific_settings.gecko || {};
+            manifest.browser_specific_settings.gecko.id = FIREFOX_DEBUG_IDS[target];
+        }
+    }
+    if (target === 'firefox-amo' || target === 'firefox-light-amo') {
+        if (manifest.browser_specific_settings?.gecko) {
+            delete manifest.browser_specific_settings.gecko.update_url;
+        }
+    }
+    if (target === 'firefox-amo' || target === 'firefox-light-amo') {
+        const parts = String(manifest.version || '').split('.');
+        if (parts.length === 3) manifest.version = manifest.version + '.1';
     }
     if (LIGHT_TARGETS.has(target)) {
         manifest.permissions = (manifest.permissions || []).filter(permission => permission !== 'identity');
@@ -703,6 +728,9 @@ function validateTarget(baseTarget, outDir, isDebug = false) {
     if (background.includes('createMediaFetchOptions(') && !background.includes('function createMediaFetchOptions(')) {
         throw new Error(`[${target}] createMediaFetchOptions is used but not defined`);
     }
+    if (background.includes('restorePersistentProcessingJobs(') && !background.includes('function restorePersistentProcessingJobs(')) {
+        throw new Error(`[${target}] restorePersistentProcessingJobs is used but not defined`);
+    }
     if (!FIREFOX_BASED_TARGETS.has(target)) {
         const popupHtml = fs.readFileSync(path.join(outDir, 'popup.html'), 'utf8');
         if (popupHtml.includes('id="media-cache"')) {
@@ -737,11 +765,11 @@ function validateTarget(baseTarget, outDir, isDebug = false) {
             }
         }
     }
-    if (target === 'firefox-light') {
+    if (target === 'firefox-light' || target === 'firefox-light-amo') {
         const standardId = JSON.parse(fs.readFileSync(path.join(SRC_DIR, 'manifest.json'), 'utf8')).browser_specific_settings?.gecko?.id;
         const lightId = manifest.browser_specific_settings?.gecko?.id;
         if (!lightId || lightId === standardId) {
-            throw new Error('[firefox-light] A dedicated Firefox extension ID is required');
+            throw new Error(`[${target}] A dedicated Firefox extension ID is required`);
         }
     }
     if (LIGHT_TARGETS.has(target)) {
@@ -872,7 +900,7 @@ function buildTarget(target) {
     if (!FIREFOX_BASED_TARGETS.has(baseTarget)) stripChromeUnsupportedMediaCache(outDir);
     if (!isDebug) stripDebugFeatures(outDir);
     if (LIGHT_TARGETS.has(baseTarget)) stripLightFeatures(outDir);
-    finalizeManifest(baseTarget, outDir);
+    finalizeManifest(baseTarget, outDir, isDebug);
     validateTarget(baseTarget, outDir, isDebug);
 
     const overrideCount = countOverrideFiles(baseTarget);
@@ -886,6 +914,7 @@ switch (command) {
     case 'chrome':
     case 'chrome-yt':
     case 'firefox':
+    case 'firefox-amo':
     case 'chrome-light':
     case 'chrome-yt-light':
     case 'firefox-light':
@@ -895,6 +924,7 @@ switch (command) {
     case 'chrome-light-debug':
     case 'chrome-yt-light-debug':
     case 'firefox-light-debug':
+    case 'firefox-light-amo':
         buildTarget(command);
         break;
     case 'light':
@@ -913,6 +943,6 @@ switch (command) {
         break;
     default:
         console.error(`[ERROR] Unknown command: ${command}`);
-        console.error('Usage: node src/build.js [chrome|chrome-yt|firefox|chrome-light|chrome-yt-light|firefox-light|<target>-debug|light|debug|all|clean]');
+        console.error('Usage: node src/build.js [chrome|chrome-yt|firefox|firefox-amo|chrome-light|chrome-yt-light|firefox-light|firefox-light-amo|<target>-debug|light|debug|all|clean]');
         process.exit(1);
 }

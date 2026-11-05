@@ -1212,7 +1212,7 @@
         "description": "Updated/Added during UI string localization audit."
     },
     "extensionDescriptionAbout": {
-        "message": "미디어 다운로드를 위한 필수 도구입니다. 브라우징하는 동안 비디오, 음악 및 라이브 스트림을 쉽게 감지합니다. 백그라운드 다운로드 및 자동 HLS/DASH 스트림 변환을 지원하여 콘텐츠를 장치에 직접 저장합니다.",
+        "message": "웹 전반에서 비디오, 오디오, 이미지 및 라이브 스트림(HLS/DASH)을 간편하게 감지하고 다운로드하세요. 스마트 탭 검색, 자동 스트림 변환, 백그라운드 다운로드 및 대화형 다운로드 제어 기능을 통해 기기에 직접 저장할 수 있습니다.",
         "description": "Updated/Added during UI string localization audit."
     },
     "confirmTitle": {
@@ -2154,5 +2154,98 @@
   "imageMinFileSizeCustomExplain": {
     "message": "이미지 파일의 최소 크기를 KB 단위로 입력하세요 (0 = 사용 안 함).",
     "description": "imageMinFileSizeCustomExplain"
-  }
+  },
+    "scanNowButton": {
+        "message": "스캔"
+    },
+    "listActionsButton": {
+        "message": "목록 옵션"
+    },
+    "addShortButton": {
+        "message": "추가"
+    },
+    "menuButton": {
+        "message": "메뉴"
+    },
+    "manualScanTitle": {
+        "message": "수동 스캔만"
+    },
+    "manualScanExplain": {
+        "message": "미디어는 백그라운드에서 계속 감지되지만 스캔을 클릭할 때 열려 있는 웹사이트에 대해서만 표시됩니다."
+    },
+    "removeOnTabCloseTitle": {
+        "message": "탭이 닫힐 때 감지된 미디어 제거"
+    },
+    "removeOnTabCloseExplain": {
+        "message": "미디어가 발견된 탭이 닫힐 때 감지된 미디어 파일을 목록에서 자동으로 제거합니다."
+    },
+    "manualScanKeepTabsTitle": {
+        "message": "다른 탭의 미디어 유지"
+    },
+    "manualScanKeepTabsExplain": {
+        "message": "탭을 전환할 때 다른 탭에서 감지된 미디어를 계속 표시합니다. 비활성화하면 현재 활성 탭의 미디어만 표시됩니다."
+    },
+    "topHeaderDesignTitle": {
+        "message": "상단 헤더 디자인"
+    },
+    "topHeaderDesignExplain": {
+        "message": "새 탐색 메뉴 헤더(v2)와 기본 탭 헤더(v1) 중에서 선택합니다."
+    },
+    "topHeaderV1": {
+        "message": "v1"
+    },
+    "topHeaderV2": {
+        "message": "v2"
+    },
+    "bottomBarDesignTitle": {
+        "message": "하단 작업 표시줄 디자인"
+    },
+    "bottomBarDesignExplain": {
+        "message": "미디어 목록 하단 작업 표시줄의 버튼 스타일을 선택합니다."
+    },
+    "bottomBarV1": {
+        "message": "v1"
+    },
+    "bottomBarV2": {
+        "message": "v2"
+    },
+    "bottomBarV3": {
+        "message": "v3"
+    },
+    "updateCardTitle": {
+        "message": "업데이트 사용 가능",
+        "description": "Title of the update available card in the about page."
+    },
+    "updateCardFirefoxDesc": {
+        "message": "공식 릴리스 저장소에서 업데이트 버전 $VERSION$이(가) 감지되었습니다. Firefox 브라우저의 보안 아키텍처에 따라 서명된 추가 기능 패키지(.xpi)는 사용자의 수동 작업 없이 최대 24시간 이내에 백그라운드에서 자동으로 검증, 다운로드 및 적용됩니다.",
+        "description": "Detailed professional description for Firefox in update card.",
+        "placeholders": {
+          "VERSION": {
+            "content": "$1",
+            "example": "2.5.0"
+          }
+        }
+    },
+    "updateCardChromeDesc": {
+        "message": "공식 릴리스 저장소에서 업데이트 버전 $VERSION$이(가) 감지되었습니다. 아래 버튼을 통해 업데이트 패키지를 다운로드하여 즉시 최신 버전으로 업그레이드할 수 있습니다.",
+        "description": "Detailed professional description for Chrome in update card.",
+        "placeholders": {
+          "VERSION": {
+            "content": "$1",
+            "example": "2.5.0"
+          }
+        }
+    },
+    "updateCardButton": {
+        "message": "지금 업데이트",
+        "description": "Action button in the update card to open update link."
+    },
+    "groupProgressTitle": {
+        "message": "그룹 다운로드 진행 상황",
+        "description": "Title of download progress on groups setting."
+    },
+    "groupProgressExplain": {
+        "message": "그룹 카드에 일시중지 및 취소 제어 기능이 있는 활성 다운로드 진행 목록을 표시합니다.",
+        "description": "Explanation of download progress on groups setting."
+    }
 }

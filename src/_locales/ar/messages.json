@@ -1038,6 +1038,10 @@
     "message": "إلغاء الكل",
     "description": "The label of the button to cancel all active downloads."
   },
+  "confirmCancelButton": {
+    "message": "إلغاء",
+    "description": "The label of the cancel button in the ZIP download error dialog."
+  },
   "zipPreparing": {
     "message": "جاري تحضير $COUNT$ من الملفات...",
     "description": "The message when starting to prepare files for a ZIP archive.",
@@ -1191,6 +1195,10 @@
   "continueAllButton": {
     "message": "استمرار الكل",
     "description": "The label of the button to continue all paused downloads."
+  },
+  "continueButton": {
+    "message": "استمرار",
+    "description": "The label of the button to continue with the next file after skipping one failed download."
   },
   "decodingAudio": {
     "message": "جاري فك تشفير الصوت... يرجى الانتظار (قد يكون هذا بطيئاً للملفات الكبيرة).",
@@ -1460,7 +1468,7 @@
     "description": "Updated/Added during UI string localization audit."
   },
   "extensionDescriptionAbout": {
-    "message": "أداتك الأساسية لتنزيل الوسائط. تكتشف بسهولة مقاطع الفيديو والموسيقى والبث المباشر أثناء تصفحك. تدعم التنزيلات في الخلفية وتحويل بث HLS/DASH التلقائي لحفظ المحتوى مباشرة على جهازك.",
+    "message": "اكتشف ونزّل مقاطع الفيديو والتسجيلات الصوتية والصور بالإضافة إلى البث المباشر (HLS/DASH) من مختلف مواقع الويب بسهولة. يتميز بفحص ذكي لعلامات التبويب وتحويل تلقائي للبث وتنزيلات في الخلفية وعناصر تحكم تفاعلية في التنزيل مباشرة إلى جهازك.",
     "description": "Updated/Added during UI string localization audit."
   },
   "confirmTitle": {
@@ -1784,6 +1792,16 @@
   "updateDialogMessage": {
     "message": "إصدار $VERSION$ متوفر. هل تريد التحديث الآن؟",
     "description": "Message shown in the update dialog.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "1.7.9"
+      }
+    }
+  },
+  "updateDialogFirefoxMessage": {
+    "message": "تم اكتشاف الإصدار $VERSION$. سيتم تحديث الإضافة تلقائيًا في الخلفية إذا تم تمكين التحديثات التلقائية. يرجى إعادة فتح الإضافة بعد فترة.",
+    "description": "Message shown in Firefox update dialog.",
     "placeholders": {
       "VERSION": {
         "content": "$1",
@@ -2618,5 +2636,122 @@
   "debugLogCleared": {
     "message": "تم مسح سجل التصحيح.",
     "description": "Notification when debug log is cleared"
+  },
+  "scanNowButton": {
+    "message": "مسح"
+  },
+  "listActionsButton": {
+    "message": "خيارات القائمة"
+  },
+  "addShortButton": {
+    "message": "إضافة"
+  },
+  "menuButton": {
+    "message": "القائمة"
+  },
+  "manualScanTitle": {
+    "message": "المسح اليدوي فقط"
+  },
+  "manualScanExplain": {
+    "message": "سيستمر اكتشاف الوسائط في الخلفية، ولكن يتم عرضها فقط للموقع المفتوح عند النقر فوق مسح."
+  },
+  "removeOnTabCloseTitle": {
+    "message": "إزالة الوسائط المكتشفة عند إغلاق علامة التبويب"
+  },
+  "removeOnTabCloseExplain": {
+    "message": "إزالة ملفات الوسائط المكتشفة تلقائيًا من القائمة عند إغلاق علامة التبويب التي تم العثور عليها فيها."
+  },
+  "manualScanKeepTabsTitle": {
+    "message": "الاحتفاظ بالوسائط من علامات التبويب الأخرى"
+  },
+  "manualScanKeepTabsExplain": {
+    "message": "الاستمرار في عرض الوسائط المكتشفة من علامات التبويب الأخرى عند التبديل بينها. عند التعطيل، يتم فقط عرض وسائط علامة التبويب الحالية."
+  },
+  "topHeaderDesignTitle": {
+    "message": "تصميم الشريط العلوي"
+  },
+  "topHeaderDesignExplain": {
+    "message": "اختر بين تصميم شريط التنقل الجديد (v2) وتصميم علامات التبويب الكلاسيكي (v1)."
+  },
+  "topHeaderV1": {
+    "message": "v1"
+  },
+  "topHeaderV2": {
+    "message": "v2"
+  },
+  "bottomBarDesignTitle": {
+    "message": "تصميم شريط الإجراءات السفلي"
+  },
+  "bottomBarDesignExplain": {
+    "message": "اختر نمط الأزرار لشريط الإجراءات السفلي في قائمة الوسائط."
+  },
+  "bottomBarV1": {
+    "message": "v1"
+  },
+  "bottomBarV2": {
+    "message": "v2"
+  },
+  "bottomBarV3": {
+    "message": "v3"
+  },
+  "updateCardTitle": {
+    "message": "التحديث متوفر",
+    "description": "Title of the update available card in the about page."
+  },
+  "updateCardFirefoxDesc": {
+    "message": "تم اكتشاف إصدار التحديث $VERSION$ في مستودع الإصدارات الرسمي. نظرًا لبنية أمان متصفح Firefox، سيتم التحقق من حزمة الإضافة الموقعة (.xpi) وتنزيلها وتطبيقها تلقائيًا في الخلفية خلال مدة أقصاها 24 ساعة دون الحاجة إلى أي تدخل يدوي.",
+    "description": "Detailed professional description for Firefox in update card.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardChromeDesc": {
+    "message": "تم اكتشاف إصدار التحديث $VERSION$ في مستودع الإصدارات الرسمي. يمكنك ترقية الإضافة فورًا إلى أحدث إصدار عن طريق تنزيل حزمة التحديث عبر الزر أدناه.",
+    "description": "Detailed professional description for Chrome in update card.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardButton": {
+    "message": "تحديث الآن",
+    "description": "Action button in the update card to open update link."
+  },
+  "updateCardGithubAheadDesc": {
+    "message": "الإصدار $VERSION$ متاح بالفعل على GitHub، بينما لا يزال AMO على الإصدار v$AMO_VERSION$. يمكنك تنزيله الآن من GitHub أو انتظار AMO. فبمجرد تحديث AMO سيتم تثبيته تلقائيًا إذا كانت التحديثات التلقائية مفعّلة. التثبيت من GitHub يحوّل التحديثات المستقبلية إلى قناة GitHub.",
+    "description": "Description shown in the update card when GitHub is ahead of AMO.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      },
+      "AMO_VERSION": {
+        "content": "$2",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardGithubButton": {
+    "message": "تنزيل من GitHub",
+    "description": "Button label to download the update from GitHub."
+  },
+  "groupProgressTitle": {
+    "message": "تقدم التنزيل في المجموعات",
+    "description": "Title of download progress on groups setting."
+  },
+  "groupProgressExplain": {
+    "message": "عرض قائمة تقدم التنزيلات النشطة مع أزرار الإيقاف المؤقت والإلغاء في بطاقات المجموعات.",
+    "description": "Explanation of download progress on groups setting."
+  },
+  "skipHttpErrorsTitle": {
+    "message": "تخطي أخطاء 403/404"
+  },
+  "skipHttpErrorsExplain": {
+    "message": "تخطي الوسائط تلقائياً وإزالتها من القائمة عند ظهور خطأ 403 أو 404 أثناء التنزيل بدلاً من فشل التنزيل."
   }
 }

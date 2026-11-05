@@ -1,111 +1,133 @@
 {
   "require_uninstall": false,
   "en": {
-    "headline": "What's New (v2.4.5)",
+    "headline": "What's New (v2.5.3)",
     "changes": [
-      "Removed dead and unsupported code.",
-      "Optimized download performance and parallel segment processing.",
-      "Fixed UI display and layout bugs across media cards.",
-      "Added image filtering by file size.",
-      "Fixed Chrome popup sizing to remain consistent across views (#3).",
-      "Improved the extension UI in Chrome.",
-      "Fixed incorrect media detection that falsely categorized files as streams."
+      "Added new top header layout with extension branding and dropdown navigation menu.",
+      "Added manual scan mode with tab-specific media filtering and manual scan trigger.",
+      "Added option to automatically remove detected media when its source tab is closed.",
+      "Revamped bottom action bar with adaptive options and quick Add URL button.",
+      "Added Spanish (es) locale support (#4).",
+      "Minimizable and freely draggable download toast with persistent position (#6).",
+      "Unified download progress across all media types with popup pause, resume and cancel controls (#6).",
+      "You can now view, pause, resume and cancel download progress in group mode without opening the group media list."
     ]
   },
   "id": {
-    "headline": "Yang Baru (v2.4.5)",
+    "headline": "Yang Baru (v2.5.3)",
     "changes": [
-      "Menghapus kode mati dan yang tidak didukung.",
-      "Optimalisasi performa unduhan dan pemrosesan segmen paralel.",
-      "Memperbaiki bug tampilan dan tata letak pada kartu media.",
-      "Menambahkan filter gambar berdasarkan ukuran file.",
-      "Memperbaiki ukuran popup Chrome agar konsisten di berbagai tampilan (#3).",
-      "Meningkatkan antarmuka ekstensi di Chrome.",
-      "Memperbaiki beberapa media terdeteksi tidak benar sehingga masuk stream."
+      "Desain header atas baru dengan logo/nama ekstensi dan menu navigasi dropdown.",
+      "Fitur mode hanya pindai manual dengan deteksi situs aktif dan tombol Pindai.",
+      "Opsi otomatis menghapus media terdeteksi saat tab sumbernya ditutup.",
+      "Pembaruan bilah aksi bawah yang adaptif dan tombol cepat Tambah URL.",
+      "Dukungan bahasa Spanyol (es) (#4).",
+      "Notifikasi download mengambang (toast) kini dapat diminimalkan, digeser bebas (draggable) dan posisinya tersimpan (#6).",
+      "Penyatuan indikator progres unduhan untuk semua tipe media lengkap dengan kontrol jeda, lanjut dan batal di popup (#6).",
+      "Kini kamu dapat melihat, menjeda, melanjutkan dan membatalkan progres unduhan dalam mode grup tanpa membuka daftar media grup."
     ]
   },
   "de": {
-    "headline": "Was gibt's Neues (v2.4.5)",
+    "headline": "Was gibt's Neues (v2.5.3)",
     "changes": [
-      "Toter Code entfernt.",
-      "Download-Leistung optimiert.",
-      "UI-Anzeigefehler behoben.",
-      "Added image filtering by file size.",
-      "Fixed Chrome popup sizing to remain consistent across views (#3).",
-      "Improved the extension UI in Chrome.",
-      "Fehlerhafte Medienerkennung behoben, durch die Dateien fälschlicherweise als Streams erkannt wurden."
+      "Neues oberes Header-Layout mit Markenlogo und Dropdown-Navigationsmenü.",
+      "Manueller Scanmodus mit tab-spezifischer Medienfilterung und Scan-Schaltfläche.",
+      "Option zum automatischen Entfernen erkannter Medien beim Schließen des Quell-Tabs.",
+      "Überarbeitete untere Aktionsleiste mit adaptiven Optionen und Schnellschaltfläche zum Hinzufügen von URLs.",
+      "Unterstützung für die spanische (es) Sprache hinzugefügt (#4).",
+      "Minimierbarer und frei verschiebbarer Download-Toast mit gespeicherter Position (#6).",
+      "Einheitlicher Download-Fortschritt für alle Medientypen mit Pausier-, Fortsetzungs- und Abbruch-Steuerung im Popup (#6).",
+      "Im Gruppenmodus kannst du den Download-Fortschritt jetzt anzeigen, pausieren, fortsetzen und abbrechen ohne die Medienliste der Gruppe zu öffnen."
     ]
   },
   "fr": {
-    "headline": "Nouveautés (v2.4.5)",
+    "headline": "Nouveautés (v2.5.3)",
     "changes": [
-      "Suppression du code mort.",
-      "Optimisation des performances de téléchargement.",
-      "Correction des bugs d'affichage de l'interface.",
-      "Added image filtering by file size.",
-      "Fixed Chrome popup sizing to remain consistent across views (#3).",
-      "Improved the extension UI in Chrome.",
-      "Correction de la détection des médias qui catégorisait à tort des fichiers comme des flux (streams)."
+      "Nouvelle disposition de l'en-tête supérieur avec logo et menu de navigation déroulant.",
+      "Mode d'analyse manuelle avec filtrage des médias par onglet et bouton d'analyse.",
+      "Option de suppression automatique des médias détectés lors de la fermeture de l'onglet source.",
+      "Barre d'actions inférieure repensée avec options adaptatives et bouton rapide d'ajout d'URL.",
+      "Ajout de la prise en charge de la langue espagnole (es) (#4).",
+      "Notification de téléchargement (toast) réductible, déplaçable librement et mémorisant sa position (#6).",
+      "Progression de téléchargement unifiée pour tous les types de médias avec commandes pause, reprise et annulation dans le popup (#6).",
+      "Vous pouvez désormais afficher, mettre en pause, reprendre et annuler la progression des téléchargements en mode groupe sans ouvrir la liste des médias du groupe."
     ]
   },
   "ja": {
-    "headline": "新機能 (v2.4.5)",
+    "headline": "新機能 (v2.5.3)",
     "changes": [
-      "不要なコードを削除しました。",
-      "ダウンロードのパフォーマンスを最適化しました。",
-      "UIの表示バグを修正しました。",
-      "Added image filtering by file size.",
-      "Fixed Chrome popup sizing to remain consistent across views (#3).",
-      "Improved the extension UI in Chrome.",
-      "メディアが誤ってストリームとして検出される不具合を修正しました。"
+      "拡張機能のブランド表示とドロップダウンナビゲーションメニューを備えた新しいトップヘッダー。",
+      "タブ固有のメディアフィルタリングとスキャンボタンを備えた手動スキャンモード。",
+      "元のタブが閉じられたときに検出されたメディアを自動的に削除するオプション。",
+      "適応型オプションとクイックURL追加ボタンを備えた刷新された下部アクションバー。",
+      "スペイン語（es）のサポートを追加 (#4)。",
+      "最小化可能で自由にドラッグ移動でき位置が記憶されるダウンロードトースト (#6)。",
+      "すべてのメディアタイプでダウンロード進捗を統合しポップアップに一時停止・再開・キャンセルの操作を追加 (#6)。",
+      "グループのメディア一覧を開かなくてもグループモードでダウンロードの進捗確認、一時停止、再開、キャンセルができるようになりました。"
     ]
   },
   "ko": {
-    "headline": "새로운 기능 (v2.4.5)",
+    "headline": "새로운 기능 (v2.5.3)",
     "changes": [
-      "사용되지 않는 코드를 삭제했습니다.",
-      "다운로드 성능을 최적화했습니다.",
-      "UI 표시 버그를 수정했습니다.",
-      "Added image filtering by file size.",
-      "Fixed Chrome popup sizing to remain consistent across views (#3).",
-      "Improved the extension UI in Chrome.",
-      "일부 미디어가 스트림으로 잘못 감지되던 문제를 수정했습니다."
+      "확장 프로그램 브랜딩 및 드롭다운 탐색 메뉴가 포함된 새로운 상단 헤더 레이아웃.",
+      "탭별 미디어 필터링 및 수동 스캔 버튼이 포함된 수동 스캔 모드.",
+      "원본 탭이 닫힐 때 감지된 미디어를 자동으로 제거하는 옵션.",
+      "적응형 옵션 및 빠른 URL 추가 버튼이 포함된 새로워진 하단 작업 표시줄.",
+      "스페인어(es) 언어 지원 추가 (#4).",
+      "최소화 가능하며 자유롭게 드래그하여 위치가 저장되는 다운로드 토스트 (#6).",
+      "모든 미디어 유형의 다운로드 진행률을 통합하고 팝업에 일시중지, 재개 및 취소 제어 추가 (#6).",
+      "이제 그룹 미디어 목록을 열지 않고도 그룹 모드에서 다운로드 진행 상황을 확인하고 일시중지, 재개 및 취소할 수 있습니다."
     ]
   },
   "pt": {
-    "headline": "Novidades (v2.4.5)",
+    "headline": "Novidades (v2.5.3)",
     "changes": [
-      "Código morto removido.",
-      "Desempenho de download otimizado.",
-      "Correção de bugs visuais da interface.",
-      "Added image filtering by file size.",
-      "Fixed Chrome popup sizing to remain consistent across views (#3).",
-      "Improved the extension UI in Chrome.",
-      "Correção na detecção de mídia que categorizava incorretamente arquivos como streams."
+      "Novo layout de cabeçalho superior com marca da extensão e menu suspenso de navegação.",
+      "Modo de verificação manual com filtragem de mídia por guia e botão de verificação.",
+      "Opção para remover automaticamente as mídias detectadas ao fechar a guia de origem.",
+      "Barra de ações inferior renovada com opções adaptáveis e botão rápido para adicionar URL.",
+      "Suporte ao idioma espanhol (es) adicionado (#4).",
+      "Aviso flutuante (toast) de download minimizável, arrastável e com posição persistente (#6).",
+      "Progresso de download unificado para todos os tipos de mídia com controles de pausa, retomada e cancelamento no popup (#6).",
+      "Agora você pode visualizar, pausar, retomar e cancelar o progresso dos downloads no modo de grupo sem abrir a lista de mídias do grupo."
     ]
   },
   "ru": {
-    "headline": "Что нового (v2.4.5)",
+    "headline": "Что нового (v2.5.3)",
     "changes": [
-      "Удалён неиспользуемый код.",
-      "Оптимизирована производительность скачивания.",
-      "Исправлены ошибки отображения интерфейса.",
-      "Added image filtering by file size.",
-      "Fixed Chrome popup sizing to remain consistent across views (#3).",
-      "Improved the extension UI in Chrome.",
-      "Исправлено ошибочное определение медиафайлов как потоков (streams)."
+      "Новый верхний заголовок с брендингом расширения и выпадающим меню навигации.",
+      "Режим ручного сканирования с фильтрацией медиа по вкладке и кнопкой сканирования.",
+      "Опция автоматического удаления обнаруженных медиа при закрытии исходной вкладки.",
+      "Обновленная нижняя панель действий с адаптивными опциями и быстрой кнопкой добавления URL.",
+      "Добавлена поддержка испанского (es) языка (#4).",
+      "Плавающее уведомление (toast) загрузки теперь можно свернуть, свободно перемещать и сохранять его позицию (#6).",
+      "Единый прогресс загрузки для всех типов медиа с кнопками паузы, возобновления и отмены в попапе (#6).",
+      "Теперь в групповом режиме можно просматривать прогресс загрузки, приостанавливать, возобновлять и отменять загрузки без открытия списка медиа группы."
     ]
   },
   "ar": {
-    "headline": "ما الجديد (v2.4.5)",
+    "headline": "ما الجديد (v2.5.3)",
     "changes": [
-      "إزالة الكود غير المستخدم.",
-      "تحسين أداء التنزيل.",
-      "إصلاح أخطاء واجهة المستخدم.",
-      "Added image filtering by file size.",
-      "Fixed Chrome popup sizing to remain consistent across views (#3).",
-      "Improved the extension UI in Chrome.",
-      "إصلاح الكشف غير الصحيح عن الوسائط وتصنيفها خطأً كبث (streams)."
+      "تصميم جديد للرأس العلوي يتضمن شعار الإضافة وقائمة تنقل منسدلة.",
+      "وضع الفحص اليدوي مع تصفية الوسائط لكل علامة تبويب وزر فحص مباشر.",
+      "خيار الحذف التلقائي للوسائط المكتشفة عند إغلاق علامة التبويب المصدر.",
+      "شريط إجراءات سفلي متجدد مع خيارات تكيفية وزر سريع لإضافة الرابط.",
+      "إضافة دعم اللغة الإسبانية (es) (#4).",
+      "إشعار تنزيل عائم قابل للتصغير والسحب بحرية مع حفظ موضعه (#6).",
+      "مؤشر تقدم تنزيل موحد لجميع أنواع الوسائط مع أزرار الإيقاف المؤقت والاستئناف والإلغاء في النافذة المنبثقة (#6).",
+      "يمكنك الآن عرض تقدم التنزيلات وإيقافها مؤقتًا واستئنافها وإلغاؤها في وضع المجموعة دون فتح قائمة وسائط المجموعة."
+    ]
+  },
+  "es": {
+    "headline": "Novedades (v2.5.3)",
+    "changes": [
+      "Nuevo diseño de encabezado superior con la marca de la extensión y menú de navegación desplegable.",
+      "Modo de escaneo manual con filtrado de medios por pestaña y botón de escaneo.",
+      "Opción para eliminar automáticamente los medios detectados al cerrar la pestaña de origen.",
+      "Barra de acciones inferior renovada con opciones adaptativas y botón rápido para agregar URL.",
+      "Soporte para el idioma español (es) (#4).",
+      "Notificación flotante (toast) de descarga minimizable, arrastrable y con posición persistente (#6).",
+      "Progreso de descarga unificado para todos los tipos de medios con controles de pausa, reanudación y cancelación en el popup (#6).",
+      "Ahora puedes ver, pausar, reanudar y cancelar el progreso de las descargas en el modo de grupo sin abrir la lista de medios del grupo."
     ]
   }
 }

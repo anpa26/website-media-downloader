@@ -27,7 +27,7 @@
     }
 
     const contentStorageKeys = [
-        'document-scan', 'document-scan-mode', 'url-detection', 'mime-detection', 'youtube-detection', 'detect-download-links', 'hide-segments', 'hide-page-components',
+        'manual-scan', 'document-scan', 'document-scan-mode', 'url-detection', 'mime-detection', 'youtube-detection', 'detect-download-links', 'hide-segments', 'hide-page-components',
         'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file',
         'ignore-disabled-types', 'optimize-low-end', 'audio-process-notification', 'theme-color',
         'ui-scale'
@@ -36,6 +36,8 @@
     let cachedContentSettings = {};
     let isGlobalOpt = false;
     const settingEnabled = (value, defaultValue = true) => value === undefined || value === null ? defaultValue : value === '1' || value === true;
+    const manualScanEnabled = (settings = cachedContentSettings) =>
+        settingEnabled(settings['manual-scan'], false);
     const contentDetectionEnabled = (settings = cachedContentSettings) =>
         settingEnabled(settings['url-detection']) ||
         settingEnabled(settings['mime-detection']) ||
@@ -95,25 +97,32 @@
                         const type = getUrlType(absolute) || 'stream';
                         if (!isTypeDisabled(type, cachedContentSettings)) {
                             detected.add(absolute);
-                            if (reportTimeout) clearTimeout(reportTimeout);
-                            reportTimeout = setTimeout(report, 500);
+                            if (!manualScanEnabled() || window.__wmdForceManualScan) {
+                                if (reportTimeout) clearTimeout(reportTimeout);
+                                reportTimeout = setTimeout(() => report(!!window.__wmdForceManualScan), 500);
+                            }
                         }
                     }
                 }
             } else if (event.data.type === 'MDU_DEEP_URLS_DETECTED') {
-                if (!maximalDocumentScanEnabled()) return;
+                if (manualScanEnabled() && !window.__wmdForceManualScan) return;
+                if (!maximalDocumentScanEnabled() && !window.__wmdForceManualScan) return;
                 if (event.data.urls && Array.isArray(event.data.urls)) {
+                    let addedAny = false;
                     event.data.urls.forEach(url => {
                         const absolute = getAbsoluteUrl(url);
-                        if (absolute && !detected.has(absolute)) {
+                        if (absolute) {
                             const type = getUrlType(absolute);
                             if (!isTypeDisabled(type, cachedContentSettings)) {
+                                if (!detected.has(absolute)) addedAny = true;
                                 detected.add(absolute);
-                                if (reportTimeout) clearTimeout(reportTimeout);
-                                reportTimeout = setTimeout(report, 500);
                             }
                         }
                     });
+                    if (addedAny || window.__wmdForceManualScan) {
+                        if (reportTimeout) clearTimeout(reportTimeout);
+                        reportTimeout = setTimeout(() => report(!!window.__wmdForceManualScan), window.__wmdForceManualScan ? 100 : 500);
+                    }
                 }
             }
         }
@@ -220,6 +229,7 @@
             if (type && isTypeDisabled(type, settings)) {
                 return false;
             }
+            if (type) return true;
 
             const extensionsToCheck = allExtensions.concat(extraExtensions);
             return extensionsToCheck.some(ext => path.endsWith(ext));
@@ -282,7 +292,7 @@
         if (size > 0 && size > (detectedImageSizes.get(url) || 0)) detectedImageSizes.set(url, size);
     }
 
-    function report() {
+    function report(isManualScan = false) {
         if (detected.size === 0) return;
         try {
             chrome.runtime.sendMessage({
@@ -291,7 +301,8 @@
                 imageDimensions: Object.fromEntries(detectedImageDimensions),
                 imageSizes: Object.fromEntries(detectedImageSizes),
                 pageTitle: getPageTitle(),
-                pageUrl: window.location.href
+                pageUrl: window.location.href,
+                isManualScan: !!isManualScan
             });
         } catch (e) {}
     }
@@ -299,31 +310,38 @@
     async function processElement(el, result, detectDownloads, extraExts) {
         if (!el || el.nodeType !== Node.ELEMENT_NODE) return;
 
-        let url = (el.tagName === 'IMG' && el.currentSrc) || el.src || el.href || el.getAttribute('data-src') || el.getAttribute('data-url') || el.getAttribute('data-href') || el.getAttribute('data-original');
+        let url = (el.tagName === 'IMG' && el.currentSrc) || (el.tagName === 'VIDEO' && el.currentSrc) || (el.tagName === 'AUDIO' && el.currentSrc) || el.src || el.href || el.getAttribute('data-src') || el.getAttribute('data-url') || el.getAttribute('data-href') || el.getAttribute('data-original');
         if (el.tagName === 'SOURCE' || el.tagName === 'TRACK') {
             url = el.src || el.srcset;
         }
-        if (url && typeof url === 'string') {
+        if (url && typeof url === 'string' && !url.startsWith('blob:') && !url.startsWith('data:')) {
             const absolute = getAbsoluteUrl(url);
             if (absolute) {
                 if (!(await checkIsSegment(absolute, result))) {
                     const isDownloadAttr = detectDownloads && el.tagName === 'A' && el.hasAttribute('download');
                     const isVideoTag = el.tagName === 'VIDEO' && !isTypeDisabled('video', result);
                     const isAudioTag = el.tagName === 'AUDIO' && !isTypeDisabled('audio', result);
+                    const isSourceInMedia = el.tagName === 'SOURCE' && (el.parentElement?.tagName === 'VIDEO' || el.parentElement?.tagName === 'AUDIO');
                     const isAllowedDownload = isDownloadAttr && !isTypeDisabled('file', result);
 
                     const isImageElement = el.tagName === 'IMG' && /^https?:/i.test(absolute);
-                    if (isImageElement || await isMediaUrl(absolute, extraExts, result) || isVideoTag || isAudioTag || isAllowedDownload) {
-                        const type = isImageElement ? 'image' : getUrlType(absolute);
+                    if (isImageElement || await isMediaUrl(absolute, extraExts, result) || isVideoTag || isAudioTag || isSourceInMedia || isAllowedDownload) {
+                        const type = isImageElement ? 'image' : (getUrlType(absolute) || (isVideoTag || el.parentElement?.tagName === 'VIDEO' ? 'video' : (isAudioTag || el.parentElement?.tagName === 'AUDIO' ? 'audio' : null)));
                         if (!isTypeDisabled(type, result)) {
-                            detected.add(absolute);
-                            if (type === 'image') recordImageResourceSize(absolute, el.tagName === 'IMG' ? el : null);
-                            if (el.tagName === 'IMG' && el.naturalWidth > 0 && el.naturalHeight > 0) {
-                                detectedImageDimensions.set(absolute, { width: el.naturalWidth, height: el.naturalHeight });
+                            const finalUrl = (!getUrlType(absolute) && (type === 'video' || type === 'audio') && !absolute.includes('#video') && !absolute.includes('#audio'))
+                                ? `${absolute}#${type}`
+                                : absolute;
+                            if (!manualScanEnabled(result) || window.__wmdForceManualScan) {
+                                detected.add(finalUrl);
+                                if (type === 'image') recordImageResourceSize(absolute, el.tagName === 'IMG' ? el : null);
+                                if (el.tagName === 'IMG' && el.naturalWidth > 0 && el.naturalHeight > 0) {
+                                    detectedImageDimensions.set(absolute, { width: el.naturalWidth, height: el.naturalHeight });
+                                }
                             }
                             if (el.tagName === 'IMG' && !watchedImageDimensions.has(el)) {
                                 watchedImageDimensions.add(el);
                                 el.addEventListener('load', () => {
+                                    if (manualScanEnabled() && !window.__wmdForceManualScan) return;
                                     if (el.naturalWidth <= 0 || el.naturalHeight <= 0) return;
                                     const loadedUrl = getAbsoluteUrl(el.currentSrc || el.src || absolute);
                                     if (!loadedUrl || !/^https?:/i.test(loadedUrl)) return;
@@ -331,7 +349,7 @@
                                     detectedImageDimensions.set(loadedUrl, { width: el.naturalWidth, height: el.naturalHeight });
                                     recordImageResourceSize(loadedUrl, el);
                                     if (reportTimeout) clearTimeout(reportTimeout);
-                                    reportTimeout = setTimeout(report, 500);
+                                    reportTimeout = setTimeout(() => report(!!window.__wmdForceManualScan), 500);
                                 });
                             }
                         }
@@ -380,40 +398,62 @@
             }
         }
 
-        if (el.shadowRoot && maximalDocumentScanEnabled(result)) {
-            await scanContainer(el.shadowRoot, result, detectDownloads, extraExts);
+        if (el.shadowRoot && (maximalDocumentScanEnabled(result) || window.__wmdForceManualScan)) {
+            await scanContainer(el.shadowRoot, result, detectDownloads, extraExts, window.__wmdForceManualScan);
         }
     }
 
-    async function scanContainer(container, result, detectDownloads, extraExts) {
+    async function scanContainer(container, result, detectDownloads, extraExts, forceManual = false) {
         const isOpt = result && (result['optimize-low-end'] === '1' || result['optimize-low-end'] === true);
         const selector = isOpt ? 'img, video, audio, source, track, a, iframe, object, embed, [data-src], [data-url], [data-href], [data-original], [style*="background"]' : '*';
         const elements = container.querySelectorAll(selector);
         for (const el of elements) {
-            if (!contentDetectionEnabled() || !documentScanEnabled()) break;
+            if (!forceManual && (!contentDetectionEnabled() || !documentScanEnabled())) break;
             await processElement(el, result, detectDownloads, extraExts);
         }
     }
 
     let scanPending = false;
     let fullScanTimeout = null;
-    window.mdu_scan = function() {
-        if (!contentDetectionEnabled() || !documentScanEnabled()) return;
+    window.mdu_scan = function(forceManual = false) {
+        if (!forceManual && (manualScanEnabled() || !contentDetectionEnabled() || !documentScanEnabled())) return;
         if (fullScanTimeout) clearTimeout(fullScanTimeout);
         fullScanTimeout = setTimeout(async () => {
-            if (!contentDetectionEnabled() || !documentScanEnabled()) return;
-            if (scanPending) return;
+            if (!forceManual && (manualScanEnabled() || !contentDetectionEnabled() || !documentScanEnabled())) return;
+            if (scanPending && !forceManual) return;
             scanPending = true;
 
             const result = await browser.storage.local.get(contentStorageKeys);
+            if (!forceManual && manualScanEnabled(result)) {
+                scanPending = false;
+                return;
+            }
             const detectDownloads = result['detect-download-links'] === '1' || result['detect-download-links'] === true;
             const initialSize = detected.size;
             const extraExts = detectDownloads ? downloadExtensions : [];
 
-            await scanContainer(document, result, detectDownloads, extraExts);
-            if (!contentDetectionEnabled() || !documentScanEnabled()) {
+            await scanContainer(document, result, detectDownloads, extraExts, forceManual);
+            if (!forceManual && (!contentDetectionEnabled() || !documentScanEnabled())) {
                 scanPending = false;
                 return;
+            }
+
+            if (forceManual) {
+                try {
+                    const resources = performance.getEntriesByType('resource') || [];
+                    for (const entry of resources) {
+                        if (entry && entry.name && await isMediaUrl(entry.name, extraExts, result)) {
+                            const absolute = getAbsoluteUrl(entry.name);
+                            if (absolute) {
+                                const type = getUrlType(absolute);
+                                if (!isTypeDisabled(type, result)) {
+                                    detected.add(absolute);
+                                    if (type === 'image') recordImageResourceSize(absolute);
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {}
             }
 
             if (window.mdu_run_surgical_scrapers) {
@@ -427,27 +467,27 @@
                 });
             }
 
-            if (maximalDocumentScanEnabled(result)) try {
+            if (maximalDocumentScanEnabled(result) || forceManual) try {
                 const script = document.createElement('script');
-                script.textContent = 'if(window.mdu_deep_scan) window.mdu_deep_scan();';
+                script.textContent = forceManual ? 'if(window.mdu_deep_scan) window.mdu_deep_scan(true);' : 'if(window.mdu_deep_scan) window.mdu_deep_scan(false);';
                 (document.head || document.documentElement).appendChild(script);
                 script.remove();
             } catch (e) {}
 
-            if (detected.size > initialSize || initialSize === 0) {
+            if (forceManual || detected.size > initialSize || initialSize === 0) {
                 if (reportTimeout) clearTimeout(reportTimeout);
-                reportTimeout = setTimeout(report, 500);
+                reportTimeout = setTimeout(() => report(forceManual), forceManual ? 100 : 500);
             }
 
             scanPending = false;
-        }, 150);
+        }, forceManual ? 20 : 150);
     };
 
     let scanTimeout = null;
     let pendingNodesToScan = new Set();
 
     async function processPendingNodes() {
-        if (!contentDetectionEnabled() || !documentScanEnabled()) {
+        if (manualScanEnabled() || !contentDetectionEnabled() || !documentScanEnabled()) {
             pendingNodesToScan.clear();
             return;
         }
@@ -456,6 +496,7 @@
         pendingNodesToScan.clear();
 
         const result = await browser.storage.local.get(contentStorageKeys);
+        if (manualScanEnabled(result)) return;
         const detectDownloads = result['detect-download-links'] === '1' || result['detect-download-links'] === true;
         const initialSize = detected.size;
         const extraExts = detectDownloads ? downloadExtensions : [];
@@ -632,8 +673,8 @@
                             window.WebSocket.prototype = OriginalWebSocket.prototype;
                             Object.assign(window.WebSocket, OriginalWebSocket);
 
-                            window.mdu_deep_scan = function() {
-                                if (document.documentElement?.getAttribute('data-wmd-detection-enabled') === '0' || document.documentElement?.getAttribute('data-wmd-document-scan-enabled') === '0') return;
+                            window.mdu_deep_scan = function(forceManual = false) {
+                                if (!forceManual && (document.documentElement?.getAttribute('data-wmd-detection-enabled') === '0' || document.documentElement?.getAttribute('data-wmd-document-scan-enabled') === '0')) return;
                                 const urls = [];
                                 try {
                                     if (window.__additionalData) {
@@ -678,7 +719,7 @@
         if (area === 'local' && contentStorageKeys.some(key => Object.prototype.hasOwnProperty.call(changes, key))) {
             for (const [key, change] of Object.entries(changes)) cachedContentSettings[key] = change.newValue;
             syncDetectionState();
-                if (contentDetectionEnabled() && documentScanEnabled()) window.mdu_scan();
+            if (contentDetectionEnabled() && documentScanEnabled()) window.mdu_scan();
         }
     });
 
@@ -1152,6 +1193,13 @@
     browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.action === 'ping') {
             sendResponse({ pong: true });
+            return true;
+        }
+        if (message.action === 'manualScanTab') {
+            window.__wmdForceManualScan = true;
+            if (window.mdu_scan) window.mdu_scan(true);
+            setTimeout(() => { window.__wmdForceManualScan = false; }, 1500);
+            sendResponse({ success: true });
             return true;
         }
         if (message.action === 'get_active_downloads') {

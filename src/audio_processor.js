@@ -18,6 +18,30 @@
 
 if (typeof browser === 'undefined') var browser = chrome;
 
+if (typeof browser !== 'undefined' && (!browser.storage || !browser.storage.local)) {
+    browser.storage = browser.storage || {};
+    browser.storage.local = {
+        get: (keys) => new Promise((resolve) => {
+            try {
+                browser.runtime.sendMessage({ action: 'wmdStorageBridge', method: 'get', keys }, (res) => {
+                    if (browser.runtime.lastError) resolve({});
+                    else resolve(res?.data || {});
+                });
+            } catch (e) { resolve({}); }
+        }),
+        set: (items) => new Promise((resolve) => {
+            try {
+                browser.runtime.sendMessage({ action: 'wmdStorageBridge', method: 'set', items }, () => resolve());
+            } catch (e) { resolve(); }
+        }),
+        remove: (keys) => new Promise((resolve) => {
+            try {
+                browser.runtime.sendMessage({ action: 'wmdStorageBridge', method: 'remove', keys }, () => resolve());
+            } catch (e) { resolve(); }
+        })
+    };
+}
+
 async function markRecoveryCompleted(key, job) {
     await browser.storage.local.set({ [key]: { ...job, recoveryState: "completed", status: "completed" } });
 }
@@ -25,7 +49,16 @@ async function markRecoveryCompleted(key, job) {
 async function saveOffscreenAudioBlob(blob, filename) {
     const objectUrl = URL.createObjectURL(blob);
     try {
-        await browser.downloads.download({ url: objectUrl, filename, saveAs: false });
+        if (browser.downloads && browser.downloads.download) {
+            await browser.downloads.download({ url: objectUrl, filename, saveAs: false });
+        } else {
+            const res = await browser.runtime.sendMessage({
+                action: 'downloadOffscreenBlob',
+                url: objectUrl,
+                filename
+            });
+            if (!res?.success) throw new Error(res?.error || 'Download failed');
+        }
     } catch (error) {
         URL.revokeObjectURL(objectUrl);
         throw error;

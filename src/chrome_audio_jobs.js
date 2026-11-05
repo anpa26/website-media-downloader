@@ -72,6 +72,38 @@ async function startPersistentAudioJobDirect(message) {
 }
 globalThis.startPersistentAudioJobDirect = startPersistentAudioJobDirect;
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'wmdStorageBridge') {
+        const storageLocal = (chrome && chrome.storage && chrome.storage.local) || (browser && browser.storage && browser.storage.local);
+        if (!storageLocal) {
+            sendResponse({ success: false, data: {} });
+            return;
+        }
+        if (message.method === 'get') {
+            storageLocal.get(message.keys).then(data => sendResponse({ success: true, data })).catch(() => sendResponse({ success: false, data: {} }));
+            return true;
+        }
+        if (message.method === 'set') {
+            storageLocal.set(message.items).then(() => sendResponse({ success: true })).catch(() => sendResponse({ success: false }));
+            return true;
+        }
+        if (message.method === 'remove') {
+            storageLocal.remove(message.keys).then(() => sendResponse({ success: true })).catch(() => sendResponse({ success: false }));
+            return true;
+        }
+    }
+    if (message.action === 'downloadOffscreenBlob') {
+        const downloadsApi = (chrome && chrome.downloads) || (browser && browser.downloads);
+        if (downloadsApi && downloadsApi.download) {
+            downloadsApi.download({ url: message.url, filename: message.filename, saveAs: false }, (id) => {
+                const err = chrome.runtime.lastError;
+                if (err) sendResponse({ success: false, error: err.message });
+                else sendResponse({ success: true, downloadId: id });
+            });
+            return true;
+        }
+        sendResponse({ success: false, error: 'Downloads API not available' });
+        return;
+    }
     if (message.action === 'startPersistentAudioJob') {
         startPersistentAudioJobDirect(message).then(sendResponse);
         return true;
@@ -97,7 +129,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     const { done, value } = await reader.read();
                     if (done) break;
                     chunks.push(value); loaded += value.byteLength;
-                    const percent = total ? loaded / total * 100 : undefined;
+                    const percent = total ? Math.round(loaded / total * 100) : undefined;
                     if (typeof activeDownloads !== 'undefined') {
                         const item = activeDownloads.get(message.jobId);
                         if (item) { item.loaded = loaded; item.total = total; item.percent = percent; item.status = 'Downloading...'; }

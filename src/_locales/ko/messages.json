@@ -1038,6 +1038,10 @@
     "message": "모두 취소",
     "description": "The label of the button to cancel all active downloads."
   },
+  "confirmCancelButton": {
+    "message": "취소",
+    "description": "The label of the cancel button in the ZIP download error dialog."
+  },
   "zipPreparing": {
     "message": "$COUNT$개의 파일 준비 중...",
     "description": "The message when starting to prepare files for a ZIP archive.",
@@ -1191,6 +1195,10 @@
   "continueAllButton": {
     "message": "모두 계속",
     "description": "The label of the button to continue all paused downloads."
+  },
+  "continueButton": {
+    "message": "계속",
+    "description": "The label of the button to continue with the next file after skipping one failed download."
   },
   "decodingAudio": {
     "message": "오디오 디코딩 중... 잠시 기다려 주세요(파일이 크면 느려질 수 있습니다).",
@@ -1460,7 +1468,7 @@
     "description": "Updated/Added during UI string localization audit."
   },
   "extensionDescriptionAbout": {
-    "message": "미디어 다운로드를 위한 필수 도구입니다. 브라우징하는 동안 비디오, 음악 및 라이브 스트림을 쉽게 감지합니다. 백그라운드 다운로드 및 자동 HLS/DASH 스트림 변환을 지원하여 콘텐츠를 장치에 직접 저장합니다.",
+    "message": "웹 전반에서 비디오, 오디오, 이미지 및 라이브 스트림(HLS/DASH)을 간편하게 감지하고 다운로드하세요. 스마트 탭 검색, 자동 스트림 변환, 백그라운드 다운로드 및 대화형 다운로드 제어 기능을 통해 기기에 직접 저장할 수 있습니다.",
     "description": "Updated/Added during UI string localization audit."
   },
   "confirmTitle": {
@@ -1784,6 +1792,16 @@
   "updateDialogMessage": {
     "message": "버전 $VERSION$을(를) 사용할 수 있습니다. 지금 업데이트하시겠습니까?",
     "description": "Message shown in the update dialog.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "1.7.9"
+      }
+    }
+  },
+  "updateDialogFirefoxMessage": {
+    "message": "버전 $VERSION$이(가) 감지되었습니다. 자동 업데이트가 활성화되어 있으면 백그라운드에서 확장 프로그램이 자동으로 업데이트됩니다. 잠시 후 확장 프로그램을 다시 열어주세요.",
+    "description": "Message shown in Firefox update dialog.",
     "placeholders": {
       "VERSION": {
         "content": "$1",
@@ -2618,5 +2636,122 @@
   "debugLogCleared": {
     "message": "디버그 로그가 지워졌습니다.",
     "description": "Notification when debug log is cleared"
+  },
+  "scanNowButton": {
+    "message": "스캔"
+  },
+  "listActionsButton": {
+    "message": "목록 옵션"
+  },
+  "addShortButton": {
+    "message": "추가"
+  },
+  "menuButton": {
+    "message": "메뉴"
+  },
+  "manualScanTitle": {
+    "message": "수동 스캔만"
+  },
+  "manualScanExplain": {
+    "message": "미디어는 백그라운드에서 계속 감지되지만 스캔을 클릭할 때 열려 있는 웹사이트에 대해서만 표시됩니다."
+  },
+  "removeOnTabCloseTitle": {
+    "message": "탭이 닫힐 때 감지된 미디어 제거"
+  },
+  "removeOnTabCloseExplain": {
+    "message": "미디어가 발견된 탭이 닫힐 때 감지된 미디어 파일을 목록에서 자동으로 제거합니다."
+  },
+  "manualScanKeepTabsTitle": {
+    "message": "다른 탭의 미디어 유지"
+  },
+  "manualScanKeepTabsExplain": {
+    "message": "탭을 전환할 때 다른 탭에서 감지된 미디어를 계속 표시합니다. 비활성화하면 현재 활성 탭의 미디어만 표시됩니다."
+  },
+  "topHeaderDesignTitle": {
+    "message": "상단 헤더 디자인"
+  },
+  "topHeaderDesignExplain": {
+    "message": "새 탐색 메뉴 헤더(v2)와 기본 탭 헤더(v1) 중에서 선택합니다."
+  },
+  "topHeaderV1": {
+    "message": "v1"
+  },
+  "topHeaderV2": {
+    "message": "v2"
+  },
+  "bottomBarDesignTitle": {
+    "message": "하단 작업 표시줄 디자인"
+  },
+  "bottomBarDesignExplain": {
+    "message": "미디어 목록 하단 작업 표시줄의 버튼 스타일을 선택합니다."
+  },
+  "bottomBarV1": {
+    "message": "v1"
+  },
+  "bottomBarV2": {
+    "message": "v2"
+  },
+  "bottomBarV3": {
+    "message": "v3"
+  },
+  "updateCardTitle": {
+    "message": "업데이트 사용 가능",
+    "description": "Title of the update available card in the about page."
+  },
+  "updateCardFirefoxDesc": {
+    "message": "공식 릴리스 저장소에서 업데이트 버전 $VERSION$이(가) 감지되었습니다. Firefox 브라우저의 보안 아키텍처에 따라 서명된 추가 기능 패키지(.xpi)는 사용자의 수동 작업 없이 최대 24시간 이내에 백그라운드에서 자동으로 검증, 다운로드 및 적용됩니다.",
+    "description": "Detailed professional description for Firefox in update card.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardChromeDesc": {
+    "message": "공식 릴리스 저장소에서 업데이트 버전 $VERSION$이(가) 감지되었습니다. 아래 버튼을 통해 업데이트 패키지를 다운로드하여 즉시 최신 버전으로 업그레이드할 수 있습니다.",
+    "description": "Detailed professional description for Chrome in update card.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardButton": {
+    "message": "지금 업데이트",
+    "description": "Action button in the update card to open update link."
+  },
+  "updateCardGithubAheadDesc": {
+    "message": "버전 $VERSION$은(는) GitHub에 이미 올라와 있지만 AMO는 아직 v$AMO_VERSION$입니다. GitHub에서 지금 다운로드하거나 AMO를 기다릴 수 있습니다. AMO가 업데이트되면 자동 업데이트가 켜져 있는 경우 자동으로 설치됩니다. GitHub에서 설치하면 이후 업데이트는 GitHub 채널로 전환됩니다.",
+    "description": "Description shown in the update card when GitHub is ahead of AMO.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      },
+      "AMO_VERSION": {
+        "content": "$2",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardGithubButton": {
+    "message": "GitHub에서 다운로드",
+    "description": "Button label to download the update from GitHub."
+  },
+  "groupProgressTitle": {
+    "message": "그룹 다운로드 진행 상황",
+    "description": "Title of download progress on groups setting."
+  },
+  "groupProgressExplain": {
+    "message": "그룹 카드에 일시중지 및 취소 제어 기능이 있는 활성 다운로드 진행 목록을 표시합니다.",
+    "description": "Explanation of download progress on groups setting."
+  },
+  "skipHttpErrorsTitle": {
+    "message": "403/404 오류 건너뛰기"
+  },
+  "skipHttpErrorsExplain": {
+    "message": "다운로드 중 403 또는 404 오류가 발생한 미디어를 실패 처리하지 않고 자동으로 건너뛰고 목록에서 제거합니다."
   }
 }

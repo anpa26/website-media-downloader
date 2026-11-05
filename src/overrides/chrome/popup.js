@@ -20,6 +20,16 @@ if (typeof browser === 'undefined') {
   var browser = chrome;
 }
 
+if (typeof browser !== 'undefined' && (!browser.i18n || !browser.i18n.getMessage)) {
+  browser.i18n = browser.i18n || {};
+  browser.i18n.getMessage = (key, subs) => {
+    if (typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getMessage) {
+      try { return chrome.i18n.getMessage(key, subs); } catch (e) {}
+    }
+    return "";
+  };
+}
+
 async function ensureScriptLoaded(src, globalVarName) {
   if (typeof window[globalVarName] !== 'undefined') return;
   if (document.querySelector(`script[src="${src}"]`)) {
@@ -199,8 +209,422 @@ const mediaPreviewLoadObserver = new IntersectionObserver(entries => {
 }, { rootMargin: '400px 0px' });
 const uiCache = new Map();
 let isGroupingEnabled = false;
+let isGroupProgressEnabled = true;
 let activeGroup = null;
 let activeDownloadingElements = [];
+const activeGroupDownloads = new Map();
+
+function updateGlobalProgressVisibility() {
+  const gC = document.getElementById('global-progress-container');
+  if (!gC) return;
+  if (isGroupingEnabled && isGroupProgressEnabled && activeGroup === null) {
+    gC.style.display = 'none';
+  }
+}
+
+let currentZipProgressState = null;
+
+function syncZipProgressToGroupCards(text, percent, indeterminate, cancelCb, isPaused = false, pauseCb = null, groupType = null, jobId = null) {
+  if (!groupType) {
+    const gtSet = new Set();
+    for (const [, entry] of activeGroupDownloads) { if (entry.groupType) gtSet.add(entry.groupType); }
+    if (gtSet.size === 1) groupType = [...gtSet][0];
+  }
+  currentZipProgressState = { text, percent, indeterminate, cancelCb, isPaused, pauseCb, groupType, jobId };
+  if (!isGroupingEnabled || !isGroupProgressEnabled || activeGroup !== null) return;
+  if (groupType) {
+    syncGroupProgressCard(groupType);
+  } else {
+    document.querySelectorAll('.media-group-card[data-group-type]').forEach(card => {
+      syncGroupProgressCard(card.dataset.groupType);
+    });
+  }
+}
+
+function clearZipProgressFromGroupCards(jobId = null) {
+  if (jobId !== null && currentZipProgressState?.jobId && String(currentZipProgressState.jobId) !== String(jobId)) return;
+  const gt = currentZipProgressState?.groupType;
+  currentZipProgressState = null;
+  if (!isGroupingEnabled || !isGroupProgressEnabled || activeGroup !== null) return;
+  if (gt) {
+    syncGroupProgressCard(gt);
+  } else {
+    document.querySelectorAll('.media-group-card[data-group-type]').forEach(card => {
+      syncGroupProgressCard(card.dataset.groupType);
+    });
+  }
+}
+
+function syncGroupProgressCard(groupType) {
+  if (!isGroupProgressEnabled || !isGroupingEnabled || activeGroup !== null) return;
+  const card = document.querySelector(`.media-group-card[data-group-type="${groupType}"]`);
+  if (!card) return;
+
+  let container = card.querySelector(".group-progress-wrapper");
+  const seenEls = new Set();
+  const seenKeys = new Set();
+  const items = [];
+  for (const d of activeGroupDownloads.values()) {
+    if (d.groupType !== groupType) continue;
+    if (d.el) {
+      if (seenEls.has(d.el)) continue;
+      seenEls.add(d.el);
+    } else {
+      const key = d.filename || d.id;
+      if (seenKeys.has(key)) continue;
+      seenKeys.add(key);
+    }
+    items.push(d);
+  }
+  const hasZip = !!currentZipProgressState && (!currentZipProgressState.groupType || currentZipProgressState.groupType === groupType);
+
+  if (items.length === 0 && !hasZip) {
+    if (container) container.remove();
+    return;
+  }
+
+  const totalCount = items.length + (hasZip ? 1 : 0);
+  let totalPercent = 0;
+  let validPercentCount = 0;
+  let anyIndeterminate = false;
+
+  items.forEach(it => {
+    if (it.percent !== null && it.percent !== undefined && !it.indeterminate) {
+      totalPercent += it.percent;
+      validPercentCount++;
+    } else {
+      anyIndeterminate = true;
+    }
+  });
+
+  if (hasZip) {
+    if (!currentZipProgressState.indeterminate) {
+      totalPercent += Math.round(Math.min(100, Math.max(0, currentZipProgressState.percent ?? 0)));
+      validPercentCount++;
+    } else {
+      anyIndeterminate = true;
+    }
+  }
+
+  const avgPercent = validPercentCount > 0 ? Math.round(totalPercent / validPercentCount) : 0;
+  const isCombinedIndeterminate = validPercentCount === 0 && anyIndeterminate;
+
+  let summaryText;
+  if (items.length > 0 && hasZip) {
+    summaryText = `${totalCount} active${!isCombinedIndeterminate ? " (" + avgPercent + "%)" : ""}`;
+  } else if (hasZip) {
+    summaryText = `1 zipping${!isCombinedIndeterminate ? " (" + avgPercent + "%)" : ""}`;
+  } else {
+    summaryText = `${items.length} downloading${!isCombinedIndeterminate ? " (" + avgPercent + "%)" : ""}`;
+  }
+
+  const buildItemElement = (item) => {
+    const isIndeterminate = item.indeterminate || item.percent === null || item.percent === undefined;
+    const pct = isIndeterminate ? 0 : Math.round(Math.min(100, Math.max(0, item.percent)));
+
+    const itemEl = document.createElement("div");
+    itemEl.className = "group-progress-mini-item";
+    itemEl.dataset.id = String(item.id);
+    itemEl.style.cssText = `
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 3px 2px;
+      box-sizing: border-box;
+      flex-shrink: 0;
+    `;
+
+    itemEl.innerHTML = `
+      <div style="display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 6px;">
+          <span class="group-mini-name" style="font-size: 0.73rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgb(var(--mdui-color-on-surface));">
+            ${item.filename || "Media File"}
+          </span>
+          <span class="group-mini-percent" style="font-size: 0.68rem; font-weight: 700; color: var(--primary); flex-shrink: 0;">
+            ${!isIndeterminate ? pct + "%" : "..."}
+          </span>
+        </div>
+        <mdui-linear-progress class="group-mini-bar" max="100" value="${pct}" ${isIndeterminate ? "indeterminate" : ""} style="height: 3px; border-radius: 99px;"></mdui-linear-progress>
+      </div>
+      <div style="display: flex; align-items: center; gap: 2px; flex-shrink: 0;">
+        <mdui-button-icon class="group-pause-btn" data-id="${item.id}" style="width: 24px; height: 24px; min-width: 24px; color: var(--primary);" title="Pause / Resume">
+          <mdui-icon style="font-size: 15px;">
+            ${item.isPaused ? '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>' : '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'}
+          </mdui-icon>
+        </mdui-button-icon>
+        <mdui-button-icon class="group-cancel-btn" data-id="${item.id}" style="width: 24px; height: 24px; min-width: 24px; color: rgb(var(--mdui-color-error));" title="Cancel">
+          <mdui-icon style="font-size: 15px;"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></mdui-icon>
+        </mdui-button-icon>
+      </div>
+    `;
+
+    itemEl.querySelector(".group-pause-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      const downloadData = activeGroupDownloads.get(String(item.id));
+      const isCurrentlyPaused = !!downloadData?.isPaused;
+      const targetId = downloadData?.el?.dataset?.downloadId || item.id;
+      const targetUrl = downloadData?.el?.dataset?.url || downloadData?.url;
+      const action = isCurrentlyPaused ? 'resumeActiveDownload' : 'pauseDownload';
+      browser.runtime.sendMessage({ action, id: targetId }).catch(() => {});
+      if (targetUrl && targetUrl !== targetId) {
+        browser.runtime.sendMessage({ action, id: targetUrl }).catch(() => {});
+      }
+      if (window.activePauses) {
+        if (!isCurrentlyPaused) {
+          window.activePauses.add(targetId);
+          if (targetUrl) window.activePauses.add(targetUrl);
+        } else {
+          window.activePauses.delete(targetId);
+          if (targetUrl) window.activePauses.delete(targetUrl);
+        }
+      }
+      const dlBtn = downloadData?.el?.querySelector("#download-button");
+      if (dlBtn) updatePausePlayUI(dlBtn, !isCurrentlyPaused);
+      if (downloadData) {
+        downloadData.isPaused = !isCurrentlyPaused;
+        syncGroupProgressCard(downloadData.groupType);
+      }
+    });
+
+    itemEl.querySelector(".group-cancel-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      const downloadData = activeGroupDownloads.get(String(item.id));
+      const cancelBtn = downloadData?.el?.querySelector("#cancel-button");
+      if (cancelBtn) {
+        cancelBtn.click();
+      } else {
+        browser.runtime.sendMessage({ action: 'cancelDownload', id: item.id }).catch(() => {});
+        finishDownloadUI(String(item.id), false);
+      }
+    });
+
+    return itemEl;
+  };
+
+  const buildZipItemElement = () => {
+    const z = currentZipProgressState;
+    const pct = z.indeterminate ? 0 : Math.round(Math.min(100, Math.max(0, z.percent ?? 0)));
+    const detailText = z.text.replace(/^📦\s*/, '');
+
+    const el = document.createElement("div");
+    el.className = "group-progress-mini-item";
+    el.dataset.id = z.jobId || "__zip__";
+    el.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:8px;padding:3px 2px;box-sizing:border-box;flex-shrink:0;";
+
+    el.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
+          <span class="group-mini-name" style="font-size:0.73rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgb(var(--mdui-color-on-surface));">📦 ${detailText}</span>
+          <span class="group-mini-percent" style="font-size:0.68rem;font-weight:700;color:var(--primary);flex-shrink:0;">${z.indeterminate ? '...' : pct + '%'}</span>
+        </div>
+        <mdui-linear-progress class="group-mini-bar" max="100" value="${pct}" ${z.indeterminate ? 'indeterminate' : ''} style="height:3px;border-radius:99px;"></mdui-linear-progress>
+      </div>
+      <div style="display:flex;align-items:center;gap:2px;flex-shrink:0;">
+        ${z.pauseCb ? `<mdui-button-icon class="group-zip-pause-btn" style="width:24px;height:24px;min-width:24px;color:var(--primary);" title="Pause / Resume">
+          <mdui-icon style="font-size:15px;">${z.isPaused ? '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>' : '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'}</mdui-icon>
+        </mdui-button-icon>` : ''}
+        ${z.cancelCb ? `<mdui-button-icon class="group-zip-cancel-btn" style="width:24px;height:24px;min-width:24px;color:rgb(var(--mdui-color-error));" title="Cancel ZIP">
+          <mdui-icon style="font-size:15px;"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></mdui-icon>
+        </mdui-button-icon>` : ''}
+      </div>
+    `;
+
+    el.querySelector(".group-zip-pause-btn")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const state = currentZipProgressState;
+      if (!state || (el.dataset.id !== '__zip__' && String(state.jobId) !== el.dataset.id)) return;
+      state.pauseCb?.();
+    });
+    el.querySelector(".group-zip-cancel-btn")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const state = currentZipProgressState;
+      if (!state || (el.dataset.id !== '__zip__' && String(state.jobId) !== el.dataset.id)) return;
+      state.cancelCb?.();
+    });
+
+    return el;
+  };
+
+  const updateZipItemElement = (el) => {
+    const z = currentZipProgressState;
+    const pct = z.indeterminate ? 0 : Math.round(Math.min(100, Math.max(0, z.percent ?? 0)));
+    const detailText = `📦 ${z.text.replace(/^📦\s*/, '')}`;
+
+    const nameEl = el.querySelector(".group-mini-name");
+    if (nameEl && nameEl.textContent !== detailText) nameEl.textContent = detailText;
+
+    const pctEl = el.querySelector(".group-mini-percent");
+    const pctStr = z.indeterminate ? '...' : pct + '%';
+    if (pctEl && pctEl.textContent !== pctStr) pctEl.textContent = pctStr;
+
+    const barEl = el.querySelector(".group-mini-bar");
+    if (barEl) {
+      if (barEl.value !== pct) barEl.value = pct;
+      if (z.indeterminate && !barEl.hasAttribute("indeterminate")) barEl.setAttribute("indeterminate", "");
+      else if (!z.indeterminate && barEl.hasAttribute("indeterminate")) barEl.removeAttribute("indeterminate");
+    }
+
+    const pauseIcon = el.querySelector(".group-zip-pause-btn mdui-icon");
+    if (pauseIcon) {
+      const targetIcon = z.isPaused
+        ? '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>'
+        : '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+      if (pauseIcon.innerHTML !== targetIcon) pauseIcon.innerHTML = targetIcon;
+    }
+  };
+
+  const updateExistingItemElement = (el, item) => {
+    const isIndeterminate = item.indeterminate || item.percent === null || item.percent === undefined;
+    const pct = isIndeterminate ? 0 : Math.round(Math.min(100, Math.max(0, item.percent)));
+
+    const nameEl = el.querySelector(".group-mini-name");
+    if (nameEl && item.filename && nameEl.textContent !== item.filename) {
+      nameEl.textContent = item.filename;
+    }
+
+    const pctEl = el.querySelector(".group-mini-percent");
+    const newPctText = !isIndeterminate ? pct + "%" : "...";
+    if (pctEl && pctEl.textContent !== newPctText) {
+      pctEl.textContent = newPctText;
+    }
+
+    const barEl = el.querySelector(".group-mini-bar");
+    if (barEl) {
+      if (barEl.value !== pct) barEl.value = pct;
+      if (isIndeterminate && !barEl.hasAttribute("indeterminate")) {
+        barEl.setAttribute("indeterminate", "");
+      } else if (!isIndeterminate && barEl.hasAttribute("indeterminate")) {
+        barEl.removeAttribute("indeterminate");
+      }
+    }
+
+    const pauseIcon = el.querySelector(".group-pause-btn mdui-icon");
+    if (pauseIcon) {
+      const targetIconHTML = item.isPaused
+        ? '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>'
+        : '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+      if (pauseIcon.innerHTML !== targetIconHTML) {
+        pauseIcon.innerHTML = targetIconHTML;
+      }
+    }
+  };
+
+  if (!container) {
+    container = document.createElement("div");
+    container.className = "group-progress-wrapper";
+    container.dataset.expanded = "0";
+    container.style.cssText = "width: 100%; margin-top: 10px; display: flex; flex-direction: column; gap: 6px; box-sizing: border-box;";
+    container.addEventListener("click", (e) => e.stopPropagation());
+
+    container.innerHTML = `
+      <div class="group-progress-summary-bar" style="
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        cursor: pointer;
+        user-select: none;
+      ">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; color: var(--on-surface-variant);">
+            <span class="group-summary-title" style="font-weight: 600; color: var(--primary);"></span>
+            <span class="group-summary-percent"></span>
+          </div>
+          <mdui-linear-progress class="group-summary-bar" max="100" value="0" style="height: 4px; border-radius: 99px;"></mdui-linear-progress>
+        </div>
+        <mdui-button-icon class="group-expand-toggle-btn" style="width: 24px; height: 24px; min-width: 24px; color: var(--on-surface-variant); transition: transform 0.2s;" title="Toggle Details">
+          <mdui-icon style="font-size: 18px;"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></mdui-icon>
+        </mdui-button-icon>
+      </div>
+      <div class="group-progress-details" style="
+        display: none;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 4px;
+        padding-top: 6px;
+        border-top: 1px dashed rgba(var(--mdui-color-outline-variant), 0.3);
+        max-height: 140px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        touch-action: pan-y;
+      ">
+      </div>
+    `;
+
+    const summaryBar = container.querySelector(".group-progress-summary-bar");
+    const toggleBtn = container.querySelector(".group-expand-toggle-btn");
+    const detailsList = container.querySelector(".group-progress-details");
+
+    const toggleExpand = (e) => {
+      e.stopPropagation();
+      const isNowExpanded = container.dataset.expanded === "1";
+      container.dataset.expanded = isNowExpanded ? "0" : "1";
+      detailsList.style.display = isNowExpanded ? "none" : "flex";
+      toggleBtn.style.transform = isNowExpanded ? "rotate(0deg)" : "rotate(180deg)";
+    };
+
+    summaryBar.addEventListener("click", toggleExpand);
+    card.appendChild(container);
+  }
+
+  const titleSpan = container.querySelector(".group-summary-title");
+  if (titleSpan && titleSpan.textContent !== summaryText) {
+    titleSpan.textContent = summaryText;
+  }
+
+  const pctSpan = container.querySelector(".group-summary-percent");
+  const pctStr = !isCombinedIndeterminate ? avgPercent + "%" : "";
+  if (pctSpan && pctSpan.textContent !== pctStr) {
+    pctSpan.textContent = pctStr;
+  }
+
+  const sumBar = container.querySelector(".group-summary-bar");
+  if (sumBar) {
+    if (sumBar.value !== avgPercent) sumBar.value = avgPercent;
+    if (isCombinedIndeterminate && !sumBar.hasAttribute("indeterminate")) {
+      sumBar.setAttribute("indeterminate", "");
+    } else if (!isCombinedIndeterminate && sumBar.hasAttribute("indeterminate")) {
+      sumBar.removeAttribute("indeterminate");
+    }
+  }
+
+  const detailsList = container.querySelector(".group-progress-details");
+  if (detailsList) {
+    const existingMap = new Map();
+    detailsList.querySelectorAll(".group-progress-mini-item").forEach(el => {
+      existingMap.set(el.dataset.id, el);
+    });
+
+    const currentIds = new Set(items.map(it => String(it.id)));
+    if (hasZip) currentIds.add("__zip__");
+
+    existingMap.forEach((el, id) => {
+      if (!currentIds.has(id)) el.remove();
+    });
+
+    items.forEach(it => {
+      const idStr = String(it.id);
+      const existingEl = existingMap.get(idStr);
+      if (existingEl) {
+        updateExistingItemElement(existingEl, it);
+      } else {
+        detailsList.appendChild(buildItemElement(it));
+      }
+    });
+
+    if (hasZip) {
+      const existingZip = existingMap.get("__zip__");
+      if (existingZip) {
+        updateZipItemElement(existingZip);
+      } else {
+        detailsList.appendChild(buildZipItemElement());
+      }
+    }
+  }
+}
 
 function prioritizeActiveDownload(element) {
   if (!element) return;
@@ -291,7 +715,11 @@ async function checkForUpdates() {
     try {
       const result = await browser.runtime.requestUpdateCheck();
       if (result && result.status === 'update_available') {
-        showUpdateNotification(AMO_URL, result.version || 'new', requireUninstall, reinstallDescription);
+        window._wmd_latest_update = {
+          updateAvailable: true,
+          latestVersion: result.version || 'new',
+          updateUrl: AMO_URL
+        };
         nativeUpdateFound = true;
       }
     } catch (err) {
@@ -303,10 +731,24 @@ async function checkForUpdates() {
     try {
       const result = await performUpdateCheck();
       if (result.updateAvailable) {
-        showUpdateNotification(result.updateUrl, result.latestVersion, requireUninstall || result.requireUninstall, reinstallDescription);
+        window._wmd_latest_update = {
+          updateAvailable: true,
+          latestVersion: result.latestVersion,
+          updateUrl: result.updateUrl,
+          amoVersion: result.amoVersion || null,
+        };
+        navigationPageLoads.delete("about");
+        if (typeof currentNavigationTab !== "undefined" && currentNavigationTab === "about") {
+          loadAboutPage();
+        }
       }
     } catch (error) {
       console.error('Update check failed:', error);
+    }
+  } else {
+    navigationPageLoads.delete("about");
+    if (typeof currentNavigationTab !== "undefined" && currentNavigationTab === "about") {
+      loadAboutPage();
     }
   }
 }
@@ -323,18 +765,28 @@ function compareVersions(v1, v2) {
   return 0;
 }
 
-async function getSpecificReleaseUrl(version) {
+async function getSpecificReleaseUrl(version, isFirefox = false) {
   const RELEASES_API_URL = 'https://api.github.com/repos/anpa26/website-media-downloader/releases';
   try {
     const res = await fetch(RELEASES_API_URL + '?per_page=20&t=' + Date.now());
     if (!res.ok) return null;
     const releases = await res.json();
-    const tag = 'v' + version;
-    // Prefer Latest (non-prerelease) first, then Pre-release
-    const latest = releases.find(r => r.tag_name === tag && !r.prerelease && !r.draft);
-    if (latest) return latest.html_url;
-    const prerelease = releases.find(r => r.tag_name === tag && r.prerelease && !r.draft);
-    if (prerelease) return prerelease.html_url;
+    const tagSigned = 'v' + version + '-signed';
+    const tagStandard = 'v' + version;
+
+    if (isFirefox) {
+      const signedRelease = releases.find(r => r.tag_name === tagSigned && !r.draft);
+      if (signedRelease) return signedRelease.html_url;
+      return null;
+    }
+
+    const targetTags = [tagSigned, tagStandard];
+    for (const tag of targetTags) {
+      const latest = releases.find(r => r.tag_name === tag && !r.prerelease && !r.draft);
+      if (latest) return latest.html_url;
+      const prerelease = releases.find(r => r.tag_name === tag && r.prerelease && !r.draft);
+      if (prerelease) return prerelease.html_url;
+    }
   } catch (e) {
     console.warn('Failed to fetch specific release URL:', e);
   }
@@ -342,12 +794,23 @@ async function getSpecificReleaseUrl(version) {
 }
 
 async function performUpdateCheck() {
-  const MANIFEST_URL = 'https://raw.githubusercontent.com/anpa26/website-media-downloader/wmd-1/src/manifest.json';
+  const ABOUT_URL = 'https://raw.githubusercontent.com/anpa26/website-media-downloader/wmd-1/src/about.json';
   const RELEASES_URL = 'https://github.com/anpa26/website-media-downloader/releases';
   const AMO_URL = 'https://addons.mozilla.org/en-US/firefox/addon/website-media-downloader';
   const AMO_API_URL = 'https://addons.mozilla.org/api/v5/addons/addon/website-media-downloader/';
 
   const currentVersion = browser.runtime.getManifest().version;
+  let localAboutVersion = null;
+  try {
+    const localAboutRes = await fetch(browser.runtime.getURL('about.json?t=' + Date.now()));
+    if (localAboutRes.ok) {
+      const localAbout = await localAboutRes.json();
+      localAboutVersion = localAbout?.extension?.version || null;
+    }
+  } catch (e) {
+    console.warn('Failed to read local about.json, falling back to manifest version:', e);
+  }
+  if (!localAboutVersion) localAboutVersion = currentVersion;
   const isFirefox = navigator.userAgent.includes('Firefox') || (typeof browser !== 'undefined' && browser.runtime.getURL && browser.runtime.getURL('').startsWith('moz-extension://'));
 
   if (isFirefox) {
@@ -356,11 +819,11 @@ async function performUpdateCheck() {
 
     try {
       const [githubRes, amoRes] = await Promise.all([
-        fetch(MANIFEST_URL + '?t=' + Date.now()).then(r => r.ok ? r.json() : null),
+        fetch(ABOUT_URL + '?t=' + Date.now()).then(r => r.ok ? r.json() : null),
         fetch(AMO_API_URL + '?t=' + Date.now()).then(r => r.ok ? r.json() : null)
       ]);
 
-      if (githubRes) githubVersion = githubRes.version;
+      if (githubRes) githubVersion = githubRes.extension?.version || null;
       if (amoRes && amoRes.current_version) amoVersion = amoRes.current_version.version;
     } catch (e) {
       console.warn("Parallel fetch failed, trying fallbacks:", e);
@@ -368,10 +831,10 @@ async function performUpdateCheck() {
 
     if (!githubVersion) {
       try {
-        const res = await fetch(MANIFEST_URL + '?t=' + Date.now());
+        const res = await fetch(ABOUT_URL + '?t=' + Date.now());
         if (res.ok) {
           const data = await res.json();
-          githubVersion = data.version;
+          githubVersion = data.extension?.version || null;
         }
       } catch (e) {
         console.error("Fallback GitHub fetch failed:", e);
@@ -382,7 +845,7 @@ async function performUpdateCheck() {
       throw new Error("Failed to check for updates");
     }
 
-    if (compareVersions(githubVersion, currentVersion) > 0) {
+    if (compareVersions(githubVersion, localAboutVersion) > 0) {
       let requireUninstall = false;
       try {
         const changelogRes = await fetch('https://raw.githubusercontent.com/anpa26/website-media-downloader/wmd-1/src/changelog.json?t=' + Date.now());
@@ -392,22 +855,22 @@ async function performUpdateCheck() {
         }
       } catch (e) {}
 
-      if (amoVersion && compareVersions(amoVersion, githubVersion) === 0) {
-        return { updateAvailable: true, latestVersion: githubVersion, updateUrl: AMO_URL, requireUninstall };
+      if (amoVersion && compareVersions(amoVersion, githubVersion) >= 0) {
+        return { updateAvailable: true, latestVersion: githubVersion, updateUrl: AMO_URL, amoVersion, requireUninstall };
       } else {
-        const specificUrl = await getSpecificReleaseUrl(githubVersion);
+        const specificUrl = await getSpecificReleaseUrl(githubVersion, true);
         if (specificUrl) {
-          return { updateAvailable: true, latestVersion: githubVersion, updateUrl: specificUrl, requireUninstall };
+          return { updateAvailable: true, latestVersion: githubVersion, updateUrl: specificUrl, amoVersion, requireUninstall };
         }
       }
     }
   } else {
     try {
-      const response = await fetch(MANIFEST_URL + '?t=' + Date.now());
+      const response = await fetch(ABOUT_URL + '?t=' + Date.now());
       if (response.ok) {
         const data = await response.json();
-        const githubVersion = data.version;
-        if (compareVersions(githubVersion, currentVersion) > 0) {
+        const githubVersion = data.extension?.version || null;
+        if (githubVersion && compareVersions(githubVersion, localAboutVersion) > 0) {
           let requireUninstall = false;
           try {
             const changelogRes = await fetch('https://raw.githubusercontent.com/anpa26/website-media-downloader/wmd-1/src/changelog.json?t=' + Date.now());
@@ -416,9 +879,9 @@ async function performUpdateCheck() {
               requireUninstall = !!data.require_uninstall;
             }
           } catch (e) {}
-          const specificUrl = await getSpecificReleaseUrl(githubVersion);
+          const specificUrl = await getSpecificReleaseUrl(githubVersion, false);
           if (specificUrl) {
-            return { updateAvailable: true, latestVersion: githubVersion, updateUrl: specificUrl, requireUninstall };
+            return { updateAvailable: true, latestVersion: githubVersion, updateUrl: specificUrl, amoVersion: null, requireUninstall };
           }
         }
       }
@@ -564,6 +1027,13 @@ async function checkAndShowEventPopup() {
     const info = await response.json();
     if (!info || info.enabled === false || !info.storage_key) return;
 
+    if (info.version !== undefined && info.version !== null && info.version !== '') {
+      const currentVersion = String(browser.runtime.getManifest().version).trim();
+      const allowedVersions = (Array.isArray(info.version) ? info.version : [info.version])
+        .map(v => String(v).trim().replace(/^v/i, ''));
+      if (!allowedVersions.includes(currentVersion)) return;
+    }
+
     const storageResult = await browser.storage.local.get(info.storage_key);
     if (storageResult[info.storage_key]) {
       return;
@@ -597,16 +1067,52 @@ async function checkAndShowEventPopup() {
     contentDiv.style.flexDirection = 'column';
     contentDiv.style.gap = '12px';
 
+    const renderEventDetails = (target, item) => {
+      const whatsNewList = item.whats_new || item.whatsNew || item.points || item.changelog;
+      if (Array.isArray(whatsNewList) && whatsNewList.length > 0) {
+        const wnContainer = document.createElement('div');
+        wnContainer.style.display = 'flex';
+        wnContainer.style.flexDirection = 'column';
+        wnContainer.style.gap = '6px';
+        wnContainer.style.marginTop = '4px';
+
+        const wnTitle = document.createElement('div');
+        wnTitle.style.fontWeight = '700';
+        wnTitle.style.fontSize = '0.9rem';
+        wnTitle.style.textAlign = 'left';
+        wnTitle.style.color = 'var(--primary)';
+        wnTitle.textContent = item.whats_new_title || item.whatsNewTitle || "What's New:";
+        wnContainer.appendChild(wnTitle);
+
+        const ul = document.createElement('ul');
+        ul.style.margin = '0';
+        ul.style.paddingLeft = '20px';
+        ul.style.textAlign = 'left';
+        ul.style.lineHeight = '1.5';
+        ul.style.fontSize = '0.85rem';
+        whatsNewList.forEach(pt => {
+          const li = document.createElement('li');
+          li.style.marginBottom = '4px';
+          li.textContent = pt;
+          ul.appendChild(li);
+        });
+        wnContainer.appendChild(ul);
+        target.appendChild(wnContainer);
+      }
+    };
+
     let slides = [];
     if (info.slides && Array.isArray(info.slides)) {
       slides = info.slides;
     } else if (info.images && Array.isArray(info.images) && info.images.length > 0) {
-      slides = info.images.map(img => ({ image: img, description: info.description }));
+      slides = info.images.map(img => ({ image: img }));
     } else if (info.image) {
-      slides = [{ image: info.image, description: info.description }];
-    } else if (info.description) {
-      slides = [{ description: info.description }];
+      slides = [{ image: info.image }];
+    } else {
+      slides = [{}];
     }
+
+    const hasSharedDetails = !!(info.whats_new || info.whatsNew || info.points || info.changelog);
 
     let descEl = null;
 
@@ -617,17 +1123,14 @@ async function checkAndShowEventPopup() {
         img.src = `${rawUrl}/${slide.image}`;
         img.style.width = '100%';
         img.style.borderRadius = '8px';
-        img.style.maxHeight = '240px';
-        img.style.objectFit = 'cover';
+        img.style.maxHeight = '360px';
+        img.style.objectFit = 'contain';
+        img.style.background = 'rgba(0, 0, 0, 0.05)';
         contentDiv.appendChild(img);
       }
-      if (slide.description) {
-        descEl = document.createElement('p');
-        descEl.style.margin = '0';
-        descEl.style.lineHeight = '1.4';
-        descEl.textContent = slide.description;
-        contentDiv.appendChild(descEl);
-      }
+      const detailsDiv = document.createElement('div');
+      renderEventDetails(detailsDiv, hasSharedDetails ? info : slide);
+      contentDiv.appendChild(detailsDiv);
     } else if (slides.length > 1) {
       const hasAnyImage = slides.some(slide => !!slide.image);
 
@@ -687,8 +1190,9 @@ async function checkAndShowEventPopup() {
           const slideContainer = document.createElement('div');
           slideContainer.style.width = '100%';
           slideContainer.style.flexShrink = '0';
-          slideContainer.style.maxHeight = '240px';
-          slideContainer.style.height = '240px';
+          slideContainer.style.maxHeight = '360px';
+          slideContainer.style.minHeight = '180px';
+          slideContainer.style.background = 'rgba(0, 0, 0, 0.05)';
           slideContainer.style.display = 'flex';
           slideContainer.style.alignItems = 'center';
           slideContainer.style.justifyContent = 'center';
@@ -699,8 +1203,9 @@ async function checkAndShowEventPopup() {
             const img = document.createElement('img');
             img.src = `${rawUrl}/${slide.image}`;
             img.style.width = '100%';
-            img.style.height = '100%';
-            img.style.objectFit = 'cover';
+            img.style.height = 'auto';
+            img.style.maxHeight = '360px';
+            img.style.objectFit = 'contain';
             slideContainer.appendChild(img);
           }
           track.appendChild(slideContainer);
@@ -764,8 +1269,10 @@ async function checkAndShowEventPopup() {
           }
         });
 
-        if (currentSlide && currentSlide.description) {
-          descEl.textContent = currentSlide.description;
+        descEl.innerHTML = '';
+        const activeDetails = hasSharedDetails ? info : currentSlide;
+        if (activeDetails && (activeDetails.whats_new || activeDetails.whatsNew || activeDetails.points || activeDetails.changelog)) {
+          renderEventDetails(descEl, activeDetails);
           descEl.style.display = 'block';
         } else {
           descEl.style.display = 'none';
@@ -851,6 +1358,15 @@ async function checkAndShowEventPopup() {
   }
 }
 
+function applyHeaderAndBottomBarDesign(headerDesign, barDesign) {
+  const htmlEl = document.documentElement;
+  htmlEl.classList.remove('top-header-v1', 'top-header-v2', 'bottom-bar-v1', 'bottom-bar-v2', 'bottom-bar-v3');
+  const hDesign = headerDesign || 'v1';
+  const bDesign = barDesign || 'v3';
+  htmlEl.classList.add(hDesign === 'v1' ? 'top-header-v1' : 'top-header-v2');
+  htmlEl.classList.add(bDesign === 'v1' ? 'bottom-bar-v1' : bDesign === 'v3' ? 'bottom-bar-v3' : 'bottom-bar-v2');
+}
+
 async function initTheme() {
   const result = await browser.storage.local.get(['theme-color', 'theme-mode']);
   const themeColor = result['theme-color'] || '#bbdefb';
@@ -879,6 +1395,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   checkForUpdates();
   checkAndShowEventPopup();
   await initTheme();
+  const designSettings = await browser.storage.local.get(['top-header-design', 'bottom-bar-design']);
+  applyHeaderAndBottomBarDesign(designSettings['top-header-design'], designSettings['bottom-bar-design']);
+
 
   const scaleResult = await browser.storage.local.get('ui-scale');
   document.documentElement.style.zoom = scaleResult['ui-scale'] || '85%';
@@ -945,36 +1464,55 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateSelectedCount();
   });
 
+  async function triggerBatchDownload(requests) {
+    if (!requests || requests.length === 0) return;
+    const hasYouTube = requests.some(req => isYoutubeVideoItem(req));
+
+    if (!hasYouTube && requests.length > 1) {
+      await downloadAllAsZip(requests);
+      return;
+    }
+
+    let startedCount = 0;
+    for (const req of requests) {
+      const url = req?.bestRequest?.originalUrl || req?.bestRequest?.url;
+      if (!url) continue;
+
+      const itemElement = Array.from(document.querySelectorAll('.media-item')).find(el => el.dataset.url === url || (el.dataset.originalUrl && el.dataset.originalUrl === url));
+      const dlBtn = itemElement?.querySelector('#download-button');
+      if (itemElement && itemElement.querySelector('mdui-linear-progress')) {
+        continue; // Already downloading
+      }
+
+      if (dlBtn && !dlBtn.classList.contains('is-paused') && !dlBtn.classList.contains('is-playing')) {
+        dlBtn.click();
+        startedCount++;
+      } else {
+        await downloadFile(url, itemElement, req?.bestRequest?.size, true);
+        startedCount++;
+      }
+      await new Promise(r => setTimeout(r, 150));
+    }
+
+    if (startedCount > 0 && typeof mdui !== 'undefined' && mdui.snackbar) {
+      mdui.snackbar({
+        message: browser.i18n.getMessage('downloadStartedSnackbar') || browser.i18n.getMessage('downloadStarted') || 'Download started...',
+        placement: 'top'
+      });
+    }
+  }
+
   document.getElementById('download-selected').addEventListener('click', async () => {
     const activeRequests = getActiveRequests();
     const selectedActiveRequests = activeRequests.filter(req => selectedUrls.has(req.bestRequest.originalUrl));
     if (selectedActiveRequests.length === 0) return;
-
-    if (selectedActiveRequests.length > 1) {
-      await downloadAllAsZip(selectedActiveRequests);
-    } else {
-      const item = selectedActiveRequests[0];
-      const url = item.bestRequest.originalUrl;
-      const itemElement = Array.from(document.querySelectorAll('.media-item')).find(el => el.dataset.url === url);
-      await downloadFile(url, itemElement, item.bestRequest.size, true);
-    }
+    await triggerBatchDownload(selectedActiveRequests);
   });
 
   document.getElementById('download-all').addEventListener('click', async () => {
     const activeRequests = getActiveRequests();
     if (activeRequests.length === 0) return;
-
-    if (activeRequests.length > 1) {
-      await downloadAllAsZip(activeRequests);
-    } else {
-      const item = activeRequests[0];
-      const url = item.bestRequest.originalUrl;
-      const size = item.bestRequest.size;
-
-      const itemElement = Array.from(document.querySelectorAll('.media-item')).find(el => el.dataset.url === url);
-      if (itemElement && itemElement.querySelector('mdui-linear-progress')) return;
-      await downloadFile(url, itemElement, size, true);
-    }
+    await triggerBatchDownload(activeRequests);
   });
 
   document.getElementById('delete-selected').addEventListener('click', async () => {
@@ -1026,7 +1564,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('cancel-all').addEventListener('click', () => {
     const activeItems = document.querySelectorAll('.media-item mdui-linear-progress');
     activeItems.forEach(progress => {
-      const itemElement = progress.closest('.media-item');
+      const itemElement = progress.closest('.media-item'); if (!itemElement) return;
       const url = itemElement.dataset.url;
       const dlId = itemElement.dataset.downloadId;
       browser.runtime.sendMessage({ action: 'cancelDownload', url: url, id: dlId });
@@ -1050,7 +1588,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   window.addEventListener('pagehide', () => saveNavigationScroll());
 
-  browser.storage.onChanged.addListener((changes, area) => {
+  browser.storage.onChanged.addListener(async (changes, area) => {
     const activeNavigationTab = document.getElementById('navbar')?.value;
     if (area === 'session') {
       if (activeNavigationTab !== 'home') navigationPageLoads.delete('home');
@@ -1063,7 +1601,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const mediaFilterSettings = [
-      'only-video', 'only-audio', 'only-stream', 'only-image',
+      'manual-scan', 'manual-scan-keep-tabs', 'only-video', 'only-audio', 'only-stream', 'only-image',
       'only-subtitle', 'only-file', 'ignore-disabled-types', 'hide-segments', 'disable-deduplication',
       'min-file-size', 'min-file-size-custom', 'image-min-side', 'image-min-side-custom', 'image-min-file-size', 'image-min-file-size-custom', 'hide-image-without-size'
     ];
@@ -1094,6 +1632,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       refreshNavbarLayout(navbar);
     }
 
+        if (changes['top-header-design'] || changes['bottom-bar-design']) {
+      const res = await browser.storage.local.get(['top-header-design', 'bottom-bar-design']);
+      applyHeaderAndBottomBarDesign(res['top-header-design'], res['bottom-bar-design']);
+      loadMediaList().catch(() => {});
+    }
+
     if (changes['theme-color'] || changes['theme-mode']) {
       initTheme();
     }
@@ -1101,17 +1645,128 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (changes['ui-scale']) {
       document.documentElement.style.zoom = changes['ui-scale'].newValue || '85%';
     }
+
+    if (changes['group-download-progress']) {
+      const enabled = changes['group-download-progress'].newValue === '1' || changes['group-download-progress'].newValue === true;
+      isGroupProgressEnabled = enabled;
+      updateGlobalProgressVisibility();
+      if (!enabled) {
+        document.querySelectorAll('.group-progress-wrapper').forEach(el => el.remove());
+      } else {
+        document.querySelectorAll('.media-group-card[data-group-type]').forEach(card => {
+          syncGroupProgressCard(card.dataset.groupType);
+        });
+      }
+    }
   });
 
-  document.getElementById('refresh-list').addEventListener('click', () => loadMediaList());
-  document.getElementById('clear-list').addEventListener('click', () => clearMediaList());
+  const appNavMenu = document.getElementById('app-nav-menu');
+  const appNavToggle = document.getElementById('app-nav-toggle');
+  const closeAppNav = () => {
+    if (appNavMenu?.classList.contains('open')) {
+      appNavMenu.classList.remove('open');
+      appNavToggle?.setAttribute('aria-expanded', 'false');
+    }
+  };
+  const syncAppNavItems = () => {
+    const current = document.getElementById('navbar')?.value;
+    const historyVisible = document.getElementById('history-tab')?.style.display !== 'none';
+    document.querySelectorAll('#app-nav-list .app-nav-item').forEach(item => {
+      const tab = item.dataset.navTab;
+      item.style.display = (tab === 'history' && !historyVisible) ? 'none' : '';
+      item.setAttribute('variant', tab === current ? 'filled' : 'tonal');
+    });
+  };
+  appNavToggle?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    syncAppNavItems();
+    const isOpen = appNavMenu.classList.toggle('open');
+    appNavToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+  document.querySelectorAll('#app-nav-list .app-nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const navbar = document.getElementById('navbar');
+      const tab = item.dataset.navTab;
+      closeAppNav();
+      if (!navbar || !tab || navbar.value === tab) return;
+      navbar.value = tab;
+      navbar.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  });
+  document.addEventListener('click', (e) => {
+    if (appNavMenu?.classList.contains('open') && !appNavMenu.contains(e.target)) closeAppNav();
+  });
+
+  const speedDialContainer = document.getElementById('bottom-speed-dial');
+  const speedDialToggle = document.getElementById('speed-dial-toggle');
+  const closeSpeedDial = () => {
+    if (speedDialContainer?.classList.contains('open')) {
+      speedDialContainer.classList.remove('open');
+      speedDialToggle?.setAttribute('aria-expanded', 'false');
+    }
+  };
+  speedDialToggle?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = speedDialContainer.classList.toggle('open');
+    speedDialToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+  document.addEventListener('click', (e) => {
+    if (speedDialContainer?.classList.contains('open') && !speedDialContainer.contains(e.target)) {
+      closeSpeedDial();
+    }
+  });
+
+  document.getElementById('refresh-list').addEventListener('click', () => {
+    closeSpeedDial();
+    loadMediaList();
+  });
+  document.getElementById('clear-list').addEventListener('click', () => {
+    closeSpeedDial();
+    clearMediaList();
+  });
+
+  const handleManualScanClick = async (scanBtn) => {
+    if (!scanBtn) return;
+    scanBtn.loading = true;
+    scanBtn.disabled = true;
+    try {
+      const activeTab = await getTargetMediaTab();
+      await browser.runtime.sendMessage({ action: 'performManualScan', tabId: activeTab?.id, pageUrl: activeTab?.url || '' }).catch(() => {});
+      if (activeTab?.id !== undefined) {
+        await browser.tabs.sendMessage(activeTab.id, { action: 'manualScanTab' }).catch(() => {});
+      }
+      await new Promise(resolve => setTimeout(resolve, 350));
+      await browser.runtime.sendMessage({ action: 'performManualScan', tabId: activeTab?.id, pageUrl: activeTab?.url || '' }).catch(() => {});
+      await loadMediaList();
+    } finally {
+      if (scanBtn.isConnected) {
+        scanBtn.loading = false;
+        scanBtn.disabled = false;
+      }
+      closeSpeedDial();
+    }
+  };
+
+  const handleAddManualUrlClick = async () => {
+    closeSpeedDial();
+    const url = await showAddManualUrlDialog();
+    if (url) {
+      addManualUrl(url);
+    }
+  };
+
+  document.getElementById('manual-scan-btn-bottom')?.addEventListener('click', (e) => handleManualScanClick(e.currentTarget));
+  document.getElementById('add-manual-url-btn-bottom')?.addEventListener('click', () => handleAddManualUrlClick());
+
   document.getElementById('media-list').addEventListener('click', async (e) => {
+    const scanBtn = e.target.closest('#manual-scan-btn-empty');
+    if (scanBtn) {
+      await handleManualScanClick(scanBtn);
+      return;
+    }
     const btn = e.target.closest('#add-manual-url-btn-empty');
     if (btn) {
-      const url = await showAddManualUrlDialog();
-      if (url) {
-        addManualUrl(url);
-      }
+      await handleAddManualUrlClick();
     }
   });
 
@@ -1132,7 +1787,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       const data = await response.json();
       const lang = browser.i18n.getUILanguage().split('-')[0];
       const content = data[lang] || data['en'];
-      const version = browser.runtime.getManifest().version;
+      let version = browser.runtime.getManifest().version;
+      try {
+        const aboutRes = await fetch(browser.runtime.getURL('about.json?t=' + Date.now()));
+        if (aboutRes.ok) {
+          const aboutData = await aboutRes.json();
+          version = aboutData?.extension?.version || version;
+        }
+      } catch (e) {}
 
       const headlineHtml = `
         <div style="display: flex; align-items: baseline; justify-content: space-between; width: 100%;">
@@ -1192,10 +1854,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+async function getTargetMediaTab() {
+  const isWebTab = (t) => t && t.url && /^https?:/i.test(t.url);
+  const activeTabs = await browser.tabs.query({ active: true, lastFocusedWindow: true }).catch(() => []);
+  if (activeTabs && isWebTab(activeTabs[0])) {
+    return activeTabs[0];
+  }
+  const allTabs = await browser.tabs.query({}).catch(() => []);
+  const webTabs = (allTabs || []).filter(isWebTab);
+  if (webTabs.length > 0) {
+    webTabs.sort((a, b) => (b.lastAccessed || b.index || 0) - (a.lastAccessed || a.index || 0));
+    return webTabs[0];
+  }
+  if (activeTabs && activeTabs[0] && !/^(moz|chrome)-extension:/i.test(activeTabs[0].url || '')) {
+    return activeTabs[0];
+  }
+  return null;
+}
+
 async function updateMissingImageSizes(urls) {
   if (!Array.isArray(urls) || !urls.length) return;
   const mediaRequests = await browser.runtime.sendMessage({ action: 'getMediaRequests' });
-  const settings = await browser.storage.local.get('hide-image-without-size');
+  const settings = await browser.storage.local.get(['hide-image-without-size', 'manual-scan']);
+  if (isFlagEnabled(settings['manual-scan'], false)) {
+    const anyScanned = urls.some(url => Array.isArray(mediaRequests?.[url]) && mediaRequests[url].some(r => r && (r.manualScanned || r.isManual)));
+    if (!anyScanned) return;
+  }
   let hiddenImageBecameVisible = false;
   for (const url of new Set(urls)) {
     const item = Array.from(document.querySelectorAll('.media-item[data-type="image"]'))
@@ -1220,6 +1904,14 @@ async function updateMissingImageSizes(urls) {
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'imageMetadataUpdated') {
     if (document.getElementById('navbar')?.value === 'home') updateMissingImageSizes(message.urls).catch(() => {});
+    return;
+  }
+  if (message.action === 'mediaRemovedOnTabClose') {
+    if (document.getElementById('navbar')?.value === 'home') {
+      loadMediaList().catch(() => {});
+    } else {
+      navigationPageLoads.delete('home');
+    }
     return;
   }
   if (message.action === 'audioJobUpdate' && message.complete) {
@@ -1278,14 +1970,56 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             item.dlBtn.style.borderRadius = '';
             if (item.audioBtn) item.audioBtn.style.display = 'none';
         }
-        if (message.text) item.statusInfo.textContent = message.text;
+        if (message.text && item.statusInfo) item.statusInfo.textContent = message.text;
         if (message.percent !== undefined) {
             item.loadingBar.removeAttribute('indeterminate');
             item.loadingBar.max = 100;
-            item.loadingBar.value = message.percent;
+            item.loadingBar.value = Math.round(Number(message.percent));
         } else if (message.indeterminate) {
             item.loadingBar.setAttribute('indeterminate', 'true');
         }
+        let gType = item.element?.dataset?.downloadMode;
+        if (!gType) {
+          if (message.audioOnly || message.action === 'audioPopupStatus') gType = 'audio';
+          else if (message.action === 'streamPopupStatus') gType = 'stream';
+          else gType = item.element?.dataset?.type || message.mediaType || 'stream';
+        }
+        let fName = item.element?.querySelector(".media-headline")?.textContent?.trim() ||
+                    item.element?.querySelector(".media-title")?.textContent?.trim() ||
+                    item.element?.dataset?.filename?.trim();
+        if (!fName && message.id) {
+          try {
+            const u = new URL(String(message.id).startsWith("http") ? message.id : (item.element?.dataset?.url || ""));
+            const cleanPath = u.pathname.split("/").filter(Boolean).pop();
+            if (cleanPath) fName = decodeURIComponent(cleanPath);
+          } catch (e) {}
+        }
+        const effectiveId = message.jobId || item.element?.dataset?.downloadId || String(message.id);
+        const affectedGroupTypes = new Set();
+        for (const [k, v] of activeGroupDownloads) {
+          if (k === String(effectiveId)) {
+            if (v.groupType && v.groupType !== gType) affectedGroupTypes.add(v.groupType);
+            continue;
+          }
+          if (v.id === String(effectiveId) || (v.el && v.el === item.element) || (item.element?.dataset?.url && (k === item.element.dataset.url || v.id === item.element.dataset.url))) {
+            if (v.groupType && v.groupType !== gType) affectedGroupTypes.add(v.groupType);
+            activeGroupDownloads.delete(k);
+          }
+        }
+        const existingEntry = activeGroupDownloads.get(String(effectiveId));
+        const resolvedIsPaused = message.isPaused !== undefined ? !!message.isPaused : (existingEntry?.isPaused ?? false);
+        activeGroupDownloads.set(String(effectiveId), {
+          id: String(effectiveId),
+          groupType: gType,
+          filename: fName || "Media File",
+          percent: message.percent !== undefined && message.percent !== null ? Math.round(Number(message.percent)) : null,
+          indeterminate: !!message.indeterminate,
+          text: message.text || "",
+          isPaused: resolvedIsPaused,
+          el: item.element
+        });
+        syncGroupProgressCard(gType);
+        affectedGroupTypes.forEach(syncGroupProgressCard);
     }
     const ctlId = message.jobId || item?.element?.dataset?.downloadId || message.id;
     updateGlobalOperationBar({
@@ -1311,42 +2045,105 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
   } else if (message.action === 'downloadPaused') {
     updateProgressUI(message.id, message.loaded, message.total, false, true);
-    const gC = document.getElementById('global-progress-container');
-    const gPause = document.getElementById('pause-global-operation');
-    if (gC && gC.dataset.activeId === String(message.id)) {
-      gC.dataset.paused = '1';
-      if (gPause) setGlobalPauseIcon(gPause, true);
+    const targetGroupItem = activeGroupDownloads.get(String(message.id));
+    if (targetGroupItem) {
+      targetGroupItem.isPaused = true;
+      syncGroupProgressCard(targetGroupItem.groupType);
+    }
+    if (!(isGroupingEnabled && isGroupProgressEnabled && activeGroup === null)) {
+      const gC = document.getElementById('global-progress-container');
+      const gPause = document.getElementById('pause-global-operation');
+      if (gC && gC.dataset.activeId === String(message.id)) {
+        gC.dataset.paused = '1';
+        if (gPause) setGlobalPauseIcon(gPause, true);
+      }
+    } else if (currentZipProgressState) {
+      currentZipProgressState.isPaused = true;
+      const { text, percent, indeterminate, cancelCb, pauseCb, groupType: czGT } = currentZipProgressState;
+      syncZipProgressToGroupCards(text, percent, indeterminate, cancelCb, true, pauseCb, czGT ?? null, currentZipProgressState?.jobId ?? null);
     }
   } else if (message.action === 'zipProgress') {
     const progressContainer = document.getElementById('global-progress-container');
     const progressBar = document.getElementById('global-progress-bar');
     const progressText = document.getElementById('global-progress-text');
     const cancelGlobalBtn = document.getElementById('cancel-global-operation');
+    const pauseGlobalBtn = document.getElementById('pause-global-operation');
+    const inGroupOverview = isGroupingEnabled && isGroupProgressEnabled && activeGroup === null;
 
-    progressContainer.style.display = 'flex';
+    if (!inGroupOverview) {
+      progressContainer.style.display = 'flex';
+    } else {
+      progressContainer.style.display = 'none';
+    }
     progressBar.value = (message.loaded / message.total) * 100;
     if (cancelGlobalBtn) {
       cancelGlobalBtn.style.display = 'inline-block';
       cancelGlobalBtn.onclick = () => {
         browser.runtime.sendMessage({ action: 'cancelDownload', id: message.id }).catch(() => {});
         progressContainer.style.display = 'none';
+        clearZipProgressFromGroupCards();
+      };
+    }
+    if (pauseGlobalBtn && !inGroupOverview) {
+      pauseGlobalBtn.style.display = 'inline-flex';
+      setGlobalPauseIcon(pauseGlobalBtn, !!message.isPaused);
+      if (progressContainer) {
+        progressContainer.dataset.activeId = String(message.id);
+        progressContainer.dataset.paused = message.isPaused ? '1' : '0';
+      }
+      pauseGlobalBtn.onclick = () => {
+        const paused = progressContainer?.dataset.paused === '1';
+        browser.runtime.sendMessage({ action: paused ? 'resumeActiveDownload' : 'pauseDownload', id: message.id }).catch(() => {});
+        if (progressContainer) progressContainer.dataset.paused = paused ? '0' : '1';
+        setGlobalPauseIcon(pauseGlobalBtn, !paused);
       };
     }
 
+    let zipText = '';
     if (message.status === 'downloading') {
-      progressText.textContent = (message.isPaused ? `[${browser.i18n.getMessage("pausedStatus") || "Paused"}] ` : "") + browser.i18n.getMessage("zipDownloading", [(message.loaded + 1).toString(), message.total.toString(), message.currentFile]);
+      zipText = (message.isPaused ? `[${(browser?.i18n?.getMessage?.("pausedStatus") || chrome?.i18n?.getMessage?.("pausedStatus")) || "Paused"}] ` : "") + browser.i18n.getMessage("zipDownloading", [(message.loaded + 1).toString(), message.total.toString(), message.currentFile]);
+      progressText.textContent = zipText;
     } else if (message.status === 'generating') {
       progressBar.value = 95;
-      progressText.textContent = (message.isPaused ? `[${browser.i18n.getMessage("pausedStatus") || "Paused"}] ` : "") + (browser.i18n.getMessage("zipGenerating") || "Generating ZIP archive...");
+      zipText = (message.isPaused ? `[${(browser?.i18n?.getMessage?.("pausedStatus") || chrome?.i18n?.getMessage?.("pausedStatus")) || "Paused"}] ` : "") + (browser.i18n.getMessage("zipGenerating") || "Generating ZIP archive...");
+      progressText.textContent = zipText;
     } else if (message.status === 'uploading') {
       progressBar.indeterminate = message.percent === undefined;
       if (message.percent !== undefined) progressBar.value = message.percent;
       const statusText = (browser.i18n.getMessage("uploadingToGDriveShort") || "Uploading to Cloud...");
-      progressText.textContent = (message.isPaused ? `[${browser.i18n.getMessage("pausedStatus") || "Paused"}] ` : "") + statusText + (message.percent !== undefined ? ` (${message.percent}%)` : "");
+      zipText = (message.isPaused ? `[${(browser?.i18n?.getMessage?.("pausedStatus") || chrome?.i18n?.getMessage?.("pausedStatus")) || "Paused"}] ` : "") + statusText + (message.percent !== undefined ? ` (${message.percent}%)` : "");
+      progressText.textContent = zipText;
     } else if (message.status === 'processingStream') {
       progressBar.indeterminate = message.percent === undefined || message.indeterminate;
       if (message.percent !== undefined) progressBar.value = message.percent;
-      progressText.textContent = `${message.currentFile || ''}${message.currentFile ? ' • ' : ''}${message.text || 'Processing stream...'}`;
+      zipText = `${message.currentFile || ''}${message.currentFile ? ' • ' : ''}${message.text || 'Processing stream...'}`;
+      progressText.textContent = zipText;
+    }
+
+    if (inGroupOverview && zipText) {
+      const pct = (message.loaded / message.total) * 100;
+      const isIndet = isNaN(pct) || !isFinite(pct);
+      const isPaused = !!message.isPaused;
+      const cancelCb = () => {
+        browser.runtime.sendMessage({ action: 'cancelDownload', id: message.id }).catch(() => {});
+        clearZipProgressFromGroupCards();
+      };
+      const pauseCb = () => {
+        const nowPaused = !currentZipProgressState?.isPaused;
+        browser.runtime.sendMessage({ action: nowPaused ? 'pauseDownload' : 'resumeActiveDownload', id: message.id }).catch(() => {});
+        if (currentZipProgressState) {
+          currentZipProgressState.isPaused = nowPaused;
+          const { text, percent, indeterminate, cancelCb, groupType: czGT2 } = currentZipProgressState;
+          syncZipProgressToGroupCards(text, percent, indeterminate, cancelCb, nowPaused, pauseCb, czGT2 ?? null, currentZipProgressState?.jobId ?? null);
+        }
+      };
+      let zipGT = message.groupType || currentZipProgressState?.groupType || null;
+      if (!zipGT) {
+        const gtSet = new Set();
+        for (const [, entry] of activeGroupDownloads) { if (entry.groupType) gtSet.add(entry.groupType); }
+        if (gtSet.size === 1) zipGT = [...gtSet][0];
+      }
+      syncZipProgressToGroupCards(`📦 ZIP • ${zipText}`, isIndet ? 0 : pct, isIndet, cancelCb, isPaused, pauseCb, zipGT, message.id);
     }
   } else if (message.action === 'zipComplete') {
     const progressContainer = document.getElementById('global-progress-container');
@@ -1358,18 +2155,25 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     progressBar.value = 1;
     progressBar.indeterminate = false;
 
+    let completeText = '';
     if (message.cloud) {
        let successMsg = browser.i18n.getMessage("uploadSuccessGDrive", [message.filename]) || `Successfully saved ${message.filename} to Google Drive!`;
        if (message.cloud === 'dropbox') {
            successMsg = successMsg.replace(/Google Drive/g, "Dropbox");
        }
        progressText.textContent = successMsg;
+       completeText = successMsg;
     } else {
-       progressText.textContent = browser.i18n.getMessage("zipComplete");
+       completeText = browser.i18n.getMessage("zipComplete");
+       progressText.textContent = completeText;
     }
 
+    if (isGroupingEnabled && isGroupProgressEnabled && activeGroup === null) {
+      syncZipProgressToGroupCards(`📦 ZIP • ${completeText}`, 100, false, null, false, null, currentZipProgressState?.groupType ?? null);
+    }
     setTimeout(() => {
       progressContainer.style.display = 'none';
+      clearZipProgressFromGroupCards(message.id);
     }, 3000);
   } else if (message.action === 'zipError') {
     const progressContainer = document.getElementById('global-progress-container');
@@ -1377,10 +2181,20 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const cancelGlobalBtn = document.getElementById('cancel-global-operation');
 
     if (cancelGlobalBtn) cancelGlobalBtn.style.display = 'none';
-    progressText.textContent = browser.i18n.getMessage("zipError", [message.error]);
-    setTimeout(() => {
+    if (message.error === 'USER_CANCELED') {
       progressContainer.style.display = 'none';
-    }, 5000);
+      clearZipProgressFromGroupCards(message.id);
+    } else {
+      const errText = browser.i18n.getMessage("zipError", [message.error]);
+      progressText.textContent = errText;
+      if (isGroupingEnabled && isGroupProgressEnabled && activeGroup === null) {
+        syncZipProgressToGroupCards(`📦 ZIP Error: ${message.error || ''}`, 0, false, null, false, null, currentZipProgressState?.groupType ?? null);
+      }
+      setTimeout(() => {
+        progressContainer.style.display = 'none';
+        clearZipProgressFromGroupCards(message.id);
+      }, 5000);
+    }
   } else if (message.action === 'confirmZipSkip') {
     showConfirmDialog(
       browser.i18n.getMessage("zipDownloadError", [message.filename, message.error || ""]),
@@ -1401,6 +2215,16 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.url) {
       allMediaRequests = allMediaRequests.filter(item => item.bestRequest.originalUrl !== message.url);
       allFilteredRequests = allFilteredRequests.filter(item => item.bestRequest.originalUrl !== message.url);
+    }
+  } else if (message.action === 'skipHttpError') {
+    const skipUrl = message.url;
+    allMediaRequests = allMediaRequests.filter(item => item.bestRequest.originalUrl !== skipUrl);
+    allFilteredRequests = allFilteredRequests.filter(item => item.bestRequest.originalUrl !== skipUrl);
+    const skipEl = document.querySelector(`.media-item[data-url="${CSS.escape(skipUrl)}"]`);
+    if (skipEl) skipEl.remove();
+    finishDownloadUI(skipUrl, false);
+    if (typeof mdui !== 'undefined' && mdui.snackbar) {
+      mdui.snackbar({ message: `Skipped (HTTP ${message.status || '4xx'}): ${skipUrl.split('/').pop() || skipUrl}`, placement: 'top' });
     }
   } else if (message.action === 'downloadError') {
     const id = message.id || message.url;
@@ -1456,54 +2280,12 @@ function hideGlobalProgressIfMatch(...ids) {
 }
 
 function updateGlobalOperationBar({ id, url, filename, text, percent, indeterminate, isPaused = false }) {
-  try {
+  if (isGroupingEnabled && isGroupProgressEnabled && activeGroup === null) {
     const gC = document.getElementById('global-progress-container');
-    const gB = document.getElementById('global-progress-bar');
-    const gT = document.getElementById('global-progress-text');
-    if (!gC || !gB || !gT) return;
-    const ctlId = id || url;
-    const pct = (percent !== undefined && percent !== null && Number.isFinite(Number(percent))) ? Math.min(100, Math.round(Number(percent))) : null;
-    gC.style.display = 'flex';
-    if (pct !== null && !indeterminate) {
-      gB.indeterminate = false;
-      gB.max = 100;
-      gB.value = pct;
-    } else {
-      gB.indeterminate = true;
-    }
-    const pausedPrefix = isPaused ? `[${browser.i18n.getMessage("pausedStatus") || "Paused"}] ` : '';
-    const titlePrefix = filename ? `${filename} • ` : '';
-    const rawText = String(text || 'Downloading...').replace(/^\[Paused\]\s*/i, '');
-    const pctSuffix = (pct !== null && !/\(\d+%\)/.test(rawText)) ? ` (${pct}%)` : '';
-    gT.textContent = `${pausedPrefix}${titlePrefix}${rawText}${pctSuffix}`;
-    const gCancel = document.getElementById('cancel-global-operation');
-    const gPause = document.getElementById('pause-global-operation');
-    if (url) gC.dataset.activeUrl = String(url);
-    if (ctlId && gCancel) {
-      gCancel.style.display = 'inline-flex';
-      gCancel.onclick = () => {
-        browser.runtime.sendMessage({ action: 'cancelDownload', id: ctlId, url: url || undefined }).catch(() => {});
-        hideGlobalProgressIfMatch(ctlId);
-      };
-    }
-    if (ctlId && gPause) {
-      gPause.style.display = 'inline-flex';
-      if (gC.dataset.activeId !== String(ctlId)) {
-        gC.dataset.activeId = String(ctlId);
-      }
-      gC.dataset.paused = isPaused ? '1' : '0';
-      setGlobalPauseIcon(gPause, !!isPaused);
-      gPause.onclick = () => {
-        const paused = gC.dataset.paused === '1';
-        browser.runtime.sendMessage({ action: paused ? 'resumeActiveDownload' : 'pauseDownload', id: ctlId }).catch(() => {});
-        gC.dataset.paused = paused ? '0' : '1';
-        setGlobalPauseIcon(gPause, !paused);
-      };
-    }
-    const done = (pct !== null && pct >= 100) || /complete|done|saved|finished/i.test(rawText);
-    clearTimeout(window.__wmdGlobalHide);
-    if (done && !isPaused) window.__wmdGlobalHide = setTimeout(() => hideGlobalProgressIfMatch(ctlId), 1500);
-  } catch (e) {}
+    if (gC) gC.style.display = 'none';
+    return;
+  }
+  return;
 }
 
 function updateProgressUI(id, loaded, total, isParallel = false, isPaused = false, status = 'downloading', percent = null, finishedParts = null, totalParts = null) {
@@ -1580,7 +2362,7 @@ function updateProgressUI(id, loaded, total, isParallel = false, isPaused = fals
         loadingBar.indeterminate = false;
         loadingBar.classList.add('uploading-phase');
         const statusText = (browser.i18n.getMessage("uploadingToGDriveShort") || "Uploading to Cloud...");
-        statusInfo.textContent = (isPaused ? `[${browser.i18n.getMessage("pausedStatus") || "Paused"}] ` : "") + statusText + ` (${pct}%)`;
+        statusInfo.textContent = (isPaused ? `[${(browser?.i18n?.getMessage?.("pausedStatus") || chrome?.i18n?.getMessage?.("pausedStatus")) || "Paused"}] ` : "") + statusText + ` (${pct}%)`;
         return;
     }
 
@@ -1638,6 +2420,115 @@ function updateProgressUI(id, loaded, total, isParallel = false, isPaused = fals
           loadingBar.indeterminate = true;
       }
     }
+
+    let gType = item.element?.dataset?.downloadMode;
+    if (!gType) {
+      if (item.element?.dataset?.type) gType = item.element.dataset.type;
+      else if (id && String(id).startsWith('stream_')) gType = 'stream';
+      else if (id && String(id).startsWith('audio_')) gType = 'audio';
+      else gType = 'video';
+    }
+    let fName = item.element?.querySelector(".media-headline")?.textContent?.trim() ||
+                item.element?.querySelector(".media-title")?.textContent?.trim() ||
+                item.element?.dataset?.filename?.trim();
+    if (!fName && id) {
+      try {
+        const u = new URL(String(id).startsWith("http") ? id : (item.element?.dataset?.url || ""));
+        const cleanPath = u.pathname.split("/").filter(Boolean).pop();
+        if (cleanPath) fName = decodeURIComponent(cleanPath);
+      } catch (e) {}
+    }
+    if (!fName) fName = item.element?.dataset?.originalUrl || "Media File";
+    let curPct = null;
+    if (!loadingBar.indeterminate) {
+      if (percent !== undefined && percent !== null && !isNaN(percent)) {
+        curPct = Math.min(100, Math.max(0, Math.round(Number(percent))));
+      } else if (total > 0 && loaded >= 0) {
+        curPct = Math.min(100, Math.max(0, Math.round((loaded / total) * 100)));
+      }
+    }
+    const effectiveId = item.element?.dataset?.downloadId || String(id);
+    const affectedGroupTypes = new Set();
+    for (const [k, v] of activeGroupDownloads) {
+      if (k === String(effectiveId)) {
+        if (v.groupType && v.groupType !== gType) affectedGroupTypes.add(v.groupType);
+        continue;
+      }
+      if (v.id === String(effectiveId) || (v.el && v.el === item.element) || (item.element?.dataset?.url && (k === item.element.dataset.url || v.id === item.element.dataset.url))) {
+        if (v.groupType && v.groupType !== gType) affectedGroupTypes.add(v.groupType);
+        activeGroupDownloads.delete(k);
+      }
+    }
+    activeGroupDownloads.set(String(effectiveId), {
+      id: String(effectiveId),
+      groupType: gType,
+      filename: fName,
+      percent: curPct,
+      indeterminate: !!loadingBar.indeterminate,
+      text: statusInfo.textContent || "",
+      isPaused: !!isPaused,
+      el: item.element
+    });
+    syncGroupProgressCard(gType);
+    affectedGroupTypes.forEach(syncGroupProgressCard);
+  } else {
+    const activeReq = (typeof allFilteredRequests !== 'undefined' ? allFilteredRequests : []).find(r =>
+      r.bestRequest?.originalUrl === id || r.bestRequest?.url === id || String(r.downloadId) === String(id)
+    ) || (typeof allMediaRequests !== 'undefined' ? allMediaRequests : []).find(r =>
+      r.bestRequest?.originalUrl === id || r.bestRequest?.url === id || String(r.downloadId) === String(id)
+    );
+
+    let gType = activeReq?.type;
+    if (!gType && id) {
+      if (String(id).startsWith('stream_')) gType = 'stream';
+      else if (String(id).startsWith('audio_')) gType = 'audio';
+      else gType = getMediaType(String(id).startsWith("http") ? id : "") || "video";
+    }
+    if (!gType) gType = "video";
+
+    let fName = activeReq?.bestRequest?.filename;
+    if (!fName && id) {
+      try {
+        const u = new URL(String(id).startsWith("http") ? id : (activeReq?.bestRequest?.originalUrl || ""));
+        const cleanPath = u.pathname.split("/").filter(Boolean).pop();
+        if (cleanPath) fName = decodeURIComponent(cleanPath);
+      } catch (e) {}
+    }
+    if (!fName) fName = "Media File";
+
+    let curPct = null;
+    if (percent !== undefined && percent !== null && !isNaN(percent)) {
+      curPct = Math.min(100, Math.max(0, Math.round(Number(percent))));
+    } else if (total > 0 && loaded >= 0) {
+      curPct = Math.min(100, Math.max(0, Math.round((loaded / total) * 100)));
+    }
+
+    const loadedMB = (loaded / (1024 * 1024)).toFixed(2);
+    let text = `${loadedMB} MB`;
+    if (total > 0) {
+      const totalMB = (total / (1024 * 1024)).toFixed(2);
+      text = `${loadedMB} MB / ${totalMB} MB (${curPct}%)`;
+    }
+    if (isPaused) text = `[Paused] ${text}`;
+
+    const affectedGroupTypes = new Set();
+    const existingEntry = activeGroupDownloads.get(String(id));
+    if (existingEntry?.groupType && existingEntry.groupType !== gType) {
+      affectedGroupTypes.add(existingEntry.groupType);
+    }
+
+    activeGroupDownloads.set(String(id), {
+      id: String(id),
+      groupType: gType,
+      filename: fName,
+      percent: curPct,
+      indeterminate: curPct === null && !(total > 0),
+      text: text,
+      isPaused: !!isPaused,
+      el: null
+    });
+    syncGroupProgressCard(gType);
+    affectedGroupTypes.forEach(syncGroupProgressCard);
   }
 }
 
@@ -1705,13 +2596,18 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
       const cancel = document.getElementById('cancel-global-operation');
       const pause = document.getElementById('pause-global-operation');
       if (container) {
-        container.style.display = 'flex';
+        if (!(isGroupingEnabled && isGroupProgressEnabled && activeGroup === null)) {
+          container.style.display = 'flex';
+        } else {
+          container.style.display = 'none';
+        }
         container.dataset.activeId = String(id);
         container.dataset.paused = downloadData.isPaused ? '1' : '0';
       }
       if (bar) {
-        bar.max = downloadData.status === 'processingStream' ? 100 : Math.max(downloadData.total || 1, 1);
-        bar.value = downloadData.percent ?? downloadData.loaded ?? 0;
+        const hasPercent = downloadData.percent !== undefined && downloadData.percent !== null;
+        bar.max = (downloadData.status === 'processingStream' || hasPercent) ? 100 : Math.max(downloadData.total || 1, 1);
+        bar.value = hasPercent ? downloadData.percent : (downloadData.loaded ?? 0);
         bar.indeterminate = downloadData.status === 'generating';
       }
       if (text) text.textContent = downloadData.status === 'generating'
@@ -1732,7 +2628,38 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
         cancel.onclick = () => {
           browser.runtime.sendMessage({ action: 'cancelDownload', id }).catch(() => {});
           hideGlobalProgressIfMatch(id);
+          clearZipProgressFromGroupCards();
         };
+      }
+
+      if (isGroupingEnabled && isGroupProgressEnabled && activeGroup === null) {
+        const pct = downloadData.percent ?? downloadData.loaded ?? 0;
+        const isIndet = downloadData.status === 'generating' || (downloadData.percent === undefined && !downloadData.loaded);
+        const zTxt = downloadData.status === 'generating'
+          ? (browser.i18n.getMessage('zipGenerating') || 'Generating ZIP archive...')
+          : (`${downloadData.currentFile || ''}${downloadData.currentFile ? ' • ' : ''}${downloadData.statusText || downloadData.status || browser.i18n.getMessage('zipPreparing') || 'Preparing ZIP...'}`);
+        const finalTxt = zTxt;
+        const cancelCb = () => {
+          browser.runtime.sendMessage({ action: 'cancelDownload', id }).catch(() => {});
+          clearZipProgressFromGroupCards();
+        };
+        const pauseCb = () => {
+          const nowPaused = !downloadData.isPaused;
+          browser.runtime.sendMessage({ action: nowPaused ? 'pauseDownload' : 'resumeActiveDownload', id }).catch(() => {});
+          downloadData.isPaused = nowPaused;
+          if (currentZipProgressState) {
+            currentZipProgressState.isPaused = nowPaused;
+            const { text, percent, indeterminate, cancelCb, groupType: czGT3 } = currentZipProgressState;
+            syncZipProgressToGroupCards(text, percent, indeterminate, cancelCb, nowPaused, pauseCb, czGT3 ?? null, currentZipProgressState?.jobId ?? null);
+          }
+        };
+        let zipGT2 = downloadData.groupType || currentZipProgressState?.groupType || null;
+        if (!zipGT2) {
+          const gtSet2 = new Set();
+          for (const [, entry] of activeGroupDownloads) { if (entry.groupType) gtSet2.add(entry.groupType); }
+          if (gtSet2.size === 1) zipGT2 = [...gtSet2][0];
+        }
+        syncZipProgressToGroupCards(`📦 ZIP • ${finalTxt}`, isIndet ? 0 : pct, isIndet, cancelCb, !!downloadData.isPaused, pauseCb, zipGT2, id);
       }
       return;
     }
@@ -1745,6 +2672,13 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
     if (item) {
       item.dataset.downloadId = id;
       if (url && !item.dataset.url) item.dataset.url = url;
+      if (downloadData.isAudioJob && downloadData.mediaType === 'audio') {
+        item.dataset.downloadMode = 'audio';
+      } else if (downloadData.isStreamJob) {
+        item.dataset.downloadMode = 'stream';
+      } else if (downloadData.mediaType) {
+        item.dataset.downloadMode = downloadData.mediaType;
+      }
       const dlBtn = item.querySelector('#download-button');
       if (dlBtn) updatePausePlayUI(dlBtn, downloadData.isPaused);
       const cancelBtn = item.querySelector('#cancel-button');
@@ -1766,6 +2700,12 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
       
       if (!activeDownloadingElements.includes(item)) {
         prioritizeActiveDownload(item);
+      }
+    } else {
+      if (downloadData.isAudioJob || downloadData.isStreamJob) {
+        updateProgressUI(id, downloadData.percent || 0, 100, false, downloadData.isPaused, downloadData.status, downloadData.percent);
+      } else {
+        updateProgressUI(id, downloadData.loaded, downloadData.total, downloadData.isParallel, downloadData.isPaused, downloadData.status, downloadData.percent, downloadData.finishedParts ?? null, downloadData.totalParts ?? null);
       }
     }
   });
@@ -1808,10 +2748,26 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
 }
 
 function finishDownloadUI(id, isSuccess = false) {
+  const normalizedId = String(id ?? '');
+  const affectedGroupTypes = new Set();
+  for (const [key, entry] of activeGroupDownloads) {
+    const item = entry.el;
+    const matches = String(key) === normalizedId || String(entry.id) === normalizedId ||
+      String(item?.dataset?.downloadId || '') === normalizedId || String(item?.dataset?.url || '') === normalizedId;
+    if (!matches) continue;
+    if (entry.groupType) affectedGroupTypes.add(entry.groupType);
+    activeGroupDownloads.delete(key);
+  }
+  affectedGroupTypes.forEach(syncGroupProgressCard);
   const itemData = uiCache.get(id);
   if (itemData) {
       const { element, progressContainer } = itemData;
       activeDownloadingElements = activeDownloadingElements.filter(el => el !== element);
+      const finishedGroupType = element?.dataset?.type || "video";
+      activeGroupDownloads.delete(String(id));
+      if (element?.dataset?.downloadId) activeGroupDownloads.delete(element.dataset.downloadId);
+      if (element?.dataset?.url) activeGroupDownloads.delete(element.dataset.url);
+      syncGroupProgressCard(finishedGroupType);
 
       if (isSuccess) {
           element.remove();
@@ -1821,6 +2777,7 @@ function finishDownloadUI(id, isSuccess = false) {
             renderInitialList();
           }
       } else {
+          if (element) delete element.dataset.downloadMode;
           if (progressContainer) progressContainer.remove();
 
           const dlBtn = element.querySelector('#download-button');
@@ -1852,6 +2809,12 @@ function finishDownloadUI(id, isSuccess = false) {
   mediaItems.forEach(item => {
     if (item.dataset.downloadId === id || item.dataset.url === id) {
       activeDownloadingElements = activeDownloadingElements.filter(el => el !== item);
+      const finishedGroupType = item.dataset.type || "video";
+      activeGroupDownloads.delete(String(id));
+      if (item.dataset.downloadId) activeGroupDownloads.delete(item.dataset.downloadId);
+      if (item.dataset.url) activeGroupDownloads.delete(item.dataset.url);
+      syncGroupProgressCard(finishedGroupType);
+
       if (isSuccess) {
         item.remove();
 
@@ -1860,6 +2823,7 @@ function finishDownloadUI(id, isSuccess = false) {
           renderInitialList();
         }
       } else {
+        delete item.dataset.downloadMode;
         const progressContainer = item.querySelector('.download-progress-container');
         if (progressContainer) progressContainer.remove();
 
@@ -1900,6 +2864,23 @@ function updateDownloadingCount(change) {
   }
 }
 
+async function shouldSkipHttpError(status) {
+  if (status !== 403 && status !== 404) return false;
+  const setting = await browser.storage.local.get('skip-http-errors');
+  return setting['skip-http-errors'] === '1';
+}
+
+function handleSkippedHttpError(url, status) {
+  allMediaRequests = allMediaRequests.filter(item => item.bestRequest.originalUrl !== url);
+  allFilteredRequests = allFilteredRequests.filter(item => item.bestRequest.originalUrl !== url);
+  const skipEl = document.querySelector(`.media-item[data-url="${CSS.escape(url)}"]`);
+  if (skipEl) skipEl.remove();
+  finishDownloadUI(url, false);
+  if (typeof mdui !== 'undefined' && mdui.snackbar) {
+    mdui.snackbar({ message: `Skipped (HTTP ${status || '4xx'}): ${url.split('/').pop() || url}`, placement: 'top' });
+  }
+}
+
 function showConfirmDialog(message, title = null) {
   return new Promise((resolve) => {
     const dialog = document.createElement('mdui-dialog');
@@ -1913,13 +2894,23 @@ function showConfirmDialog(message, title = null) {
 
     const cancelButton = document.createElement('mdui-button');
     cancelButton.variant = "text";
-    cancelButton.textContent = browser.i18n.getMessage("cancelAllButton");
+    cancelButton.textContent = browser.i18n.getMessage("confirmCancelButton") || "Cancel";
     cancelButton.slot = 'action';
     cancelButton.addEventListener('click', () => {
       dialog.open = false;
       resolve('cancel');
     });
     dialog.appendChild(cancelButton);
+
+    const skipButton = document.createElement('mdui-button');
+    skipButton.variant = "text";
+    skipButton.textContent = browser.i18n.getMessage("continueButton") || "Continue";
+    skipButton.slot = 'action';
+    skipButton.addEventListener('click', () => {
+      dialog.open = false;
+      resolve('continue');
+    });
+    dialog.appendChild(skipButton);
 
     const continueButton = document.createElement('mdui-button');
     continueButton.variant = "tonal";
@@ -2120,12 +3111,106 @@ async function showQRCode(url) {
   }, 100);
 }
 
+let manualScanEnabled = false;
+function applyManualScanUI(enabled, barDesign = 'v3') {
+  manualScanEnabled = !!enabled;
+  const dial = document.getElementById('bottom-speed-dial');
+  if (!dial) return;
+  const isV2 = barDesign === 'v2';
+  dial.classList.toggle('classic', isV2 && !manualScanEnabled);
+  if (!manualScanEnabled || !isV2) {
+    dial.classList.remove('open');
+    document.getElementById('speed-dial-toggle')?.setAttribute('aria-expanded', 'false');
+  }
+
+  const refreshBtn = document.getElementById('refresh-list');
+  const refreshIcon = refreshBtn?.querySelector('mdui-icon');
+  const refreshLabel = browser.i18n.getMessage('refreshListButton') || 'Refresh list';
+  if (refreshBtn) {
+    const isFilledRefresh = !isV2 || !manualScanEnabled;
+    refreshBtn.setAttribute('variant', isFilledRefresh ? 'filled' : 'tonal');
+    if (barDesign === 'v3') {
+      if (refreshIcon) refreshIcon.setAttribute('slot', 'icon');
+      refreshBtn.setAttribute('title', refreshLabel);
+      refreshBtn.setAttribute('aria-label', refreshLabel);
+    } else if (isV2 && manualScanEnabled) {
+      if (refreshIcon) refreshIcon.setAttribute('slot', 'icon');
+      refreshBtn.removeAttribute('title');
+      refreshBtn.removeAttribute('aria-label');
+    } else {
+      if (refreshIcon) refreshIcon.removeAttribute('slot');
+      refreshBtn.setAttribute('title', refreshLabel);
+      refreshBtn.setAttribute('aria-label', refreshLabel);
+    }
+  }
+
+  const addBtn = document.getElementById('add-manual-url-btn-bottom');
+  const addIcon = addBtn?.querySelector('mdui-icon');
+  const addSpan = addBtn?.querySelector('span');
+  if (addBtn && addIcon) {
+    const shortLabel = browser.i18n.getMessage('addShortButton') || 'Add';
+    const fullLabel = browser.i18n.getMessage('addManualUrlButton') || 'Add URL';
+    const label = (barDesign === 'v3' || isV2) ? shortLabel : fullLabel;
+    if (addSpan) addSpan.textContent = label;
+    if (barDesign === 'v3') {
+      addIcon.setAttribute('slot', 'icon');
+      addBtn.removeAttribute('title');
+      addBtn.removeAttribute('aria-label');
+    } else if (isV2 && manualScanEnabled) {
+      addIcon.setAttribute('slot', 'icon');
+      addBtn.removeAttribute('title');
+      addBtn.removeAttribute('aria-label');
+    } else {
+      addIcon.removeAttribute('slot');
+      addBtn.setAttribute('title', label);
+      addBtn.setAttribute('aria-label', label);
+    }
+  }
+
+  const clearBtn = document.getElementById('clear-list');
+  const clearIcon = clearBtn?.querySelector('mdui-icon');
+  const clearLabel = browser.i18n.getMessage('clearListButton') || 'Clear list';
+  if (clearBtn) {
+    if (barDesign === 'v3') {
+      if (clearIcon) clearIcon.setAttribute('slot', 'icon');
+      clearBtn.setAttribute('title', clearLabel);
+      clearBtn.setAttribute('aria-label', clearLabel);
+    } else if (isV2 && manualScanEnabled) {
+      if (clearIcon) clearIcon.setAttribute('slot', 'icon');
+      clearBtn.removeAttribute('title');
+      clearBtn.removeAttribute('aria-label');
+    } else {
+      if (clearIcon) clearIcon.removeAttribute('slot');
+      clearBtn.setAttribute('title', clearLabel);
+      clearBtn.setAttribute('aria-label', clearLabel);
+    }
+  }
+
+  const scanBtn = document.getElementById('manual-scan-btn-bottom');
+  const scanIcon = scanBtn?.querySelector('mdui-icon');
+  if (scanBtn) {
+    if (scanIcon) scanIcon.setAttribute('slot', 'icon');
+    scanBtn.style.display = (barDesign === 'v1' || !manualScanEnabled) ? 'none' : '';
+  }
+}
+
+function getEmptyListActionButtonsHTML() {
+  const scanLabel = browser.i18n.getMessage("scanNowButton") || "Scan";
+  const addShortLabel = browser.i18n.getMessage("addShortButton") || "Add";
+  return `
+      <div style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px;">
+        ${manualScanEnabled ? `<mdui-button variant="tonal" id="manual-scan-btn-empty" style="--mdui-shape-corner-extra-small: 16px;"><mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></mdui-icon><span data-translate="scanNowButton">${scanLabel}</span></mdui-button>` : ''}
+        <mdui-button variant="tonal" id="add-manual-url-btn-empty" style="--mdui-shape-corner-extra-small: 16px;"><mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></mdui-icon><span data-translate="addShortButton">${addShortLabel}</span></mdui-button>
+      </div>
+  `;
+}
+
 function getNoMediaDetectedHTML() {
   return `
     <div class="end-of-list-container no-media-container">
       <div class="end-of-list-title">${browser.i18n.getMessage("errorTitle4") || 'Info'}</div>
       <div class="end-of-list-text">${browser.i18n.getMessage("noMediaDetected")}</div>
-      <mdui-button variant="tonal" id="add-manual-url-btn-empty" style="margin-top: 12px; --mdui-shape-corner-extra-small: 16px;"><mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></mdui-icon><span data-translate="addManualUrlButton">Add URL</span></mdui-button>
+      ${getEmptyListActionButtonsHTML()}
     </div>
   `;
 }
@@ -2147,7 +3232,7 @@ function updateSelectedCount() {
   const allCheckboxes = document.querySelectorAll('.media-item .media-checkbox');
   const renderedSelected = Array.from(allCheckboxes).filter(cb => cb.checked);
   let hasActiveSelected = renderedSelected.some(cb =>
-    cb.closest('.media-item').querySelector('mdui-linear-progress')
+    cb.closest('.media-item')?.querySelector('mdui-linear-progress')
   );
 
   document.getElementById('selected-count').textContent = browser.i18n.getMessage("selectedCount", [selectedCount.toString()]);
@@ -2246,8 +3331,21 @@ function getGroupCounts(activeItems) {
   // Active cards are rendered first and reserve their URL before detected items.
   activeItems.forEach(item => {
     const url = item.dataset.url || "";
-    if (url) countedUrls.add(getMediaRenderKey(url, item.dataset.type || "file"));
-    increment(item.dataset.type || "file");
+    const origUrl = item.dataset.originalUrl || "";
+    const type = item.dataset.type || "file";
+    if (url) {
+      countedUrls.add(getMediaRenderKey(url, type));
+      countedUrls.add(url.split('?')[0]);
+      countedUrls.add(`video:${url.split('?')[0]}`);
+      countedUrls.add(`stream:${url.split('?')[0]}`);
+    }
+    if (origUrl && origUrl !== url) {
+      countedUrls.add(getMediaRenderKey(origUrl, type));
+      countedUrls.add(origUrl.split('?')[0]);
+      countedUrls.add(`video:${origUrl.split('?')[0]}`);
+      countedUrls.add(`stream:${origUrl.split('?')[0]}`);
+    }
+    increment(type);
   });
 
   // renderNextChunk hides detected URLs whose query-less URL is already rendered.
@@ -2255,8 +3353,10 @@ function getGroupCounts(activeItems) {
   allFilteredRequests.forEach(item => {
     const url = item.bestRequest.originalUrl || item.bestRequest.url || "";
     const normalizedUrl = getMediaRenderKey(url, item.type || "file");
-    if (normalizedUrl && countedUrls.has(normalizedUrl)) return;
+    const urlNoQuery = url ? url.split('?')[0] : '';
+    if ((normalizedUrl && countedUrls.has(normalizedUrl)) || (urlNoQuery && countedUrls.has(urlNoQuery))) return;
     if (normalizedUrl) countedUrls.add(normalizedUrl);
+    if (urlNoQuery) countedUrls.add(urlNoQuery);
     increment(item.type || "file");
   });
 
@@ -2273,10 +3373,12 @@ function createGroupItemHTML(type, count, title, iconSVG) {
       transition: var(--transition);
       cursor: pointer;
       display: flex;
-      align-items: center;
+      flex-direction: column;
       padding: 16px 20px;
-      gap: 16px;
+      gap: 0;
+      box-sizing: border-box;
     ">
+      <div style="display: flex; align-items: center; gap: 16px; width: 100%;">
       <div style="
         width: 44px;
         height: 44px;
@@ -2296,6 +3398,7 @@ function createGroupItemHTML(type, count, title, iconSVG) {
       <mdui-icon style="opacity: 0.5; color: rgb(var(--mdui-color-on-surface));">
         <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
       </mdui-icon>
+      </div>
     </div>
   `;
 }
@@ -2354,9 +3457,25 @@ function renderInitialList() {
   renderedMediaUrls.clear();
   activeItems.forEach(item => {
     const url = item.dataset.url;
+    const origUrl = item.dataset.originalUrl;
+    const type = item.dataset.type || 'file';
     if (url) {
       renderedMediaUrls.add(url);
       renderedMediaUrls.add(url.split('?')[0]);
+      renderedMediaUrls.add(getMediaRenderKey(url, type));
+      renderedMediaUrls.add(`video:${url.split('?')[0]}`);
+      renderedMediaUrls.add(`stream:${url.split('?')[0]}`);
+      renderedMediaUrls.add(`audio:${url.split('?')[0]}`);
+      renderedMediaUrls.add(`file:${url.split('?')[0]}`);
+    }
+    if (origUrl && origUrl !== url) {
+      renderedMediaUrls.add(origUrl);
+      renderedMediaUrls.add(origUrl.split('?')[0]);
+      renderedMediaUrls.add(getMediaRenderKey(origUrl, type));
+      renderedMediaUrls.add(`video:${origUrl.split('?')[0]}`);
+      renderedMediaUrls.add(`stream:${origUrl.split('?')[0]}`);
+      renderedMediaUrls.add(`audio:${origUrl.split('?')[0]}`);
+      renderedMediaUrls.add(`file:${origUrl.split('?')[0]}`);
     }
   });
   renderedCount = 0;
@@ -2411,11 +3530,19 @@ function renderInitialList() {
         cardEl.addEventListener('click', () => {
           activeGroup = type;
           renderInitialList();
+          updateGlobalProgressVisibility();
         });
         mediaContainer.appendChild(cardEl);
+        syncGroupProgressCard(type);
       }
     });
 
+    if (currentZipProgressState) {
+      const { text, percent, indeterminate, cancelCb, isPaused, pauseCb } = currentZipProgressState;
+      syncZipProgressToGroupCards(text, percent, indeterminate, cancelCb, isPaused, pauseCb, currentZipProgressState?.groupType ?? null, currentZipProgressState?.jobId ?? null);
+    }
+
+    updateGlobalProgressVisibility();
     return;
   }
 
@@ -2494,8 +3621,10 @@ function renderNextChunk() {
   nextChunk.forEach(item => {
     const itemUrl = item.bestRequest.originalUrl;
     const itemUrlBase = getMediaRenderKey(itemUrl, item.type || 'file');
-    if (renderedMediaUrls.has(itemUrlBase)) return;
+    const itemUrlNoQuery = itemUrl ? itemUrl.split('?')[0] : '';
+    if (renderedMediaUrls.has(itemUrlBase) || renderedMediaUrls.has(itemUrl) || (itemUrlNoQuery && renderedMediaUrls.has(itemUrlNoQuery))) return;
     renderedMediaUrls.add(itemUrl);
+    if (itemUrlNoQuery) renderedMediaUrls.add(itemUrlNoQuery);
     renderedMediaUrls.add(itemUrlBase);
 
     const mediaDiv = createMediaItem(item);
@@ -2539,7 +3668,7 @@ function renderNextChunk() {
    endMsg.innerHTML = `
      <div class="end-of-list-title">${titleText}</div>
      <div class="end-of-list-text">${bodyText}</div>
-     <mdui-button variant="tonal" id="add-manual-url-btn-empty" style="margin-top: 12px; --mdui-shape-corner-extra-small: 16px;"><mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></mdui-icon><span data-translate="addManualUrlButton">Add URL</span></mdui-button>
+     ${getEmptyListActionButtonsHTML()}
    `;
    mediaContainer.appendChild(endMsg);
   }
@@ -3448,6 +4577,10 @@ function createMediaItem(item) {
     if (activeAudioUrl) {
       browser.runtime.sendMessage({ action: 'cancelDownload', url: activeAudioUrl, id: dlId });
     }
+    if (mediaDiv.dataset.recoveryJob) {
+      browser.runtime.sendMessage({ action: 'releasePopupRecovery', jobId: mediaDiv.dataset.recoveryJob }).catch(() => {});
+      delete mediaDiv.dataset.recoveryJob;
+    }
     finishDownloadUI(dlId || activeUrl, false);
   });
   dlBtn.style.flex = '1.0';
@@ -3477,11 +4610,11 @@ function createMediaItem(item) {
 
 function updatePausePlayUI(btn, isPaused) {
   if (isPaused) {
-    btn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></mdui-icon>${browser.i18n.getMessage("resumeActiveButton") || "Resume"}`;
+    btn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></mdui-icon>${(browser?.i18n?.getMessage?.("resumeActiveButton") || chrome?.i18n?.getMessage?.("resumeActiveButton")) || "Resume"}`;
     btn.classList.add('is-paused');
     btn.classList.remove('is-playing');
   } else {
-    btn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></mdui-icon>${browser.i18n.getMessage("pauseButton") || "Pause"}`;
+    btn.innerHTML = `<mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></mdui-icon>${(browser?.i18n?.getMessage?.("pauseButton") || chrome?.i18n?.getMessage?.("pauseButton")) || "Pause"}`;
     btn.classList.add('is-playing');
     btn.classList.remove('is-paused');
   }
@@ -3639,20 +4772,43 @@ async function loadMediaListOnce() {
   selectedUrls.clear();
   updateSelectedCount();
 
-  const activeItems = new Map(activeDownloadingElements.map(item => [item.dataset.url, item]));
+  const activeItems = new Map();
+  activeDownloadingElements.forEach(item => {
+    if (item.dataset.url) {
+      activeItems.set(item.dataset.url, item);
+      activeItems.set(item.dataset.url.split('?')[0], item);
+    }
+    if (item.dataset.originalUrl) {
+      activeItems.set(item.dataset.originalUrl, item);
+      activeItems.set(item.dataset.originalUrl.split('?')[0], item);
+    }
+  });
   mediaContainer.querySelectorAll('.media-item').forEach(item => {
-    if (item.querySelector('mdui-linear-progress')) activeItems.set(item.dataset.url, item);
+    if (item.querySelector('mdui-linear-progress')) {
+      if (item.dataset.url) {
+        activeItems.set(item.dataset.url, item);
+        activeItems.set(item.dataset.url.split('?')[0], item);
+      }
+      if (item.dataset.originalUrl) {
+        activeItems.set(item.dataset.originalUrl, item);
+        activeItems.set(item.dataset.originalUrl.split('?')[0], item);
+      }
+    }
   });
 
   mediaContainer.innerHTML = '';
-  activeItems.forEach(item => mediaContainer.appendChild(item));
+  [...new Set(activeItems.values())].forEach(item => mediaContainer.appendChild(item));
 
   try {
     const activeDownloadsPromise = getActiveDownloadSnapshot();
-    const [mediaRequests, settings] = await Promise.all([
+    const [mediaRequests, settings, targetWebTab] = await Promise.all([
       browser.runtime.sendMessage({ action: "getMediaRequests" }),
-      browser.storage.local.get(["filename-template", "only-video", "only-audio", "only-stream", "only-image", "only-subtitle", "only-file", "hide-segments", "hide-page-components", "media-sort-order", "limit-media-list", "limit-media-list-custom", "min-file-size", "min-file-size-custom", "image-min-side", "image-min-side-custom", "image-min-file-size", "image-min-file-size-custom", "hide-image-without-size", "optimize-low-end", "group-by-type", "disable-deduplication"])
+      browser.storage.local.get(["manual-scan", "manual-scan-keep-tabs", "top-header-design", "bottom-bar-design", "filename-template", "only-video", "only-audio", "only-stream", "only-image", "only-subtitle", "only-file", "hide-segments", "hide-page-components", "media-sort-order", "limit-media-list", "limit-media-list-custom", "min-file-size", "min-file-size-custom", "image-min-side", "image-min-side-custom", "image-min-file-size", "image-min-file-size-custom", "hide-image-without-size", "optimize-low-end", "group-by-type", "group-download-progress", "disable-deduplication"]),
+      getTargetMediaTab()
     ]);
+    const currentActiveTabId = targetWebTab?.id;
+    let currentActiveHost = '';
+    try { if (targetWebTab?.url) currentActiveHost = new URL(targetWebTab.url).hostname.toLowerCase().replace(/^www\./, ''); } catch (e) {}
     let activeDownloads = activeDownloadSnapshot || {};
     const quickActiveDownloads = await Promise.race([activeDownloadsPromise, new Promise(resolve => setTimeout(() => resolve(null), 100))]);
     if (quickActiveDownloads) activeDownloads = quickActiveDownloads;
@@ -3662,6 +4818,9 @@ async function loadMediaListOnce() {
 
 
     isGroupingEnabled = settings['group-by-type'] === '1' || settings['group-by-type'] === true;
+    isGroupProgressEnabled = settings['group-download-progress'] === undefined || settings['group-download-progress'] === '1' || settings['group-download-progress'] === true;
+    updateGlobalProgressVisibility();
+    applyManualScanUI(isFlagEnabled(settings['manual-scan'], false), settings['bottom-bar-design'] || 'v3');
 
     const minFileSizeSetting = settings['min-file-size'] || '0';
     const imageMinSideSelection = String(settings['image-min-side'] ?? '0');
@@ -3705,7 +4864,7 @@ async function loadMediaListOnce() {
     let mediaScanIndex = 0;
     for (const rawUrl in mediaRequests) {
       if (++mediaScanIndex % 20 === 0) await new Promise(resolve => requestAnimationFrame(resolve));
-      if (activeItems.has(rawUrl)) continue;
+      if (activeItems.has(rawUrl) || activeItems.has(rawUrl.split('?')[0])) continue;
 
       const requests = mediaRequests[rawUrl];
       if (!Array.isArray(requests) || requests.length === 0) continue;
@@ -3715,6 +4874,58 @@ async function loadMediaListOnce() {
 
       let type = getMediaType(rawUrl, lastResponseHeaders);
       const isManualItem = requests.some(r => r.isManual);
+      const isManualScanMode = isFlagEnabled(settings['manual-scan'], false);
+      const keepOtherTabs = isFlagEnabled(settings['manual-scan-keep-tabs'], false);
+
+      if (!isManualItem) {
+        const matchesCurrentActiveScope = requests.some(r => {
+          if (!r) return false;
+
+          let matchesHost = false;
+          let hasHostCandidate = false;
+          if (currentActiveHost) {
+            const cands = [r.pageUrl];
+            if (Array.isArray(r.requestHeaders)) {
+              for (const h of r.requestHeaders) {
+                const n = h?.name?.toLowerCase();
+                if ((n === 'referer' || n === 'origin') && h.value) cands.push(h.value);
+              }
+            }
+            for (const c of cands) {
+              if (!c) continue;
+              try {
+                const h = new URL(c).hostname.toLowerCase().replace(/^www\./, '');
+                if (h) {
+                  hasHostCandidate = true;
+                  if (h === currentActiveHost || h.endsWith('.' + currentActiveHost) || currentActiveHost.endsWith('.' + h)) {
+                    matchesHost = true;
+                    break;
+                  }
+                }
+              } catch (e) {}
+            }
+          }
+
+          const matchesTabId = currentActiveTabId != null && r.tabId === currentActiveTabId;
+
+          if (hasHostCandidate) {
+            if (!matchesHost) return false;
+            return matchesTabId || !currentActiveTabId;
+          }
+
+          if (matchesTabId) return true;
+          if ((r.tabId == null || r.tabId < 0) && !r.pageUrl) return true;
+          return currentActiveTabId == null && !currentActiveHost;
+        });
+
+        if (isManualScanMode) {
+          const hasManualScan = requests.some(r => r && r.manualScanned);
+          if (!hasManualScan) continue;
+          if (!keepOtherTabs && !matchesCurrentActiveScope) continue;
+        } else if (!keepOtherTabs) {
+          if (!matchesCurrentActiveScope) continue;
+        }
+      }
       if (!type && isManualItem) {
           type = 'file';
       }
@@ -3954,19 +5165,32 @@ async function loadMediaListOnce() {
 
     if (loadingSpinner) loadingSpinner.style.display = 'none';
 
-    activeDownloadingElements = [...activeItems.values()];
-    const requestUrls = new Set(allFilteredRequests.map(item =>
-      getMediaRenderKey(item.bestRequest.originalUrl, item.type || 'file')));
+    activeDownloadingElements = [...new Set(activeItems.values())];
+    const requestUrls = new Set();
+    allFilteredRequests.forEach(item => {
+      const u = item.bestRequest?.originalUrl || item.bestRequest?.url || '';
+      if (!u) return;
+      requestUrls.add(u);
+      requestUrls.add(u.split('?')[0]);
+      requestUrls.add(getMediaRenderKey(u, item.type || 'file'));
+      requestUrls.add(`video:${u.split('?')[0]}`);
+      requestUrls.add(`stream:${u.split('?')[0]}`);
+      requestUrls.add(`audio:${u.split('?')[0]}`);
+      requestUrls.add(`file:${u.split('?')[0]}`);
+    });
     const downloadModels = [];
     let activeCount = 0;
     for (const [id, downloadData] of Object.entries(activeDownloads || {})) {
       if (downloadData.isZip) continue;
       activeCount++;
       const url = downloadData.url || '';
+      const urlNoQuery = url ? url.split('?')[0] : '';
       const type = downloadData.mediaType || 'file';
       const renderKey = getMediaRenderKey(url, type);
-      if (requestUrls.has(renderKey) || activeItems.has(url)) continue;
+      if (requestUrls.has(renderKey) || requestUrls.has(url) || (urlNoQuery && requestUrls.has(urlNoQuery)) || activeItems.has(url) || (urlNoQuery && activeItems.has(urlNoQuery))) continue;
       requestUrls.add(renderKey);
+      if (url) requestUrls.add(url);
+      if (urlNoQuery) requestUrls.add(urlNoQuery);
       downloadModels.push({
         downloadId: id,
         bestRequest: { originalUrl: url, size: downloadData.total,
@@ -4392,7 +5616,7 @@ async function loadAboutPage() {
     let reinstallCardHtml = '';
     if (requireUninstall && !hasDismissedWarning) {
       reinstallCardHtml = `
-        <div style="display: flex; flex-direction: column; gap: 8px; padding: 18px 16px 12px; background: rgba(var(--mdui-color-error), 0.05); border-radius: var(--app-border-radius); border: 1px solid rgba(var(--mdui-color-error), 0.15); margin-top: 4px;">
+        <div style="display: flex; flex-direction: column; gap: 8px; padding: 18px 16px 12px; background: transparent; border-radius: var(--app-border-radius); border: 1px solid rgba(var(--mdui-color-error), 0.35); margin-top: 4px;">
           <div style="font-size: 0.85rem; font-weight: 700; color: rgb(var(--mdui-color-error)); display: flex; align-items: center; gap: 6px;">
             <mdui-icon style="font-size: 16px;"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></mdui-icon>
             ${browser.i18n.getMessage("reinstallTitle") || "Reinstallation Recommended"}
@@ -4415,27 +5639,41 @@ async function loadAboutPage() {
       `;
     }
 
-    let trustedSourcesHtml = '';
-    if (isFirefox) {
-      trustedSourcesHtml = `
-        <div style="display: flex; gap: 8px;">
-          <a href="https://github.com/anpa26/website-media-downloader/releases" target="_blank" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; color: var(--primary); font-size: 0.75rem; font-weight: 600; padding: 8px 12px; background: rgba(var(--mdui-color-primary), 0.08); border: 1px solid rgba(var(--mdui-color-primary), 0.15); border-radius: 12px; transition: background 0.2s;">
-            <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: currentColor; flex-shrink: 0;"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
-            GitHub Release
-          </a>
-          <a href="https://addons.mozilla.org/en-US/firefox/addon/website-media-downloader/" target="_blank" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; color: var(--primary); font-size: 0.75rem; font-weight: 600; padding: 8px 12px; background: rgba(var(--mdui-color-primary), 0.08); border: 1px solid rgba(var(--mdui-color-primary), 0.15); border-radius: 12px; transition: background 0.2s;">
-            <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: #FF7139; flex-shrink: 0;"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 7.312c.459.63.784 1.353.957 2.118-.495-.302-1.177-.46-1.957-.46-.948 0-1.74.268-2.269.705.025-.21.038-.426.038-.645 0-1.696-.647-3.24-1.698-4.401.977.175 1.889.578 2.646 1.165.108.08.214.163.317.249.001.001.002.001.003.002.013.012.026.022.039.033.08.072.158.146.234.222a6.01 6.01 0 0 1 1.69 1.012zm-9.905 2.118c.173-.765.498-1.488.957-2.118a6.01 6.01 0 0 1 1.69-1.012c.076-.076.154-.15.234-.222.013-.011.026-.021.039-.033.001-.001.002-.001.003-.002.103-.086.209-.169.317-.249a5.974 5.974 0 0 1 2.646-1.165C12.493 5.91 11.846 7.454 11.846 9.15c0 .219.013.435.038.645-.529-.437-1.321-.705-2.269-.705-.78 0-1.462.158-1.957.46zm4.343 9.327a3.966 3.966 0 0 1-3.963-3.963c0-2.188 1.776-3.963 3.963-3.963s3.963 1.775 3.963 3.963a3.967 3.967 0 0 1-3.963 3.963z"/></svg>
-            Firefox Add-on
-          </a>
-        </div>
-      `;
-    } else {
-      trustedSourcesHtml = `
-        <div style="display: flex; gap: 8px;">
-          <a href="https://github.com/anpa26/website-media-downloader/releases" target="_blank" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; color: var(--primary); font-size: 0.75rem; font-weight: 600; padding: 8px 12px; background: rgba(var(--mdui-color-primary), 0.08); border: 1px solid rgba(var(--mdui-color-primary), 0.15); border-radius: 12px; transition: background 0.2s;">
-            <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: currentColor; flex-shrink: 0;"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
-            GitHub Release
-          </a>
+    let updateCardHtml = '';
+    if (window._wmd_latest_update && window._wmd_latest_update.updateAvailable) {
+      const uInfo = window._wmd_latest_update;
+      const isFx = false;
+      const title = browser.i18n.getMessage("updateCardTitle") || "Update Available";
+      const isSelfHosted = !!manifest.browser_specific_settings?.gecko?.update_url;
+      const githubAhead = !isSelfHosted && !!uInfo.updateUrl && uInfo.updateUrl.includes('github.com')
+        && !!uInfo.amoVersion && compareVersions(uInfo.latestVersion, uInfo.amoVersion) > 0;
+      const desc = githubAhead
+        ? (browser.i18n.getMessage("updateCardGithubAheadDesc", [uInfo.latestVersion, uInfo.amoVersion]) || (`Version ${uInfo.latestVersion} is available on GitHub, while AMO still has v${uInfo.amoVersion}. Download it now from GitHub, or wait for AMO. Once AMO is updated, it will install automatically if automatic updates are enabled. Installing from GitHub switches future updates to the GitHub release channel.`))
+        : (isFx
+          ? (browser.i18n.getMessage("updateCardFirefoxDesc", [uInfo.latestVersion]) || (`Version ${uInfo.latestVersion} has been detected. The extension will automatically update in the background within a maximum of 24 hours.`))
+          : (browser.i18n.getMessage("updateCardChromeDesc", [uInfo.latestVersion]) || (`Version ${uInfo.latestVersion} has been detected. Click the button below to update to the latest version.`)));
+      const btnText = githubAhead
+        ? (browser.i18n.getMessage("updateCardGithubButton") || "Download on GitHub")
+        : (browser.i18n.getMessage("updateCardButton") || "Update Now");
+      const actionHtml = githubAhead ? `<div style="display: flex; justify-content: flex-end; margin-top: 8px;"><a href="${uInfo.updateUrl || "https://github.com/anpa26/website-media-downloader/releases"}" target="_blank" style="text-decoration: none;"><mdui-button style="--mdui-shape-corner-extra-small: 16px; height: 32px; font-size: 12px; background: var(--primary); color: var(--surface-low);"><mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></mdui-icon>${btnText}</mdui-button></a></div>` : (isFx ? "" : `<div style="display: flex; justify-content: flex-end; margin-top: 8px;"><a href="${uInfo.updateUrl || "https://github.com/anpa26/website-media-downloader/releases"}" target="_blank" style="text-decoration: none;"><mdui-button style="--mdui-shape-corner-extra-small: 16px; height: 32px; font-size: 12px; background: var(--primary); color: var(--surface-low);"><mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></mdui-icon>${btnText}</mdui-button></a></div>`);
+
+      updateCardHtml = `
+        <div id="about-update-card" style="display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; background: transparent; border-radius: var(--app-border-radius); border: 1px solid rgba(var(--mdui-color-primary), 0.35);">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="font-size: 0.85rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px;">
+              <mdui-icon style="font-size: 18px;"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></mdui-icon>
+              ${title} (v${uInfo.latestVersion})
+            </div>
+            <mdui-button-icon id="update-card-help-btn" style="width: 28px; height: 28px; min-width: 28px; color: var(--primary);" title="Changelog & Details">
+              <mdui-icon style="font-size: 20px;">
+                <svg viewBox="0 -960 960 960"><path fill="currentColor" d="M480-280q17 0 28.5-11.5T520-320q0-17-11.5-28.5T480-360q-17 0-28.5 11.5T440-320q0 17 11.5 28.5T480-280Zm-40-160h80q0-32 6.5-52.5T560-542q30-26 45-50.5t15-57.5q0-58-41-94t-101-36q-59 0-98.5 34.5T329-647l68 31q13-31 36.5-47.5T481-680q26 0 42.5 15.5T540-628q0 20-11.5 37.5T500-562q-40 33-50 56.5t-10 65.5Zm40 360q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>
+              </mdui-icon>
+            </mdui-button-icon>
+          </div>
+          <p style="font-size: 0.78rem; line-height: 1.5; margin: 2px 0 0; color: var(--on-surface-variant);">
+            ${desc}
+          </p>
+          ${actionHtml}
         </div>
       `;
     }
@@ -4443,8 +5681,8 @@ async function loadAboutPage() {
     let html = `
       <div class="about-content" style="padding: 16px; display: flex; flex-direction: column; gap: 24px;">
         <div style="text-align: center; padding: 24px 16px; background: var(--surface-low); border-radius: var(--app-border-radius); border: 1px solid rgb(var(--mdui-color-outline-variant));">
-          <div style="width: 48px; height: 48px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
-            <img src="${browser.runtime.getURL('icons/icon.png')}" style="width: 48px; height: 48px; object-fit: contain;">
+          <div style="width: 72px; height: 72px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
+            <img src="${browser.runtime.getURL('icons/icon.png')}" style="width: 72px; height: 72px; object-fit: contain;">
           </div>
           <h1 style="margin: 0; font-size: 1.4rem; font-weight: 700; color: rgb(var(--mdui-color-on-surface));">${data.extension.name}</h1>
           <p style="font-size: 0.9rem; line-height: 1.6; margin: 16px 0 0; color: var(--on-surface-variant);">${browser.i18n.getMessage("extensionDescriptionAbout") || data.extension.description}</p>
@@ -4453,7 +5691,7 @@ async function loadAboutPage() {
         <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; background: var(--surface-low); border-radius: var(--app-border-radius); border: 1px solid rgb(var(--mdui-color-outline-variant));">
           <div style="display: flex; align-items: center; justify-content: space-between;">
             <div style="font-size: 0.85rem; font-weight: 600; color: var(--on-surface-variant); padding-left: 4px; display: flex; flex-direction: column; gap: 3px;">
-              <span>${browser.i18n.getMessage("installedVersion") || "Version"} ${manifest.version}</span>
+              <span>${browser.i18n.getMessage("installedVersion") || "Version"} ${data.extension?.version || manifest.version}</span>
               <span style="font-size: 0.75rem; font-weight: 500; opacity: 0.8;">${browser.i18n.getMessage('installedType') || 'Installed Type'}: ${installedType}</span>
             </div>
             <mdui-button id="manual-check-update" style="--mdui-shape-corner-extra-small: 16px; height: 32px; font-size: 12px; background: linear-gradient(135deg, rgba(var(--mdui-color-primary), 0.15), rgba(var(--mdui-color-on-surface), 0.08)); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1), inset -2px -2px 4px rgba(255, 255, 255, 0.05); border: 1px solid rgba(var(--mdui-color-primary), 0.15); color: var(--primary);">
@@ -4464,15 +5702,9 @@ async function loadAboutPage() {
           <div id="update-status-text" style="font-size: 0.75rem; font-weight: 500; text-align: center; display: none; color: var(--on-surface-variant); border-top: 1px solid rgba(var(--mdui-color-outline-variant), 0.5); margin-top: 4px; padding-top: 8px;"></div>
         </div>
         ${reinstallCardHtml}
+        ${updateCardHtml}
 
-        <div style="padding: 12px 16px; background: var(--surface-low); border-radius: var(--app-border-radius); border: 1px solid rgb(var(--mdui-color-outline-variant));">
-          <div style="font-size: 0.75rem; font-weight: 700; text-transform: none; letter-spacing: 0.02em; color: var(--on-surface-variant); margin-bottom: 8px;">${browser.i18n.getMessage('trustedUpdateSourcesTitle') || 'Trusted Update Sources'}</div>
-          ${trustedSourcesHtml}
-          <a href="https://wmd.devianproject.tech/download" target="_blank" style="margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; color: var(--primary); font-size: 0.75rem; font-weight: 600; padding: 8px 12px; background: rgba(var(--mdui-color-primary), 0.08); border: 1px solid rgba(var(--mdui-color-primary), 0.15); border-radius: 12px; transition: background 0.2s;">
-            <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: currentColor; flex-shrink: 0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-            WMD Official Web
-          </a>
-        </div>
+        
       `;
 
     html += `
@@ -4586,6 +5818,16 @@ async function loadAboutPage() {
 
     container.innerHTML = html;
 
+    const updateCardHelpBtn = document.getElementById('update-card-help-btn');
+    if (updateCardHelpBtn) {
+      updateCardHelpBtn.addEventListener('click', () => {
+        const helpBtn = document.getElementById('help-button');
+        if (helpBtn) {
+          helpBtn.click();
+        }
+      });
+    }
+
     const confirmReinstallBtn = document.getElementById('about-confirm-reinstalled');
     if (confirmReinstallBtn) {
       confirmReinstallBtn.addEventListener('click', async () => {
@@ -4618,7 +5860,11 @@ async function loadAboutPage() {
           try {
             const result = await browser.runtime.requestUpdateCheck();
             if (result && result.status === 'update_available') {
-              showUpdateDialog('https://addons.mozilla.org/en-US/firefox/addon/website-media-downloader', result.version || 'new');
+              window._wmd_latest_update = {
+                updateAvailable: true,
+                latestVersion: result.version || 'new',
+                updateUrl: 'https://addons.mozilla.org/en-US/firefox/addon/website-media-downloader'
+              };
               nativeUpdateFound = true;
             }
           } catch (err) {
@@ -4629,13 +5875,20 @@ async function loadAboutPage() {
         if (nativeUpdateFound) {
           checkBtn.loading = false;
           checkBtn.disabled = false;
+          loadAboutPage();
           return;
         }
 
         try {
           const result = await performUpdateCheck();
           if (result.updateAvailable) {
-            showUpdateDialog(result.updateUrl, result.latestVersion);
+            window._wmd_latest_update = {
+              updateAvailable: true,
+              latestVersion: result.latestVersion,
+              updateUrl: result.updateUrl,
+              amoVersion: result.amoVersion || null,
+            };
+            loadAboutPage();
           } else {
             if (statusText) {
               statusText.textContent = browser.i18n.getMessage("alreadyLatestVersion") || "You are using the latest version.";
@@ -4697,7 +5950,11 @@ async function downloadAllAsZip(items) {
 
   try {
     await ensureScriptLoaded('libraries/client-zip.js', 'downloadZip');
-    progressContainer.style.display = 'flex';
+    if (!(isGroupingEnabled && isGroupProgressEnabled && activeGroup === null)) {
+      progressContainer.style.display = 'flex';
+    } else {
+      progressContainer.style.display = 'none';
+    }
     progressBar.value = 0;
     progressText.textContent = browser.i18n.getMessage("zipPreparing", [items.length]);
 
@@ -4729,8 +5986,15 @@ async function downloadAllAsZip(items) {
         counter++;
       }
 
-      downloadItems.push({ url, filename, request: targetRequest });
+      downloadItems.push({
+        url, filename, request: targetRequest,
+        groupType: item instanceof HTMLElement ? (item.dataset.type || null) : (item?.type || null)
+      });
     }
+
+    const zipGroupTypes = [...new Set(downloadItems.map(item => item.groupType).filter(Boolean))];
+    const zipGroupType = activeGroup || (zipGroupTypes.length === 1 ? zipGroupTypes[0] : 'file');
+    const zipJobId = `local_zip_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
     // Keep the work in this UI when background downloading is disabled.
     if (!backgroundDownloadEnabled || !browser.tabs?.create) {
@@ -4739,20 +6003,50 @@ async function downloadAllAsZip(items) {
         let skipAllErrors = false;
         progressBar.max = downloadItems.length;
 
+        let isLocalZipPaused = false;
+        const waitIfLocalZipPaused = async () => {
+          while (isLocalZipPaused) {
+            if (window.activeCancellations && window.activeCancellations.has('global_zip')) {
+              throw new Error("Cancelled");
+            }
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+        };
+
         const zipEntriesGenerator = async function* () {
           for (let i = 0; i < downloadItems.length; i++) {
+            await waitIfLocalZipPaused();
             const item = downloadItems[i];
 
             if (window.activeCancellations && window.activeCancellations.has('global_zip')) {
               throw new Error("Cancelled");
             }
 
-            progressText.textContent = browser.i18n.getMessage("zipDownloading", [i + 1, downloadItems.length, item.filename]);
+            const currentZipText = `${isLocalZipPaused ? `[${(browser?.i18n?.getMessage?.("pausedStatus") || chrome?.i18n?.getMessage?.("pausedStatus")) || "Paused"}] ` : ""}${browser.i18n.getMessage("zipDownloading", [i + 1, downloadItems.length, item.filename])}`;
+            progressText.textContent = currentZipText;
             progressBar.value = i;
+
+            const localZipPct = (i / downloadItems.length) * 100;
+            const updateLocalZipUI = () => {
+              const txt = `${isLocalZipPaused ? `[${(browser?.i18n?.getMessage?.("pausedStatus") || chrome?.i18n?.getMessage?.("pausedStatus")) || "Paused"}] ` : ""}${browser.i18n.getMessage("zipDownloading", [String(i + 1), String(downloadItems.length), item.filename])}`;
+              progressText.textContent = txt;
+              syncZipProgressToGroupCards(
+                `📦 ZIP • ${txt}`,
+                localZipPct, false,
+                () => { if (window.activeCancellations) window.activeCancellations.add('global_zip'); clearZipProgressFromGroupCards(); },
+                isLocalZipPaused,
+                () => { isLocalZipPaused = !isLocalZipPaused; updateLocalZipUI(); },
+                zipGroupType, zipJobId
+              );
+            };
+            updateLocalZipUI();
 
             try {
               const response = await spoofedFetch(item.url, item.request);
-              if (!response.ok) throw new Error(`Server returned ${response.status}`);
+              if (!response.ok) {
+                if (await shouldSkipHttpError(response.status)) continue;
+                throw new Error(`Server returned ${response.status}`);
+              }
 
               const blob = await response.blob();
               yield { name: item.filename, input: blob };
@@ -4778,6 +6072,7 @@ async function downloadAllAsZip(items) {
 
         progressText.textContent = browser.i18n.getMessage("zipGenerating") || "Generating ZIP archive...";
         progressBar.indeterminate = true;
+        syncZipProgressToGroupCards(`📦 ZIP • ${browser.i18n.getMessage("zipGenerating") || "Generating ZIP archive..."}`, 95, false, null, false, null, zipGroupType, zipJobId);
 
         const zipBlob = await downloadZip(zipEntriesGenerator()).blob();
         const zipName = `downloads_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`;
@@ -4785,7 +6080,7 @@ async function downloadAllAsZip(items) {
         if (typeof finalizeDownload === 'function') {
             const downloadMethod = await browser.storage.local.get('download-method').then(res => res['download-method'] || 'browser');
             await finalizeDownload(zipBlob, zipName, downloadMethod, progressBar, false, false);
-            setTimeout(() => { progressContainer.style.display = 'none'; }, 2000);
+            progressContainer.style.display = 'none'; clearZipProgressFromGroupCards();
         } else {
             const blobUrl = URL.createObjectURL(zipBlob);
             const a = document.createElement("a");
@@ -4798,25 +6093,31 @@ async function downloadAllAsZip(items) {
               document.body.removeChild(a);
               URL.revokeObjectURL(blobUrl);
               progressContainer.style.display = 'none';
+              clearZipProgressFromGroupCards();
             }, 2000);
         }
 
         if (typeof mdui !== 'undefined' && mdui.snackbar) {
           mdui.snackbar({ message: browser.i18n.getMessage("zipComplete") || "ZIP download complete!", placement: "top" });
         }
+        syncZipProgressToGroupCards(`📦 ZIP • ${browser.i18n.getMessage("zipComplete") || "ZIP download complete!"}`, 100, false, null, false, null, zipGroupType, zipJobId);
 
       } catch (e) {
         if (e.message !== "Cancelled") {
           console.error("Local ZIP error:", e);
           showDialog(browser.i18n.getMessage("zipError", [e.message]));
+          syncZipProgressToGroupCards(`📦 ZIP Error: ${e.message}`, 0, false, null, false, null, zipGroupType, zipJobId);
+          setTimeout(() => clearZipProgressFromGroupCards(), 5000);
         }
         progressContainer.style.display = 'none';
+        clearZipProgressFromGroupCards();
       }
     } else {
 
       browser.runtime.sendMessage({
         action: 'startPersistentZipJob',
-        items: downloadItems
+        items: downloadItems,
+        groupType: zipGroupType
       });
 
       if (typeof mdui !== 'undefined' && mdui.snackbar) {
@@ -5013,14 +6314,12 @@ async function downloadAudioOnly(url, mediaDiv, specificSize) {
     
 
     if (mediaDiv) {
+      mediaDiv.dataset.downloadMode = 'audio';
       const audioBtn = mediaDiv.querySelector('#audio-only-button');
       const dlBtn = mediaDiv.querySelector('#download-button');
       const cancelBtn = mediaDiv.querySelector('#cancel-button');
       if (audioBtn) audioBtn.style.display = 'none';
-      if (dlBtn) {
-        dlBtn.disabled = true;
-        dlBtn.style.borderRadius = '';
-      }
+      if (dlBtn) { updatePausePlayUI(dlBtn, false); dlBtn.style.borderRadius = ""; }
       if (cancelBtn) cancelBtn.style.display = 'inline-flex';
     }
 
@@ -5126,7 +6425,10 @@ try {
               blob = new Blob([uint8Array.buffer]);
           } else {
               const response = await spoofedFetch(url);
-              if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+              if (!response.ok) {
+                if (await shouldSkipHttpError(response.status)) { handleSkippedHttpError(url, response.status); return; }
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
 
               const contentLength = +(response.headers.get('Content-Length') || 0);
               const reader = response.body.getReader();
@@ -5137,6 +6439,7 @@ try {
               if (contentLength > 0) loadingBar.max = contentLength;
 
               while(true) {
+                while (window.activePauses && (window.activePauses.has(url) || (mediaDiv?.dataset?.downloadId && window.activePauses.has(mediaDiv.dataset.downloadId)))) { await new Promise(r => setTimeout(r, 200)); }
                 if (window.activeCancellations.has(url)) {
                   reader.cancel();
                   throw new Error("Cancelled");
@@ -5213,6 +6516,7 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
      const audioBtn = mediaDiv.querySelector('#audio-only-button');
      if (audioBtn) audioBtn.style.display = 'none';
      mediaDiv.dataset.downloadId = downloadId;
+     mediaDiv.dataset.downloadMode = mediaDiv.dataset.type || (audioUrl ? 'video' : 'file');
    }
 
    const defaultName = mediaFilename.resolve(url, targetRequest);
@@ -5276,13 +6580,14 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
       uiCache.set(downloadId, { element: mediaDiv, loadingBar, statusInfo, progressContainer });
     }
 
-    const dlSettings = await browser.storage.local.get(['download-method', 'stream-download', 'background-download']);
+    const dlSettings = await browser.storage.local.get(['download-method', 'stream-download', 'background-download', 'skip-http-errors']);
     let downloadMethod = dlSettings['download-method'] || 'browser';
     if (url.includes('#audio.m4a') || url.includes('#audio.webm')) {
         downloadMethod = 'fetch';
     }
     let streamPref = dlSettings['stream-download'] || 'offline';
     const bgDownloadEnabled = dlSettings['background-download'] !== '0';
+    const skipHttpErrorsOn = dlSettings['skip-http-errors'] === '1';
 
     try {
         if (!bgDownloadEnabled) throw new Error('Background download disabled');
@@ -5436,7 +6741,7 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
       });
       if (!streamJob?.success) throw new Error(streamJob?.error || 'Unable to start stream download');
       return;
-    } else if (bgDownloadEnabled && downloadMethod === 'browser' && !cloudEnabled) {
+    } else if (bgDownloadEnabled && downloadMethod === 'browser' && !cloudEnabled && !skipHttpErrorsOn) {
 
       let downloadUrl = url;
       try {
@@ -5497,7 +6802,10 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
 
           const response = await spoofedFetch(url);
 
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          if (!response.ok) {
+            if (await shouldSkipHttpError(response.status)) { handleSkippedHttpError(url, response.status); return; }
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
 
           const contentLength = +(response.headers.get('Content-Length') || 0);
 
@@ -5509,6 +6817,7 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
           if (contentLength > 0) loadingBar.max = contentLength;
 
           while(true) {
+            while (window.activePauses && (window.activePauses.has(url) || (mediaDiv?.dataset?.downloadId && window.activePauses.has(mediaDiv.dataset.downloadId)))) { await new Promise(r => setTimeout(r, 200)); }
             if (window.activeCancellations.has(url)) {
               reader.cancel();
               throw new Error("Cancelled");
@@ -5553,9 +6862,7 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
             }
           }
 
-          setTimeout(() => {
-            finishDownloadUI(downloadId, true);
-          }, 2000);
+          finishDownloadUI(downloadId, true);
         } catch (e) {
           console.error("Popup fetch error:", e);
           if (showNotif && notifId) {

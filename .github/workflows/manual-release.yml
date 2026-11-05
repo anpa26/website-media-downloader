@@ -69,6 +69,22 @@ jobs:
           
           echo "release_name=$FINAL_NAME" >> $GITHUB_OUTPUT
           
+          INPUT_TAG="${{ github.event.inputs.tag_name }}"
+          SIGN_CHOICE="${{ github.event.inputs.sign_firefox }}"
+          TARGET_BROWSER="${{ github.event.inputs.target_browser }}"
+          
+          if [ "$SIGN_CHOICE" = "sign with AMO" ] && [ "$TARGET_BROWSER" != "chrome only" ]; then
+            if [[ "$INPUT_TAG" != *-signed ]]; then
+              RELEASE_TAG="${INPUT_TAG}-signed"
+            else
+              RELEASE_TAG="$INPUT_TAG"
+            fi
+          else
+            RELEASE_TAG="$INPUT_TAG"
+          fi
+          
+          echo "release_tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
+          
           if [ -z "$BODY" ]; then
             echo "body=$TITLE" >> $GITHUB_OUTPUT
           else
@@ -92,7 +108,9 @@ jobs:
             node src/build.js chrome-yt-light-debug
           elif [ "${{ github.event.inputs.target_browser }}" = "firefox only" ]; then
             node src/build.js firefox
+            node src/build.js firefox-amo
             node src/build.js firefox-light
+            node src/build.js firefox-light-amo
             node src/build.js firefox-debug
             node src/build.js firefox-light-debug
           fi
@@ -199,6 +217,14 @@ jobs:
             zip -9 -r ../../website-media-downloader-firefox-${{ github.event.inputs.tag_name }}.xpi ./*
             cd ../..
 
+            cd build/firefox-amo
+            zip -9 -r ../../website-media-downloader-firefox-amo-${{ github.event.inputs.tag_name }}.xpi ./*
+            cd ../..
+
+            cd build/firefox-light-amo
+            zip -9 -r ../../website-media-downloader-firefox-light-amo-${{ github.event.inputs.tag_name }}.xpi ./*
+            cd ../..
+
             cd build/firefox-light
             zip -9 -r ../../website-media-downloader-firefox-light-${{ github.event.inputs.tag_name }}.xpi ./*
             cd ../..
@@ -228,6 +254,24 @@ jobs:
             zip -9 -r ../website-media-downloader-firefox-light-source-${{ github.event.inputs.tag_name }}.zip ./*
             cd ..
             rm -rf firefox-light-source-temp
+
+            mkdir -p firefox-amo-source-temp/src
+            cp -r build/firefox-amo/* firefox-amo-source-temp/src/
+            cp README.md LICENSE.md CONTRIBUTING.md firefox-amo-source-temp/
+            cp -r licenses firefox-amo-source-temp/
+            cd firefox-amo-source-temp
+            zip -9 -r ../website-media-downloader-firefox-amo-source-${{ github.event.inputs.tag_name }}.zip ./*
+            cd ..
+            rm -rf firefox-amo-source-temp
+
+            mkdir -p firefox-light-amo-source-temp/src
+            cp -r build/firefox-light-amo/* firefox-light-amo-source-temp/src/
+            cp README.md LICENSE.md CONTRIBUTING.md firefox-light-amo-source-temp/
+            cp -r licenses firefox-light-amo-source-temp/
+            cd firefox-light-amo-source-temp
+            zip -9 -r ../website-media-downloader-firefox-light-amo-source-${{ github.event.inputs.tag_name }}.zip ./*
+            cd ..
+            rm -rf firefox-light-amo-source-temp
           fi
 
       - name: Sign Firefox Extension with AMO
@@ -245,14 +289,20 @@ jobs:
             SOURCE_DIR="$1"
             ARTIFACT_DIR="$2"
             OUTPUT_FILE="$3"
+            SOURCE_ZIP="$4"
 
             mkdir -p "$ARTIFACT_DIR"
+            UPLOAD_SOURCE_FLAG=""
+            if [ -n "$SOURCE_ZIP" ] && [ -f "$SOURCE_ZIP" ]; then
+              UPLOAD_SOURCE_FLAG="--upload-source-code $SOURCE_ZIP"
+            fi
             npx --yes web-ext sign \
               --source-dir "$SOURCE_DIR" \
               --artifacts-dir "$ARTIFACT_DIR" \
               --channel unlisted \
               --api-key "$WEB_EXT_API_KEY" \
-              --api-secret "$WEB_EXT_API_SECRET"
+              --api-secret "$WEB_EXT_API_SECRET" \
+              $UPLOAD_SOURCE_FLAG
 
             SIGNED_XPI=$(find "$ARTIFACT_DIR" -maxdepth 1 -type f -name '*.xpi' -print -quit)
             if [ -z "$SIGNED_XPI" ]; then
@@ -262,15 +312,20 @@ jobs:
             cp "$SIGNED_XPI" "$OUTPUT_FILE"
           }
 
-          sign_firefox_build build/firefox signed-artifacts/firefox "website-media-downloader-firefox-${{ github.event.inputs.tag_name }}.xpi"
-          sign_firefox_build build/firefox-light signed-artifacts/firefox-light "website-media-downloader-firefox-light-${{ github.event.inputs.tag_name }}.xpi"
+          TAG="${{ github.event.inputs.tag_name }}"
+          sign_firefox_build build/firefox signed-artifacts/firefox "website-media-downloader-firefox-$TAG.xpi" "website-media-downloader-firefox-source-$TAG.zip"
+          sign_firefox_build build/firefox-light signed-artifacts/firefox-light "website-media-downloader-firefox-light-$TAG.xpi" "website-media-downloader-firefox-light-source-$TAG.zip"
+          sign_firefox_build build/firefox-debug signed-artifacts/firefox-debug "website-media-downloader-firefox-debug-$TAG.xpi"
+          sign_firefox_build build/firefox-light-debug signed-artifacts/firefox-light-debug "website-media-downloader-firefox-light-debug-$TAG.xpi"
 
       - name: Verify Firefox Artifacts
         if: ${{ github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only' }}
         run: |
           for XPI in \
             "website-media-downloader-firefox-${{ github.event.inputs.tag_name }}.xpi" \
-            "website-media-downloader-firefox-light-${{ github.event.inputs.tag_name }}.xpi"; do
+            "website-media-downloader-firefox-light-${{ github.event.inputs.tag_name }}.xpi" \
+            "website-media-downloader-firefox-debug-${{ github.event.inputs.tag_name }}.xpi" \
+            "website-media-downloader-firefox-light-debug-${{ github.event.inputs.tag_name }}.xpi"; do
             test -s "$XPI"
             unzip -t "$XPI"
             if [ "${{ inputs.sign_firefox }}" = "sign with AMO" ]; then
@@ -278,10 +333,22 @@ jobs:
             fi
           done
 
+      - name: Upload AMO Listed XPIs as Workflow Artifact
+        if: ${{ github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: firefox-amo-xpis-${{ github.event.inputs.tag_name }}
+          path: |
+            website-media-downloader-firefox-amo-${{ github.event.inputs.tag_name }}.xpi
+            website-media-downloader-firefox-light-amo-${{ github.event.inputs.tag_name }}.xpi
+            website-media-downloader-firefox-amo-source-${{ github.event.inputs.tag_name }}.zip
+            website-media-downloader-firefox-light-amo-source-${{ github.event.inputs.tag_name }}.zip
+          if-no-files-found: error
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.event.inputs.tag_name }}
+          tag_name: ${{ steps.commit_info.outputs.release_tag }}
           name: ${{ steps.commit_info.outputs.release_name }}
           body: ${{ steps.commit_info.outputs.body }}
           prerelease: ${{ github.event.inputs.prerelease == 'true' }}

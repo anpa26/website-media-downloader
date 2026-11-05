@@ -1038,6 +1038,10 @@
     "message": "Отменить все",
     "description": "The label of the button to cancel all active downloads."
   },
+  "confirmCancelButton": {
+    "message": "Отмена",
+    "description": "The label of the cancel button in the ZIP download error dialog."
+  },
   "zipPreparing": {
     "message": "Подготовка файлов ($COUNT$)...",
     "description": "The message when starting to prepare files for a ZIP archive.",
@@ -1191,6 +1195,10 @@
   "continueAllButton": {
     "message": "Продолжить все",
     "description": "The label of the button to continue all paused downloads."
+  },
+  "continueButton": {
+    "message": "Продолжить",
+    "description": "The label of the button to continue with the next file after skipping one failed download."
   },
   "decodingAudio": {
     "message": "Декодирование аудио... Пожалуйста, подождите (это может быть медленно для больших файлов).",
@@ -1460,7 +1468,7 @@
     "description": "Updated/Added during UI string localization audit."
   },
   "extensionDescriptionAbout": {
-    "message": "Ваш незаменимый инструмент для скачивания медиа. Легко обнаруживает видео, музыку и прямые трансляции во время просмотра страниц. Поддерживает фоновые загрузки и автоматическую конвертацию потоков HLS/DASH для сохранения контента прямо на ваше устройство.",
+    "message": "С легкостью находите и скачивайте видео, аудио, изображения и прямые трансляции (HLS/DASH) в интернете. Интеллектуальное сканирование вкладок, автоматическая конвертация потоков, фоновые загрузки и интерактивное управление загрузками прямо на вашем устройстве.",
     "description": "Updated/Added during UI string localization audit."
   },
   "confirmTitle": {
@@ -1784,6 +1792,16 @@
   "updateDialogMessage": {
     "message": "Версия $VERSION$ доступна. Хотите обновить сейчас?",
     "description": "Message shown in the update dialog.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "1.7.9"
+      }
+    }
+  },
+  "updateDialogFirefoxMessage": {
+    "message": "Обнаружена версия $VERSION$. Расширение обновится автоматически в фоновом режиме, если включено автообновление. Пожалуйста, откройте расширение заново через некоторое время.",
+    "description": "Message shown in Firefox update dialog.",
     "placeholders": {
       "VERSION": {
         "content": "$1",
@@ -2618,5 +2636,122 @@
   "debugLogCleared": {
     "message": "Журнал отладки очищен.",
     "description": "Notification when debug log is cleared"
+  },
+  "scanNowButton": {
+    "message": "Сканировать"
+  },
+  "listActionsButton": {
+    "message": "Параметры списка"
+  },
+  "addShortButton": {
+    "message": "Добавить"
+  },
+  "menuButton": {
+    "message": "Меню"
+  },
+  "manualScanTitle": {
+    "message": "Только ручное сканирование"
+  },
+  "manualScanExplain": {
+    "message": "Медиафайлы по-прежнему будут обнаруживаться в фоновом режиме, но отображаться только для открытого сайта при нажатии кнопки Сканировать."
+  },
+  "removeOnTabCloseTitle": {
+    "message": "Удалять обнаруженные медиафайлы при закрытии вкладки"
+  },
+  "removeOnTabCloseExplain": {
+    "message": "Автоматически удалять обнаруженные медиафайлы из списка при закрытии вкладки, на которой они были найдены."
+  },
+  "manualScanKeepTabsTitle": {
+    "message": "Сохранять медиафайлы из других вкладок"
+  },
+  "manualScanKeepTabsExplain": {
+    "message": "Продолжать показывать медиа, обнаруженные на других вкладках, при переключении между ними. Если отключено, отображаются только медиа активной вкладки."
+  },
+  "topHeaderDesignTitle": {
+    "message": "Дизайн верхней шапки"
+  },
+  "topHeaderDesignExplain": {
+    "message": "Выберите между новой шапкой с меню навигации (v2) и классической шапкой с вкладками (v1)."
+  },
+  "topHeaderV1": {
+    "message": "v1"
+  },
+  "topHeaderV2": {
+    "message": "v2"
+  },
+  "bottomBarDesignTitle": {
+    "message": "Дизайн нижней панели действий"
+  },
+  "bottomBarDesignExplain": {
+    "message": "Выберите стиль кнопок для нижней панели действий со списком медиа."
+  },
+  "bottomBarV1": {
+    "message": "v1"
+  },
+  "bottomBarV2": {
+    "message": "v2"
+  },
+  "bottomBarV3": {
+    "message": "v3"
+  },
+  "updateCardTitle": {
+    "message": "Доступно обновление",
+    "description": "Title of the update available card in the about page."
+  },
+  "updateCardFirefoxDesc": {
+    "message": "Версия обновления $VERSION$ обнаружена в официальном репозитории релизов. В соответствии с архитектурой безопасности браузера Firefox, подписанный пакет дополнения (.xpi) будет проверен, загружен и автоматически применен в фоновом режиме в течение максимум 24 часов без необходимости ручных действий.",
+    "description": "Detailed professional description for Firefox in update card.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardChromeDesc": {
+    "message": "Версия обновления $VERSION$ обнаружена в официальном репозитории релизов. Вы можете немедленно обновить расширение до последней версии, загрузив пакет обновления с помощью кнопки ниже.",
+    "description": "Detailed professional description for Chrome in update card.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardButton": {
+    "message": "Обновить сейчас",
+    "description": "Action button in the update card to open update link."
+  },
+  "updateCardGithubAheadDesc": {
+    "message": "Версия $VERSION$ уже доступна на GitHub, а в AMO пока v$AMO_VERSION$. Вы можете скачать её с GitHub сейчас или дождаться AMO: как только AMO обновится, она установится автоматически, если включены автообновления. Установка с GitHub переводит дальнейшие обновления на канал GitHub.",
+    "description": "Description shown in the update card when GitHub is ahead of AMO.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      },
+      "AMO_VERSION": {
+        "content": "$2",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardGithubButton": {
+    "message": "Скачать с GitHub",
+    "description": "Button label to download the update from GitHub."
+  },
+  "groupProgressTitle": {
+    "message": "Прогресс загрузки в группах",
+    "description": "Title of download progress on groups setting."
+  },
+  "groupProgressExplain": {
+    "message": "Отображать список активных загрузок с кнопками паузы и отмены на карточках групп.",
+    "description": "Explanation of download progress on groups setting."
+  },
+  "skipHttpErrorsTitle": {
+    "message": "Пропускать ошибки 403/404"
+  },
+  "skipHttpErrorsExplain": {
+    "message": "Автоматически пропускать и удалять из списка медиафайлы, возвращающие ошибку 403 или 404 при загрузке, вместо сбоя."
   }
 }

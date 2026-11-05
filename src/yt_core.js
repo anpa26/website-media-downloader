@@ -100,44 +100,53 @@ function getYoutubeVideoId() {
     return null;
 }
 
-function reportYoutubeData(data) {
+function reportYoutubeData(data, isManualScan = false) {
     if (!youtubeDetectionEnabled || !data?.videoDetails) return;
     const title = data.videoDetails.title || document.title;
     const { ytFormats, urls } = mapYoutubeStreams(data);
     if (ytFormats.length) chrome.runtime.sendMessage({ action: 'reportDetectedMedia', urls, pageTitle: title,
-        pageUrl: location.href, is_youtube: true, ytFormats, ytSubtitles: data.subtitles || null });
+        pageUrl: location.href, is_youtube: true, ytFormats, ytSubtitles: data.subtitles || null, isManualScan: !!isManualScan });
     for (const audio of bestAudioTracks(data.audio)) chrome.runtime.sendMessage({ action: 'reportDetectedMedia',
-        urls: [taggedAudioUrl(audio)], pageTitle: `${title} - ${audio.displayName}`, pageUrl: location.href, is_youtube: false });
+        urls: [taggedAudioUrl(audio)], pageTitle: `${title} - ${audio.displayName}`, pageUrl: location.href, is_youtube: false, isManualScan: !!isManualScan });
     for (const subtitle of data.subtitles || []) chrome.runtime.sendMessage({ action: 'reportDetectedMedia',
         urls: [`${subtitle.vttUrl}#subtitle.vtt`], pageTitle: `${title} - ${subtitle.displayName}`,
-        pageUrl: location.href, is_youtube: false });
+        pageUrl: location.href, is_youtube: false, isManualScan: !!isManualScan });
 }
 
-function checkForVideoChange() {
+function checkForVideoChange(forceManual = false) {
     if (!youtubeDetectionEnabled) return;
     const videoId = getYoutubeVideoId();
-    if (!videoId || videoId === lastVideoId) return;
+    if (!videoId || (!forceManual && videoId === lastVideoId)) return;
     lastVideoId = videoId;
     chrome.runtime.sendMessage({ action: 'extract', videoId }, response => {
         if (!youtubeDetectionEnabled) return;
-        if (response?.success) reportYoutubeData(response.data);
+        if (response?.success) reportYoutubeData(response.data, forceManual);
         else if (!response?.disabled) console.error('[website-media-downloader] Extraction failed:', response?.error || 'No response');
     });
 }
 
-function syncYoutubeDetection(value) {
-    youtubeDetectionEnabled = flagEnabled(value);
+function syncYoutubeDetection(ytValue) {
+    if (ytValue !== undefined) youtubeDetectionEnabled = flagEnabled(ytValue);
     if (!youtubeDetectionEnabled) {
         if (youtubeDetectionTimer) clearInterval(youtubeDetectionTimer);
         youtubeDetectionTimer = null;
         lastVideoId = '';
         return;
     }
-    if (!youtubeDetectionTimer) youtubeDetectionTimer = setInterval(checkForVideoChange, 1500);
-    checkForVideoChange();
+    if (!youtubeDetectionTimer) youtubeDetectionTimer = setInterval(() => checkForVideoChange(false), 1500);
+    checkForVideoChange(false);
 }
 
-chrome.storage.local.get('youtube-detection', result => syncYoutubeDetection(result['youtube-detection']));
+chrome.storage.local.get(['youtube-detection'], result => syncYoutubeDetection(result['youtube-detection']));
 chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === 'local' && changes['youtube-detection']) syncYoutubeDetection(changes['youtube-detection'].newValue);
+    if (area === 'local' && changes['youtube-detection']) {
+        syncYoutubeDetection(changes['youtube-detection'].newValue);
+    }
+});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message && message.action === 'manualScanTab') {
+        checkForVideoChange(true);
+        if (sendResponse) sendResponse({ success: true });
+    }
 });

@@ -1043,6 +1043,10 @@
     "message": "Alle abbrechen",
     "description": "The label of the button to cancel all active downloads."
   },
+  "confirmCancelButton": {
+    "message": "Abbrechen",
+    "description": "The label of the cancel button in the ZIP download error dialog."
+  },
   "zipPreparing": {
     "message": "$COUNT$ Dateien werden vorbereitet...",
     "description": "The message when starting to prepare files for a ZIP archive.",
@@ -1196,6 +1200,10 @@
   "continueAllButton": {
     "message": "Alle fortsetzen",
     "description": "The label of the button to continue all paused downloads."
+  },
+  "continueButton": {
+    "message": "Fortfahren",
+    "description": "The label of the button to continue with the next file after skipping one failed download."
   },
   "decodingAudio": {
     "message": "Audio wird decodiert... Bitte warten (kann bei großen Dateien langsam sein).",
@@ -1460,7 +1468,7 @@
     "description": "Updated/Added during UI string localization audit."
   },
   "extensionDescriptionAbout": {
-    "message": "Ihr essenzielles Tool für Medien-Downloads. Erkennt mühelos Videos, Musik und Live-Streams beim Surfen. Unterstützt Hintergrund-Downloads und die automatische Konvertierung von HLS/DASH-Streams, um Inhalte direkt auf Ihrem Gerät zu speichern.",
+    "message": "Erkennen und laden Sie Videos, Audios, Bilder sowie Live-Streams (HLS/DASH) von verschiedenen Websites mühelos herunter. Mit intelligenter Tab-Erkennung, automatischer Stream-Konvertierung, Hintergrund-Downloads und interaktiver Download-Steuerung direkt auf Ihr Gerät.",
     "description": "Updated/Added during UI string localization audit."
   },
   "confirmTitle": {
@@ -1542,7 +1550,7 @@
     "description": "About page footer/error message."
   },
   "zipDownloadError": {
-    "message": "Fehler beim Herunterladen von \"$FILENAME\". $ERROR$\n\nMöchten Sie mit den restlichen Dateien fortfahren?",
+    "message": "Fehler beim Herunterladen von \"$FILENAME$\". $ERROR$\n\nMöchten Sie mit den restlichen Dateien fortfahren?",
     "description": "Error message when a file in ZIP batch fails.",
     "placeholders": {
       "FILENAME": {
@@ -1784,6 +1792,16 @@
   "updateDialogMessage": {
     "message": "Version $VERSION$ ist verfügbar. Möchten Sie jetzt aktualisieren?",
     "description": "Message shown in the update dialog.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "1.7.9"
+      }
+    }
+  },
+  "updateDialogFirefoxMessage": {
+    "message": "Version $VERSION$ wurde erkannt. Die Erweiterung wird im Hintergrund automatisch aktualisiert, wenn automatische Updates aktiviert sind. Bitte öffnen Sie die Erweiterung nach einiger Zeit erneut.",
+    "description": "Message shown in Firefox update dialog.",
     "placeholders": {
       "VERSION": {
         "content": "$1",
@@ -2618,5 +2636,122 @@
   "debugLogCleared": {
     "message": "Debug-Protokoll gelöscht.",
     "description": "Notification when debug log is cleared"
+  },
+  "scanNowButton": {
+    "message": "Scannen"
+  },
+  "listActionsButton": {
+    "message": "Listenoptionen"
+  },
+  "addShortButton": {
+    "message": "Hinzufügen"
+  },
+  "menuButton": {
+    "message": "Menü"
+  },
+  "manualScanTitle": {
+    "message": "Nur manueller Scan"
+  },
+  "manualScanExplain": {
+    "message": "Medien werden weiterhin im Hintergrund erkannt, aber nur für die geöffnete Website angezeigt, wenn auf Scannen geklickt wird."
+  },
+  "removeOnTabCloseTitle": {
+    "message": "Erkannte Medien beim Schließen des Tabs entfernen"
+  },
+  "removeOnTabCloseExplain": {
+    "message": "Entfernt erkannte Mediendateien automatisch aus der Liste, wenn der Tab geschlossen wird, in dem sie gefunden wurden."
+  },
+  "manualScanKeepTabsTitle": {
+    "message": "Medien aus anderen Tabs behalten"
+  },
+  "manualScanKeepTabsExplain": {
+    "message": "Erkannte Medien von anderen Tabs beim Wechseln zwischen Tabs weiterhin anzeigen. Wenn deaktiviert, werden nur Medien des aktiven Tabs angezeigt."
+  },
+  "topHeaderDesignTitle": {
+    "message": "Design der oberen Kopfzeile"
+  },
+  "topHeaderDesignExplain": {
+    "message": "Wähle zwischen dem neuen Navigationsmenü-Header (v2) und dem klassischen Tab-Header (v1)."
+  },
+  "topHeaderV1": {
+    "message": "v1"
+  },
+  "topHeaderV2": {
+    "message": "v2"
+  },
+  "bottomBarDesignTitle": {
+    "message": "Design der unteren Aktionsleiste"
+  },
+  "bottomBarDesignExplain": {
+    "message": "Wähle den Schaltflächenstil für die untere Aktionsleiste der Medienliste."
+  },
+  "bottomBarV1": {
+    "message": "v1"
+  },
+  "bottomBarV2": {
+    "message": "v2"
+  },
+  "bottomBarV3": {
+    "message": "v3"
+  },
+  "updateCardTitle": {
+    "message": "Update verfügbar",
+    "description": "Title of the update available card in the about page."
+  },
+  "updateCardFirefoxDesc": {
+    "message": "Die Update-Version $VERSION$ wurde im offiziellen Release-Repository erkannt. Aufgrund der Sicherheitsarchitektur des Firefox-Browsers wird das signierte Add-on-Paket (.xpi) überprüft, heruntergeladen und innerhalb von maximal 24 Stunden automatisch im Hintergrund installiert, ohne dass ein manueller Eingriff erforderlich ist.",
+    "description": "Detailed professional description for Firefox in update card.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardChromeDesc": {
+    "message": "Die Update-Version $VERSION$ wurde im offiziellen Release-Repository erkannt. Sie können die Erweiterung sofort auf die neueste Version aktualisieren, indem Sie das Update-Paket über die Schaltfläche unten herunterladen.",
+    "description": "Detailed professional description for Chrome in update card.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardButton": {
+    "message": "Jetzt aktualisieren",
+    "description": "Action button in the update card to open update link."
+  },
+  "updateCardGithubAheadDesc": {
+    "message": "Version $VERSION$ ist bereits auf GitHub verfügbar, während AMO noch v$AMO_VERSION$ hat. Du kannst sie jetzt von GitHub herunterladen oder auf AMO warten. Sobald AMO aktualisiert wurde, wird sie automatisch installiert, sofern automatische Updates aktiviert sind. Eine Installation von GitHub stellt künftige Updates auf GitHub um.",
+    "description": "Description shown in the update card when GitHub is ahead of AMO.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      },
+      "AMO_VERSION": {
+        "content": "$2",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardGithubButton": {
+    "message": "Auf GitHub herunterladen",
+    "description": "Button label to download the update from GitHub."
+  },
+  "groupProgressTitle": {
+    "message": "Download-Fortschritt in Gruppen",
+    "description": "Title of download progress on groups setting."
+  },
+  "groupProgressExplain": {
+    "message": "Zeigt die Liste der aktiven Downloads mit Pause- und Abbrechen-Schaltflächen auf den Gruppenkarten an.",
+    "description": "Explanation of download progress on groups setting."
+  },
+  "skipHttpErrorsTitle": {
+    "message": "403/404-Fehler überspringen"
+  },
+  "skipHttpErrorsExplain": {
+    "message": "Medien, die beim Herunterladen einen 403- oder 404-Fehler zurückgeben, automatisch überspringen und aus der Liste entfernen, anstatt fehlzuschlagen."
   }
 }

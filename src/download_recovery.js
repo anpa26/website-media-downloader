@@ -57,11 +57,37 @@ function processingJobInfo(key, job) {
         id: job.jobId, url: isZip ? `zip://${job.jobId}` : job.url,
         filename: job.filename, audioUrl: job.audioUrl,
         loaded: 0, total: isZip ? (job.items || []).length : 100,
-        percent: 0, isPaused: true, status: 'Paused',
+        percent: job.percent ?? 0, isPaused: !!job.isPaused,
+        status: job.status || (job.isPaused ? 'Paused' : 'Preparing ZIP...'),
         mediaType: isZip ? 'file' : (job.mediaType || (isAudioJob ? (job.audioOnly ? 'audio' : 'video') : 'stream')),
         isAudioJob, isStreamJob: !isAudioJob && !isZip && !isPopupJob,
-        isZip, isPersistentZipJob: isZip, recoveryKey: key
+        isZip, isPersistentZipJob: isZip, recoveryKey: key,
+        groupType: job.groupType || null
     };
+}
+
+async function restorePersistentProcessingJobs() {
+    const stored = await browser.storage.local.get(null);
+    const staleKeys = [];
+    for (const [key, job] of Object.entries(stored)) {
+        if (!/^(audio|stream|zip|popup)Job_/.test(key) || !job?.jobId) continue;
+        if (job.recoveryState === 'completed' || job.recoveryState === 'cancelled' || job.status === 'Cancelled' || job.status === 'completed') {
+            staleKeys.push(key);
+            continue;
+        }
+        if (key.startsWith('popupJob_')) {
+            staleKeys.push(key);
+            continue;
+        }
+        if (!activeDownloads.has(job.jobId)) {
+            job.isPaused = true;
+            job.status = 'Paused';
+            activeDownloads.set(job.jobId, processingJobInfo(key, job));
+        }
+    }
+    if (staleKeys.length > 0) {
+        browser.storage.local.remove(staleKeys).catch(() => {});
+    }
 }
 
 function restartProcessingJob(jobId) {

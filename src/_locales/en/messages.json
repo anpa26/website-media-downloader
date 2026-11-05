@@ -1043,6 +1043,10 @@
     "message": "Cancel All",
     "description": "The label of the button to cancel all active downloads."
   },
+  "confirmCancelButton": {
+    "message": "Cancel",
+    "description": "The label of the cancel button in the ZIP download error dialog."
+  },
   "zipPreparing": {
     "message": "Preparing $COUNT$ files...",
     "description": "The message when starting to prepare files for a ZIP archive.",
@@ -1196,6 +1200,10 @@
   "continueAllButton": {
     "message": "Continue All",
     "description": "The label of the button to continue all paused downloads."
+  },
+  "continueButton": {
+    "message": "Continue",
+    "description": "The label of the button to continue with the next file after skipping one failed download."
   },
   "decodingAudio": {
     "message": "Decoding audio... Please wait (this can be slow for large files).",
@@ -1465,7 +1473,7 @@
     "description": "Updated/Added during UI string localization audit."
   },
   "extensionDescriptionAbout": {
-    "message": "Your essential tool for media downloads. Effortlessly detects videos, music, and live streams while you browse. Supports background downloads and automatic HLS/DASH stream conversion to save content directly to your device.",
+    "message": "Effortlessly detect and download videos, audios, images and live streams (HLS/DASH) across the web. Features smart tab scanning, automatic stream conversion, background downloads and interactive download controls directly to your device.",
     "description": "Updated/Added during UI string localization audit."
   },
   "confirmTitle": {
@@ -1789,6 +1797,16 @@
   "updateDialogMessage": {
     "message": "Version $VERSION$ is available. Would you like to update now?",
     "description": "Message shown in the update dialog.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "1.7.9"
+      }
+    }
+  },
+  "updateDialogFirefoxMessage": {
+    "message": "Version $VERSION$ has been detected. The extension will automatically update in the background if automatic updates are enabled. Please reopen the extension after a while.",
+    "description": "Message shown in Firefox update dialog.",
     "placeholders": {
       "VERSION": {
         "content": "$1",
@@ -2623,5 +2641,122 @@
   "debugLogCleared": {
     "message": "Debug log cleared.",
     "description": "Notification when debug log is cleared"
+  },
+  "scanNowButton": {
+    "message": "Scan"
+  },
+  "listActionsButton": {
+    "message": "List options"
+  },
+  "addShortButton": {
+    "message": "Add"
+  },
+  "menuButton": {
+    "message": "Menu"
+  },
+  "manualScanTitle": {
+    "message": "Manual scan only"
+  },
+  "manualScanExplain": {
+    "message": "Media will still be detected in background, but only shown for the opened website when clicking Scan."
+  },
+  "removeOnTabCloseTitle": {
+    "message": "Remove detected media when tab is closed"
+  },
+  "removeOnTabCloseExplain": {
+    "message": "Automatically remove detected media files from the list when the tab where they were found is closed."
+  },
+  "manualScanKeepTabsTitle": {
+    "message": "Keep media from other tabs"
+  },
+  "manualScanKeepTabsExplain": {
+    "message": "Continue showing media detected from other tabs when switching between tabs. When disabled, only media from the active tab is shown."
+  },
+  "topHeaderDesignTitle": {
+    "message": "Top header design"
+  },
+  "topHeaderDesignExplain": {
+    "message": "Choose between the new navigation menu header (v2) and the classic tabs header (v1)."
+  },
+  "topHeaderV1": {
+    "message": "v1"
+  },
+  "topHeaderV2": {
+    "message": "v2"
+  },
+  "bottomBarDesignTitle": {
+    "message": "Bottom action bar design"
+  },
+  "bottomBarDesignExplain": {
+    "message": "Choose the button layout style for the bottom media action bar."
+  },
+  "bottomBarV1": {
+    "message": "v1"
+  },
+  "bottomBarV2": {
+    "message": "v2"
+  },
+  "bottomBarV3": {
+    "message": "v3"
+  },
+  "updateCardTitle": {
+    "message": "Update Available",
+    "description": "Title of the update available card in the about page."
+  },
+  "updateCardFirefoxDesc": {
+    "message": "Update version $VERSION$ has been detected on the official release repository. Due to the Firefox browser security architecture, the signed add-on package (.xpi) will be verified, downloaded, and automatically applied in the background within a maximum of 24 hours without requiring any manual intervention.",
+    "description": "Detailed professional description for Firefox in update card.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardChromeDesc": {
+    "message": "Update version $VERSION$ has been detected on the official release repository. You can immediately upgrade the extension to the latest version by downloading the release package via the button below.",
+    "description": "Detailed professional description for Chrome in update card.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardButton": {
+    "message": "Update Now",
+    "description": "Action button in the update card to open update link."
+  },
+  "updateCardGithubAheadDesc": {
+    "message": "Version $VERSION$ is available on GitHub, while AMO still has v$AMO_VERSION$. Download it now from GitHub, or wait for AMO. Once AMO is updated, it will install automatically if automatic updates are enabled. Installing from GitHub switches future updates to the GitHub release channel.",
+    "description": "Description shown in the update card when GitHub is ahead of AMO.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      },
+      "AMO_VERSION": {
+        "content": "$2",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardGithubButton": {
+    "message": "Download on GitHub",
+    "description": "Button label to download the update from GitHub."
+  },
+  "groupProgressTitle": {
+    "message": "Download progress on groups",
+    "description": "Title of download progress on groups setting."
+  },
+  "groupProgressExplain": {
+    "message": "Display active download progress list with pause and cancel controls on group cards.",
+    "description": "Explanation of download progress on groups setting."
+  },
+  "skipHttpErrorsTitle": {
+    "message": "Skip 403/404 errors"
+  },
+  "skipHttpErrorsExplain": {
+    "message": "Automatically skip and remove media that returns a 403 or 404 error during download, instead of failing."
   }
 }

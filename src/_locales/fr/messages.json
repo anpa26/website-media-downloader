@@ -1043,6 +1043,10 @@
     "message": "Tout annuler",
     "description": "The label of the button to cancel all active downloads."
   },
+  "confirmCancelButton": {
+    "message": "Annuler",
+    "description": "The label of the cancel button in the ZIP download error dialog."
+  },
   "zipPreparing": {
     "message": "Préparation de $COUNT$ fichiers...",
     "description": "The message when starting to prepare files for a ZIP archive.",
@@ -1196,6 +1200,10 @@
   "continueAllButton": {
     "message": "Tout continuer",
     "description": "The label of the button to continue all paused downloads."
+  },
+  "continueButton": {
+    "message": "Continuer",
+    "description": "The label of the button to continue with the next file after skipping one failed download."
   },
   "decodingAudio": {
     "message": "Décodage de l'audio... Veuillez patienter (cela peut être lent pour les gros fichiers).",
@@ -1460,7 +1468,7 @@
     "description": "Updated/Added during UI string localization audit."
   },
   "extensionDescriptionAbout": {
-    "message": "Votre outil indispensable pour télécharger des médias. Détecte facilement les vidéos, la musique et les flux en direct pendant votre navigation. Prend en charge les téléchargements en arrière-plan et la conversion automatique des flux HLS/DASH pour sauvegarder le contenu directement sur votre appareil.",
+    "message": "Détectez et téléchargez facilement des vidéos, des audios, des images et des flux en direct (HLS/DASH) sur le Web. Comprend une analyse intelligente des onglets, une conversion automatique des flux, des téléchargements en arrière-plan et des commandes de téléchargement interactives directement sur votre appareil.",
     "description": "Updated/Added during UI string localization audit."
   },
   "confirmTitle": {
@@ -1542,7 +1550,7 @@
     "description": "About page footer/error message."
   },
   "zipDownloadError": {
-    "message": "Échec du téléchargement de \"$FILENAME\". $ERROR$\n\nVoulez-vous continuer avec les fichiers restants ?",
+    "message": "Échec du téléchargement de \"$FILENAME$\". $ERROR$\n\nVoulez-vous continuer avec les fichiers restants ?",
     "description": "Error message when a file in ZIP batch fails.",
     "placeholders": {
       "FILENAME": {
@@ -1710,7 +1718,7 @@
     }
   },
   "mpdDownloadCompleteSuccess": {
-    "message": "ZIP téléchargé (\"$FILENAME\").",
+    "message": "ZIP téléchargé (\"$FILENAME$\").",
     "description": "Success message when MPD ZIP is downloaded.",
     "placeholders": {
       "FILENAME": {
@@ -1784,6 +1792,16 @@
   "updateDialogMessage": {
     "message": "La version $VERSION$ est disponible. Voulez-vous mettre à jour maintenant ?",
     "description": "Message shown in the update dialog.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "1.7.9"
+      }
+    }
+  },
+  "updateDialogFirefoxMessage": {
+    "message": "La version $VERSION$ a été détectée. L'extension sera mise à jour automatiquement en arrière-plan si les mises à jour automatiques sont activées. Veuillez rouvrir l'extension après un moment.",
+    "description": "Message shown in Firefox update dialog.",
     "placeholders": {
       "VERSION": {
         "content": "$1",
@@ -2618,5 +2636,122 @@
   "debugLogCleared": {
     "message": "Journal de débogage effacé.",
     "description": "Notification when debug log is cleared"
+  },
+  "scanNowButton": {
+    "message": "Analyser"
+  },
+  "listActionsButton": {
+    "message": "Options de liste"
+  },
+  "addShortButton": {
+    "message": "Ajouter"
+  },
+  "menuButton": {
+    "message": "Menu"
+  },
+  "manualScanTitle": {
+    "message": "Analyse manuelle uniquement"
+  },
+  "manualScanExplain": {
+    "message": "Les médias continueront d'être détectés en arrière-plan, mais ne seront affichés pour le site web ouvert que lors d'un clic sur Analyser."
+  },
+  "removeOnTabCloseTitle": {
+    "message": "Supprimer les médias détectés lors de la fermeture de l'onglet"
+  },
+  "removeOnTabCloseExplain": {
+    "message": "Supprimer automatiquement les fichiers multimédias détectés de la liste lorsque l'onglet où ils ont été trouvés est fermé."
+  },
+  "manualScanKeepTabsTitle": {
+    "message": "Conserver les médias des autres onglets"
+  },
+  "manualScanKeepTabsExplain": {
+    "message": "Continuer à afficher les médias détectés des autres onglets lors du changement d'onglet. Si désactivé, seuls les médias de l'onglet actif sont affichés."
+  },
+  "topHeaderDesignTitle": {
+    "message": "Design de l'en-tête supérieur"
+  },
+  "topHeaderDesignExplain": {
+    "message": "Choisissez entre le nouvel en-tête avec menu déroulant (v2) et l'en-tête classique à onglets (v1)."
+  },
+  "topHeaderV1": {
+    "message": "v1"
+  },
+  "topHeaderV2": {
+    "message": "v2"
+  },
+  "bottomBarDesignTitle": {
+    "message": "Design de la barre d'actions inférieure"
+  },
+  "bottomBarDesignExplain": {
+    "message": "Choisissez le style des boutons pour la barre d'actions inférieure."
+  },
+  "bottomBarV1": {
+    "message": "v1"
+  },
+  "bottomBarV2": {
+    "message": "v2"
+  },
+  "bottomBarV3": {
+    "message": "v3"
+  },
+  "updateCardTitle": {
+    "message": "Mise à jour disponible",
+    "description": "Title of the update available card in the about page."
+  },
+  "updateCardFirefoxDesc": {
+    "message": "La version de mise à jour $VERSION$ a été détectée sur le référentiel de publication officiel. En raison de l'architecture de sécurité du navigateur Firefox, le package de module signé (.xpi) sera vérifié, téléchargé et appliqué automatiquement en arrière-plan dans un délai maximal de 24 heures sans aucune intervention manuelle.",
+    "description": "Detailed professional description for Firefox in update card.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardChromeDesc": {
+    "message": "La version de mise à jour $VERSION$ a été détectée sur le référentiel de publication officiel. Vous pouvez immédiatement mettre à niveau l'extension vers la dernière version en téléchargeant le package de mise à jour via le bouton ci-dessous.",
+    "description": "Detailed professional description for Chrome in update card.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardButton": {
+    "message": "Mettre à jour maintenant",
+    "description": "Action button in the update card to open update link."
+  },
+  "updateCardGithubAheadDesc": {
+    "message": "La version $VERSION$ est déjà disponible sur GitHub, tandis qu'AMO en est encore à la v$AMO_VERSION$. Vous pouvez la télécharger dès maintenant depuis GitHub, ou attendre AMO. Une fois AMO mis à jour, elle s'installera automatiquement si les mises à jour automatiques sont activées. Installer depuis GitHub bascule les futures mises à jour vers GitHub.",
+    "description": "Description shown in the update card when GitHub is ahead of AMO.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      },
+      "AMO_VERSION": {
+        "content": "$2",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardGithubButton": {
+    "message": "Télécharger sur GitHub",
+    "description": "Button label to download the update from GitHub."
+  },
+  "groupProgressTitle": {
+    "message": "Progression des téléchargements par groupe",
+    "description": "Title of download progress on groups setting."
+  },
+  "groupProgressExplain": {
+    "message": "Affiche la liste des téléchargements actifs avec commandes de pause et d'annulation sur les cartes de groupe.",
+    "description": "Explanation of download progress on groups setting."
+  },
+  "skipHttpErrorsTitle": {
+    "message": "Ignorer les erreurs 403/404"
+  },
+  "skipHttpErrorsExplain": {
+    "message": "Ignorer et supprimer automatiquement de la liste les médias renvoyant une erreur 403 ou 404 lors du téléchargement au lieu d'échouer."
   }
 }

@@ -1,10 +1,54 @@
-# Website Media Downloader
+<p align="center">
+  <img src="src/icons/icon.png" alt="Website Media Downloader" width="96" />
+</p>
 
-[![Version](https://img.shields.io/badge/version-2.4.5-blue.svg)](src/manifest.json)
-[![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE.md)
-[![Platform](https://img.shields.io/badge/platform-Chrome%20%7C%20Firefox%20%7C%20Android-orange.svg)](#installation)
+<h3 align="center">Website Media Downloader</h3>
 
-Website Media Downloader detects media on websites and helps you download videos, audio, images, streams, subtitles, and other files. It combines network request monitoring with page scanning to find media that may not have a direct link in the page.
+<div align="center">
+
+  [![Version](https://img.shields.io/badge/version-2.5.3-blue.svg)](src/manifest.json)
+  [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE.md)
+  [![Platform](https://img.shields.io/badge/platform-Chrome%20%7C%20Firefox%20%7C%20Android-orange.svg)](#installation)
+  [![Firefox Add-ons](https://img.shields.io/badge/Firefox-Add--ons-FF7139?logo=firefox)](https://addons.mozilla.org/en-US/firefox/addon/website-media-downloader/)
+
+</div>
+
+---
+
+<p align="center">Website Media Downloader detects media on websites and helps you download videos, audio, images, streams, subtitles, and other files. It combines network request monitoring with page scanning to find media that may not have a direct link in the page.</p>
+
+---
+
+## Table of Contents
+
+- [About the Project](#about-the-project)
+- [User Control and Resource Use](#user-control-and-resource-use)
+- [Key Features](#key-features)
+- [How to Use](#how-to-use)
+- [Disclaimer](#disclaimer)
+- [Technical Features](#technical-features)
+  - [Core Detection Engine](#core-detection-engine)
+  - [UI Architecture](#ui-architecture)
+  - [Detection Methodology](#detection-methodology)
+  - [Stream Reconstruction](#stream-reconstruction)
+  - [Speed Boost Technology](#speed-boost-technology)
+  - [Request Simulation](#request-simulation)
+  - [Update Mechanism](#update-mechanism)
+- [Supported Formats](#supported-formats)
+- [Project Structure](#project-structure)
+- [Building](#building)
+- [Installation](#installation)
+  - [Chrome / Chromium](#chrome--chromium)
+  - [Firefox Desktop & Android](#firefox-desktop--android)
+- [Redirect & Unwanted Ad Protection](#redirect--unwanted-ad-protection)
+- [Troubleshooting](#troubleshooting)
+- [Support & Feedback](#support--feedback)
+- [Security and Privacy Model](#security-and-privacy-model)
+- [Credits and Attributions](#credits-and-attributions)
+
+---
+
+## About the Project
 
 The project aims to put useful detection, download, filtering, stream, and page-protection tools in one extension while giving users control over which features are enabled. Media processing runs in your browser; optional integrations such as cloud saving communicate with the service you choose.
 
@@ -19,6 +63,7 @@ If you prefer a smaller installation or use a lower-powered device, choose a Lig
 ---
 
 ## Key Features
+
 - **Download Video**: Seamlessly acquire high-quality video content from various online sources.
 - **Download Audio Only**: Extract and download audio-only tracks from any media with ease.
 - **Download Image**: Quickly capture and save images, including those nested in complex DOM structures.
@@ -41,6 +86,7 @@ If you prefer a smaller installation or use a lower-powered device, choose a Lig
 - **Multi-language Support**: Fully localized for English, Indonesian, German, French, Portuguese, Japanese, Korean, Arabic, and Russian.
 
 ## How to Use
+
 1. **Detection**: Navigate to any website with media content. The extension will automatically detect media assets in the background.
 2. **Access**: Click the extension icon to open the popup interface.
 3. **Group Navigation**: Browse media grouped by category (Videos, Audio, Streams, Images, Subtitles, Files) or use global search across all groups.
@@ -58,46 +104,39 @@ If you prefer a smaller installation or use a lower-powered device, choose a Lig
 
 ---
 
-## What's New in v2.4.5
-
-- Removed dead and unsupported code.
-- Optimized download performance and parallel segment processing.
-- Fixed UI display and layout bugs across media cards.
-- Added image filtering by file size.
-- Fixed Chrome popup sizing to remain consistent across views ([#3](https://github.com/anpa26/website-media-downloader/issues/3)).
-- Improved the extension UI in Chrome.
-- Fixed false-positive stream detection for images, subtitles, and document/archive files.
-
----
-
 ## Technical Features
 
 ### Core Detection Engine
+
 The detection engine handles complex web environments through:
 - **Enhanced Stream Detection**: Improved accuracy in identifying and filtering HLS and DASH segments to prevent redundant entries.
 - **Parallel Acquisition Overhaul**: A refined multi-threaded fetching mechanism that provides more stable and efficient Speed Boost downloads.
 - **Improved Lifecycle Management**: Enhanced cleanup and state persistence when reopening the extension popup while downloads are active.
 
 ### UI Architecture
+
 The interface is built using Material Design 3 (MDUI) components, now featuring:
 - **Media Grouping System**: Categorizes media into discrete cards (Videos, Audio, Streams, Images, Subtitles, Files) with live item counts and dedicated view navigation.
 - **Multiple Settings Layouts**: Flexible settings interface supporting Collapsible sections, Sidebar navigation, or Tabbed layout.
 - **Direct Manual URL Download**: Seamless entry point for adding external file download links directly into the media list.
 - **Custom Pill Dropdowns**: A modern, space-efficient settings interface featuring dynamic sizing that fits content perfectly.
 - **Visual Status Indicators**: Real-time visual feedback for Speed Boost status and multi-threaded download progress.
-- **Comprehensive Localization**: A fully localized experience across 9 languages for all UI elements, including installation and error pages.
+- **Comprehensive Localization**: A fully localized experience across 10 languages for all UI elements, including installation and error pages.
 
 ### Detection Methodology
+
 - **Network Traffic Interception**: Monitors real-time network requests to identify high-bitrate media and dynamic streaming manifests, including M3U8 and MPD files.
 - **Deep DOM Scanning**: Systematically inspects HTML5 tags, custom data attributes, and elements managed by lazy-loading frameworks.
 - **CSS Analysis**: Identifies media assets embedded within computed styles, such as background and border images.
 
 ### Stream Reconstruction
+
 - **HLS (M3U8)**: Supports master and media playlists with variant selection for specific resolutions. It handles local AES-128 decryption and merges segments into standardized containers.
 - **DASH (MPD)**: Parses XML-based manifests to extract video and audio adaptation sets.
 - **Parallel Acquisition**: Implements a multi-threaded fetching mechanism to optimize throughput and reduce download duration.
 
 ### Speed Boost Technology
+
 Website Media Downloader features an advanced **Speed Boost** mechanism designed to saturate your bandwidth and significantly reduce download times.
 
 #### How it Works
@@ -118,9 +157,11 @@ Website Media Downloader features an advanced **Speed Boost** mechanism designed
 - **Visual Indicator**: When Speed Boost is supported and active, the download status text will turn **bold and use your themed/accent color**. If not supported (or for standard sequential downloads), the status text and progress bar will use the default standard appearance. You can configure the number of parallel connections (up to 16 connections) in the extension settings.
 
 ### Request Simulation
+
 The extension utilizes header management, including Referer, Origin, and Cookies, to replicate the original request context. This ensures compatibility with servers that restrict access based on request origins.
 
 ### Update Mechanism
+
 The extension features an advanced, multi-tiered update checker that automatically runs when the popup is opened.
 - **Native Store Check**: On supported platforms, the extension performs a native update check against the Mozilla Add-ons (AMO) store. If an update is available on the store, you will be prompted to update directly from AMO.
 - **GitHub Fallback**: If the native check is unavailable or fails, the extension queries the project's GitHub repository manifest file. This ensures you are notified of new versions as soon as they are released.
@@ -129,15 +170,6 @@ You can also manually trigger an update check at any time via the **About** page
 
 **Note on Store Updates vs. GitHub Releases:**
 New versions are often published to GitHub before they pass the review process on the Mozilla Add-ons (AMO) store. If you are notified of a GitHub update while AMO still serves the older version, you can choose to wait for the official store update or manually install the latest release.
-
-**Manual Installation (.xpi) for Firefox:**
-To manually install the `.xpi` file from GitHub Releases, you **must use Firefox Developer Edition or Firefox Nightly**. Standard Firefox versions restrict the installation of unlisted or manually downloaded extensions for security reasons.
-1. Open Firefox Developer Edition or Firefox Nightly and navigate to `about:config`.
-2. Accept the risk warning, then search for `xpinstall.signatures.required` and double-click it to set it to **false**.
-3. Download the latest `.xpi` file from the [GitHub Releases](https://github.com/anpa26/website-media-downloader/releases) page.
-4. Navigate to the Add-ons manager (`about:addons`).
-5. Click the gear icon and select **"Install Add-on From File..."**.
-6. Select the downloaded `.xpi` file and confirm the installation.
 
 ---
 
@@ -227,6 +259,15 @@ You can install the extension directly from the official Firefox Add-ons store:
 
 > [!TIP]
 > **Recommended Platform**: While this extension supports Android, it is **highly recommended to use it on Desktop/PC** for the best experience. Desktop browsers offer better stability for background processing, stream reconstruction, and large batch ZIP downloads.
+
+**Manual Installation (.xpi) for Firefox:**
+To manually install the `.xpi` file from GitHub Releases, you **must use Firefox Developer Edition or Firefox Nightly**. Standard Firefox versions restrict the installation of unlisted or manually downloaded extensions for security reasons.
+1. Open Firefox Developer Edition or Firefox Nightly and navigate to `about:config`.
+2. Accept the risk warning, then search for `xpinstall.signatures.required` and double-click it to set it to **false**.
+3. Download the latest `.xpi` file from the [GitHub Releases](https://github.com/anpa26/website-media-downloader/releases) page.
+4. Navigate to the Add-ons manager (`about:addons`).
+5. Click the gear icon and select **"Install Add-on From File..."**.
+6. Select the downloaded `.xpi` file and confirm the installation.
 
 ---
 

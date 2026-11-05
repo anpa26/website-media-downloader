@@ -136,8 +136,8 @@ async function walkDirAndMinify(dir) {
 async function main() {
     console.log("Starting minification of build outputs...");
     const targets = [
-        'chrome', 'chrome-yt', 'firefox',
-        'chrome-light', 'chrome-yt-light', 'firefox-light',
+        'chrome', 'chrome-yt', 'firefox', 'firefox-amo',
+        'chrome-light', 'chrome-yt-light', 'firefox-light', 'firefox-light-amo',
         'chrome-debug', 'chrome-yt-debug', 'firefox-debug',
         'chrome-light-debug', 'chrome-yt-light-debug', 'firefox-light-debug'
     ];

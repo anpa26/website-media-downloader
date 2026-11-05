@@ -1015,6 +1015,10 @@
     "message": "Batalkan Semua",
     "description": "The label of the button to cancel all active downloads."
   },
+  "confirmCancelButton": {
+    "message": "Batalkan",
+    "description": "The label of the cancel button in the ZIP download error dialog."
+  },
   "zipPreparing": {
     "message": "Menyiapkan $COUNT$ file...",
     "description": "The message when starting to prepare files for a ZIP archive.",
@@ -1168,6 +1172,10 @@
   "continueAllButton": {
     "message": "Lanjutkan Semua",
     "description": "The label of the button to continue all paused downloads."
+  },
+  "continueButton": {
+    "message": "Lanjutkan",
+    "description": "The label of the button to continue with the next file after skipping one failed download."
   },
   "decodingAudio": {
     "message": "Mendekode audio... Harap tunggu (ini mungkin lambat untuk file besar).",
@@ -1432,7 +1440,7 @@
     "description": "Updated/Added during UI string localization audit."
   },
   "extensionDescriptionAbout": {
-    "message": "Alat penting untuk mengunduh media. Mendeteksi video, musik, dan siaran langsung dengan mudah saat Anda menjelajah. Mendukung unduhan di latar belakang dan konversi otomatis siaran HLS/DASH untuk menyimpan konten langsung ke perangkat Anda.",
+    "message": "Deteksi dan unduh video, audio, gambar serta siaran langsung (HLS/DASH) dari berbagai situs web dengan mudah. Dilengkapi pemindaian tab pintar, konversi stream otomatis, unduhan latar belakang dan kontrol unduhan interaktif langsung ke perangkat Anda.",
     "description": "Updated/Added during UI string localization audit."
   },
   "confirmTitle": {
@@ -1514,7 +1522,7 @@
     "description": "About page footer/error message."
   },
   "zipDownloadError": {
-    "message": "Gagal mengunduh \"$FILENAME\". $ERROR$\n\nApakah Anda ingin melanjutkan dengan file yang tersisa?",
+    "message": "Gagal mengunduh \"$FILENAME$\". $ERROR$\n\nApakah Anda ingin melanjutkan dengan file yang tersisa?",
     "description": "Error message when a file in ZIP batch fails.",
     "placeholders": {
       "FILENAME": {
@@ -1756,6 +1764,16 @@
   "updateDialogMessage": {
     "message": "Versi $VERSION$ tersedia. Apakah Anda ingin memperbarui sekarang?",
     "description": "Message shown in the update dialog.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "1.7.9"
+      }
+    }
+  },
+  "updateDialogFirefoxMessage": {
+    "message": "Versi $VERSION$ telah terdeteksi. Ekstensi akan diperbarui secara otomatis di latar belakang jika opsi pembaruan otomatis aktif. Silakan buka kembali ekstensi setelah beberapa saat.",
+    "description": "Message shown in Firefox update dialog.",
     "placeholders": {
       "VERSION": {
         "content": "$1",
@@ -2618,5 +2636,122 @@
   "debugLogCleared": {
     "message": "Log debug dihapus.",
     "description": "Notification when debug log is cleared"
+  },
+  "scanNowButton": {
+    "message": "Pindai"
+  },
+  "listActionsButton": {
+    "message": "Opsi daftar"
+  },
+  "addShortButton": {
+    "message": "Tambah"
+  },
+  "menuButton": {
+    "message": "Menu"
+  },
+  "manualScanTitle": {
+    "message": "Hanya pindai manual"
+  },
+  "manualScanExplain": {
+    "message": "Media tetap terdeteksi di latar belakang, namun hanya ditampilkan untuk situs web yang sedang dibuka saat tombol Pindai diklik."
+  },
+  "removeOnTabCloseTitle": {
+    "message": "Hapus media terdeteksi saat tab ditutup"
+  },
+  "removeOnTabCloseExplain": {
+    "message": "Secara otomatis menghapus berkas media yang terdeteksi dari daftar ketika tab tempat media tersebut ditemukan ditutup."
+  },
+  "manualScanKeepTabsTitle": {
+    "message": "Tetap tampilkan media dari tab lain"
+  },
+  "manualScanKeepTabsExplain": {
+    "message": "Tetap tampilkan media yang terdeteksi dari tab lain saat berpindah tab. Jika dinonaktifkan, daftar hanya menampilkan media dari tab yang sedang dibuka."
+  },
+  "topHeaderDesignTitle": {
+    "message": "Desain header atas"
+  },
+  "topHeaderDesignExplain": {
+    "message": "Pilih antara desain header menu navigasi baru (v2) atau tab navigasi klasik (v1)."
+  },
+  "topHeaderV1": {
+    "message": "v1"
+  },
+  "topHeaderV2": {
+    "message": "v2"
+  },
+  "bottomBarDesignTitle": {
+    "message": "Desain bilah aksi bawah"
+  },
+  "bottomBarDesignExplain": {
+    "message": "Pilih gaya tombol untuk bilah aksi bagian bawah pada daftar media."
+  },
+  "bottomBarV1": {
+    "message": "v1"
+  },
+  "bottomBarV2": {
+    "message": "v2"
+  },
+  "bottomBarV3": {
+    "message": "v3"
+  },
+  "updateCardTitle": {
+    "message": "Pembaruan Tersedia",
+    "description": "Title of the update available card in the about page."
+  },
+  "updateCardFirefoxDesc": {
+    "message": "Versi pembaruan $VERSION$ telah terdeteksi pada repositori rilis resmi. Karena arsitektur sistem keamanan browser Firefox, paket add-on (.xpi) yang telah ditandatangani akan diperiksa, diunduh, dan diterapkan secara otomatis di latar belakang dalam waktu maksimal 24 jam tanpa memerlukan tindakan manual dari Anda.",
+    "description": "Detailed professional description for Firefox in update card.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardChromeDesc": {
+    "message": "Versi pembaruan $VERSION$ telah terdeteksi pada repositori rilis resmi. Anda dapat segera memperbarui ekstensi ke versi terbaru dengan mengunduh paket pembaruan melalui tombol di bawah ini.",
+    "description": "Detailed professional description for Chrome in update card.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardButton": {
+    "message": "Perbarui Sekarang",
+    "description": "Action button in the update card to open update link."
+  },
+  "updateCardGithubAheadDesc": {
+    "message": "Versi $VERSION$ sudah tersedia di GitHub, sementara AMO masih v$AMO_VERSION$. Kamu bisa download sekarang dari GitHub, atau tunggu AMO. Begitu AMO diperbarui, update akan terpasang otomatis kalau auto-update nyala. Menginstal dari GitHub memindahkan update berikutnya ke jalur GitHub.",
+    "description": "Description shown in the update card when GitHub is ahead of AMO.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "2.5.0"
+      },
+      "AMO_VERSION": {
+        "content": "$2",
+        "example": "2.5.0"
+      }
+    }
+  },
+  "updateCardGithubButton": {
+    "message": "Download di GitHub",
+    "description": "Button label to download the update from GitHub."
+  },
+  "groupProgressTitle": {
+    "message": "Progres unduhan pada grup",
+    "description": "Title of download progress on groups setting."
+  },
+  "groupProgressExplain": {
+    "message": "Menampilkan daftar progres unduhan aktif dengan tombol jeda dan batal di kartu grup.",
+    "description": "Explanation of download progress on groups setting."
+  },
+  "skipHttpErrorsTitle": {
+    "message": "Lewati galat 403/404"
+  },
+  "skipHttpErrorsExplain": {
+    "message": "Lewati dan hapus otomatis media yang mengalami galat 403 atau 404 saat mengunduh alih-alih gagal."
   }
 }

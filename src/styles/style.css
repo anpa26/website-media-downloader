@@ -36,6 +36,39 @@ html,
 body {
     width: 550px;
     height: 600px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--mdui-color-primary), 0.45) transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: rgba(var(--mdui-color-primary), 0.45);
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(var(--mdui-color-primary), 0.8);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--mdui-color-primary), 0.45) transparent;
 }
 
 body {
@@ -46,7 +79,6 @@ body {
     color: rgb(var(--mdui-color-on-surface));
     overflow-x: hidden;
     overflow-y: auto;
-    scrollbar-gutter: stable;
 }
 
 html.is-tab,
@@ -586,6 +618,8 @@ mdui-bottom-app-bar {
     border-top: 1px solid rgb(var(--mdui-color-outline-variant));
     background-color: rgb(var(--mdui-color-surface-container-high));
     backdrop-filter: blur(12px);
+    overflow: visible !important;
+    z-index: 120;
 }
 
 .bottom-content {
@@ -595,11 +629,67 @@ mdui-bottom-app-bar {
     align-items: center;
     padding: 0 16px;
     height: 100%;
+    position: relative;
+    overflow: visible;
 }
 
 .bottom-actions {
     display: flex;
-    gap: 12px;
+    align-items: center;
+    gap: 8px;
+}
+
+.speed-dial-container {
+    position: relative;
+}
+
+.speed-dial-menu {
+    position: absolute;
+    bottom: calc(100% + 14px);
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+    transform-origin: bottom right;
+    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 200;
+}
+
+.speed-dial-container.open .speed-dial-menu {
+    pointer-events: auto;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.speed-dial-item {
+    --mdui-shape-corner-extra-small: 20px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+    white-space: nowrap;
+    transform: translateY(8px);
+    opacity: 0;
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.18s ease;
+}
+
+.speed-dial-container.open .speed-dial-item {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.speed-dial-container.open .speed-dial-item:nth-child(4) { transition-delay: 0.02s; }
+.speed-dial-container.open .speed-dial-item:nth-child(3) { transition-delay: 0.05s; }
+.speed-dial-container.open .speed-dial-item:nth-child(2) { transition-delay: 0.08s; }
+.speed-dial-container.open .speed-dial-item:nth-child(1) { transition-delay: 0.11s; }
+
+.speed-dial-toggle-icon {
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.speed-dial-container.open .speed-dial-toggle-icon {
+    transform: rotate(180deg);
 }
 
 .history-actions {
@@ -1319,3 +1409,363 @@ html.theme-pitch-black mdui-card,
 html.theme-pitch-black .media-card {
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
+
+.speed-dial-container.classic #speed-dial-toggle,
+.speed-dial-container.classic #manual-scan-btn-bottom {
+    display: none;
+}
+
+.speed-dial-container.classic .speed-dial-item:not(#add-manual-url-btn-bottom) mdui-icon {
+    display: none;
+}
+
+.speed-dial-container.classic #add-manual-url-btn-bottom {
+    min-width: 40px;
+    width: 40px;
+    padding: 0;
+}
+
+.speed-dial-container.classic #add-manual-url-btn-bottom span {
+    display: none;
+}
+
+.speed-dial-container.classic .speed-dial-menu {
+    position: static;
+    flex-direction: row;
+    align-items: center;
+    pointer-events: auto;
+    opacity: 1;
+    transform: none;
+}
+
+.speed-dial-container.classic .speed-dial-item {
+    --mdui-shape-corner-extra-small: 20px;
+    box-shadow: none;
+    transform: none;
+    opacity: 1;
+    transition: none;
+}
+
+.speed-dial-container.classic #add-manual-url-btn-bottom {
+    order: -1;
+}
+
+html:not(.top-header-v1) mdui-tabs::part(container) {
+    display: none;
+}
+
+html.top-header-v1 #app-header {
+    display: none !important;
+}
+
+html.top-header-v1 mdui-tabs::part(container) {
+    display: flex !important;
+}
+
+html:not(.top-header-v1) #media-controls,
+html:not(.top-header-v1) .download-progress-container,
+html:not(.top-header-v1) .settings-tabs-header {
+    top: 60px;
+}
+
+#app-header {
+    position: sticky;
+    top: 0;
+    z-index: 130;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 12px 0 16px;
+    background-color: rgb(var(--mdui-color-surface));
+    border-bottom: 1px solid rgb(var(--mdui-color-outline-variant));
+}
+
+.app-header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.app-header-logo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.app-header-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.app-header-menu {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.app-nav-list {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+    transform-origin: top right;
+    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 200;
+}
+
+.app-header-menu.open .app-nav-list {
+    pointer-events: auto;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.app-nav-item {
+    --mdui-shape-corner-extra-small: 20px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+    white-space: nowrap;
+}
+
+#app-nav-toggle {
+    margin-top: 4px;
+}
+
+#app-nav-toggle,
+.app-nav-item {
+    height: 30px;
+    font-size: 0.8rem;
+    --mdui-shape-corner-extra-small: 15px;
+}
+
+#app-nav-toggle::part(button),
+.app-nav-item::part(button) {
+    padding: 0 14px;
+}
+
+.app-nav-list {
+    gap: 6px;
+    top: calc(100% + 8px);
+}
+
+html.bottom-bar-v1 .speed-dial-container #speed-dial-toggle,
+html.bottom-bar-v1 .speed-dial-container #manual-scan-btn-bottom,
+html.bottom-bar-v1 .speed-dial-container #add-manual-url-btn-bottom {
+    display: none !important;
+}
+
+html.bottom-bar-v1 .speed-dial-container .speed-dial-menu {
+    position: static;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    pointer-events: auto;
+    opacity: 1;
+    transform: none;
+}
+
+html.bottom-bar-v1 .speed-dial-container .speed-dial-item {
+    --mdui-shape-corner-extra-small: 20px;
+    box-shadow: none;
+    transform: none;
+    opacity: 1;
+    transition: none;
+    min-width: auto;
+    width: auto;
+    padding: 0;
+}
+
+html.bottom-bar-v1 .speed-dial-container .speed-dial-item::part(button) {
+    padding: 0 1rem !important;
+}
+
+html.bottom-bar-v1 .speed-dial-container .speed-dial-item::part(label) {
+    display: inline-flex !important;
+    padding: 0 0.5rem !important;
+}
+
+html.bottom-bar-v1 .speed-dial-container .speed-dial-item mdui-icon {
+    display: none !important;
+}
+
+html.bottom-bar-v1 .speed-dial-container .speed-dial-item span {
+    display: inline !important;
+}
+
+html.bottom-bar-v1 .speed-dial-container #clear-list {
+    order: 1;
+}
+
+html.bottom-bar-v1 .speed-dial-container #refresh-list {
+    order: 2;
+}
+
+html.bottom-bar-v3 .speed-dial-container #speed-dial-toggle {
+    display: none !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container .speed-dial-menu {
+    position: static;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    pointer-events: auto;
+    opacity: 1;
+    transform: none;
+}
+
+html.bottom-bar-v3 .speed-dial-container .speed-dial-item {
+    --mdui-shape-corner-extra-small: 16px;
+    box-shadow: none;
+    transform: none;
+    opacity: 1;
+    transition: none;
+}
+
+html.bottom-bar-v3 .speed-dial-container #refresh-list {
+    order: 1;
+    min-width: 40px !important;
+    width: 40px !important;
+    max-width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container #manual-scan-btn-bottom {
+    order: 2;
+    min-width: auto !important;
+    width: auto !important;
+    padding: 0 !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container #manual-scan-btn-bottom::part(button) {
+    padding: 0 16px !important;
+    justify-content: center !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container #manual-scan-btn-bottom mdui-icon {
+    display: inline-flex !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container #manual-scan-btn-bottom span {
+    display: inline !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container #add-manual-url-btn-bottom {
+    order: 3;
+    min-width: auto !important;
+    width: auto !important;
+    padding: 0 !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container #add-manual-url-btn-bottom::part(button) {
+    padding: 0 16px !important;
+    justify-content: center !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container #add-manual-url-btn-bottom mdui-icon {
+    display: inline-flex !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container #add-manual-url-btn-bottom span {
+    display: inline !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container #clear-list {
+    order: 4;
+    min-width: 40px !important;
+    width: 40px !important;
+    max-width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container #clear-list::part(button) {
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container #clear-list::part(label) {
+    display: none !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container #clear-list::part(icon) {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container #clear-list span {
+    display: none !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container #clear-list mdui-icon {
+    display: inline-flex !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container #refresh-list::part(button) {
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container #refresh-list::part(label) {
+    display: none !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container #refresh-list::part(icon) {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container #refresh-list span {
+    display: none !important;
+}
+
+html.bottom-bar-v3 .speed-dial-container #refresh-list mdui-icon {
+    display: inline-flex !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.group-progress-details {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+.group-progress-details::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+

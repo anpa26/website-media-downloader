@@ -1244,7 +1244,7 @@
         "description": "Updated/Added during UI string localization audit."
     },
     "extensionDescriptionAbout": {
-        "message": "Alat penting untuk mengunduh media. Mendeteksi video, musik, dan siaran langsung dengan mudah saat Anda menjelajah. Mendukung unduhan di latar belakang dan konversi otomatis siaran HLS/DASH untuk menyimpan konten langsung ke perangkat Anda.",
+        "message": "Deteksi dan unduh video, audio, gambar serta siaran langsung (HLS/DASH) dari berbagai situs web dengan mudah. Dilengkapi pemindaian tab pintar, konversi stream otomatis, unduhan latar belakang dan kontrol unduhan interaktif langsung ke perangkat Anda.",
         "description": "Updated/Added during UI string localization audit."
     },
     "confirmTitle": {
@@ -2175,5 +2175,98 @@
   "imageMinFileSizeCustomExplain": {
     "message": "Masukkan ukuran minimum file gambar dalam KB (0 = nonaktif).",
     "description": "imageMinFileSizeCustomExplain"
-  }
+  },
+    "scanNowButton": {
+        "message": "Pindai"
+    },
+    "listActionsButton": {
+        "message": "Opsi daftar"
+    },
+    "addShortButton": {
+        "message": "Tambah"
+    },
+    "menuButton": {
+        "message": "Menu"
+    },
+    "manualScanTitle": {
+        "message": "Hanya pindai manual"
+    },
+    "manualScanExplain": {
+        "message": "Media tetap terdeteksi di latar belakang, namun hanya ditampilkan untuk situs web yang sedang dibuka saat tombol Pindai diklik."
+    },
+    "removeOnTabCloseTitle": {
+        "message": "Hapus media terdeteksi saat tab ditutup"
+    },
+    "removeOnTabCloseExplain": {
+        "message": "Secara otomatis menghapus berkas media yang terdeteksi dari daftar ketika tab tempat media tersebut ditemukan ditutup."
+    },
+    "manualScanKeepTabsTitle": {
+        "message": "Tetap tampilkan media dari tab lain"
+    },
+    "manualScanKeepTabsExplain": {
+        "message": "Tetap tampilkan media yang terdeteksi dari tab lain saat berpindah tab. Jika dinonaktifkan, daftar hanya menampilkan media dari tab yang sedang dibuka."
+    },
+    "topHeaderDesignTitle": {
+        "message": "Desain header atas"
+    },
+    "topHeaderDesignExplain": {
+        "message": "Pilih antara desain header menu navigasi baru (v2) atau tab navigasi klasik (v1)."
+    },
+    "topHeaderV1": {
+        "message": "v1"
+    },
+    "topHeaderV2": {
+        "message": "v2"
+    },
+    "bottomBarDesignTitle": {
+        "message": "Desain bilah aksi bawah"
+    },
+    "bottomBarDesignExplain": {
+        "message": "Pilih gaya tombol untuk bilah aksi bagian bawah pada daftar media."
+    },
+    "bottomBarV1": {
+        "message": "v1"
+    },
+    "bottomBarV2": {
+        "message": "v2"
+    },
+    "bottomBarV3": {
+        "message": "v3"
+    },
+    "updateCardTitle": {
+        "message": "Pembaruan Tersedia",
+        "description": "Title of the update available card in the about page."
+    },
+    "updateCardFirefoxDesc": {
+        "message": "Versi pembaruan $VERSION$ telah terdeteksi pada repositori rilis resmi. Karena arsitektur sistem keamanan browser Firefox, paket add-on (.xpi) yang telah ditandatangani akan diperiksa, diunduh, dan diterapkan secara otomatis di latar belakang dalam waktu maksimal 24 jam tanpa memerlukan tindakan manual dari Anda.",
+        "description": "Detailed professional description for Firefox in update card.",
+        "placeholders": {
+          "VERSION": {
+            "content": "$1",
+            "example": "2.5.0"
+          }
+        }
+    },
+    "updateCardChromeDesc": {
+        "message": "Versi pembaruan $VERSION$ telah terdeteksi pada repositori rilis resmi. Anda dapat segera memperbarui ekstensi ke versi terbaru dengan mengunduh paket pembaruan melalui tombol di bawah ini.",
+        "description": "Detailed professional description for Chrome in update card.",
+        "placeholders": {
+          "VERSION": {
+            "content": "$1",
+            "example": "2.5.0"
+          }
+        }
+    },
+    "updateCardButton": {
+        "message": "Perbarui Sekarang",
+        "description": "Action button in the update card to open update link."
+    },
+    "groupProgressTitle": {
+        "message": "Progres unduhan pada grup",
+        "description": "Title of download progress on groups setting."
+    },
+    "groupProgressExplain": {
+        "message": "Menampilkan daftar progres unduhan aktif dengan tombol jeda dan batal di kartu grup.",
+        "description": "Explanation of download progress on groups setting."
+    }
 }
