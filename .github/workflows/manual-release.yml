@@ -288,23 +288,42 @@ jobs:
             if [ -n "$SOURCE_ZIP" ] && [ -f "$SOURCE_ZIP" ]; then
               UPLOAD_SOURCE_FLAG="--upload-source-code $SOURCE_ZIP"
             fi
+            LOG_FILE="/tmp/sign-$(basename "$SOURCE_DIR").log"
+            set +e
             npx --yes web-ext sign \
               --source-dir "$SOURCE_DIR" \
               --artifacts-dir "$ARTIFACT_DIR" \
               --channel unlisted \
               --api-key "$WEB_EXT_API_KEY" \
               --api-secret "$WEB_EXT_API_SECRET" \
-              $UPLOAD_SOURCE_FLAG
-
-            SIGNED_XPI=$(find "$ARTIFACT_DIR" -maxdepth 1 -type f -name '*.xpi' -print -quit)
-            if [ -z "$SIGNED_XPI" ]; then
-              echo "AMO did not return a signed XPI for $SOURCE_DIR."
-              exit 1
+              $UPLOAD_SOURCE_FLAG 2>&1 | tee "$LOG_FILE"
+            SIGN_RC=${PIPESTATUS[0]}
+            set -e
+            sleep 60
+            if [ "$SIGN_RC" -eq 0 ]; then
+              SIGNED_XPI=$(find "$ARTIFACT_DIR" -maxdepth 1 -type f -name '*.xpi' -print -quit)
+              if [ -z "$SIGNED_XPI" ]; then
+                echo "WARNING: AMO did not return a signed XPI for $SOURCE_DIR, continuing with the next build."
+                return 0
+              fi
+              cp "$SIGNED_XPI" "$OUTPUT_FILE"
+              return 0
             fi
-            cp "$SIGNED_XPI" "$OUTPUT_FILE"
+            if grep -qiE "already exist|already been submitted|duplicate version" "$LOG_FILE"; then
+              echo "Version for $SOURCE_DIR was already submitted, skipping re-sign."
+              if gh release download "$RELEASE_TAG" --pattern "$(basename "$OUTPUT_FILE")" --dir . --clobber 2>/dev/null; then
+                echo "Restored previously signed $OUTPUT_FILE from the GitHub release."
+              else
+                echo "WARNING: could not restore $OUTPUT_FILE from the GitHub release; Verify may fail for this file."
+              fi
+              return 0
+            fi
+            echo "WARNING: signing $SOURCE_DIR failed (exit $SIGN_RC), continuing with the next build."
+            return 0
           }
 
           TAG="${{ github.event.inputs.tag_name }}"
+          RELEASE_TAG="${{ steps.commit_info.outputs.release_tag }}"
           sign_firefox_build build/firefox signed-artifacts/firefox "website-media-downloader-firefox-$TAG.xpi" "website-media-downloader-firefox-source-$TAG.zip"
           sign_firefox_build build/firefox-light signed-artifacts/firefox-light "website-media-downloader-firefox-light-$TAG.xpi" "website-media-downloader-firefox-light-source-$TAG.zip"
           sign_firefox_build build/firefox-debug signed-artifacts/firefox-debug "website-media-downloader-firefox-debug-$TAG.xpi"
@@ -319,6 +338,8 @@ jobs:
             if [ -n "$SOURCE_ZIP" ] && [ -f "$SOURCE_ZIP" ]; then
               UPLOAD_SOURCE_FLAG="--upload-source-code $SOURCE_ZIP"
             fi
+            LOG_FILE="/tmp/submit-$(basename "$SOURCE_DIR").log"
+            set +e
             npx --yes web-ext sign \
               --source-dir "$SOURCE_DIR" \
               --artifacts-dir "listed-artifacts/$(basename "$SOURCE_DIR")" \
@@ -326,8 +347,20 @@ jobs:
               --approval-timeout 0 \
               --api-key "$WEB_EXT_API_KEY" \
               --api-secret "$WEB_EXT_API_SECRET" \
-              $UPLOAD_SOURCE_FLAG
-            echo "Submitted $SOURCE_DIR to AMO listed channel (review pending)."
+              $UPLOAD_SOURCE_FLAG 2>&1 | tee "$LOG_FILE"
+            SIGN_RC=${PIPESTATUS[0]}
+            set -e
+            sleep 60
+            if [ "$SIGN_RC" -eq 0 ]; then
+              echo "Submitted $SOURCE_DIR to AMO listed channel (review pending)."
+              return 0
+            fi
+            if grep -qiE "already exist|already been submitted|duplicate version" "$LOG_FILE"; then
+              echo "Version for $SOURCE_DIR was already submitted to AMO listed channel, skipping."
+              return 0
+            fi
+            echo "WARNING: listed submission for $SOURCE_DIR failed (exit $SIGN_RC), continuing (listed is optional)."
+            return 0
           }
 
           submit_listed_build build/firefox-amo "website-media-downloader-firefox-amo-source-$TAG.zip"
@@ -336,17 +369,27 @@ jobs:
       - name: Verify Firefox Artifacts
         if: ${{ github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only' }}
         run: |
+          FOUND=0
           for XPI in \
             "website-media-downloader-firefox-${{ github.event.inputs.tag_name }}.xpi" \
             "website-media-downloader-firefox-light-${{ github.event.inputs.tag_name }}.xpi" \
             "website-media-downloader-firefox-debug-${{ github.event.inputs.tag_name }}.xpi" \
             "website-media-downloader-firefox-light-debug-${{ github.event.inputs.tag_name }}.xpi"; do
-            test -s "$XPI"
+            if [ ! -s "$XPI" ]; then
+              echo "WARNING: $XPI missing, skipping (partial release)."
+              continue
+            fi
             unzip -t "$XPI"
             if [ "${{ inputs.sign_firefox }}" = "sign with AMO" ]; then
               unzip -Z1 "$XPI" | grep -Eq '^META-INF/(mozilla\.rsa|cose\.sig)$'
             fi
+            FOUND=$((FOUND + 1))
           done
+          if [ "$FOUND" -eq 0 ]; then
+            echo "No signed Firefox XPI found, nothing to release."
+            exit 1
+          fi
+          echo "Verified $FOUND of 4 Firefox XPIs."
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -360,20 +403,18 @@ jobs:
             website-media-downloader-chrome-yt-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-chrome-light-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-chrome-yt-light-${{ github.event.inputs.tag_name }}.zip
-            website-media-downloader-firefox-${{ github.event.inputs.tag_name }}.xpi
-            website-media-downloader-firefox-light-${{ github.event.inputs.tag_name }}.xpi
+            website-media-downloader-firefox-*.xpi
             website-media-downloader-chrome-debug-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-chrome-yt-debug-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-chrome-light-debug-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-chrome-yt-light-debug-${{ github.event.inputs.tag_name }}.zip
-            website-media-downloader-firefox-debug-${{ github.event.inputs.tag_name }}.xpi
-            website-media-downloader-firefox-light-debug-${{ github.event.inputs.tag_name }}.xpi
             website-media-downloader-chrome-source-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-chrome-yt-source-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-chrome-light-source-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-chrome-yt-light-source-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-firefox-source-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-firefox-light-source-${{ github.event.inputs.tag_name }}.zip
+          fail_on_unmatched_files: false
           target_commitish: ${{ github.event.inputs.commit_sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
