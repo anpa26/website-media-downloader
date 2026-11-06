@@ -3,32 +3,32 @@
     "{924f7c81-8b1e-4b6e-9e7c-8e4a9e1d2c3f}": {
       "updates": [
         {
-          "version": "2.5.3",
-          "update_link": "https://github.com/anpa26/website-media-downloader/releases/download/v2.5.3-signed/website-media-downloader-firefox-v2.5.3.xpi"
+          "version": "2.5.5",
+          "update_link": "https://github.com/anpa26/website-media-downloader/releases/download/v2.5.5-signed/website-media-downloader-firefox-v2.5.3.xpi"
         }
       ]
     },
     "{a3e8274d-921c-4ad5-af7b-cb9e015def72}": {
       "updates": [
         {
-          "version": "2.5.3",
-          "update_link": "https://github.com/anpa26/website-media-downloader/releases/download/v2.5.3-signed/website-media-downloader-firefox-light-v2.5.3.xpi"
+          "version": "2.5.5",
+          "update_link": "https://github.com/anpa26/website-media-downloader/releases/download/v2.5.5-signed/website-media-downloader-firefox-light-v2.5.3.xpi"
         }
       ]
     },
     "{1376a6d2-e07f-4015-af28-ca2acfef4e37}": {
       "updates": [
         {
-          "version": "2.5.3",
-          "update_link": "https://github.com/anpa26/website-media-downloader/releases/download/v2.5.3-signed/website-media-downloader-firefox-debug-v2.5.3.xpi"
+          "version": "2.5.5",
+          "update_link": "https://github.com/anpa26/website-media-downloader/releases/download/v2.5.5-signed/website-media-downloader-firefox-debug-v2.5.3.xpi"
         }
       ]
     },
     "{d223cfe1-7d70-4ba2-a81c-3cc817d21cc7}": {
       "updates": [
         {
-          "version": "2.5.3",
-          "update_link": "https://github.com/anpa26/website-media-downloader/releases/download/v2.5.3-signed/website-media-downloader-firefox-light-debug-v2.5.3.xpi"
+          "version": "2.5.5",
+          "update_link": "https://github.com/anpa26/website-media-downloader/releases/download/v2.5.5-signed/website-media-downloader-firefox-light-debug-v2.5.3.xpi"
         }
       ]
     }

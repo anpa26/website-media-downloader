@@ -217,14 +217,6 @@ jobs:
             zip -9 -r ../../website-media-downloader-firefox-${{ github.event.inputs.tag_name }}.xpi ./*
             cd ../..
 
-            cd build/firefox-amo
-            zip -9 -r ../../website-media-downloader-firefox-amo-${{ github.event.inputs.tag_name }}.xpi ./*
-            cd ../..
-
-            cd build/firefox-light-amo
-            zip -9 -r ../../website-media-downloader-firefox-light-amo-${{ github.event.inputs.tag_name }}.xpi ./*
-            cd ../..
-
             cd build/firefox-light
             zip -9 -r ../../website-media-downloader-firefox-light-${{ github.event.inputs.tag_name }}.xpi ./*
             cd ../..
@@ -256,7 +248,7 @@ jobs:
             rm -rf firefox-light-source-temp
 
             mkdir -p firefox-amo-source-temp/src
-            cp -r build/firefox-amo/* firefox-amo-source-temp/src/
+            cp -r src/* firefox-amo-source-temp/src/
             cp README.md LICENSE.md CONTRIBUTING.md firefox-amo-source-temp/
             cp -r licenses firefox-amo-source-temp/
             cd firefox-amo-source-temp
@@ -265,7 +257,7 @@ jobs:
             rm -rf firefox-amo-source-temp
 
             mkdir -p firefox-light-amo-source-temp/src
-            cp -r build/firefox-light-amo/* firefox-light-amo-source-temp/src/
+            cp -r src/* firefox-light-amo-source-temp/src/
             cp README.md LICENSE.md CONTRIBUTING.md firefox-light-amo-source-temp/
             cp -r licenses firefox-light-amo-source-temp/
             cd firefox-light-amo-source-temp
@@ -318,6 +310,29 @@ jobs:
           sign_firefox_build build/firefox-debug signed-artifacts/firefox-debug "website-media-downloader-firefox-debug-$TAG.xpi"
           sign_firefox_build build/firefox-light-debug signed-artifacts/firefox-light-debug "website-media-downloader-firefox-light-debug-$TAG.xpi"
 
+          submit_listed_build() {
+            SOURCE_DIR="$1"
+            SOURCE_ZIP="$2"
+
+            mkdir -p "listed-artifacts/$(basename "$SOURCE_DIR")"
+            UPLOAD_SOURCE_FLAG=""
+            if [ -n "$SOURCE_ZIP" ] && [ -f "$SOURCE_ZIP" ]; then
+              UPLOAD_SOURCE_FLAG="--upload-source-code $SOURCE_ZIP"
+            fi
+            npx --yes web-ext sign \
+              --source-dir "$SOURCE_DIR" \
+              --artifacts-dir "listed-artifacts/$(basename "$SOURCE_DIR")" \
+              --channel listed \
+              --approval-timeout 0 \
+              --api-key "$WEB_EXT_API_KEY" \
+              --api-secret "$WEB_EXT_API_SECRET" \
+              $UPLOAD_SOURCE_FLAG
+            echo "Submitted $SOURCE_DIR to AMO listed channel (review pending)."
+          }
+
+          submit_listed_build build/firefox-amo "website-media-downloader-firefox-amo-source-$TAG.zip"
+          submit_listed_build build/firefox-light-amo "website-media-downloader-firefox-light-amo-source-$TAG.zip"
+
       - name: Verify Firefox Artifacts
         if: ${{ github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only' }}
         run: |
@@ -332,18 +347,6 @@ jobs:
               unzip -Z1 "$XPI" | grep -Eq '^META-INF/(mozilla\.rsa|cose\.sig)$'
             fi
           done
-
-      - name: Upload AMO Listed XPIs as Workflow Artifact
-        if: ${{ github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: firefox-amo-xpis-${{ github.event.inputs.tag_name }}
-          path: |
-            website-media-downloader-firefox-amo-${{ github.event.inputs.tag_name }}.xpi
-            website-media-downloader-firefox-light-amo-${{ github.event.inputs.tag_name }}.xpi
-            website-media-downloader-firefox-amo-source-${{ github.event.inputs.tag_name }}.zip
-            website-media-downloader-firefox-light-amo-source-${{ github.event.inputs.tag_name }}.zip
-          if-no-files-found: error
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1

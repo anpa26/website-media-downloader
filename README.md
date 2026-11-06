@@ -6,7 +6,7 @@
 
 <div align="center">
 
-  [![Version](https://img.shields.io/badge/version-2.5.3-blue.svg)](src/manifest.json)
+  [![Version](https://img.shields.io/badge/version-2.5.5-blue.svg)](src/manifest.json)
   [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE.md)
   [![Platform](https://img.shields.io/badge/platform-Chrome%20%7C%20Firefox%20%7C%20Android-orange.svg)](#installation)
   [![Firefox Add-ons](https://img.shields.io/badge/Firefox-Add--ons-FF7139?logo=firefox)](https://addons.mozilla.org/en-US/firefox/addon/website-media-downloader/)
