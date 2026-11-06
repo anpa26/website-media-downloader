@@ -1,4 +1,4 @@
-name: Manual Release
+name: Automatic Release Extension
 
 on:
   workflow_dispatch:
@@ -35,7 +35,12 @@ on:
           - 'sign with AMO'
           - 'do not sign'
       recompress_only:
-        description: 'Recompress only: download an existing release, recompress its XPIs/source zips, and re-upload (skip build and sign)'
+        description: 'Download an existing release, recompress it and re-upload (skip build and sign)'
+        required: false
+        default: false
+        type: boolean
+      skip_listed:
+        description: 'Sign unlisted build only, do not submit to AMO listed channel'
         required: false
         default: false
         type: boolean
@@ -59,7 +64,7 @@ jobs:
         with:
           node-version: 20
 
-      - name: Get Commit Details
+      - name: Get Commit Detail
         id: commit_info
         run: |
           SHA="${{ github.event.inputs.commit_sha }}"
@@ -122,13 +127,13 @@ jobs:
             node src/build.js firefox-light-debug
           fi
 
-      - name: Minify Builds
+      - name: Minify Build
         if: ${{ !inputs.recompress_only }}
         run: |
           npm install terser html-minifier-terser clean-css
           node src/minify.js
 
-      - name: Create Release Archives
+      - name: Create Release Archive
         if: ${{ !inputs.recompress_only }}
         run: |
           if [ "${{ github.event.inputs.target_browser }}" = "both" ] || [ "${{ github.event.inputs.target_browser }}" = "chrome only" ]; then
@@ -375,8 +380,12 @@ jobs:
             return 0
           }
 
-          submit_listed_build build/firefox-amo "website-media-downloader-firefox-amo-source-$TAG.zip"
-          submit_listed_build build/firefox-light-amo "website-media-downloader-firefox-light-amo-source-$TAG.zip"
+          if [ "${{ inputs.skip_listed }}" != "true" ]; then
+            submit_listed_build build/firefox-amo "website-media-downloader-firefox-amo-source-$TAG.zip"
+            submit_listed_build build/firefox-light-amo "website-media-downloader-firefox-light-amo-source-$TAG.zip"
+          else
+            echo "Skipping listed submissions (skip_listed is enabled)."
+          fi
 
       - name: Download Existing Release Assets
         if: ${{ inputs.recompress_only && (github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only') }}
@@ -387,7 +396,7 @@ jobs:
           gh release download "$TAG" --pattern 'website-media-downloader-firefox-*.xpi' --pattern 'website-media-downloader-*-source-*.zip' --dir . --clobber
           ls -la website-media-downloader-firefox-*.xpi website-media-downloader-*-source-*.zip
 
-      - name: Recompress Signed XPIs and Source Archives
+      - name: Recompress Signed XPI and Source Archives
         if: ${{ github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only' }}
         run: |
           python3 - <<'PYEOF'
@@ -437,7 +446,7 @@ jobs:
                   print(f'{path}: {old} -> {new} bytes ({status})')
           PYEOF
 
-      - name: Verify Firefox Artifacts
+      - name: Verify Firefox Artifact
         if: ${{ github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only' }}
         run: |
           FOUND=0
