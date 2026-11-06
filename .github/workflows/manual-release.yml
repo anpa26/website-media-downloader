@@ -34,6 +34,11 @@ on:
         options:
           - 'sign with AMO'
           - 'do not sign'
+      recompress_only:
+        description: 'Recompress only: download an existing release, recompress its XPIs/source zips, and re-upload (skip build and sign)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build:
@@ -49,6 +54,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node.js
+        if: ${{ !inputs.recompress_only }}
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -94,6 +100,7 @@ jobs:
           fi
 
       - name: Run Build Script
+        if: ${{ !inputs.recompress_only }}
         run: |
           if [ "${{ github.event.inputs.target_browser }}" = "both" ]; then
             node src/build.js all
@@ -116,11 +123,13 @@ jobs:
           fi
 
       - name: Minify Builds
+        if: ${{ !inputs.recompress_only }}
         run: |
           npm install terser html-minifier-terser clean-css
           node src/minify.js
 
       - name: Create Release Archives
+        if: ${{ !inputs.recompress_only }}
         run: |
           if [ "${{ github.event.inputs.target_browser }}" = "both" ] || [ "${{ github.event.inputs.target_browser }}" = "chrome only" ]; then
             cd build/chrome
@@ -267,7 +276,7 @@ jobs:
           fi
 
       - name: Sign Firefox Extension with AMO
-        if: ${{ inputs.sign_firefox == 'sign with AMO' && (github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only') }}
+        if: ${{ !inputs.recompress_only && inputs.sign_firefox == 'sign with AMO' && (github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only') }}
         env:
           WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
           WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
@@ -304,6 +313,7 @@ jobs:
               SIGNED_XPI=$(find "$ARTIFACT_DIR" -maxdepth 1 -type f -name '*.xpi' -print -quit)
               if [ -z "$SIGNED_XPI" ]; then
                 echo "WARNING: AMO did not return a signed XPI for $SOURCE_DIR, continuing with the next build."
+                rm -f "$OUTPUT_FILE"
                 return 0
               fi
               cp "$SIGNED_XPI" "$OUTPUT_FILE"
@@ -314,11 +324,13 @@ jobs:
               if gh release download "$RELEASE_TAG" --pattern "$(basename "$OUTPUT_FILE")" --dir . --clobber 2>/dev/null; then
                 echo "Restored previously signed $OUTPUT_FILE from the GitHub release."
               else
-                echo "WARNING: could not restore $OUTPUT_FILE from the GitHub release; Verify may fail for this file."
+                echo "WARNING: could not restore $OUTPUT_FILE from the GitHub release; removing unsigned file so Verify treats it as missing."
+                rm -f "$OUTPUT_FILE"
               fi
               return 0
             fi
             echo "WARNING: signing $SOURCE_DIR failed (exit $SIGN_RC), continuing with the next build."
+            rm -f "$OUTPUT_FILE"
             return 0
           }
 
@@ -366,6 +378,65 @@ jobs:
           submit_listed_build build/firefox-amo "website-media-downloader-firefox-amo-source-$TAG.zip"
           submit_listed_build build/firefox-light-amo "website-media-downloader-firefox-light-amo-source-$TAG.zip"
 
+      - name: Download Existing Release Assets
+        if: ${{ inputs.recompress_only && (github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.commit_info.outputs.release_tag }}"
+          gh release download "$TAG" --pattern 'website-media-downloader-firefox-*.xpi' --pattern 'website-media-downloader-*-source-*.zip' --dir . --clobber
+          ls -la website-media-downloader-firefox-*.xpi website-media-downloader-*-source-*.zip
+
+      - name: Recompress Signed XPIs and Source Archives
+        if: ${{ github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only' }}
+        run: |
+          python3 - <<'PYEOF'
+          import zipfile, hashlib, base64, re, os, glob
+
+          def recompress(path):
+              zin = zipfile.ZipFile(path, 'r')
+              tmp = path + '.repacked'
+              zout = zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED, compresslevel=9)
+              for item in zin.infolist():
+                  data = zin.read(item.filename)
+                  zi = zipfile.ZipInfo(item.filename, date_time=item.date_time)
+                  zi.compress_type = zipfile.ZIP_DEFLATED
+                  zi.external_attr = item.external_attr
+                  zi.create_system = item.create_system
+                  zout.writestr(zi, data)
+              zout.close()
+              zin.close()
+              os.replace(tmp, path)
+
+          def verify_signed(path):
+              z = zipfile.ZipFile(path, 'r')
+              names = z.namelist()
+              if 'META-INF/manifest.mf' not in names:
+                  z.close()
+                  return None
+              mf = z.read('META-INF/manifest.mf').decode('utf-8')
+              entries = re.findall(r'Name: (.+)\nDigest-Algorithms: [^\n]+\nSHA1-Digest: [^\n]+\nSHA256-Digest: (\S+)', mf)
+              checked = 0
+              for name, b64 in entries:
+                  if name not in names:
+                      raise SystemExit(f'{path}: file in manifest missing from archive: {name}')
+                  h = base64.b64encode(hashlib.sha256(z.read(name)).digest()).decode()
+                  if h != b64:
+                      raise SystemExit(f'{path}: hash mismatch for {name}, signature broken')
+                  checked += 1
+              z.close()
+              return checked
+
+          for pattern in ['website-media-downloader-firefox-*.xpi', 'website-media-downloader-*-source-*.zip']:
+              for path in sorted(glob.glob(pattern)):
+                  old = os.path.getsize(path)
+                  recompress(path)
+                  new = os.path.getsize(path)
+                  checked = verify_signed(path)
+                  status = f'signature OK ({checked} hashes)' if checked is not None else 'unsigned, no signature to check'
+                  print(f'{path}: {old} -> {new} bytes ({status})')
+          PYEOF
+
       - name: Verify Firefox Artifacts
         if: ${{ github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only' }}
         run: |
@@ -391,7 +462,16 @@ jobs:
           fi
           echo "Verified $FOUND of 4 Firefox XPIs."
 
+      - name: Upload Recompressed Assets to Release
+        if: ${{ inputs.recompress_only && (github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.commit_info.outputs.release_tag }}"
+          gh release upload "$TAG" website-media-downloader-firefox-*.xpi website-media-downloader-*-source-*.zip --clobber
+
       - name: Create GitHub Release
+        if: ${{ !inputs.recompress_only }}
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.commit_info.outputs.release_tag }}
