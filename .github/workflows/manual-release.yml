@@ -243,6 +243,14 @@ jobs:
             zip -9 -r ../../website-media-downloader-firefox-light-debug-${{ github.event.inputs.tag_name }}.xpi ./*
             cd ../..
 
+            cd build/firefox-amo
+            zip -9 -r ../../website-media-downloader-firefox-amo-${{ github.event.inputs.tag_name }}.xpi ./*
+            cd ../..
+
+            cd build/firefox-light-amo
+            zip -9 -r ../../website-media-downloader-firefox-light-amo-${{ github.event.inputs.tag_name }}.xpi ./*
+            cd ../..
+            
             mkdir -p firefox-source-temp/src
             cp -r build/firefox/* firefox-source-temp/src/
             cp README.md LICENSE.md CONTRIBUTING.md firefox-source-temp/
@@ -260,7 +268,7 @@ jobs:
             zip -9 -r ../website-media-downloader-firefox-light-source-${{ github.event.inputs.tag_name }}.zip ./*
             cd ..
             rm -rf firefox-light-source-temp
-
+            
             mkdir -p firefox-amo-source-temp/src
             cp -r src/* firefox-amo-source-temp/src/
             cp README.md LICENSE.md CONTRIBUTING.md firefox-amo-source-temp/
@@ -479,6 +487,27 @@ jobs:
           TAG="${{ steps.commit_info.outputs.release_tag }}"
           gh release upload "$TAG" website-media-downloader-firefox-*.xpi website-media-downloader-*-source-*.zip --clobber
 
+      - name: Upload AMO Listed XPI as Workflow Artifact
+        if: ${{ inputs.skip_listed && github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: firefox-amo-listed-${{ github.event.inputs.tag_name }}
+          path: |
+            website-media-downloader-firefox-amo-${{ github.event.inputs.tag_name }}.xpi
+            website-media-downloader-firefox-light-amo-${{ github.event.inputs.tag_name }}.xpi
+            website-media-downloader-firefox-amo-source-${{ github.event.inputs.tag_name }}.zip
+            website-media-downloader-firefox-light-amo-source-${{ github.event.inputs.tag_name }}.zip
+          if-no-files-found: error
+
+      - name: Remove Firefox Artifact
+        if: ${{ inputs.skip_listed && github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only' }}
+        run: |
+          rm -rf \
+            website-media-downloader-firefox-amo-${{ github.event.inputs.tag_name }}.xpi \
+            website-media-downloader-firefox-light-amo-${{ github.event.inputs.tag_name }}.xpi \
+            website-media-downloader-firefox-amo-source-${{ github.event.inputs.tag_name }}.zip \
+            website-media-downloader-firefox-light-amo-source-${{ github.event.inputs.tag_name }}.zip
+        
       - name: Create GitHub Release
         if: ${{ !inputs.recompress_only }}
         uses: softprops/action-gh-release@v1
