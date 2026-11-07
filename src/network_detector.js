@@ -4760,6 +4760,7 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
 
             partPromises.push((async (pIdx, pStart, pEnd) => {
                 let currentPos = pStart;
+                let NggonKesimpen = pStart;
                 let retries = 0;
                 const maxRetries = 5;
 
@@ -4784,7 +4785,8 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                             const skipPartSetting = await browser.storage.local.get('skip-http-errors');
                             if (skipPartSetting['skip-http-errors'] === '1' && (partSt === 403 || partSt === 404)) {
                                 browser.runtime.sendMessage({ action: 'skipHttpError', url: url, status: partSt }).catch(() => {});
-                                return;
+                                abortController.abort();
+                                throw new DOMException(`Part ${pIdx} skipped (HTTP ${partSt})`, 'AbortError');
                             }
                             throw new Error(`Part ${pIdx} failed with status ${partSt}`);
                         }
@@ -4802,8 +4804,11 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                                 currentBuffer = [];
                                 currentBufferSize = 0;
 
+                                const awalChunk = chunkOffset;
+                                const akhirChunk = chunkOffset + blob.size;
                                 const writePromise = storeChunkInCache(downloadId, chunkOffset, blob).then(() => {
                                     savedChunks++;
+                                    if (awalChunk === NggonKesimpen) NggonKesimpen = akhirChunk;
                                     const now = Date.now();
                                     if (now - lastStateSaveTime > 1500) {
                                         lastStateSaveTime = now;
@@ -4887,13 +4892,23 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                             }
                         }
                         await flushPartBuffer(true);
+                        if (currentPos > pEnd && NggonKesimpen <= pEnd) {
+                            throw new Error(`Part ${pIdx} incomplete: stored up to ${NggonKesimpen}, expected ${pEnd + 1}`);
+                        }
                         break;
                     } catch (error) {
+                        if (error.name === 'AbortError') {
+                            throw error;
+                        }
                         retries++;
                         console.warn(`Part ${pIdx} failed (attempt ${retries}/${maxRetries}) at position ${currentPos}:`, error);
+                        currentPos = NggonKesimpen;
 
                         const errorItemCheck = activeDownloads.get(downloadId);
                         if (!errorItemCheck || errorItemCheck.isPaused || retries >= maxRetries) {
+                            if (!errorItemCheck || retries >= maxRetries) {
+                                abortController.abort();
+                            }
                             throw error;
                         }
 
