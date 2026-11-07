@@ -488,7 +488,7 @@ jobs:
           gh release upload "$TAG" website-media-downloader-firefox-*.xpi website-media-downloader-*-source-*.zip --clobber
 
       - name: Upload AMO Listed XPI as Workflow Artifact
-        if: ${{ inputs.skip_listed && github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only' }}
+        if: ${{ inputs.skip_listed && (github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only') }}
         uses: actions/upload-artifact@v4
         with:
           name: firefox-amo-listed-${{ github.event.inputs.tag_name }}
@@ -500,7 +500,7 @@ jobs:
           if-no-files-found: error
 
       - name: Remove Firefox Artifact
-        if: ${{ inputs.skip_listed && github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only' }}
+        if: ${{ inputs.skip_listed && (github.event.inputs.target_browser == 'both' || github.event.inputs.target_browser == 'firefox only') }}
         run: |
           rm -rf \
             website-media-downloader-firefox-amo-${{ github.event.inputs.tag_name }}.xpi \
