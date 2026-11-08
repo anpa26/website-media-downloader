@@ -268,7 +268,7 @@ async function getDB() {
     return cachedDB;
 }
 
-async function storeChunksInCache(downloadId, chunks) {
+async function storeChunkInCache(downloadId, chunkIndex, data) {
     try {
         const db = await getDB();
         return new Promise((resolve, reject) => {
@@ -279,23 +279,18 @@ async function storeChunksInCache(downloadId, chunks) {
             tx.onerror = () => reject(tx.error);
             tx.onabort = () => reject(new Error("Transaction aborted"));
 
-            for (const chunk of chunks) {
-                const item = {
-                    downloadId: downloadId,
-                    chunkIndex: chunk.index,
-                    data: chunk.data,
-                    timestamp: Date.now()
-                };
-                store.put(item);
-            }
+            const item = {
+                downloadId: downloadId,
+                chunkIndex: chunkIndex,
+                data: data,
+                timestamp: Date.now()
+            };
+            store.put(item);
         });
     } catch (e) {
         console.error("Failed to store chunks in cache:", e);
+        throw e;
     }
-}
-
-async function storeChunkInCache(downloadId, chunkIndex, data) {
-    return storeChunksInCache(downloadId, [{ index: chunkIndex, data: data }]);
 }
 
 const videoExtensions = [".3g2", ".3gp", ".asx", ".avi", ".divx", ".4v", ".flv", ".ismv", ".m2t", ".m2ts", ".m2v", ".m4s", ".m4v", ".mk3d", ".mkv", ".mng", ".mov", ".mp2v", ".mp4", ".mp4v", ".mpe", ".mpeg", ".mpeg1", ".mpeg2", ".mpeg4", ".mpg", ".mxf", ".ogm", ".ogv", ".qt", ".rm", ".swf", ".ts", ".vob", ".vp9", ".webm", ".wmv"];
@@ -3876,6 +3871,8 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
             currentItem.abortController = abortController;
             currentItem.isParallel = true;
             currentItem.isPaused = false;
+            currentItem.originalRequest = cleanOptions;
+            currentItem.chunkIndexMode = 'bytes';
         } else {
             activeDownloads.set(downloadId, {
                 loaded: startOffset,
@@ -3885,6 +3882,7 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                 filename: filename,
                 originalRequest: cleanOptions,
                 isParallel: true,
+                chunkIndexMode: 'bytes',
                 isManualResume: isManualResume,
                 isPaused: false,
                 mediaType: providedMediaType || getMediaType(url, providedContentType)

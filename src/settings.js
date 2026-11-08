@@ -576,16 +576,7 @@ async function initializeSettings() {
         await browser.storage.local.set({ 'filename-template': '' });
     }
 
-    const settings = [
-        'auto-download-media', 'auto-download-quality', 'auto-download-youtube-mode', 'auto-download-all-domains', 'auto-download-domains', 'auto-skip-download-names', 'auto-skip-download-names-only', 'auto-skip-download-domains', 'auto-ignore-excluded-media', 'auto-download-video', 'auto-download-stream',
-        'manual-scan', 'manual-scan-keep-tabs', 'remove-on-tab-close', 'document-scan', 'document-scan-mode', 'url-detection', 'youtube-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components', 'disable-deduplication', 'optimize-low-end', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom',
-        'only-video', 'only-audio', 'only-stream', 'only-image', 'image-min-side', 'image-min-side-custom', 'image-min-file-size', 'image-min-file-size-custom', 'hide-image-without-size', 'only-subtitle', 'only-file', 'ignore-disabled-types',
-        'media-notification', 'audio-process-notification', 'media-system-notification', 'stack-notifications', 'download-method', 'fetch-notification', 'skip-http-errors', 'media-cache', 'speed-boost', 'speed-boost-resume', 'connections', 'stream-download',
-        'stream-quality', 'subtitle-conversion', 'mpd-fix', 'background-download', 'stream-to-mp4', 'audio-to-mp3', 'mp3-bitrate', 'open-preference', 'mux-all-audios', 'mpd-to-mp4',
-        'embed-subtitles-mkv', 'embed-subtitles-container', 'embed-subtitles-nonyt', 'block-incoming-popups', 'redirect-guard-clicks', 'redirect-guard-hide-content',
-        'ignore-excluded-media', 'skip-detection-names', 'skip-detection-names-only', 'skip-detection-domains', 'filename-template', 'disable-rename-dialog', 'history-page', 'settings-layout', 'top-header-design', 'bottom-bar-design', 'theme-mode', 'group-by-type', 'group-download-progress', 'save-to-gdrive', 'gdrive-stream', 'media-sort-order',
-        'save-to-dropbox', 'dropbox-stream', 'auto-check-update', 'badge-counter', 'ui-scale', 'ui-scale-custom'
-    ];
+    const settings = SETTINGS_KEYS;
 
     const storedSettings = await browser.storage.local.get(settings);
     const defaultSettings = {};
