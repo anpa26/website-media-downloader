@@ -344,6 +344,13 @@ function stripLibAvCode(outDir) {
     );
     converter = subtitleResult.source;
 
+    const gabungResult = replaceNamedFunction(
+        converter,
+        'gabungkanVideoAudioKeMp4',
+        'async function gabungkanVideoAudioKeMp4() { throw new Error("Muxing is not available in the light edition."); }'
+    );
+    converter = gabungResult.source;
+
     fs.copyFileSync(
         path.join(SRC_DIR, 'light_mediabunny_worker.js'),
         path.join(outDir, 'light_mediabunny_worker.js')

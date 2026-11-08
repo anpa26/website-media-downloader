@@ -597,11 +597,11 @@
     "description": "The label of the checkbox to enable the MPD fix option."
   },
   "mpdToMp4Checkbox": {
-    "message": "Mesclar áudio e vídeo MPD em MP4",
+    "message": "Mesclar áudio e vídeo de stream em MP4",
     "description": "The label of the checkbox to enable merging MPD video and audio tracks."
   },
   "mpdToMp4Explain": {
-    "message": "Mescla as transmissões de vídeo e áudio selecionadas em um único arquivo MP4 em vez de compactá-las em um arquivo ZIP.",
+    "message": "Mescla as transmissões de vídeo e áudio selecionadas (HLS, MPD e outras) em um único arquivo MP4 em vez de compactá-las em um arquivo ZIP.",
     "description": "The explanation of the merge MPD option."
   },
   "openPreference": {

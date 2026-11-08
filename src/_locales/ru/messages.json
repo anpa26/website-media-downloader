@@ -597,11 +597,11 @@
     "description": "The label of the checkbox to enable the MPD fix option."
   },
   "mpdToMp4Checkbox": {
-    "message": "Объединить аудио и видео MPD в MP4",
+    "message": "Объединить аудио и видео потока в MP4",
     "description": "The label of the checkbox to enable merging MPD video and audio tracks."
   },
   "mpdToMp4Explain": {
-    "message": "Объединяет выбранные видео- и аудиопотоки в один файл MP4 вместо их архивации в ZIP.",
+    "message": "Объединяет выбранные видео- и аудиопотоки (HLS, MPD и другие) в один файл MP4 вместо их архивации в ZIP.",
     "description": "The explanation of the merge MPD option."
   },
   "openPreference": {

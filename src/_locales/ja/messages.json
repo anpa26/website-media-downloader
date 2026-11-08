@@ -597,11 +597,11 @@
     "description": "The label of the checkbox to enable the MPD fix option."
   },
   "mpdToMp4Checkbox": {
-    "message": "MPDのオーディオとビデオをMP4に結合する",
+    "message": "ストリームのオーディオとビデオをMP4に結合する",
     "description": "The label of the checkbox to enable merging MPD video and audio tracks."
   },
   "mpdToMp4Explain": {
-    "message": "選択したビデオとオーディオのストリームを、ZIPに圧縮する代わりに、単一のMP4ファイルに結合します。",
+    "message": "選択したビデオとオーディオのストリーム（HLS、MPDなど）を、ZIPに圧縮する代わりに、単一のMP4ファイルに結合します。",
     "description": "The explanation of the merge MPD option."
   },
   "openPreference": {

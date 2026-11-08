@@ -1774,7 +1774,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
     });
   }
 
-  async function downloadSegments(playlistUrl, isAudio = false, customFilename = null) {
+  async function downloadSegments(playlistUrl, isAudio = false, customFilename = null, tanpaTransmux = false) {
     if (loadingBar) {
         loadingBar.max = 100;
         loadingBar.value = 0;
@@ -2237,7 +2237,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
         finalResult = { blob: new Blob(filteredChunks, { type: "video/mp4" }), ext: '.mp4' };
       } else {
         const convertPref = await browser.storage.local.get('stream-to-mp4');
-        const shouldConvert = convertPref['stream-to-mp4'] !== '0';
+        const shouldConvert = convertPref['stream-to-mp4'] !== '0' && !tanpaTransmux;
         if (shouldConvert) {
           if (loadingBar) {
             const statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
@@ -2324,21 +2324,16 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
     }
   }
 
+  const pengaturanGabungAwal = await browser.storage.local.get("mpd-to-mp4");
+  const akanGabung = !audioOnly && audioUrl && pengaturanGabungAwal["mpd-to-mp4"] === "1";
   let videoBlob, ext, videoStreamed, videoStreamedToGDrive, videoStreamedToDropbox;
   if (!audioOnly) {
-    const videoResult = await downloadSegments(videoUrl, false, customFilename);
+    const videoResult = await downloadSegments(videoUrl, false, customFilename, akanGabung);
     videoBlob = videoResult.blob;
     ext = videoResult.ext;
     videoStreamed = videoResult.streamed;
     videoStreamedToGDrive = videoResult.streamedToGDrive;
     videoStreamedToDropbox = videoResult.streamedToDropbox;
-
-    const baseFileName = customFilename ? (customFilename.substring(0, customFilename.lastIndexOf('.')) || customFilename) : getFileName(m3u8Url);
-    const videoBlobUrl = URL.createObjectURL(videoBlob);
-
-    await finalizeDownload(videoBlob, audioUrl ? `${baseFileName}_video${ext}` : `${baseFileName}${ext}`, downloadMethod, loadingBar, videoStreamedToGDrive, videoStreamedToDropbox);
-
-    URL.revokeObjectURL(videoBlobUrl);
   }
 
   if (audioUrl) {
@@ -2352,10 +2347,10 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
     snackbar.addEventListener('close', () => {
       snackbar.remove();
     });
-    const { blob: audioBlob, streamed: audioStreamed, streamedToGDrive: audioStreamedToGDrive, streamedToDropbox: audioStreamedToDropbox } = await downloadSegments(audioUrl, true, customFilename);
+    const { blob: audioBlob, ext: extAudio, streamed: audioStreamed, streamedToGDrive: audioStreamedToGDrive, streamedToDropbox: audioStreamedToDropbox } = await downloadSegments(audioUrl, true, customFilename, akanGabung);
 
     let finalAudioBlob = audioBlob;
-    let finalAudioFileName = audioOnly ? (customFilename || `${baseFileName}.mp3`) : `${baseFileName}_audio.mp4`;
+    let finalAudioFileName = audioOnly ? (customFilename || `${baseFileName}.mp3`) : `${baseFileName}_audio${extAudio}`;
     let audioConverted = false;
 
     if (audioOnly) {
@@ -2372,6 +2367,66 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
         finalAudioBlob = converted.blob;        finalAudioFileName = converted.filename;
     }
 
+
+    if (!audioOnly && videoBlob && audioBlob && !videoStreamedToGDrive && !videoStreamedToDropbox && !audioStreamedToGDrive && !audioStreamedToDropbox) {
+        const pengaturanGabung = await browser.storage.local.get("mpd-to-mp4");
+        if (pengaturanGabung["mpd-to-mp4"] === "1") {
+            try {
+                if (loadingBar) {
+                    const infoGabung = loadingBar.parentNode.querySelector('.download-status-info');
+                    if (infoGabung) infoGabung.textContent = "Merging video and audio...";
+                }
+                const blobGabung = await gabungkanVideoAudioKeMp4(videoBlob, audioBlob, ext, extAudio);
+                if (checkCancel()) throw new Error("Cancelled");
+                await finalizeDownload(blobGabung, `${baseFileName}.mp4`, downloadMethod, loadingBar, false, false);
+                mdui.alert({
+                    headline: browser.i18n.getMessage("streamDownloadCompleteTitle") || "Download Complete",
+                    description: browser.i18n.getMessage("streamDownloadSaved") || "File has been saved.",
+                    confirmText: "OK"
+                });
+                return { blob: blobGabung, streamed: false };
+            } catch (e) {
+                if (e.message === "Cancelled") throw e;
+                console.error("Failed to mux HLS tracks, falling back to ZIP:", e);
+            }
+        }
+    }
+
+    if (!audioOnly && videoBlob && audioBlob && !videoStreamedToGDrive && !videoStreamedToDropbox && !audioStreamedToGDrive && !audioStreamedToDropbox) {
+        try {
+            if (loadingBar) {
+                const infoZip = loadingBar.parentNode.querySelector('.download-status-info');
+                if (infoZip) infoZip.textContent = "Creating ZIP...";
+            }
+            await ensureClientZipLoaded();
+            const namaZip = `${baseFileName}.zip`;
+            const entriZip = async function* () {
+                if (checkCancel()) throw new Error("Cancelled");
+                yield { name: `${baseFileName}_video${ext}`, input: videoBlob };
+                if (checkCancel()) throw new Error("Cancelled");
+                yield { name: finalAudioFileName, input: finalAudioBlob };
+            };
+            const blobZip = await downloadZip(entriZip()).blob();
+            if (checkCancel()) throw new Error("Cancelled");
+            await finalizeDownload(blobZip, namaZip, downloadMethod, loadingBar, false, false);
+            mdui.alert({
+                headline: browser.i18n.getMessage("streamDownloadCompleteTitle") || "Download Complete",
+                description: browser.i18n.getMessage("streamDownloadSaved") || "File has been saved.",
+                confirmText: "OK"
+            });
+            return { blob: blobZip, streamed: false };
+        } catch (e) {
+            if (e.message === "Cancelled") throw e;
+            console.error("Failed to create HLS ZIP, falling back to separate files:", e);
+        }
+    }
+
+    if (!audioOnly) {
+        const videoBlobUrl = URL.createObjectURL(videoBlob);
+        await finalizeDownload(videoBlob, `${baseFileName}_video${ext}`, downloadMethod, loadingBar, videoStreamedToGDrive, videoStreamedToDropbox);
+        URL.revokeObjectURL(videoBlobUrl);
+    }
+
     await finalizeDownload(finalAudioBlob, finalAudioFileName, downloadMethod, loadingBar, audioConverted ? false : audioStreamedToGDrive, audioConverted ? false : audioStreamedToDropbox);
 
     if (audioOnly) {
@@ -2382,6 +2437,13 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
         showDialog(browser.i18n.getMessage("splitAudioVideoDownloadCompleteDescription", [new Option(baseFileName).innerHTML, ext]), browser.i18n.getMessage("splitAudioVideoDownloadCompleteTitle"), { error: browser.i18n.getMessage("splitAudioVideoDownloadCompleteSuccess", [baseFileName]), urls: { video: URL.createObjectURL(videoBlob), audio: audioBlobUrl, m3u8: m3u8Url }, request: request, downloadMethod: downloadMethod });
     }
     return;
+  }
+
+  if (!audioOnly) {
+    const baseFileName = customFilename ? (customFilename.substring(0, customFilename.lastIndexOf('.')) || customFilename) : getFileName(m3u8Url);
+    const videoBlobUrl = URL.createObjectURL(videoBlob);
+    await finalizeDownload(videoBlob, `${baseFileName}${ext}`, downloadMethod, loadingBar, videoStreamedToGDrive, videoStreamedToDropbox);
+    URL.revokeObjectURL(videoBlobUrl);
   }
 }
 
@@ -2511,6 +2573,99 @@ async function selectStreamVariant(playlistLines, baseUrl, options = {}, selecte
     document.body.appendChild(dialog);
     requestAnimationFrame(() => dialog.open = true);
   });
+}
+
+async function gabungkanVideoAudioKeMp4(vBlob, aBlob, extVideo, extAudio) {
+    let libavInstance = null;
+    let logFfmpeg = "";
+    const logAsli = console.log;
+    const errAsli = console.error;
+    const tebakExt = async (blob, jatuh) => {
+        try {
+            const awal = new Uint8Array(await blob.slice(0, 32).arrayBuffer());
+            if (awal[0] === 0x47) return '.ts';
+            const hex = Array.from(awal).map(b => b.toString(16).padStart(2, '0')).join('');
+            if (hex.includes('66747970') || hex.includes('73747970')) return '.mp4';
+            if (awal[0] === 0xFF && (awal[1] & 0xF6) === 0xF0) return '.aac';
+            if (awal[0] === 0xFF && (awal[1] & 0xE0) === 0xE0) return '.mp3';
+            if (awal[0] === 0x49 && awal[1] === 0x44 && awal[2] === 0x33) return '.mp3';
+        } catch (e) {}
+        return jatuh || '.mp4';
+    };
+    try {
+        console.log = function(...args) {
+            logFfmpeg += args.join(" ") + "\n";
+            logAsli.apply(console, args);
+        };
+        console.error = function(...args) {
+            logFfmpeg += args.join(" ") + "\n";
+            errAsli.apply(console, args);
+        };
+        const libavVar = 'LibAV_h264';
+        const libavScript = 'libraries/libav.js';
+
+        if (!window[libavVar] || !window[libavVar].LibAV) {
+            const script = document.createElement('script');
+            script.src = browser.runtime.getURL(libavScript);
+            document.head.appendChild(script);
+            await new Promise(resolve => {
+                script.onload = () => resolve();
+            });
+        }
+
+        libavInstance = await window[libavVar].LibAV({
+            noworker: false,
+            base: browser.runtime.getURL('libraries'),
+            toImport: browser.runtime.getURL('libraries/libav.js')
+        });
+
+        const berkasVideo = 'input_video' + (vBlob ? await tebakExt(vBlob, extVideo) : (extVideo || '.mp4'));
+        const berkasAudio = 'input_audio' + (aBlob ? await tebakExt(aBlob, extAudio) : (extAudio || '.mp4'));
+        if (vBlob) {
+            await libavInstance.writeFile(berkasVideo, new Uint8Array(await vBlob.arrayBuffer()));
+        }
+        if (aBlob) {
+            await libavInstance.writeFile(berkasAudio, new Uint8Array(await aBlob.arrayBuffer()));
+        }
+
+        const ffmpegArgs = ["-y"];
+        if (vBlob) ffmpegArgs.push("-i", berkasVideo);
+        if (aBlob) ffmpegArgs.push("-i", berkasAudio);
+
+        if (vBlob && aBlob) {
+            ffmpegArgs.push("-c:v", "copy", "-c:a", "copy", "output.mp4");
+        } else if (vBlob) {
+            ffmpegArgs.push("-c:v", "copy", "output.mp4");
+        } else if (aBlob) {
+            ffmpegArgs.push("-c:a", "copy", "output.mp4");
+        }
+
+        const exitCode = await libavInstance.ffmpeg(ffmpegArgs);
+        console.log("gabungkanVideoAudioKeMp4 LibAV ffmpeg exit code:", exitCode);
+
+        let outputData;
+        try {
+            outputData = await libavInstance.readFile("output.mp4");
+        } catch (readErr) {
+            throw new Error("Muxing failed: output.mp4 not created. Exit code: " + exitCode);
+        }
+
+        return new Blob([outputData.buffer], { type: 'video/mp4' });
+    } catch (e) {
+        const infoBlob = "Video: " + (vBlob ? vBlob.size : 0) + " bytes (" + (extVideo || '?') + "), Audio: " + (aBlob ? aBlob.size : 0) + " bytes (" + (extAudio || '?') + ")";
+        alert("FFmpeg Error: " + (e.message || e) + "\n" + infoBlob + "\n\nFFmpeg Log:\n" + logFfmpeg.substring(logFfmpeg.length - 3000));
+        throw e;
+    } finally {
+        console.log = logAsli;
+        console.error = errAsli;
+        if (libavInstance) {
+            try {
+                await libavInstance.terminate();
+            } catch (e) {
+                console.warn("gabungkanVideoAudioKeMp4: Failed to terminate LibAV:", e);
+            }
+        }
+    }
 }
 
 async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, request, customFilename = null, audioOnly = false, selectedQuality = null) {
@@ -3422,68 +3577,6 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
                 return new Blob(blobs);
             };
 
-            const muxMPDTracks = async (vBlob, aBlob, outName) => {
-                let libavInstance = null;
-                try {
-                    const libavVar = 'LibAV_h264';
-                    const libavScript = 'libraries/libav.js';
-
-                    if (!window[libavVar] || !window[libavVar].LibAV) {
-                        const script = document.createElement('script');
-                        script.src = browser.runtime.getURL(libavScript);
-                        document.head.appendChild(script);
-                        await new Promise(resolve => {
-                            script.onload = () => resolve();
-                        });
-                    }
-                    
-                    libavInstance = await window[libavVar].LibAV({
-                        noworker: false,
-                        base: browser.runtime.getURL('libraries'),
-                        toImport: browser.runtime.getURL('libraries/libav.js')
-                    });
-
-                    if (vBlob) {
-                        await libavInstance.writeFile('input_video.mp4', new Uint8Array(await vBlob.arrayBuffer()));
-                    }
-                    if (aBlob) {
-                        await libavInstance.writeFile('input_audio.mp4', new Uint8Array(await aBlob.arrayBuffer()));
-                    }
-
-                    const ffmpegArgs = ["-y"];
-                    if (vBlob) ffmpegArgs.push("-i", "input_video.mp4");
-                    if (aBlob) ffmpegArgs.push("-i", "input_audio.mp4");
-
-                    if (vBlob && aBlob) {
-                        ffmpegArgs.push("-c:v", "copy", "-c:a", "copy", "output.mp4");
-                    } else if (vBlob) {
-                        ffmpegArgs.push("-c:v", "copy", "output.mp4");
-                    } else if (aBlob) {
-                        ffmpegArgs.push("-c:a", "copy", "output.mp4");
-                    }
-
-                    const exitCode = await libavInstance.ffmpeg(ffmpegArgs);
-                    throwIfCancelled();
-                    console.log("muxMPDTracks LibAV ffmpeg exit code:", exitCode);
-
-                    let outputData;
-                    try {
-                        outputData = await libavInstance.readFile("output.mp4");
-                    } catch (readErr) {
-                        throw new Error("Muxing failed: output.mp4 not created. Exit code: " + exitCode);
-                    }
-                    
-                    return new Blob([outputData.buffer], { type: 'video/mp4' });
-                } finally {
-                    if (libavInstance) {
-                        try {
-                            await libavInstance.terminate();
-                        } catch (e) {
-                            console.warn("muxMPDTracks: Failed to terminate LibAV:", e);
-                        }
-                    }
-                }
-            };
 
             if (loadingBar) {
                 const statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
@@ -3509,7 +3602,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
 
             if (videoBlob && audioBlob) {
                 try {
-                    finalBlob = await muxMPDTracks(videoBlob, audioBlob, finalFilename);
+                    finalBlob = await gabungkanVideoAudioKeMp4(videoBlob, audioBlob, '.mp4', '.mp4');
                     throwIfCancelled();
                 } catch (muxErr) {
                     console.error("Failed to mux MPD tracks, falling back to ZIP:", muxErr);
