@@ -194,6 +194,7 @@ if (!browser.storage.session) {
 let downloadingCount = 0;
 let allMediaRequests = [];
 let allFilteredRequests = [];
+let kunciMediaSudahDiunduh = new Set();
 let renderedCount = 0;
 const CHUNK_SIZE = 20;
 let intersectionObserver = null;
@@ -1471,14 +1472,40 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   document.getElementById('cancel-all').addEventListener('click', () => {
+    const sudahDibatalkan = new Set();
     const activeItems = document.querySelectorAll('.media-item mdui-linear-progress');
     activeItems.forEach(progress => {
       const itemElement = progress.closest('.media-item'); if (!itemElement) return;
       const url = itemElement.dataset.url;
       const dlId = itemElement.dataset.downloadId;
+      if (dlId) sudahDibatalkan.add(String(dlId));
+      if (url) sudahDibatalkan.add(url);
       browser.runtime.sendMessage({ action: 'cancelDownload', url: url, id: dlId });
       finishDownloadUI(dlId || url, false);
     });
+    getActiveDownloadSnapshot().then(snapshot => {
+      if (!snapshot) return;
+      const dibatalkanSnapshot = new Set();
+      for (const id of Object.keys(snapshot)) {
+        if (sudahDibatalkan.has(String(id))) continue;
+        const entri = snapshot[id];
+        if (entri?.url && sudahDibatalkan.has(entri.url)) continue;
+        dibatalkanSnapshot.add(String(id));
+        browser.runtime.sendMessage({ action: 'cancelDownload', url: entri?.url, id });
+        finishDownloadUI(id, false);
+      }
+      let sisa = 0;
+      for (const [sid, entri] of Object.entries(snapshot)) {
+        if (dibatalkanSnapshot.has(String(sid))) continue;
+        if (sudahDibatalkan.has(String(sid))) continue;
+        if (entri?.url && sudahDibatalkan.has(entri.url)) continue;
+        if (entri?.isZip || entri?.isCachedSave) continue;
+        if (entriUnduhanSelesai(entri)) continue;
+        sisa++;
+      }
+      downloadingCount = sisa;
+      updateDownloadingCount(0);
+    }).catch(() => {});
   });
 
   document.getElementById('navbar').addEventListener('change', (event) => {
@@ -1507,6 +1534,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (Object.prototype.hasOwnProperty.call(changes, 'download-history')) {
       navigationPageLoads.delete('history');
+      muatKunciMediaSudahDiunduh(changes['download-history'].newValue || []);
     }
 
     const mediaFilterSettings = [
@@ -2125,6 +2153,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       allMediaRequests = allMediaRequests.filter(item => item.bestRequest.originalUrl !== message.url);
       allFilteredRequests = allFilteredRequests.filter(item => item.bestRequest.originalUrl !== message.url);
     }
+    segarkanHitunganGrup();
   } else if (message.action === 'skipHttpError') {
     const skipUrl = message.url;
     allMediaRequests = allMediaRequests.filter(item => item.bestRequest.originalUrl !== skipUrl);
@@ -2197,8 +2226,23 @@ function updateGlobalOperationBar({ id, url, filename, text, percent, indetermin
   return;
 }
 
+function entriUnduhanSelesai(downloadData) {
+  const statusNormal = String(downloadData.status || 'downloading').trim().toLowerCase();
+  if (statusNormal === 'complete' || statusNormal === 'completed') return true;
+  const persenAkhir = downloadData.percent !== undefined && downloadData.percent !== null && !isNaN(downloadData.percent)
+    ? Math.min(100, Math.max(0, Math.round(Number(downloadData.percent))))
+    : (downloadData.total > 0 ? Math.min(100, Math.max(0, Math.round(((downloadData.loaded || 0) / downloadData.total) * 100))) : null);
+  return persenAkhir !== null && persenAkhir >= 100 && statusNormal === 'downloading';
+}
+
 function updateProgressUI(id, loaded, total, isParallel = false, isPaused = false, status = 'downloading', percent = null, finishedParts = null, totalParts = null) {
   let item = uiCache.get(id);
+  const statusNormal = String(status || 'downloading').trim().toLowerCase();
+  const persenAkhir = percent !== undefined && percent !== null && !isNaN(percent)
+    ? Math.min(100, Math.max(0, Math.round(Number(percent))))
+    : (total > 0 && loaded >= 0 ? Math.min(100, Math.max(0, Math.round((loaded / total) * 100))) : null);
+  const sudahSelesai = statusNormal === 'complete' || statusNormal === 'completed' ||
+    (persenAkhir !== null && persenAkhir >= 100 && statusNormal === 'downloading');
 
   if (!item) {
     const mediaItems = [...new Set([...document.querySelectorAll('.media-item'), ...activeDownloadingElements])];
@@ -2361,6 +2405,7 @@ function updateProgressUI(id, loaded, total, isParallel = false, isPaused = fals
     for (const [k, v] of activeGroupDownloads) {
       if (k === String(effectiveId)) {
         if (v.groupType && v.groupType !== gType) affectedGroupTypes.add(v.groupType);
+        if (sudahSelesai) activeGroupDownloads.delete(k);
         continue;
       }
       if (v.id === String(effectiveId) || (v.el && v.el === item.element) || (item.element?.dataset?.url && (k === item.element.dataset.url || v.id === item.element.dataset.url))) {
@@ -2368,16 +2413,18 @@ function updateProgressUI(id, loaded, total, isParallel = false, isPaused = fals
         activeGroupDownloads.delete(k);
       }
     }
-    activeGroupDownloads.set(String(effectiveId), {
-      id: String(effectiveId),
-      groupType: gType,
-      filename: fName,
-      percent: curPct,
-      indeterminate: !!loadingBar.indeterminate,
-      text: statusInfo.textContent || "",
-      isPaused: !!isPaused,
-      el: item.element
-    });
+    if (!sudahSelesai) {
+      activeGroupDownloads.set(String(effectiveId), {
+        id: String(effectiveId),
+        groupType: gType,
+        filename: fName,
+        percent: curPct,
+        indeterminate: !!loadingBar.indeterminate,
+        text: statusInfo.textContent || "",
+        isPaused: !!isPaused,
+        el: item.element
+      });
+    }
     syncGroupProgressCard(gType);
     affectedGroupTypes.forEach(syncGroupProgressCard);
   } else {
@@ -2426,16 +2473,20 @@ function updateProgressUI(id, loaded, total, isParallel = false, isPaused = fals
       affectedGroupTypes.add(existingEntry.groupType);
     }
 
-    activeGroupDownloads.set(String(id), {
-      id: String(id),
-      groupType: gType,
-      filename: fName,
-      percent: curPct,
-      indeterminate: curPct === null && !(total > 0),
-      text: text,
-      isPaused: !!isPaused,
-      el: null
-    });
+    if (sudahSelesai) {
+      activeGroupDownloads.delete(String(id));
+    } else {
+      activeGroupDownloads.set(String(id), {
+        id: String(id),
+        groupType: gType,
+        filename: fName,
+        percent: curPct,
+        indeterminate: curPct === null && !(total > 0),
+        text: text,
+        isPaused: !!isPaused,
+        el: null
+      });
+    }
     syncGroupProgressCard(gType);
     affectedGroupTypes.forEach(syncGroupProgressCard);
   }
@@ -2472,6 +2523,9 @@ function restoreActiveDownloadsUI(snapshot = null) {
   return activeDownloadUISync;
 }
 
+const waktuSelesaiTerlihat = new Map();
+const BATAS_TUNGGU_SELESAI_MS = 2000;
+
 async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
   const activeDownloads = activeDownloadsPassed || await getActiveDownloadSnapshot();
   if (!activeDownloads) return;
@@ -2496,6 +2550,24 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
   activeIds.forEach(id => {
     const downloadData = activeDownloads[id];
     const url = downloadData.url;
+    const statusSelesai = String(downloadData.status || '').trim().toLowerCase();
+    if ((statusSelesai === 'complete' || statusSelesai === 'completed') && !downloadData.isZip) {
+      const pertamaKali = waktuSelesaiTerlihat.get(id);
+      if (pertamaKali === undefined) {
+        waktuSelesaiTerlihat.set(id, Date.now());
+      } else if (Date.now() - pertamaKali >= BATAS_TUNGGU_SELESAI_MS) {
+        waktuSelesaiTerlihat.delete(id);
+        finishDownloadUI(id, true);
+        hideGlobalProgressIfMatch(id, url);
+        if (url) {
+          allMediaRequests = allMediaRequests.filter(item => item.bestRequest.originalUrl !== url);
+          allFilteredRequests = allFilteredRequests.filter(item => item.bestRequest.originalUrl !== url);
+        }
+      }
+      return;
+    }
+    waktuSelesaiTerlihat.delete(id);
+    if (url && apakahUrlSudahDiunduh(url, downloadData.mediaType || 'file')) return;
 
     if (downloadData.isZip) {
       hasZip = true;
@@ -2621,6 +2693,10 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
     }
   });
 
+  for (const idTerlihat of [...waktuSelesaiTerlihat.keys()]) {
+    if (!activeIdSet.has(idTerlihat)) waktuSelesaiTerlihat.delete(idTerlihat);
+  }
+
   if (!hasZip && lastNonZipEntry) {
     const { id, downloadData } = lastNonZipEntry;
     const pct = downloadData.percent !== undefined && downloadData.percent !== null
@@ -2652,10 +2728,17 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
 
   mediaItems.forEach(item => {
     const jobId = item.dataset.downloadId || '';
-    if ((jobId.startsWith('audio_') || jobId.startsWith('stream_') || jobId.startsWith('dl_')) && !activeIdSet.has(jobId)) {
+    if (!jobId || activeIdSet.has(jobId)) return;
+    const bar = item.querySelector('mdui-linear-progress');
+    const nilaiBar = Number(bar?.value ?? uiCache.get(jobId)?.loadingBar?.value ?? 0);
+    if (nilaiBar >= 100) {
+      finishDownloadUI(jobId, true);
+    } else if (jobId.startsWith('audio_') || jobId.startsWith('stream_') || jobId.startsWith('dl_')) {
       finishDownloadUI(jobId, false);
     }
   });
+
+  segarkanHitunganGrup();
 }
 
 // Popup documents can miss progress events while closed. Keep the visible UI
@@ -3213,6 +3296,57 @@ function getMediaRenderKey(url, type = '') {
   return `${type}:${url.split('?')[0]}`;
 }
 
+function kunciMediaDariUrl(url, type = 'file') {
+  const kunci = [url, getMediaRenderKey(url, type)];
+  let isGoogleVideo = false;
+  try {
+    const parsed = new URL(url);
+    isGoogleVideo = parsed.hostname === 'googlevideo.com' || parsed.hostname.endsWith('.googlevideo.com');
+  } catch (_) {}
+  if (!isGoogleVideo) kunci.push(url.split('?')[0]);
+  return kunci;
+}
+
+function muatKunciMediaSudahDiunduh(riwayat) {
+  for (const item of riwayat || []) {
+    const url = item?.url || '';
+    if (!url) continue;
+    for (const kunci of kunciMediaDariUrl(url, item.mediaType || 'file')) kunciMediaSudahDiunduh.add(kunci);
+  }
+}
+
+function apakahUrlSudahDiunduh(url, type = 'file') {
+  if (!url || kunciMediaSudahDiunduh.size === 0) return false;
+  return kunciMediaDariUrl(url, type).some(kunci => kunciMediaSudahDiunduh.has(kunci));
+}
+
+function apakahMediaSudahDiunduh(item) {
+  const url = item?.bestRequest?.originalUrl || item?.bestRequest?.url || '';
+  return apakahUrlSudahDiunduh(url, item?.type || 'file');
+}
+
+async function hapusRiwayatMediaTersembunyiSekali(itemTersembunyi, urlAktif) {
+  if (!itemTersembunyi.length) return;
+  const kunciTersembunyi = new Set();
+  for (const item of itemTersembunyi) {
+    const url = item?.bestRequest?.originalUrl || item?.bestRequest?.url || '';
+    if (!url) continue;
+    for (const kunci of kunciMediaDariUrl(url, item?.type || 'file')) kunciTersembunyi.add(kunci);
+  }
+  if (kunciTersembunyi.size === 0) return;
+  const hasilRiwayat = await browser.storage.local.get('download-history');
+  const riwayat = hasilRiwayat['download-history'] || [];
+  if (!riwayat.length) return;
+  const sisa = riwayat.filter(entri => {
+    const urlEntri = entri?.url || '';
+    if (!urlEntri) return true;
+    if (kunciMediaDariUrl(urlEntri, entri.mediaType || 'file').some(kunci => urlAktif.has(kunci))) return true;
+    return !kunciMediaDariUrl(urlEntri, entri.mediaType || 'file').some(kunci => kunciTersembunyi.has(kunci));
+  });
+  if (sisa.length === riwayat.length) return;
+  await browser.storage.local.set({ 'download-history': sisa });
+}
+
 function getMediaRepresentativeScore(item) {
   const request = item?.bestRequest || {};
   let score = Array.isArray(request.ytFormats) ? request.ytFormats.length * 1000 : 0;
@@ -3283,6 +3417,22 @@ function getGroupCounts(activeItems) {
   });
 
   return counts;
+}
+
+function segarkanHitunganGrup() {
+  if (!isGroupingEnabled || activeGroup !== null) return;
+  const hitungan = getGroupCounts([...activeDownloadingElements]);
+  document.querySelectorAll('.media-group-card[data-group-type]').forEach(kartu => {
+    const tipe = kartu.dataset.groupType;
+    const jumlah = hitungan[tipe] || 0;
+    if (jumlah <= 0) {
+      kartu.remove();
+      return;
+    }
+    const labelJumlah = kartu.querySelector('h4 + span');
+    const teksBaru = `${jumlah} ${jumlah === 1 ? 'item' : 'items'}`;
+    if (labelJumlah && labelJumlah.textContent !== teksBaru) labelJumlah.textContent = teksBaru;
+  });
 }
 
 function createGroupItemHTML(type, count, title, iconSVG) {
@@ -4976,7 +5126,7 @@ async function loadMediaListOnce() {
     const activeDownloadsPromise = getActiveDownloadSnapshot();
     const [mediaRequests, settings, targetWebTab] = await Promise.all([
       browser.runtime.sendMessage({ action: "getMediaRequests" }),
-      browser.storage.local.get(["manual-scan", "manual-scan-keep-tabs", "top-header-design", "bottom-bar-design", "filename-template", "only-video", "only-audio", "only-stream", "only-image", "only-subtitle", "only-file", "hide-segments", "hide-page-components", "media-sort-order", "limit-media-list", "limit-media-list-custom", "min-file-size", "min-file-size-custom", "image-min-side", "image-min-side-custom", "image-min-file-size", "image-min-file-size-custom", "hide-image-without-size", "optimize-low-end", "group-by-type", "group-download-progress", "disable-deduplication"]),
+      browser.storage.local.get(["manual-scan", "manual-scan-keep-tabs", "top-header-design", "bottom-bar-design", "filename-template", "only-video", "only-audio", "only-stream", "only-image", "only-subtitle", "only-file", "hide-segments", "hide-page-components", "media-sort-order", "limit-media-list", "limit-media-list-custom", "min-file-size", "min-file-size-custom", "image-min-side", "image-min-side-custom", "image-min-file-size", "image-min-file-size-custom", "hide-image-without-size", "optimize-low-end", "group-by-type", "group-download-progress", "disable-deduplication", "download-history"]),
       getTargetMediaTab()
     ]);
     const currentActiveTabId = targetWebTab?.id;
@@ -5335,7 +5485,17 @@ async function loadMediaListOnce() {
     if (settings['optimize-low-end'] === '1' || settings['optimize-low-end'] === true) {
       limit = 0;
     }
-    const displayRequests = deduplicateMediaForDisplay(flattenedRequests);
+    muatKunciMediaSudahDiunduh(settings['download-history'] || []);
+    const semuaTampil = deduplicateMediaForDisplay(flattenedRequests);
+    const itemTersembunyi = semuaTampil.filter(item => apakahMediaSudahDiunduh(item));
+    const displayRequests = semuaTampil.filter(item => !apakahMediaSudahDiunduh(item));
+    const urlAktif = new Set();
+    for (const downloadData of Object.values(activeDownloads || {})) {
+      const url = downloadData?.url || '';
+      if (!url) continue;
+      for (const kunci of kunciMediaDariUrl(url, downloadData.mediaType || 'file')) urlAktif.add(kunci);
+    }
+    hapusRiwayatMediaTersembunyiSekali(itemTersembunyi, urlAktif).catch(() => {});
     if (limit > 0 && displayRequests.length > limit) {
       displayRequests.length = limit;
     }
@@ -5361,9 +5521,11 @@ async function loadMediaListOnce() {
     const downloadModels = [];
     let activeCount = 0;
     for (const [id, downloadData] of Object.entries(activeDownloads || {})) {
-      if (downloadData.isZip) continue;
-      activeCount++;
+      if (downloadData.isZip || downloadData.isCachedSave) continue;
+      if (entriUnduhanSelesai(downloadData)) continue;
       const url = downloadData.url || '';
+      if (url && apakahUrlSudahDiunduh(url, downloadData.mediaType || 'file')) continue;
+      activeCount++;
       const urlNoQuery = url ? url.split('?')[0] : '';
       const type = downloadData.mediaType || 'file';
       const renderKey = getMediaRenderKey(url, type);
@@ -7261,7 +7423,7 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
 
     const nonYtSettings = await browser.storage.local.get(['embed-subtitles-nonyt']);
     const embedSubtitlesNonYt = nonYtSettings['embed-subtitles-nonyt'] === '1';
-    const isNonYtSubtitleEmbed = embedSubtitlesNonYt && selectedSubUrls.length > 0;
+    const isNonYtSubtitleEmbed = embedSubtitlesNonYt && selectedSubUrls.length > 0 && !url.toLowerCase().includes('.m3u8') && !url.toLowerCase().includes('.mpd');
 
     if (isNonYtSubtitleEmbed) {
         if (statusInfo) statusInfo.textContent = browser.i18n.getMessage("startingDownload") || "Starting download...";
@@ -7492,9 +7654,37 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
       loadingBar.max = 100;
       loadingBar.setAttribute('indeterminate', 'true');
       statusInfo.textContent = browser.i18n.getMessage('preparingManifest') || 'Preparing stream...';
+      let subDataStream = null;
+      const pengaturanSubStream = await browser.storage.local.get(['embed-subtitles-nonyt']);
+      if (pengaturanSubStream['embed-subtitles-nonyt'] === '1' && selectedSubUrls.length > 0) {
+        subDataStream = [];
+        for (let i = 0; i < selectedSubUrls.length; i++) {
+          const subUrl = selectedSubUrls[i];
+          try {
+            const bgFetch = await browser.runtime.sendMessage({ action: 'fetchText', url: subUrl });
+            let text = bgFetch && bgFetch.text ? bgFetch.text : null;
+            if (!text) {
+              const resp = await spoofedFetch(subUrl);
+              if (resp.ok) text = await resp.text();
+            }
+            if (text) {
+              const cleaned = cleanVtt(text);
+              const matchedReq = allMediaRequests.find(r => (r.bestRequest.originalUrl === subUrl || r.bestRequest.url === subUrl));
+              const name = matchedReq ? (matchedReq.resolvedFilename || getFileName(subUrl)) : getFileName(subUrl);
+              let lang = 'und';
+              const langMatch = name.match(/[\s._-]([a-z]{2})[\s._-]/i) || name.match(/^([a-z]{2})[\s._-]/i);
+              if (langMatch) lang = langMatch[1].toLowerCase();
+              if (cleaned) subDataStream.push({ text: cleaned, language: lang, displayName: name.replace(/\.[a-zA-Z0-9]+$/, '') });
+            }
+          } catch (err) {
+            console.error('Failed to fetch subtitle:', subUrl, err);
+          }
+        }
+        if (!subDataStream.length) subDataStream = null;
+      }
       const result = url.toLowerCase().includes('.mpd')
-        ? await downloadMPDOffline(url, targetRequest.responseHeaders, downloadMethod, loadingBar, targetRequest, newName, false, selectedRes)
-        : await downloadM3U8Offline(url, targetRequest.responseHeaders, downloadMethod, loadingBar, targetRequest, newName, false, selectedRes);
+        ? await downloadMPDOffline(url, targetRequest.responseHeaders, downloadMethod, loadingBar, targetRequest, newName, false, selectedRes, subDataStream)
+        : await downloadM3U8Offline(url, targetRequest.responseHeaders, downloadMethod, loadingBar, targetRequest, newName, false, selectedRes, subDataStream);
       if (window.activeCancellations.has(url)) throw new Error('Cancelled');
       finishDownloadUI(downloadId, true);
       return result;
@@ -7503,9 +7693,37 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
       loadingBar.max = 100;
       loadingBar.setAttribute('indeterminate', 'true');
       statusInfo.textContent = browser.i18n.getMessage('preparingManifest') || 'Preparing stream...';
+      let subDataStream = null;
+      const pengaturanSubStream = await browser.storage.local.get(['embed-subtitles-nonyt']);
+      if (pengaturanSubStream['embed-subtitles-nonyt'] === '1' && selectedSubUrls.length > 0) {
+        subDataStream = [];
+        for (let i = 0; i < selectedSubUrls.length; i++) {
+          const subUrl = selectedSubUrls[i];
+          try {
+            const bgFetch = await browser.runtime.sendMessage({ action: 'fetchText', url: subUrl });
+            let text = bgFetch && bgFetch.text ? bgFetch.text : null;
+            if (!text) {
+              const resp = await spoofedFetch(subUrl);
+              if (resp.ok) text = await resp.text();
+            }
+            if (text) {
+              const cleaned = cleanVtt(text);
+              const matchedReq = allMediaRequests.find(r => (r.bestRequest.originalUrl === subUrl || r.bestRequest.url === subUrl));
+              const name = matchedReq ? (matchedReq.resolvedFilename || getFileName(subUrl)) : getFileName(subUrl);
+              let lang = 'und';
+              const langMatch = name.match(/[\s._-]([a-z]{2})[\s._-]/i) || name.match(/^([a-z]{2})[\s._-]/i);
+              if (langMatch) lang = langMatch[1].toLowerCase();
+              if (cleaned) subDataStream.push({ text: cleaned, language: lang, displayName: name.replace(/\.[a-zA-Z0-9]+$/, '') });
+            }
+          } catch (err) {
+            console.error('Failed to fetch subtitle:', subUrl, err);
+          }
+        }
+        if (!subDataStream.length) subDataStream = null;
+      }
       const streamJob = await browser.runtime.sendMessage({
         action: 'startPersistentStreamJob', recoveryJobId, url, filename: newName,
-        quality: selectedRes || 'highest', request: targetRequest, downloadMethod
+        quality: selectedRes || 'highest', request: targetRequest, downloadMethod, subData: subDataStream
       });
       if (!streamJob?.success) throw new Error(streamJob?.error || 'Unable to start stream download');
       return;

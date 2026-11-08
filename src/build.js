@@ -460,7 +460,6 @@ function stripDisabledIntegrations(outDir) {
     });
     let converter = fs.readFileSync(converterPath, 'utf8');
     converter = converter.replace("const ensureMuxJsLoaded = () => ensureOptionalLibraryLoaded('libraries/mux.js', 'muxjs');\n", '');
-    converter = replaceNamedFunction(converter, 'updateProgressStatus', '').source;
     fs.writeFileSync(converterPath, converter, 'utf8');
 
     const backgroundPath = path.join(outDir, 'network_detector.js');
@@ -822,6 +821,9 @@ function validasiRingan(berkas, outDir, target) {
     }
     if (!konverterPakaiMediabunny && adaMediabunny) {
         throw new Error(`[${target}] Unused Mediabunny library leaked into Light build`);
+    }
+    if (konverter.includes('updateProgressStatus(') && !konverter.includes('function updateProgressStatus(')) {
+        throw new Error(`[${target}] updateProgressStatus is used but not defined in Light build`);
     }
     const kebocoranLibav = [];
     const auditLibAv = dir => {

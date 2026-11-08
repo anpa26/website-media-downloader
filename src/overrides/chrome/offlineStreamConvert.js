@@ -1204,6 +1204,25 @@ async function finalizeDownload(blob, filename, downloadMethod, loadingBar = nul
     const settings = await browser.storage.local.get(['save-to-gdrive', 'gdrive_token', 'save-to-dropbox', 'dropbox_token']);
     const gdriveEnabled = settings['save-to-gdrive'] === '1' && settings['gdrive_token'];
     const dropboxEnabled = settings['save-to-dropbox'] === '1' && settings['dropbox_token'];
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    if (isAndroid && !gdriveEnabled && !dropboxEnabled && typeof storeCompletedDownloadBlob === 'function' && typeof browser !== 'undefined' && browser.runtime) {
+        try {
+            const cacheId = 'processed_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+            await storeCompletedDownloadBlob(cacheId, blob, blob.type);
+            const tersimpan = await browser.runtime.sendMessage({ action: 'download_cached_blob', cacheId, filename, mime: blob.type, size: blob.size });
+            if (tersimpan?.success) {
+                if (loadingBar) {
+                    loadingBar.value = 100;
+                    loadingBar.removeAttribute('indeterminate');
+                    const statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
+                    if (statusInfo) statusInfo.textContent = browser.i18n.getMessage("downloadComplete") || "Download Complete!";
+                }
+                return;
+            }
+        } catch (e) {
+            console.warn("Simpan via cache Android gagal, lanjut jalur biasa:", e);
+        }
+    }
     
     // Trigger local download first or early to preserve user gesture
     const objectUrl = URL.createObjectURL(blob);
@@ -2902,8 +2921,8 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
     return;
   }
 
-  const mpdToMp4Settings = await browser.storage.local.get("mpd-to-mp4");
-  const mpdToMp4Enabled = mpdToMp4Settings["mpd-to-mp4"] === "1" || audioOnly;
+  const mpdToMp4Settings = await browser.storage.local.get(["gabung-stream", "mpd-to-mp4"]);
+  const mpdToMp4Enabled = audioOnly || (mpdToMp4Settings["gabung-stream"] !== "0");
 
   const snackbar = document.createElement('mdui-snackbar');
   snackbar.setAttribute('open', true);
@@ -3412,8 +3431,8 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
             await finalizeDownload(zipBlob, zipName, downloadMethod, loadingBar);
         }
     } else {
-        const mpdToMp4Settings = await browser.storage.local.get("mpd-to-mp4");
-        const mpdToMp4Enabled = mpdToMp4Settings["mpd-to-mp4"] === "1" || audioOnly;
+        const mpdToMp4Settings = await browser.storage.local.get(["gabung-stream", "mpd-to-mp4"]);
+        const mpdToMp4Enabled = audioOnly || (mpdToMp4Settings["gabung-stream"] !== "0");
 
         if (mpdToMp4Enabled) {
             const concatenateChunks = async (dbInstance, sessId, indices) => {

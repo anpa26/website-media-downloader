@@ -225,9 +225,11 @@ async function restorePersistentProcessingJobs() {
 }
 
 async function discardStaleDownloadState() {
-    const session = await browser.storage.session.get("recovery-startup-cleaned");
+    const penyimpananSesi = (typeof browser !== 'undefined' && browser.storage && browser.storage.session) ? browser.storage.session : (typeof browser !== 'undefined' && browser.storage ? browser.storage.local : null);
+    if (!penyimpananSesi) return;
+    const session = await penyimpananSesi.get("recovery-startup-cleaned");
     if (session["recovery-startup-cleaned"]) return;
-    await browser.storage.session.set({ "recovery-startup-cleaned": true });
+    await penyimpananSesi.set({ "recovery-startup-cleaned": true });
     const stored = await browser.storage.local.get(null);
     if (stored['pending-downloads']) await browser.storage.local.remove('pending-downloads');
 }
@@ -809,7 +811,7 @@ async function updateActiveDownloadsBadge() {
 }
 
 function isActivelyDownloading(item) {
-    if (!item || item.paused || item.isPaused || item.cancelled) return false;
+    if (!item || item.paused || item.isPaused || item.cancelled || item.isCachedSave) return false;
     const state = String(item.state || '').trim().toLowerCase();
     const status = String(item.status || item.statusText || '').trim().toLowerCase();
     const terminalStates = new Set(['complete', 'completed', 'failed', 'error', 'interrupted', 'cancelled', 'canceled', 'paused']);
@@ -853,9 +855,14 @@ function restoreActiveDownloadsFromSession() {
         const list = res.wmd_active_downloads;
         if (list && Array.isArray(list)) {
             list.forEach(val => {
-                if (!activeDownloads.has(val.id)) {
-                    _origActiveDownloadsSet(val.id, val);
-                }
+                if (activeDownloads.has(val.id)) return;
+                if (val.isNative && typeof val.url === 'string' && val.url.startsWith('blob:') && !(val.loaded > 0)) return;
+                const statusNormal = String(val.status || '').trim().toLowerCase();
+                const sudahSelesai = statusNormal === 'complete' || statusNormal === 'completed' ||
+                    (val.percent !== null && val.percent !== undefined && val.percent >= 100) ||
+                    ((val.total || 0) > 0 && (val.loaded || 0) >= (val.total || 0));
+                if (!val.isPaused && !sudahSelesai) return;
+                _origActiveDownloadsSet(val.id, val);
             });
             updateActiveDownloadsBadge();
         }
@@ -3360,12 +3367,19 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === 'cancelDownload') {
-        let targetId = message.id;
+        let targetId = null;
+        if (message.id && activeDownloads.has(message.id)) {
+            targetId = message.id;
+        } else if (message.id && activeDownloads.has(Number(message.id))) {
+            targetId = Number(message.id);
+        }
         let isNative = false;
 
-        if (!targetId && message.url) {
+        if (!targetId) {
             for (let [id, val] of activeDownloads) {
-                if (val.url === message.url) {
+                const cocokUrl = message.url && val.url === message.url;
+                const cocokId = message.id && String(id) === String(message.id);
+                if (cocokUrl || cocokId) {
                     targetId = id;
                     isNative = !!val.isNative;
                     break;
@@ -4655,6 +4669,13 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
             const item = activeDownloads.get(downloadId);
             if (item && item.abortController !== abortController) return;
             if (item && item.isPaused) return; 
+            if (item && item.gagalKarenaMacet) {
+                const pesanMacet = 'Unduhan macet: server tidak mengirim data (timeout)';
+                browser.runtime.sendMessage({ action: 'downloadError', id: downloadId, url: url, error: pesanMacet }).catch(() => {});
+                activeDownloads.delete(downloadId);
+                cleanupDownload(downloadId);
+                return;
+            }
 
             broadcastAudioJob({
                 action: 'audioJobUpdate',
@@ -5248,6 +5269,48 @@ async function uploadStreamChunk(sessionUri, chunk, offset, totalSize) {
         throw e;
     }
 }
+function mulaiSapuanMacet() {
+    const BATAS_AWAL_MS = 60000;
+    const BATAS_DIAM_MS = 120000;
+    const INTERVAL_MS = 15000;
+    setInterval(() => {
+        const kini = Date.now();
+        for (const [id, entri] of activeDownloads) {
+            if (entri && entri.isNative && typeof entri.url === 'string' && entri.url.startsWith('blob:') && !(entri.loaded > 0)) {
+                if (entri.pertamaDilihat === undefined) entri.pertamaDilihat = kini;
+                if (kini - entri.pertamaDilihat >= BATAS_AWAL_MS) {
+                    try { browser.downloads.cancel(id).catch(() => {}); } catch (e) {}
+                    try { browser.downloads.erase(id).catch(() => {}); } catch (e) {}
+                    activeDownloads.delete(id);
+                    removeDownloadState(id);
+                }
+                continue;
+            }
+            if (!entri || entri.isPaused || entri.isZip || entri.isAudioJob || entri.isStreamJob || entri.isPersistentZipJob || entri.isCachedSave || entri.isNative) continue;
+            if (!entri.abortController) continue;
+            const statusNormal = String(entri.status || '').trim().toLowerCase();
+            if (statusNormal === 'complete' || statusNormal === 'completed') continue;
+            const total = entri.total || 0;
+            const loaded = entri.loaded || 0;
+            if (total > 0 && loaded >= total) continue;
+            if (entri.terakhirLoaded === undefined || entri.terakhirLoaded !== loaded) {
+                entri.terakhirLoaded = loaded;
+                entri.terakhirBergerak = kini;
+                if (entri.pertamaDilihat === undefined) entri.pertamaDilihat = kini;
+                continue;
+            }
+            const batas = loaded === 0 ? BATAS_AWAL_MS : BATAS_DIAM_MS;
+            const acuan = loaded === 0 ? (entri.pertamaDilihat || entri.terakhirBergerak) : entri.terakhirBergerak;
+            if (kini - acuan >= batas) {
+                entri.gagalKarenaMacet = true;
+                try { entri.abortController.abort(); } catch (e) {}
+            }
+        }
+    }, INTERVAL_MS);
+}
+
+mulaiSapuanMacet();
+
 async function handleFetchDownload(url, filename, originalRequest = null, providedId = null, isResuming = false, isManualResume = false, providedResumeOffset = null, providedMediaType = null, providedDropboxSessionId = null) {
     providedResumeOffset = parseInt(providedResumeOffset) || 0;
     const settings = await browser.storage.local.get(['speed-boost', 'speed-boost-resume', 'connections', 'save-to-gdrive', 'gdrive-stream', 'gdrive_token', 'save-to-dropbox', 'dropbox-stream', 'dropbox_token', 'fetch-notification']);
@@ -5764,6 +5827,7 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
             currentItem.status = 'complete';
             currentItem.percent = 100;
         }
+        updateActiveDownloadsBadge();
 
         const finalFilename = filename || getFileName(url);
         const contentTypeToStore = contentType || 'application/octet-stream';
@@ -5819,6 +5883,13 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
         if (error.name === 'AbortError') {
             const item = activeDownloads.get(downloadId);
             if (item && item.isPaused) return; 
+            if (item && item.gagalKarenaMacet) {
+                const pesanMacet = 'Unduhan macet: server tidak mengirim data (timeout)';
+                browser.runtime.sendMessage({ action: 'downloadError', id: downloadId, url: url, error: pesanMacet }).catch(() => {});
+                activeDownloads.delete(downloadId);
+                removeDownloadState(downloadId);
+                return;
+            }
             
             broadcastAudioJob({
                 action: 'audioJobUpdate',

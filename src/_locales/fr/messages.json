@@ -596,6 +596,12 @@
     "message": "Corriger les fichiers MPD",
     "description": "The label of the checkbox to enable the MPD fix option."
   },
+  "gabungStreamCheckbox": {
+    "message": "Fusionner l'audio et la vidéo du flux"
+  },
+  "gabungStreamExplain": {
+    "message": "Fusionne les flux vidéo et audio sélectionnés (HLS, MPD et autres) dans un seul fichier. Les deux sont fusionnés dans un seul fichier TS au lieu de les compresser dans un fichier ZIP."
+  },
   "mpdToMp4Checkbox": {
     "message": "Fusionner l'audio et la vidéo du flux en MP4",
     "description": "The label of the checkbox to enable merging MPD video and audio tracks."

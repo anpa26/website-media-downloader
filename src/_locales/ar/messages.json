@@ -596,6 +596,12 @@
     "message": "إصلاح ملفات MPD (موصى به)",
     "description": "The label of the checkbox to enable the MPD fix option."
   },
+  "gabungStreamCheckbox": {
+    "message": "دمج صوت وفيديو البث"
+  },
+  "gabungStreamExplain": {
+    "message": "دمج مسارات الفيديو والصوت المختارة من البث (HLS وMPD وغيرها) في ملف واحد. يتم دمجهما في ملف TS واحد بدلاً من ضغطهما في ملف ZIP."
+  },
   "mpdToMp4Checkbox": {
     "message": "دمج صوت وفيديو البث في ملف MP4",
     "description": "The label of the checkbox to enable merging MPD video and audio tracks."

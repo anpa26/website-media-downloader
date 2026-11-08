@@ -596,6 +596,12 @@
     "message": "MPDファイルを修正する（推奨）",
     "description": "The label of the checkbox to enable the MPD fix option."
   },
+  "gabungStreamCheckbox": {
+    "message": "ストリームのオーディオとビデオを結合する"
+  },
+  "gabungStreamExplain": {
+    "message": "選択したビデオとオーディオのストリーム（HLS、MPDなど）を単一のファイルに結合します。両方ともZIPファイルに圧縮する代わりに、単一のTSファイルに結合されます。"
+  },
   "mpdToMp4Checkbox": {
     "message": "ストリームのオーディオとビデオをMP4に結合する",
     "description": "The label of the checkbox to enable merging MPD video and audio tracks."

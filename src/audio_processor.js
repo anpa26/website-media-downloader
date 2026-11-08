@@ -230,7 +230,8 @@ async function runPersistentAudioJob(jobId, options = {}) {
         }
 
         await waitIfPaused();
-        if (options.offscreen) {
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        if (options.offscreen && !isAndroid) {
             await saveOffscreenAudioBlob(blob, filename);
         } else {
             const cacheId = 'processed_' + Date.now() + '_' + Math.random().toString(36).slice(2);

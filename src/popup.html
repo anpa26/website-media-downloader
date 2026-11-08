@@ -866,8 +866,15 @@
               <!-- LIGHT_EXCLUDE_MEDIA_PROCESSING_OPTIONS_START -->
               <div class="setting-item">
                  <div class="setting-text">
-                   <h3 data-translate="mpdToMp4Checkbox">Merge MPD audio and video into MP4</h3>
-                   <p data-translate="mpdToMp4Explain">Muxes the chosen video and audio representations into a single MP4 file instead of zipping them.</p>
+                   <h3 data-translate="gabungStreamCheckbox">Merge stream audio and video</h3>
+                   <p data-translate="gabungStreamExplain">Merge the chosen stream video and audio tracks into a single file. Both are packed into a single TS file instead of zipping them.</p>
+                 </div>
+                 <mdui-switch id="gabung-stream"></mdui-switch>
+              </div>
+              <div class="setting-item">
+                 <div class="setting-text">
+                   <h3 data-translate="mpdToMp4Checkbox">Merge stream audio and video into MP4</h3>
+                   <p data-translate="mpdToMp4Explain">Muxes the chosen video and audio representations into a single MP4 file instead of a TS file.</p>
                  </div>
                  <mdui-switch id="mpd-to-mp4"></mdui-switch>
                </div>
@@ -933,14 +940,6 @@
 
             <!-- LIGHT_EXCLUDE_STREAM_MP4_START -->
             <div class="settings-items-container">
-              <div class="setting-item">
-                <div class="setting-text">
-                  <h3 data-translate="streamToMp4Title">Save stream as MP4</h3>
-                  <p data-translate="streamToMp4Explain">Automatically convert MPEG-TS streams to MP4 format. (Requires mux.js)</p>
-                </div>
-                <mdui-switch id="stream-to-mp4"></mdui-switch>
-              </div>
-
               <div class="setting-item" id="manual-ts-converter" style="align-items: flex-start;">
                 <div class="setting-text" style="min-width: 0; flex: 1;">
                   <h3 data-translate="manualTsConvertTitle">Convert a TS file manually</h3>

@@ -573,6 +573,12 @@
     "message": "Perbaiki file MPD (disarankan)",
     "description": "The label of the checkbox to enable the MPD fix option."
   },
+  "gabungStreamCheckbox": {
+    "message": "Gabungkan audio dan video Stream"
+  },
+  "gabungStreamExplain": {
+    "message": "Menggabungkan track video dan audio stream yang dipilih (HLS, MPD, dan lainnya) ke dalam satu file. Keduanya dikemas ke dalam satu file ts alih-alih mengompresnya menjadi zip."
+  },
   "mpdToMp4Checkbox": {
     "message": "Gabungkan audio dan video Stream ke MP4",
     "description": "The label of the checkbox to enable merging MPD video and audio tracks."

@@ -64,7 +64,7 @@ const SETTINGS_KEYS = [
     'manual-scan', 'manual-scan-keep-tabs', 'remove-on-tab-close', 'document-scan', 'document-scan-mode', 'url-detection', 'mime-detection', 'detect-download-links', 'hide-segments', 'hide-page-components', 'disable-deduplication', 'optimize-low-end', 'limit-media-list', 'limit-media-list-custom', 'min-file-size', 'min-file-size-custom',
     'only-video', 'only-audio', 'only-stream', 'only-image', 'image-min-side', 'image-min-side-custom', 'image-min-file-size', 'image-min-file-size-custom', 'hide-image-without-size', 'only-subtitle', 'only-file', 'ignore-disabled-types',
     'media-notification', 'audio-process-notification', 'media-system-notification', 'stack-notifications', 'download-method', 'fetch-notification', 'speed-boost', 'speed-boost-resume', 'connections', 'stream-download',
-    'stream-quality', 'subtitle-conversion', 'mpd-fix', 'background-download', 'stream-to-mp4', 'audio-to-mp3', 'mp3-bitrate', 'open-preference', 'mux-all-audios', 'mpd-to-mp4',
+    'stream-quality', 'subtitle-conversion', 'mpd-fix', 'background-download', 'audio-to-mp3', 'mp3-bitrate', 'open-preference', 'mux-all-audios', 'gabung-stream', 'mpd-to-mp4',
     'embed-subtitles-mkv', 'embed-subtitles-container', 'embed-subtitles-nonyt', 'block-incoming-popups', 'redirect-guard-clicks', 'redirect-guard-hide-content',
     'ignore-excluded-media', 'skip-detection-names', 'skip-detection-names-only', 'skip-detection-domains', 'filename-template', 'disable-rename-dialog', 'history-page', 'settings-layout', 'top-header-design', 'bottom-bar-design', 'theme-mode', 'theme-color', 'group-by-type', 'group-download-progress', 'save-to-gdrive', 'gdrive-stream', 'media-sort-order',
     'save-to-dropbox', 'dropbox-stream', 'auto-check-update', 'badge-counter', 'ui-scale', 'ui-scale-custom'
@@ -504,13 +504,13 @@ async function initializeSettings() {
                 'ignore-excluded-media',
                 'document-scan', 'url-detection', 'mime-detection', 'hide-page-components', 'hide-segments',
                 'media-notification', 'media-system-notification', 'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle',
-                'background-download', 'only-file', 'stream-to-mp4', 'audio-to-mp3', 'auto-check-update', 'badge-counter',
+                'background-download', 'only-file', 'gabung-stream', 'auto-check-update', 'badge-counter',
                 'detect-download-links', 'disable-deduplication', 'fetch-notification', 'group-by-type', 'group-download-progress'
             ];
             if (defaultsEnabled.includes(setting)) {
                 value = '1';
                 defaultSettings[setting] = value;
-            } else if (['auto-download-media', 'auto-download-all-domains', 'manual-scan', 'manual-scan-keep-tabs', 'remove-on-tab-close', 'ignore-disabled-types', 'hide-image-without-size', 'history-page', 'save-to-gdrive', 'gdrive-stream', 'save-to-dropbox', 'dropbox-stream', 'stack-notifications', 'embed-subtitles-nonyt', 'mpd-to-mp4', 'block-incoming-popups', 'redirect-guard-hide-content'].includes(setting)) {
+            } else if (['auto-download-media', 'auto-download-all-domains', 'manual-scan', 'manual-scan-keep-tabs', 'remove-on-tab-close', 'ignore-disabled-types', 'hide-image-without-size', 'history-page', 'save-to-gdrive', 'gdrive-stream', 'save-to-dropbox', 'dropbox-stream', 'stack-notifications', 'embed-subtitles-nonyt', 'mpd-to-mp4', 'block-incoming-popups', 'redirect-guard-hide-content', 'audio-to-mp3'].includes(setting)) {
                 value = '0';
                 defaultSettings[setting] = value;
             } else if (setting === 'speed-boost' || setting === 'speed-boost-resume' || setting === 'disable-rename-dialog') {
@@ -548,6 +548,15 @@ async function initializeSettings() {
 
         if (element.tagName === 'MDUI-SWITCH') {
             element.checked = value === '1' || value === true;
+
+            if (setting === 'gabung-stream') {
+                const itemMp4 = document.getElementById('mpd-to-mp4')?.closest('.setting-item');
+                const perbaruiVisibilitasMp4 = () => {
+                    if (itemMp4) itemMp4.style.display = element.checked ? 'flex' : 'none';
+                };
+                perbaruiVisibilitasMp4();
+                element.addEventListener('change', perbaruiVisibilitasMp4);
+            }
 
             const updateConstraints = () => {
                 const speedBoost = document.getElementById('speed-boost');

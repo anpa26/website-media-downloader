@@ -613,6 +613,12 @@
     "message": "Corregir archivos MPD (recomendado)",
     "description": "The label of the checkbox to enable the MPD fix option."
   },
+  "gabungStreamCheckbox": {
+    "message": "Unir audio y video de stream"
+  },
+  "gabungStreamExplain": {
+    "message": "Combina las representaciones de video y audio elegidas del stream (HLS, MPD y otros) en un solo archivo. Ambas se combinan en un solo archivo TS en lugar de comprimirlas en ZIP."
+  },
   "mpdToMp4Checkbox": {
     "message": "Unir audio y video de stream en MP4",
     "description": "The label of the checkbox to enable merging MPD video and audio tracks."
