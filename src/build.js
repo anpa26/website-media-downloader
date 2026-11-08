@@ -50,26 +50,24 @@ const LIGHT_MP3_FILES = ['lame.min.js', 'mp3_worker.js'];
 const LIGHT_STREAM_CONVERSION_FILES = ['mux.js', 'mp4_duration.js'];
 
 const FIREFOX_EXCLUDES = new Set(['chrome_audio_jobs.js', 'offscreen.html', 'offscreen.js']);
-
-const EXCLUDE_PER_TARGET = {
-    chrome: new Set(['yt_core.js', 'wymd.js', ...MEDIABUNNY_FILES]),
-    'chrome-yt': new Set(MEDIABUNNY_FILES),
-    firefox: new Set([...FIREFOX_EXCLUDES, ...MEDIABUNNY_FILES]),
-    'firefox-amo': new Set([...FIREFOX_EXCLUDES, ...MEDIABUNNY_FILES]),
-    'chrome-light': new Set(['yt_core.js', 'wymd.js', 'download_recovery.js', 'audio_processor.html', 'libav.js', ...LIGHT_MP3_FILES, ...LIGHT_STREAM_CONVERSION_FILES]),
-    'chrome-yt-light': new Set(['download_recovery.js', 'audio_processor.html', 'libav.js', ...LIGHT_MP3_FILES, ...LIGHT_STREAM_CONVERSION_FILES]),
-    'firefox-light': new Set([...FIREFOX_EXCLUDES, 'libav.js', ...LIGHT_MP3_FILES, ...LIGHT_STREAM_CONVERSION_FILES]),
-    'firefox-light-amo': new Set([...FIREFOX_EXCLUDES, 'libav.js', ...LIGHT_MP3_FILES, ...LIGHT_STREAM_CONVERSION_FILES])
-};
-
-const FORBIDDEN_PER_TARGET = {
-    firefox: [...FIREFOX_EXCLUDES],
-    'firefox-amo': [...FIREFOX_EXCLUDES],
-    'firefox-light': [...FIREFOX_EXCLUDES],
-    'firefox-light-amo': [...FIREFOX_EXCLUDES]
-};
+const BERKAS_KHUSUS_YOUTUBE = ['yt_core.js', 'wymd.js'];
+const BERKAS_CADANGAN_FIREFOX = ['download_recovery.js', 'audio_processor.html'];
+const BERKAS_RINGAN_BERSAMA = ['libav.js', ...LIGHT_MP3_FILES, ...LIGHT_STREAM_CONVERSION_FILES];
 
 const FIREFOX_BASED_TARGETS = new Set(['firefox', 'firefox-amo', 'firefox-light', 'firefox-light-amo']);
+const TARGET_AMO = new Set(['firefox-amo', 'firefox-light-amo']);
+
+const EXCLUDE_PER_TARGET = {
+    chrome: new Set([...BERKAS_KHUSUS_YOUTUBE, ...MEDIABUNNY_FILES]),
+    'chrome-yt': new Set(MEDIABUNNY_FILES),
+    firefox: new Set([...FIREFOX_EXCLUDES, ...MEDIABUNNY_FILES]),
+    'chrome-light': new Set([...BERKAS_KHUSUS_YOUTUBE, ...BERKAS_CADANGAN_FIREFOX, ...BERKAS_RINGAN_BERSAMA]),
+    'chrome-yt-light': new Set([...BERKAS_CADANGAN_FIREFOX, ...BERKAS_RINGAN_BERSAMA]),
+    'firefox-light': new Set([...FIREFOX_EXCLUDES, ...BERKAS_RINGAN_BERSAMA]),
+};
+EXCLUDE_PER_TARGET['firefox-amo'] = new Set(EXCLUDE_PER_TARGET.firefox);
+EXCLUDE_PER_TARGET['firefox-light-amo'] = new Set(EXCLUDE_PER_TARGET['firefox-light']);
+
 const FIREFOX_DEBUG_IDS = {
     firefox: '{1376a6d2-e07f-4015-af28-ca2acfef4e37}',
     'firefox-light': '{d223cfe1-7d70-4ba2-a81c-3cc817d21cc7}'
@@ -674,12 +672,10 @@ function finalizeManifest(target, outDir, isDebug = false) {
             manifest.browser_specific_settings.gecko.id = FIREFOX_DEBUG_IDS[target];
         }
     }
-    if (target === 'firefox-amo' || target === 'firefox-light-amo') {
+    if (TARGET_AMO.has(target)) {
         if (manifest.browser_specific_settings?.gecko) {
             delete manifest.browser_specific_settings.gecko.update_url;
         }
-    }
-    if (target === 'firefox-amo' || target === 'firefox-light-amo') {
         const parts = String(manifest.version || '').split('.');
         if (parts.length === 3) manifest.version = manifest.version + '.1';
     }
@@ -691,193 +687,182 @@ function finalizeManifest(target, outDir, isDebug = false) {
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 4) + '\n', 'utf8');
 }
 
-function validateTarget(baseTarget, outDir, isDebug = false) {
-    const targetLabel = isDebug ? `${baseTarget}-debug` : baseTarget;
-    for (const relativePath of FORBIDDEN_PER_TARGET[baseTarget] || []) {
-        if (fs.existsSync(path.join(outDir, relativePath))) {
-            throw new Error(`[${targetLabel}] Browser-specific file leaked into build: ${relativePath}`);
+function validasiBerkasTerlarang(baseTarget, outDir, targetLabel) {
+    for (const namaBerkas of EXCLUDE_PER_TARGET[baseTarget] || []) {
+        for (const lokasi of [path.join(outDir, namaBerkas), path.join(outDir, 'libraries', namaBerkas)]) {
+            if (fs.existsSync(lokasi)) {
+                throw new Error(`[${targetLabel}] Excluded file leaked into build: ${namaBerkas}`);
+            }
         }
     }
+}
 
+function validasiLoggerDebug(berkas, outDir, isDebug, targetLabel) {
     if (!isDebug) {
         if (fs.existsSync(path.join(outDir, 'debug_logger.js'))) {
             throw new Error(`[${targetLabel}] debug_logger.js leaked into non-debug build`);
         }
-        const popupHtml = fs.readFileSync(path.join(outDir, 'popup.html'), 'utf8');
-        const settingsJs = fs.readFileSync(path.join(outDir, 'settings.js'), 'utf8');
-        const bgJs = fs.readFileSync(path.join(outDir, 'network_detector.js'), 'utf8');
-        if (popupHtml.includes('debug_logger.js') || popupHtml.includes('download-debug-log')) {
+        if (berkas.popup.includes('debug_logger.js') || berkas.popup.includes('download-debug-log')) {
             throw new Error(`[${targetLabel}] Debug logger UI/script leaked into popup.html`);
         }
-        if (settingsJs.includes('setupDebugLogControls') || settingsJs.includes('WMDDebugLogger')) {
+        if (berkas.pengaturan.includes('setupDebugLogControls') || berkas.pengaturan.includes('WMDDebugLogger')) {
             throw new Error(`[${targetLabel}] Debug logger controls leaked into settings.js`);
         }
-        if (bgJs.includes('debug_logger.js')) {
+        if (berkas.latar.includes('debug_logger.js')) {
             throw new Error(`[${targetLabel}] debug_logger.js import leaked into network_detector.js`);
         }
-    } else {
-        if (!fs.existsSync(path.join(outDir, 'debug_logger.js'))) {
-            throw new Error(`[${targetLabel}] debug_logger.js is missing from debug build`);
-        }
+    } else if (!fs.existsSync(path.join(outDir, 'debug_logger.js'))) {
+        throw new Error(`[${targetLabel}] debug_logger.js is missing from debug build`);
     }
+}
 
-    const target = baseTarget;
-
-    const manifest = JSON.parse(fs.readFileSync(path.join(outDir, 'manifest.json'), 'utf8'));
-    const background = fs.readFileSync(path.join(outDir, 'network_detector.js'), 'utf8');
-    if (background.includes('createMediaFetchOptions(') && !background.includes('function createMediaFetchOptions(')) {
+function validasiFungsiLatar(berkas, target) {
+    if (berkas.latar.includes('createMediaFetchOptions(') && !berkas.latar.includes('function createMediaFetchOptions(')) {
         throw new Error(`[${target}] createMediaFetchOptions is used but not defined`);
     }
-    if (background.includes('restorePersistentProcessingJobs(') && !background.includes('function restorePersistentProcessingJobs(')) {
+    if (berkas.latar.includes('restorePersistentProcessingJobs(') && !berkas.latar.includes('function restorePersistentProcessingJobs(')) {
         throw new Error(`[${target}] restorePersistentProcessingJobs is used but not defined`);
     }
+}
+
+function validasiManifes(berkas, target, targetLabel) {
+    const manifes = berkas.manifes;
     if (!FIREFOX_BASED_TARGETS.has(target)) {
-        const popupHtml = fs.readFileSync(path.join(outDir, 'popup.html'), 'utf8');
-        if (popupHtml.includes('id="media-cache"')) {
+        if (berkas.popup.includes('id="media-cache"')) {
             throw new Error(`[${targetLabel}] Firefox-only media-cache toggle leaked into Chrome build`);
         }
     }
     if (FIREFOX_BASED_TARGETS.has(target)) {
-        if (manifest.permissions?.includes('offscreen')) {
+        if (manifes.permissions?.includes('offscreen')) {
             throw new Error(`[${target}] Chrome-only "offscreen" permission leaked into manifest`);
         }
-        if (manifest.background?.service_worker) {
+        if (manifes.background?.service_worker) {
             throw new Error(`[${target}] Chrome-only background service worker leaked into manifest`);
         }
-        if (!manifest.background?.scripts?.length) {
+        if (!manifes.background?.scripts?.length) {
             throw new Error(`[${target}] Missing background scripts`);
         }
     }
-
-    if (LIGHT_TARGETS.has(target) && !manifest.name.startsWith('Website Media Downloader Light')) {
+    if (LIGHT_TARGETS.has(target) && !manifes.name.startsWith('Website Media Downloader Light')) {
         throw new Error(`[${target}] Light manifest override was not applied`);
     }
     if (CHROME_LIGHT_TARGETS.has(target)) {
-        if (manifest.developer || manifest.browser_specific_settings) {
+        if (manifes.developer || manifes.browser_specific_settings) {
             throw new Error(`[${target}] Firefox-only manifest keys leaked into Chrome build`);
         }
-        if (manifest.background?.scripts || !manifest.background?.service_worker) {
+        if (manifes.background?.scripts || !manifes.background?.service_worker) {
             throw new Error(`[${target}] Chrome MV3 build must use a background service worker`);
         }
         for (const permission of ['webRequestBlocking', 'webRequestFilterResponse']) {
-            if (manifest.permissions?.includes(permission)) {
+            if (manifes.permissions?.includes(permission)) {
                 throw new Error(`[${target}] Firefox-only permission leaked into Chrome build: ${permission}`);
             }
         }
     }
     if (target === 'firefox-light' || target === 'firefox-light-amo') {
         const standardId = JSON.parse(fs.readFileSync(path.join(SRC_DIR, 'manifest.json'), 'utf8')).browser_specific_settings?.gecko?.id;
-        const lightId = manifest.browser_specific_settings?.gecko?.id;
+        const lightId = manifes.browser_specific_settings?.gecko?.id;
         if (!lightId || lightId === standardId) {
             throw new Error(`[${target}] A dedicated Firefox extension ID is required`);
         }
     }
-    if (LIGHT_TARGETS.has(target)) {
-        const popup = fs.readFileSync(path.join(outDir, 'popup.html'), 'utf8');
-        const settings = fs.readFileSync(path.join(outDir, 'settings.js'), 'utf8');
-        const download = fs.readFileSync(path.join(outDir, 'download.js'), 'utf8');
-        for (const notificationSetting of ['media-notification']) {
-            if (!popup.includes(`id="${notificationSetting}"`)) {
-                throw new Error(`[${target}] Notification setting is missing from Light build: ${notificationSetting}`);
-            }
-        }
-        for (const removedNotificationSetting of ['media-system-notification', 'fetch-notification']) {
-            if (popup.includes(`id="${removedNotificationSetting}"`)) {
-                throw new Error(`[${target}] Removed device notification setting leaked into Light build: ${removedNotificationSetting}`);
-            }
-        }
-        if (/async function showMediaNotification\([^)]*\)\s*{\s*return;\s*}/.test(background)) {
-            throw new Error(`[${target}] In-page media notifications were disabled in Light build`);
-        }
-        if (!download.includes('const activeJobs = new Map();')) {
-            throw new Error(`[${target}] Download manager state was removed from Light build`);
-        }
-        if (popup.includes('start-speed-test') || settings.includes('setupSpeedTest') || settings.includes('speed.cloudflare.com')) {
-            throw new Error(`[${target}] Speed Test code leaked into build`);
-        }
-        if (popup.includes('cloud-save-location') || popup.includes('gdrive-login-btn') || popup.includes('dropbox-login-btn')) {
-            throw new Error(`[${target}] Cloud settings UI leaked into build`);
-        }
-        if (manifest.permissions?.includes('identity') || manifest.oauth2) {
-            throw new Error(`[${target}] Cloud authentication capability leaked into manifest`);
-        }
-        if (fs.existsSync(path.join(outDir, 'libraries', 'libav.js'))) {
-            throw new Error(`[${target}] LibAV library leaked into Light build`);
-        }
-        for (const removedMp3File of LIGHT_MP3_FILES) {
-            const removedPath = removedMp3File === 'mp3_worker.js'
-                ? path.join(outDir, removedMp3File)
-                : path.join(outDir, 'libraries', removedMp3File);
-            if (fs.existsSync(removedPath)) throw new Error(`[${target}] Removed MP3 encoder leaked into Light build: ${removedMp3File}`);
-        }
-        for (const removedStreamFile of LIGHT_STREAM_CONVERSION_FILES) {
-            const removedPath = removedStreamFile.endsWith('.js') && removedStreamFile !== 'mp4_duration.js'
-                ? path.join(outDir, 'libraries', removedStreamFile)
-                : path.join(outDir, removedStreamFile);
-            if (fs.existsSync(removedPath)) {
-                throw new Error(`[${target}] Disabled stream converter leaked into Light build: ${removedStreamFile}`);
-            }
-        }
-        const lightSourceFiles = ['offlineStreamConvert.js', 'network_detector.js', 'download.js', 'settings.js']
-            .filter(file => fs.existsSync(path.join(outDir, file)))
-            .map(file => fs.readFileSync(path.join(outDir, file), 'utf8'))
-            .join('\n');
-        if (/googleapis\.com|dropboxapi\.com|launchWebAuthFlow/.test(lightSourceFiles)) {
-            throw new Error(`[${target}] Disabled cloud integration code leaked into Light build`);
-        }
-        if (/libraries\/mux\.js|mp4_duration\.js/.test(lightSourceFiles)) {
-            throw new Error(`[${target}] Disabled stream conversion references leaked into Light build`);
-        }
-        if (CHROME_LIGHT_TARGETS.has(target)) {
-            for (const firefoxFallbackFile of ['download_recovery.js', 'audio_processor.html']) {
-                if (fs.existsSync(path.join(outDir, firefoxFallbackFile))) {
-                    throw new Error(`[${target}] Firefox fallback leaked into Chrome Light build: ${firefoxFallbackFile}`);
-                }
-            }
-        }
-        if (popup.includes('audio-to-mp3') || popup.includes('mp3-bitrate')) {
-            throw new Error(`[${target}] MP3 conversion settings UI leaked into build`);
-        }
-        const converterUsesMediabunny = fs.readFileSync(path.join(outDir, 'offlineStreamConvert.js'), 'utf8').includes('Mediabunny');
-        const hasMediabunny = fs.existsSync(path.join(outDir, 'libraries', 'mediabunny.min.js'));
-        if (converterUsesMediabunny && !hasMediabunny) {
-            throw new Error(`[${target}] Mediabunny library is missing from Light build`);
-        }
-        if (!converterUsesMediabunny && hasMediabunny) {
-            throw new Error(`[${target}] Unused Mediabunny library leaked into Light build`);
-        }
-        const libavLeaks = [];
-        const auditLibAv = dir => {
-            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-                const entryPath = path.join(dir, entry.name);
-                if (entry.isDirectory()) auditLibAv(entryPath);
-                else if (/\.(?:js|html|json|md)$/i.test(entry.name) && /libav/i.test(fs.readFileSync(entryPath, 'utf8'))) {
-                    libavLeaks.push(path.relative(outDir, entryPath));
-                }
-            }
-        };
-        auditLibAv(outDir);
-        if (libavLeaks.length) throw new Error(`[${target}] LibAV references leaked into: ${libavLeaks.join(', ')}`);
-        for (const locale of fs.readdirSync(path.join(outDir, '_locales'))) {
-            const messagesPath = path.join(outDir, '_locales', locale, 'messages.json');
-            if (!fs.existsSync(messagesPath)) continue;
-            const messages = JSON.parse(fs.readFileSync(messagesPath, 'utf8'));
-            for (const notificationMessage of ['mediaNotificationTitle', 'mediaNotificationDownloadAction']) {
-                if (!Object.hasOwn(messages, notificationMessage)) {
-                    throw new Error(`[${target}] Notification translation is missing from locale ${locale}: ${notificationMessage}`);
-                }
-            }
-            if (LIGHT_SPEED_TEST_MESSAGES.some(key => Object.hasOwn(messages, key))) {
-                throw new Error(`[${target}] Speed Test translations leaked into locale: ${locale}`);
-            }
-            const deadMessages = Object.keys(messages).filter(key =>
-                LIGHT_DEAD_MESSAGES.includes(key) || LIGHT_DEAD_MESSAGE_PATTERN.test(key)
-            );
-            if (deadMessages.length) {
-                throw new Error(`[${target}] Removed feature translations leaked into locale ${locale}: ${deadMessages.join(', ')}`);
-            }
+}
+
+function validasiRingan(berkas, outDir, target) {
+    const popup = berkas.popup;
+    const pengaturan = berkas.pengaturan;
+    const unduhan = fs.readFileSync(path.join(outDir, 'download.js'), 'utf8');
+    const konverter = fs.readFileSync(path.join(outDir, 'offlineStreamConvert.js'), 'utf8');
+    const sumberRingan = [konverter, berkas.latar, unduhan, pengaturan].join('\n');
+    for (const notificationSetting of ['media-notification']) {
+        if (!popup.includes(`id="${notificationSetting}"`)) {
+            throw new Error(`[${target}] Notification setting is missing from Light build: ${notificationSetting}`);
         }
     }
+    for (const removedNotificationSetting of ['media-system-notification', 'fetch-notification']) {
+        if (popup.includes(`id="${removedNotificationSetting}"`)) {
+            throw new Error(`[${target}] Removed device notification setting leaked into Light build: ${removedNotificationSetting}`);
+        }
+    }
+    if (/async function showMediaNotification\([^)]*\)\s*{\s*return;\s*}/.test(berkas.latar)) {
+        throw new Error(`[${target}] In-page media notifications were disabled in Light build`);
+    }
+    if (!unduhan.includes('const activeJobs = new Map();')) {
+        throw new Error(`[${target}] Download manager state was removed from Light build`);
+    }
+    if (popup.includes('start-speed-test') || pengaturan.includes('setupSpeedTest') || pengaturan.includes('speed.cloudflare.com')) {
+        throw new Error(`[${target}] Speed Test code leaked into build`);
+    }
+    if (popup.includes('cloud-save-location') || popup.includes('gdrive-login-btn') || popup.includes('dropbox-login-btn')) {
+        throw new Error(`[${target}] Cloud settings UI leaked into build`);
+    }
+    if (berkas.manifes.permissions?.includes('identity') || berkas.manifes.oauth2) {
+        throw new Error(`[${target}] Cloud authentication capability leaked into manifest`);
+    }
+    if (/googleapis\.com|dropboxapi\.com|launchWebAuthFlow/.test(sumberRingan)) {
+        throw new Error(`[${target}] Disabled cloud integration code leaked into Light build`);
+    }
+    if (/libraries\/mux\.js|mp4_duration\.js/.test(sumberRingan)) {
+        throw new Error(`[${target}] Disabled stream conversion references leaked into Light build`);
+    }
+    if (popup.includes('audio-to-mp3') || popup.includes('mp3-bitrate')) {
+        throw new Error(`[${target}] MP3 conversion settings UI leaked into build`);
+    }
+    const konverterPakaiMediabunny = konverter.includes('Mediabunny');
+    const adaMediabunny = fs.existsSync(path.join(outDir, 'libraries', 'mediabunny.min.js'));
+    if (konverterPakaiMediabunny && !adaMediabunny) {
+        throw new Error(`[${target}] Mediabunny library is missing from Light build`);
+    }
+    if (!konverterPakaiMediabunny && adaMediabunny) {
+        throw new Error(`[${target}] Unused Mediabunny library leaked into Light build`);
+    }
+    const kebocoranLibav = [];
+    const auditLibAv = dir => {
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+            const entryPath = path.join(dir, entry.name);
+            if (entry.isDirectory()) auditLibAv(entryPath);
+            else if (/\.(?:js|html|json|md)$/i.test(entry.name) && /libav/i.test(fs.readFileSync(entryPath, 'utf8'))) {
+                kebocoranLibav.push(path.relative(outDir, entryPath));
+            }
+        }
+    };
+    auditLibAv(outDir);
+    if (kebocoranLibav.length) throw new Error(`[${target}] LibAV references leaked into: ${kebocoranLibav.join(', ')}`);
+    for (const locale of fs.readdirSync(path.join(outDir, '_locales'))) {
+        const messagesPath = path.join(outDir, '_locales', locale, 'messages.json');
+        if (!fs.existsSync(messagesPath)) continue;
+        const messages = JSON.parse(fs.readFileSync(messagesPath, 'utf8'));
+        for (const notificationMessage of ['mediaNotificationTitle', 'mediaNotificationDownloadAction']) {
+            if (!Object.hasOwn(messages, notificationMessage)) {
+                throw new Error(`[${target}] Notification translation is missing from locale ${locale}: ${notificationMessage}`);
+            }
+        }
+        if (LIGHT_SPEED_TEST_MESSAGES.some(key => Object.hasOwn(messages, key))) {
+            throw new Error(`[${target}] Speed Test translations leaked into locale: ${locale}`);
+        }
+        const deadMessages = Object.keys(messages).filter(key =>
+            LIGHT_DEAD_MESSAGES.includes(key) || LIGHT_DEAD_MESSAGE_PATTERN.test(key)
+        );
+        if (deadMessages.length) {
+            throw new Error(`[${target}] Removed feature translations leaked into locale ${locale}: ${deadMessages.join(', ')}`);
+        }
+    }
+}
+
+function validateTarget(baseTarget, outDir, isDebug = false) {
+    const targetLabel = isDebug ? `${baseTarget}-debug` : baseTarget;
+    const target = baseTarget;
+    const berkas = {
+        manifes: JSON.parse(fs.readFileSync(path.join(outDir, 'manifest.json'), 'utf8')),
+        popup: fs.readFileSync(path.join(outDir, 'popup.html'), 'utf8'),
+        latar: fs.readFileSync(path.join(outDir, 'network_detector.js'), 'utf8'),
+        pengaturan: fs.readFileSync(path.join(outDir, 'settings.js'), 'utf8'),
+    };
+    validasiBerkasTerlarang(baseTarget, outDir, targetLabel);
+    validasiLoggerDebug(berkas, outDir, isDebug, targetLabel);
+    validasiFungsiLatar(berkas, target);
+    validasiManifes(berkas, target, targetLabel);
+    if (LIGHT_TARGETS.has(target)) validasiRingan(berkas, outDir, target);
 }
 
 function buildTarget(target) {
@@ -910,39 +895,20 @@ function buildTarget(target) {
 const args = process.argv.slice(2);
 const command = (args[0] || 'all').toLowerCase();
 
-switch (command) {
-    case 'chrome':
-    case 'chrome-yt':
-    case 'firefox':
-    case 'firefox-amo':
-    case 'chrome-light':
-    case 'chrome-yt-light':
-    case 'firefox-light':
-    case 'chrome-debug':
-    case 'chrome-yt-debug':
-    case 'firefox-debug':
-    case 'chrome-light-debug':
-    case 'chrome-yt-light-debug':
-    case 'firefox-light-debug':
-    case 'firefox-light-amo':
-        buildTarget(command);
-        break;
-    case 'light':
-        for (const target of LIGHT_TARGETS) buildTarget(target);
-        break;
-    case 'debug':
-        for (const target of DEBUG_TARGETS) buildTarget(target);
-        break;
-    case 'all':
-        for (const target of BASE_TARGETS) buildTarget(target);
-        for (const target of DEBUG_TARGETS) buildTarget(target);
-        break;
-    case 'clean':
-        cleanDir(BUILD_DIR);
-        console.log('[OK] build/ cleaned');
-        break;
-    default:
-        console.error(`[ERROR] Unknown command: ${command}`);
-        console.error('Usage: node src/build.js [chrome|chrome-yt|firefox|firefox-amo|chrome-light|chrome-yt-light|firefox-light|firefox-light-amo|<target>-debug|light|debug|all|clean]');
-        process.exit(1);
+if ([...BASE_TARGETS, ...DEBUG_TARGETS].includes(command)) {
+    buildTarget(command);
+} else if (command === 'light') {
+    for (const target of LIGHT_TARGETS) buildTarget(target);
+} else if (command === 'debug') {
+    for (const target of DEBUG_TARGETS) buildTarget(target);
+} else if (command === 'all') {
+    for (const target of BASE_TARGETS) buildTarget(target);
+    for (const target of DEBUG_TARGETS) buildTarget(target);
+} else if (command === 'clean') {
+    cleanDir(BUILD_DIR);
+    console.log('[OK] build/ cleaned');
+} else {
+    console.error(`[ERROR] Unknown command: ${command}`);
+    console.error('Usage: node src/build.js [chrome|chrome-yt|firefox|firefox-amo|chrome-light|chrome-yt-light|firefox-light|firefox-light-amo|<target>-debug|light|debug|all|clean]');
+    process.exit(1);
 }
