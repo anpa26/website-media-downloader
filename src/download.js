@@ -20,6 +20,10 @@ if (typeof browser === 'undefined') {
     var browser = chrome;
 }
 
+function escapeHtmlDownload(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 async function ensureScriptLoaded(src, globalVarName) {
   if (typeof window[globalVarName] !== 'undefined') return;
   if (document.querySelector(`script[src="${src}"]`)) {
@@ -983,7 +987,7 @@ async function addNewDownload(id, url, filename) {
             </mdui-icon>
           </div>
           <div class="info-wrapper">
-            <h4 class="file-name">${filename || browser.i18n.getMessage("defaultMediaName")}</h4>
+            <h4 class="file-name">${escapeHtmlDownload(filename || browser.i18n.getMessage("defaultMediaName"))}</h4>
             <p class="status-text" id="status-text-${id}">${browser.i18n.getMessage("downloadWaiting") || "Preparing..."}</p>
           </div>
         </div>

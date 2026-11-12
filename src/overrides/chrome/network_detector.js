@@ -84,13 +84,25 @@ async function ensureClientZipLoaded() {
     return clientZipLoadPromise;
 }
 
-if (!browser.storage.session) {
+const isSessionShimActive = !browser.storage.session;
+if (isSessionShimActive) {
     browser.storage.session = {
         get: (keys, cb) => browser.storage.local.get(keys, cb),
         set: (obj, cb) => browser.storage.local.set(obj, cb),
         remove: (keys, cb) => browser.storage.local.remove(keys, cb),
         clear: (cb) => browser.storage.local.clear(cb)
     };
+    if (browser.runtime.onStartup) {
+        browser.runtime.onStartup.addListener(async () => {
+            try {
+                const all = await browser.storage.local.get(null);
+                const mediaKeys = Object.keys(all || {}).filter(k => /^(https?:|blob:|data:)/i.test(k) || k === 'wmd_active_downloads' || k === 'urlToHeaderMap');
+                if (mediaKeys.length) await browser.storage.local.remove(mediaKeys);
+                urlToHeaderMap.clear();
+                activeDownloads.clear();
+            } catch (_) {}
+        });
+    }
 }
 
 let urlList = [];
@@ -104,6 +116,13 @@ async function setPersistentJobPaused(item, jobId, isPaused) {
     if (!stored[key]) return;
     stored[key].isPaused = isPaused;
     await browser.storage.local.set({ [key]: stored[key] });
+}
+
+let antreanTulisSession = Promise.resolve();
+function antreTulisSession(tulis) {
+    const tugas = antreanTulisSession.then(() => tulis());
+    antreanTulisSession = tugas.catch((error) => console.error('[website-media-downloader] Gagal nulis session:', error));
+    return tugas;
 }
 
 async function saveDownloadState(downloadId, data) {
@@ -136,6 +155,7 @@ async function removeDownloadState(downloadId) {
 
 async function removeMediaRequest(url) {
     if (!url) return;
+    return antreTulisSession(async () => {
     try {
         const baseUrl = url.split('?')[0];
         const res = await browser.storage.session.get(null);
@@ -161,6 +181,7 @@ async function removeMediaRequest(url) {
 
         browser.storage.session.remove(url).catch(() => {});
     }
+    });
 }
 
 function processingJobInfo(key, job) {
@@ -299,7 +320,7 @@ const videoExtensions = [".3g2", ".3gp", ".asx", ".avi", ".divx", ".4v", ".flv",
 const audioExtensions = [".3ga", ".aac", ".ac3", ".adts", ".aif", ".aiff", ".alac", ".ape", ".asf", ".au", ".dts", ".f4a", ".f4b", ".flac", ".isma", ".it", ".m4a", ".m4b", ".m4r", ".mid", ".mka", ".mod", ".mp1", ".mp2", ".mp3", ".mp4a", ".mpa", ".mpga", ".oga", ".ogg", ".ogx", ".opus", ".ra", ".shn", ".spx", ".vorbis", ".wav", ".weba", ".wma", ".xm"];
 const streamExtensions = [".f4f", ".f4m", ".m3u8", ".mpd", ".smil"];
 const subtitleExtensions = [".vtt", ".srt", ".ass", ".ssa", ".ttml", ".dfxp", ".lrc", ".smi", ".sub", ".sbv"];
-const imageExtensions = [".webp", ".png", ".jpg", ".jpeg", ".gif"];
+const imageExtensions = [".webp", ".png", ".jpg", ".jpeg", ".gif", ".avif", ".bmp", ".ico", ".tiff", ".tif"];
 const allExtensions = videoExtensions.concat(audioExtensions, streamExtensions, subtitleExtensions, imageExtensions);
 
 const extPattern = allExtensions.map(e => e.replace(/^\./, '').replace(/\+/g, '\\+')).join('|');
@@ -308,6 +329,58 @@ const temporaryHeaderMap = new Map();
 const temporaryRequestBodyMap = new Map();
 const temporaryCookieMap = new Map();
 const urlToHeaderMap = new Map();
+const HEADER_TTL_MS = 30 * 60 * 1000;
+function ambilHeaderTersimpen(url) {
+    const entry = urlToHeaderMap.get(url);
+    if (!entry) return null;
+    if (entry.disimpen && Date.now() - entry.disimpen > HEADER_TTL_MS) {
+        urlToHeaderMap.delete(url);
+        if (typeof removeHeaderSpoofRules === 'function') removeHeaderSpoofRules(url);
+        return null;
+    }
+    return entry;
+}
+
+function golekHeaderTersimpen(url, bolehFallbackAsal = false) {
+    const pas = ambilHeaderTersimpen(url);
+    if (pas) return pas;
+    let tanpaFragment = url;
+    try { const u = new URL(url); u.hash = ''; tanpaFragment = u.href; } catch (_) {}
+    if (tanpaFragment !== url) {
+        const pasTanpaFragment = ambilHeaderTersimpen(tanpaFragment);
+        if (pasTanpaFragment) return pasTanpaFragment;
+    }
+    if (!bolehFallbackAsal) return null;
+    let asal = '';
+    try { asal = new URL(url).origin; } catch (_) { return null; }
+    if (!asal || asal === 'null') return null;
+    let palingAnyar = null;
+    let wektuPalingAnyar = 0;
+    for (const [kunci, entri] of urlToHeaderMap) {
+        if (!entri || !entri.disimpen) continue;
+        if (Date.now() - entri.disimpen > HEADER_TTL_MS) continue;
+        let asalEntri = '';
+        try { asalEntri = new URL(kunci).origin; } catch (_) { continue; }
+        if (asalEntri !== asal) continue;
+        if (entri.disimpen > wektuPalingAnyar) { wektuPalingAnyar = entri.disimpen; palingAnyar = entri; }
+    }
+    return palingAnyar;
+}
+
+function golekiDownload(query) {
+    return new Promise((selesai) => {
+        try {
+            const hasil = browser.downloads.search(query);
+            if (hasil && typeof hasil.then === 'function') {
+                hasil.then((dl) => selesai(Array.isArray(dl) ? dl : [])).catch(() => selesai([]));
+                return;
+            }
+        } catch (_) {}
+        try {
+            browser.downloads.search(query, (dl) => selesai(Array.isArray(dl) ? dl : []));
+        } catch (_) { selesai([]); }
+    });
+}
 
 const SPOOF_HEADERS = [
     'cookie', 'referer', 'origin', 'user-agent', 'accept', 'accept-language', 'accept-encoding',
@@ -337,6 +410,7 @@ function registerHeaderSpoofRules(url, headers) {
     const requestHeaders = [];
     
     for (const [name, value] of Object.entries(headers)) {
+        if (name === 'disimpen') continue;
         requestHeaders.push({
             header: name,
             operation: 'set',
@@ -388,9 +462,19 @@ async function loadPersistentHeaders() {
         if (!isFlagEnabled(detection['mime-detection'], true) && !isFlagEnabled(detection['url-detection'], true)) return;
         const res = await browser.storage.session.get('urlToHeaderMap');
         if (res.urlToHeaderMap) {
+            const kadaluarsa = [];
             for (const [url, headers] of Object.entries(res.urlToHeaderMap)) {
+                if (headers?.disimpen && Date.now() - headers.disimpen > HEADER_TTL_MS) {
+                    kadaluarsa.push(url);
+                    continue;
+                }
                 urlToHeaderMap.set(url, headers);
                 registerHeaderSpoofRules(url, headers);
+            }
+            if (kadaluarsa.length) {
+                const sisa = { ...res.urlToHeaderMap };
+                for (const url of kadaluarsa) delete sisa[url];
+                browser.storage.session.set({ 'urlToHeaderMap': sisa }).catch(() => {});
             }
         }
     } catch (e) {
@@ -398,6 +482,18 @@ async function loadPersistentHeaders() {
     }
 }
 loadPersistentHeaders();
+
+setInterval(() => {
+    try {
+        const saiki = Date.now();
+        for (const [url, headers] of urlToHeaderMap) {
+            if (headers?.disimpen && saiki - headers.disimpen > HEADER_TTL_MS) {
+                urlToHeaderMap.delete(url);
+                if (typeof removeHeaderSpoofRules === 'function') removeHeaderSpoofRules(url);
+            }
+        }
+    } catch (_) {}
+}, 5 * 60 * 1000);
 
 function registerStaticYoutubeRules() {
     if (typeof chrome === 'undefined' || !chrome.declarativeNetRequest) return;
@@ -454,7 +550,6 @@ browser.storage.onChanged.addListener((changes, area) => {
     }
 });
 
-let savePersistentHeadersTimeout = null;
 async function savePersistentHeaders() {
     while (urlToHeaderMap.size > 200) {
         const oldestKey = urlToHeaderMap.keys().next().value;
@@ -465,18 +560,20 @@ async function savePersistentHeaders() {
 
     const doSave = async () => {
         try {
+            const saiki = Date.now();
+            for (const [url, headers] of urlToHeaderMap) {
+                if (headers?.disimpen && saiki - headers.disimpen > HEADER_TTL_MS) {
+                    urlToHeaderMap.delete(url);
+                    removeHeaderSpoofRules(url);
+                }
+            }
             await browser.storage.session.set({ 'urlToHeaderMap': Object.fromEntries(urlToHeaderMap) });
         } catch (e) {
             console.warn("Failed to save persistent headers:", e);
         }
     };
 
-    if (savePersistentHeadersTimeout) return;
-    const debounceMs = isOptimizeLowEnd ? 1500 : 1000;
-    savePersistentHeadersTimeout = setTimeout(() => {
-        savePersistentHeadersTimeout = null;
-        doSave();
-    }, debounceMs);
+    doSave();
 }
 
 function isFlagEnabled(val, defaultVal = false) {
@@ -512,8 +609,8 @@ browser.webRequest.onBeforeSendHeaders.addListener(
         }
 
         if (hasHeaders) {
-            const current = urlToHeaderMap.get(details.url) || {};
-            const mergedHeaders = { ...current, ...capturedHeaders };
+            const current = ambilHeaderTersimpen(details.url) || {};
+            const mergedHeaders = { ...current, ...capturedHeaders, disimpen: Date.now() };
             urlToHeaderMap.set(details.url, mergedHeaders);
             registerHeaderSpoofRules(details.url, mergedHeaders);
             savePersistentHeaders();
@@ -522,11 +619,13 @@ browser.webRequest.onBeforeSendHeaders.addListener(
         const isMediaRequest = details.type === 'media' ||
                                details.type === 'xmlhttprequest' ||
                                details.type === 'other' ||
+                               details.type === 'main_frame' ||
+                               details.type === 'sub_frame' ||
                                details.url.includes('download') ||
                                detectionRegex.test(details.url);
 
         if (isMediaRequest || isFromExtension) {
-            const stored = urlToHeaderMap.get(details.url);
+            const stored = golekHeaderTersimpen(details.url, true);
 
             details.requestHeaders = details.requestHeaders.filter(h => {
                 const val = h.value.toLowerCase();
@@ -535,6 +634,8 @@ browser.webRequest.onBeforeSendHeaders.addListener(
 
             if (stored) {
                 for (const [name, value] of Object.entries(stored)) {
+                    if (name === 'disimpen') continue;
+                    if (!isFromExtension && (name === 'sec-fetch-site' || name === 'sec-fetch-mode' || name === 'sec-fetch-dest')) continue;
                     let found = false;
                     for (let h of details.requestHeaders) {
                         if (h.name.toLowerCase() === name) {
@@ -547,9 +648,6 @@ browser.webRequest.onBeforeSendHeaders.addListener(
                         details.requestHeaders.push({ name: name, value: value });
                     }
 
-                    if (name === 'referer' && isFromExtension) {
-                        details.referrer = value;
-                    }
                 }
             }
 
@@ -557,6 +655,8 @@ browser.webRequest.onBeforeSendHeaders.addListener(
                 const storedSFS = stored?.['sec-fetch-site'];
                 const storedSFM = stored?.['sec-fetch-mode'];
                 const storedSFD = stored?.['sec-fetch-dest'];
+                let refererHostSama = false;
+                try { refererHostSama = !!stored?.referer && details.url.includes(new URL(stored.referer).host); } catch (_) { refererHostSama = false; }
 
                 details.requestHeaders = details.requestHeaders.filter(h =>
                     !['sec-fetch-site', 'sec-fetch-mode', 'sec-fetch-dest'].includes(h.name.toLowerCase())
@@ -564,7 +664,7 @@ browser.webRequest.onBeforeSendHeaders.addListener(
 
                 details.requestHeaders.push({
                     name: 'Sec-Fetch-Site',
-                    value: storedSFS || (stored?.referer && details.url.includes(new URL(stored.referer).host) ? 'same-origin' : 'cross-site')
+                    value: storedSFS || (refererHostSama ? 'same-origin' : 'cross-site')
                 });
                 details.requestHeaders.push({ name: 'Sec-Fetch-Mode', value: storedSFM || 'no-cors' });
                 details.requestHeaders.push({ name: 'Sec-Fetch-Dest', value: storedSFD || 'video' });
@@ -579,6 +679,22 @@ browser.webRequest.onBeforeSendHeaders.addListener(
     { urls: ["<all_urls>"] },
     ["requestHeaders", "extraHeaders"]
 );
+if (browser.webRequest.onBeforeRedirect) {
+    browser.webRequest.onBeforeRedirect.addListener((details) => {
+        if (!details.redirectUrl || !details.url) return;
+        const entry = ambilHeaderTersimpen(details.url);
+        if (!entry) return;
+        let hostAsal = '', hostTujuan = '';
+        try {
+            hostAsal = new URL(details.url).hostname;
+            hostTujuan = new URL(details.redirectUrl).hostname;
+        } catch (_) { return; }
+        if (hostTujuan !== hostAsal && !hostTujuan.endsWith('.' + hostAsal) && !hostAsal.endsWith('.' + hostTujuan)) return;
+        urlToHeaderMap.set(details.redirectUrl, { ...entry, disimpen: Date.now() });
+        savePersistentHeaders();
+        if (typeof registerHeaderSpoofRules === 'function') registerHeaderSpoofRules(details.redirectUrl, entry);
+    }, { urls: ['<all_urls>'] });
+}
 
 let cachedSettings = {
     manualScan: false,
@@ -683,7 +799,8 @@ browser.tabs.onRemoved.addListener((tabId) => {
 
     getSettings((settings) => {
         if (!settings.removeOnTabClose) return;
-        browser.storage.session.get(null, async (items) => {
+        antreTulisSession(async () => {
+            const items = await browser.storage.session.get(null);
             if (!items) return;
             let otherSameHostOpen = false;
             if (removedHost) {
@@ -722,13 +839,16 @@ browser.tabs.onRemoved.addListener((tabId) => {
             if (keysToRemove.length > 0) ops.push(browser.storage.session.remove(keysToRemove).catch(() => {}));
             if (Object.keys(updates).length > 0) ops.push(browser.storage.session.set(updates).catch(() => {}));
             if (ops.length > 0) {
-                Promise.all(ops).then(() => {
-                    browser.runtime.sendMessage({ action: 'mediaRemovedOnTabClose' }).catch(() => {});
-                });
+                await Promise.all(ops);
+                browser.runtime.sendMessage({ action: 'mediaRemovedOnTabClose' }).catch(() => {});
             }
-        });
+        }).catch(() => {});
     });
 });
+
+if (browser.tabs.onActivated) {
+    browser.tabs.onActivated.addListener(() => { updateActiveDownloadsBadge().catch(() => {}); });
+}
 
 browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
     if (changeInfo.url) {
@@ -738,7 +858,8 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
         notifiedUrls.delete(tabId);
         lastNotificationTime.delete(tabId);
         tabsWithDrm.delete(tabId);
-        browser.storage.session.get(null, (items) => {
+        antreTulisSession(async () => {
+            const items = await browser.storage.session.get(null);
             const updates = {};
             for (const [url, reqs] of Object.entries(items || {})) {
                 if (!Array.isArray(reqs) || !reqs.length) continue;
@@ -751,18 +872,21 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
                 });
                 if (changed) updates[url] = reqs;
             }
-            if (Object.keys(updates).length > 0) browser.storage.session.set(updates).catch(() => {});
-        });
+            if (Object.keys(updates).length > 0) await browser.storage.session.set(updates);
+        }).catch(() => {});
     }
 });
 
+let nomerBadge = 0;
 async function updateActiveDownloadsBadge() {
+    const nomerku = ++nomerBadge;
     try {
         const settings = await browser.storage.local.get('badge-counter');
         const actionAPI = (typeof browser !== 'undefined' && browser.action) ? browser.action : (typeof chrome !== 'undefined' && chrome.action) ? chrome.action : (browser.browserAction || chrome.browserAction);
         if (!actionAPI || !actionAPI.setBadgeText) return;
 
         if (settings['badge-counter'] === '0') {
+            if (nomerku !== nomerBadge) return;
             actionAPI.setBadgeText({ text: '' });
             return;
         }
@@ -776,10 +900,11 @@ async function updateActiveDownloadsBadge() {
             }
         }
 
-        const text = activeCount > 0 ? (activeCount > 99 ? '99+' : String(activeCount)) : '';
+        let text = activeCount > 0 ? (activeCount > 99 ? '99+' : String(activeCount)) : '';
+        if (nomerku !== nomerBadge) return;
         actionAPI.setBadgeText({ text: text });
-        if (activeCount > 0 && actionAPI.setBadgeBackgroundColor) {
-            actionAPI.setBadgeBackgroundColor({ color: '#1976D2' });
+        if (text && actionAPI.setBadgeBackgroundColor) {
+            actionAPI.setBadgeBackgroundColor({ color: activeCount > 0 ? '#1976D2' : '#3B82F6' });
         }
     } catch (e) {
         console.warn("Failed to update active downloads badge:", e);
@@ -827,9 +952,14 @@ function restoreActiveDownloadsFromSession() {
     const storageSession = (typeof browser !== 'undefined' && browser.storage && browser.storage.session) ? browser.storage.session : (typeof browser !== 'undefined' && browser.storage ? browser.storage.local : null);
     if (!storageSession) return;
 
-    storageSession.get('wmd_active_downloads').then(res => {
+    storageSession.get('wmd_active_downloads').then(async res => {
         const list = res.wmd_active_downloads;
         if (list && Array.isArray(list)) {
+            let statusAsli = {};
+            try {
+                const kabeh = await golekiDownload({});
+                for (const d of kabeh || []) statusAsli[d.id] = d.state;
+            } catch (_) {}
             list.forEach(val => {
                 if (activeDownloads.has(val.id)) return;
                 if (val.isNative && typeof val.url === 'string' && val.url.startsWith('blob:') && !(val.loaded > 0)) return;
@@ -837,7 +967,12 @@ function restoreActiveDownloadsFromSession() {
                 const sudahSelesai = statusNormal === 'complete' || statusNormal === 'completed' ||
                     (val.percent !== null && val.percent !== undefined && val.percent >= 100) ||
                     ((val.total || 0) > 0 && (val.loaded || 0) >= (val.total || 0));
-                if (!val.isPaused && !sudahSelesai) return;
+                if (!val.isPaused && !sudahSelesai) {
+                    if (!val.isNative) return;
+                    const stateAsli = statusAsli[val.id];
+                    if (!stateAsli || stateAsli !== 'in_progress') return;
+                    val.state = stateAsli;
+                }
                 _origActiveDownloadsSet(val.id, val);
             });
             updateActiveDownloadsBadge();
@@ -1406,11 +1541,11 @@ function getMediaType(url, contentType) {
 
 
     const subtitleExtensions = [".vtt", ".srt", ".ass", ".ssa", ".ttml", ".dfxp", ".lrc", ".smi", ".sub", ".sbv"];
-    const imageExtensions = [".webp", ".png", ".jpg", ".jpeg", ".gif"];
+    const imageExtensions = [".webp", ".png", ".jpg", ".jpeg", ".gif", ".avif", ".bmp", ".ico", ".tiff", ".tif"];
     const downloadExtensions = [".zip", ".rar", ".7z", ".tar", ".gz", ".exe", ".msi", ".apk", ".dmg", ".iso", ".bin", ".pdf", ".epub", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"];
 
     const urlPath = urlLower.split('?')[0].split('#')[0];
-    const hasExt = (ext) => urlPath.endsWith(ext) || urlLower.includes(ext + '&') || urlLower.includes(ext + '?') || urlLower.includes(ext + '#') || urlLower.endsWith(ext);
+    const hasExt = (ext) => urlPath.endsWith(ext);
     let decodedUrlLower = urlLower;
     try { decodedUrlLower = decodeURIComponent(urlLower); } catch (_) {}
     const isStaticNonStream = imageExtensions.some(hasExt) || subtitleExtensions.some(hasExt) || downloadExtensions.some(hasExt) ||
@@ -1442,6 +1577,9 @@ function checkIsSegment(url, contentType, contentLength, currentSettings) {
 
     const isHideSegments = currentSettings?.hideSegments ?? true;
     const isHidePageComponents = currentSettings?.hidePageComponents ?? true;
+    if (urlLower.includes('googlevideo.com/videoplayback')) {
+        return true;
+    }
 
 
 
@@ -1466,29 +1604,17 @@ function checkIsSegment(url, contentType, contentLength, currentSettings) {
 
     if (!isHideSegments) return false;
 
-    if (path.endsWith('.ts') || 
-        path.endsWith('.m4s') || 
-        path.endsWith('.m4v') || 
-        path.endsWith('.m4a') ||
-        path.endsWith('.m2ts') ||
-        path.endsWith('.mts')) {
-        return true;
-    }
+    if (path.endsWith('.m4s')) return true;
+    const isSegmentLikeExt = path.endsWith('.ts') || path.endsWith('.m4v') || path.endsWith('.m2ts') || path.endsWith('.mts');
+    const hasSegmentKeyword = urlLower.includes('chunk') || urlLower.includes('fragment') || urlLower.includes('segment') || urlLower.includes('range/') || urlLower.includes('seg-');
 
-    if (mimeLower === 'video/mp2t' || 
-        mimeLower === 'video/iso.segment' || 
+    if (mimeLower === 'video/mp2t' ||
+        mimeLower === 'video/iso.segment' ||
         mimeLower === 'audio/iso.segment') {
         return true;
     }
 
-    if (size > 0 && size < 5242880) { 
-        if (urlLower.includes('chunk') || 
-            urlLower.includes('fragment') || 
-            urlLower.includes('segment') || 
-            urlLower.includes('range/')) {
-            return true;
-        }
-    }
+    if (isSegmentLikeExt) return size > 0 && size < 5242880 && hasSegmentKeyword;
 
     return false;
 }
@@ -2076,14 +2202,15 @@ function initListener(skipCacheReset = false) {
                     pageUrl: fallbackPageUrl
                 };
 
-                browser.storage.session.get(details.url, function (result) {
+                antreTulisSession(async () => {
+                    const result = await browser.storage.session.get(details.url);
                     let existingRequests = result[details.url] || [];
 
                     existingRequests.push(mediaRequest);
                     let requestsObj = {};
                     requestsObj[details.url] = existingRequests;
-                    browser.storage.session.set(requestsObj);
-                });
+                    await browser.storage.session.set(requestsObj);
+                }).catch(() => {});
             } catch (e) {
                 console.error("Error in onSendHeaders handler:", e);
             }
@@ -2136,7 +2263,8 @@ function initListener(skipCacheReset = false) {
 
                 const urlMatches = detectionRegex.test(decodeURI(details.url));
 
-                browser.storage.session.get(details.url, function (result) {
+                antreTulisSession(async () => {
+                    const result = await browser.storage.session.get(details.url);
                     let existingRequests = result[details.url] || [];
 
                     let updated = false;
@@ -2151,6 +2279,8 @@ function initListener(skipCacheReset = false) {
                         }
                     }
 
+                    await new Promise((selesaiAntrean) => {
+                    setTimeout(() => selesaiAntrean(), 10000);
                     getSettings(async function (currentSettings) {
                         const mimeEnabledNow = !!currentSettings.mimeDetection;
                         const urlEnabledNow = !!currentSettings.urlDetection;
@@ -2239,8 +2369,10 @@ function initListener(skipCacheReset = false) {
                         if (!currentSettings.manualScan && (shouldSaveNow || updated)) {
                             showMediaNotification(details, currentSettings);
                         }
+                        selesaiAntrean();
                     });
-                });
+                    });
+                }).catch(() => {});
             } catch (e) {
                 console.error("Error in onHeadersReceived handler:", e);
             }
@@ -2260,20 +2392,34 @@ browser.downloads.onCreated.addListener((downloadItem) => {
             url: downloadItem.url,
             loaded: 0,
             total: downloadItem.totalBytes,
-            isNative: true
+            isNative: true,
+            state: downloadItem.state
         });
     }
 });
 
 browser.downloads.onChanged.addListener((delta) => {
-    const item = activeDownloads.get(delta.id);
-    if (!item) return;
+    let item = activeDownloads.get(delta.id);
+    if (!item) {
+        golekiDownload({ id: delta.id }).then((dl) => {
+            const d = dl && dl[0];
+            if (!d || d.state !== 'in_progress') return;
+            if (!d.url || !(d.url.startsWith('http') || d.url.startsWith('blob:'))) return;
+            if (!detectionRegex.test(d.url) && !urlToHeaderMap.has(d.url)) return;
+            activeDownloads.set(d.id, { url: d.url, filename: d.filename, loaded: d.bytesReceived || 0, total: d.totalBytes, isNative: true, state: d.state });
+        }).catch(() => {});
+        return;
+    }
 
     if (delta.bytesReceived) item.loaded = delta.bytesReceived.current;
     if (delta.totalBytes) item.total = delta.totalBytes.current;
-    if (delta.paused) item.isPaused = delta.paused.current;
+    if (delta.paused) {
+        item.isPaused = delta.paused.current;
+        updateActiveDownloadsBadge().catch(() => {});
+    }
     if (delta.state?.current === 'interrupted' && delta.error?.current !== 'USER_CANCELED') {
         item.isPaused = true;
+        updateActiveDownloadsBadge().catch(() => {});
         browser.runtime.sendMessage({ action: 'downloadPaused', id: delta.id,
             loaded: item.loaded, total: item.total }).catch(() => {});
         return;
@@ -2318,7 +2464,13 @@ function broadcastAudioJob(message) {
     }).catch(() => {});
 }
 
+function isTrustedExtensionSender(sender) {
+    if (!sender || !sender.id) return false;
+    return sender.id === browser.runtime.id;
+}
+
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (!isTrustedExtensionSender(sender)) return;
     if (message.action === 'customStatus') {
         const id = message.id;
         if (id) {
@@ -2391,7 +2543,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (tabsWithDrm.has(tabId)) return;
         tabsWithDrm.add(tabId);
 
-        browser.storage.session.get(null, (items) => {
+        antreTulisSession(async () => {
+            const items = await browser.storage.session.get(null);
             const keysToRemove = [];
             for (const [url, requests] of Object.entries(items)) {
                 if (requests && requests.length > 0 && requests[0].tabId === tabId) {
@@ -2401,8 +2554,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     }
                 }
             }
-            if (keysToRemove.length > 0) browser.storage.session.remove(keysToRemove);
-        });
+            if (keysToRemove.length > 0) await browser.storage.session.remove(keysToRemove);
+        }).catch(() => {});
 
         const drmMsg = browser.i18n.getMessage("mediaNotificationDrmMessage") || "DRM Protected";
         const drmTitle = browser.i18n.getMessage("drmWarningTitle") || "DRM Detected";
@@ -2526,7 +2679,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const normTargetHost = stripWww(targetHost);
         browser.storage.local.get('manual-scan-keep-tabs', (localRes) => {
             const keepOtherTabs = localRes && (localRes['manual-scan-keep-tabs'] === '1' || localRes['manual-scan-keep-tabs'] === true);
-            browser.storage.session.get(null, (items) => {
+            antreTulisSession(async () => {
+            const items = await browser.storage.session.get(null);
             const updates = {};
             const allEntries = Object.entries(items || {}).filter(([, reqs]) => Array.isArray(reqs) && reqs.length > 0);
             let matchedUrlsCount = 0;
@@ -2579,26 +2733,13 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 }
             }
 
-            if (matchedUrlsCount === 0 && allEntries.length > 0) {
-                for (const [url, reqs] of allEntries) {
-                    let changed = false;
-                    reqs.forEach(r => {
-                        if (r && !r.manualScanned) {
-                            r.manualScanned = true;
-                            changed = true;
-                        }
-                    });
-                    if (changed) updates[url] = reqs;
-                }
-            }
 
             const finish = () => sendResponse({ success: true, markedCount: Object.keys(updates).length });
             if (Object.keys(updates).length > 0) {
-                browser.storage.session.set(updates).then(finish).catch(finish);
-            } else {
-                finish();
+                await browser.storage.session.set(updates).catch(() => {});
             }
-        });
+            finish();
+            }).catch(() => {});
         });
         return true;
     }
@@ -2633,7 +2774,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             let senderOrigin = "";
             try { if (senderReferer) senderOrigin = new URL(senderReferer).origin; } catch(e) {}
 
-            browser.storage.session.get(null, (items) => {
+            antreTulisSession(async () => {
+                const items = await browser.storage.session.get(null);
                 const updates = {};
                 const imageMetadataUpdates = {};
                 let hasNew = false;
@@ -2692,16 +2834,16 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     }
                 });
 
-                if (Object.keys(updates).length) browser.storage.session.set(updates);
+                if (Object.keys(updates).length) await browser.storage.session.set(updates);
                 if (Object.keys(imageMetadataUpdates).length) {
-                    browser.storage.session.set(imageMetadataUpdates)
-                        .then(() => {
-                            if (!settings.manualScan || isManualScan) {
-                                browser.runtime.sendMessage({ action: 'imageMetadataUpdated', urls: Object.keys(imageMetadataUpdates) }).catch(() => {});
-                            }
-                        })
-                        .catch(() => {});
+                    try {
+                        await browser.storage.session.set(imageMetadataUpdates);
+                        if (!settings.manualScan || isManualScan) {
+                            browser.runtime.sendMessage({ action: 'imageMetadataUpdated', urls: Object.keys(imageMetadataUpdates) }).catch(() => {});
+                        }
+                    } catch (_) {}
                 }
+                updateActiveDownloadsBadge().catch(() => {});
                 if (hasNew) {
                     for (const url in updates) {
                         const req = updates[url][0];
@@ -2709,12 +2851,13 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                         maybeAutoDownloadMedia({ url, tabId: tabId ?? req.tabId, pageUrl: req.pageUrl, pageTitle: req.pageTitle, responseHeaders: [{ name: 'content-type', value: detectedType === 'video' ? 'video/mp4' : (detectedType === 'audio' ? 'audio/mp4' : 'application/octet-stream') }] }, settings, req);
                     }
                 }
-            });
+            }).catch(() => {});
         });
         return;
     }
         if (message.action === 'getMediaRequests') {
-        browser.storage.session.get(null, async function (items) {
+        const onlyUrl = typeof message.url === 'string' && message.url ? message.url : null;
+        browser.storage.session.get(onlyUrl || null, async function (items) {
             await detectionExclusions.ready;
             items = Object.fromEntries(Object.entries(items || {}).map(([url, requests]) => [
                 url, Array.isArray(requests) ? requests.filter(request => !detectionExclusions.matches({ ...request, url })) : []
@@ -2739,14 +2882,14 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === 'getSpoofedHeaders') {
-        let headers = urlToHeaderMap.get(message.url) || null;
+        let headers = golekHeaderTersimpen(message.url, true);
         if (!headers && (message.url.includes('googlevideo.com') || message.url.includes('youtube.com'))) {
             headers = {
                 'referer': 'https://www.youtube.com/',
                 'origin': 'https://www.youtube.com',
                 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             };
-            urlToHeaderMap.set(message.url, headers);
+            urlToHeaderMap.set(message.url, { ...headers, disimpen: Date.now() });
             if (typeof registerHeaderSpoofRules === 'function') {
                 registerHeaderSpoofRules(message.url, headers);
             }
@@ -2756,7 +2899,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === 'fetchText') {
-        const fetchHeaders = urlToHeaderMap.get(message.url) || {};
+        const fetchHeaders = golekHeaderTersimpen(message.url, true) || {};
         const options = { headers: {} };
         if (fetchHeaders.cookie) options.headers['Cookie'] = fetchHeaders.cookie;
         if (fetchHeaders.referer) {
@@ -2879,6 +3022,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (item) {
             if (item.isStreamJob || item.isAudioJob || item.isZip) {
                 item.isPaused = true;
+                updateActiveDownloadsBadge().catch(() => {});
                 if (item.isAudioJob || item.isStreamJob || item.isPersistentZipJob) {
                     setPersistentJobPaused(item, id, true).catch(console.error);
                     const action = item.isAudioJob ? "pausePersistentAudioJob" :
@@ -2892,10 +3036,12 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             item.recoveryState = "paused";
             if (item.abortController) {
                 item.isPaused = true;
+                updateActiveDownloadsBadge().catch(() => {});
                 item.abortController.abort();
             }
             if (item.cloudController) {
                 item.isPaused = true;
+                updateActiveDownloadsBadge().catch(() => {});
                 item.cloudController.pause();
                 
 
@@ -2933,6 +3079,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (item && item.isPaused) {
             if (item.isStreamJob || item.isAudioJob || item.isZip) {
                 item.isPaused = false;
+                updateActiveDownloadsBadge().catch(() => {});
                 if (item.isAudioJob || item.isStreamJob || item.isPersistentZipJob) {
                     setPersistentJobPaused(item, id, false).catch(console.error);
                     const action = item.isAudioJob ? "resumePersistentAudioJob" :
@@ -2944,6 +3091,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 return true;
             }
             item.isPaused = false;
+            updateActiveDownloadsBadge().catch(() => {});
             item.recoveryState = "running";
 
             item.isManualResume = true;
@@ -3133,7 +3281,7 @@ async function handleDownloadAllAsZip(items, downloadId) {
                         });
                     }
 
-                    const storedHeaders = urlToHeaderMap.get(url);
+                    const storedHeaders = golekHeaderTersimpen(url, true);
                     if (storedHeaders) {
                         if (storedHeaders.cookie) fetchOptions.headers['Cookie'] = storedHeaders.cookie;
                         if (storedHeaders.referer) {
@@ -3885,6 +4033,7 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
             currentItem.abortController = abortController;
             currentItem.isParallel = true;
             currentItem.isPaused = false;
+            updateActiveDownloadsBadge().catch(() => {});
             currentItem.originalRequest = cleanOptions;
             currentItem.chunkIndexMode = 'bytes';
         } else {
@@ -4813,6 +4962,7 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
         const item = activeDownloads.get(downloadId);
         item.abortController = abortController;
         item.isPaused = false;
+        updateActiveDownloadsBadge().catch(() => {});
         if (providedDropboxSessionId) item.dropboxSessionId = providedDropboxSessionId;
     }
 
@@ -4893,9 +5043,10 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
             });
         }
 
-        const storedHeaders = urlToHeaderMap.get(url);
+        const storedHeaders = golekHeaderTersimpen(url, true);
         if (storedHeaders) {
             for (const [name, value] of Object.entries(storedHeaders)) {
+                if (name === 'disimpen') continue;
                 if (name === 'cookie') {
                     fetchOptions.headers['Cookie'] = value;
                 } else if (name === 'referer') {
@@ -4948,6 +5099,7 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
             current.abortController = abortController;
             current.isManualResume = isManualResume;
             current.isPaused = false;
+            updateActiveDownloadsBadge().catch(() => {});
         }
 
         const response = await fetch(url, fetchOptions);
@@ -5028,6 +5180,7 @@ async function handleFetchDownload(url, filename, originalRequest = null, provid
             existingItem.abortController = abortController;
             existingItem.isParallel = false;
             existingItem.isPaused = false;
+            updateActiveDownloadsBadge().catch(() => {});
             existingItem.chunkIndex = activeChunkIndex;
         } else {
             activeDownloads.set(downloadId, { 
@@ -5414,7 +5567,8 @@ browser.storage.local.get('open-preference', function (result) {
     }
 });
 
-browser.runtime.onMessage.addListener((message) => {
+browser.runtime.onMessage.addListener((message, sender) => {
+    if (!isTrustedExtensionSender(sender)) return;
     if (message.action === 'clearStorage') {
 
         const activeUrls = new Set();
@@ -5422,17 +5576,19 @@ browser.runtime.onMessage.addListener((message) => {
             if (value.url) activeUrls.add(value.url);
         }
 
-        browser.storage.session.get(null, function (items) {
+        antreTulisSession(async () => {
+            const items = await browser.storage.session.get(null);
             const keysToRemove = [];
             for (const url in items) {
+                if (url === 'urlToHeaderMap') continue;
                 if (!activeUrls.has(url)) {
                     keysToRemove.push(url);
                 }
             }
             if (keysToRemove.length > 0) {
-                browser.storage.session.remove(keysToRemove);
+                await browser.storage.session.remove(keysToRemove);
             }
-        });
+        }).catch(() => {});
 
         openCacheDB().then(db => {
             const activeKeys = new Set();
@@ -5484,7 +5640,7 @@ browser.runtime.onMessage.addListener((message) => {
         });
     } else if (message.action === 'removeMedia') {
         if (message.url) {
-            browser.storage.session.remove(message.url);
+            antreTulisSession(() => browser.storage.session.remove(message.url)).catch(() => {});
         }
     }
 });
@@ -5531,7 +5687,8 @@ browser.storage.onChanged.addListener((changes, area) => {
             scheduleExistingMediaAutoDownload(newSettings);
         }
         if (newSettings.ignoreDisabledTypes) {
-            browser.storage.session.get(null, (items) => {
+            antreTulisSession(async () => {
+                const items = await browser.storage.session.get(null);
                 const keysToRemove = [];
                 for (const [url, requests] of Object.entries(items || {})) {
                     const contentType = (requests && requests.length > 0 && requests[0].responseHeaders)
@@ -5543,9 +5700,9 @@ browser.storage.onChanged.addListener((changes, area) => {
                     }
                 }
                 if (keysToRemove.length > 0) {
-                    browser.storage.session.remove(keysToRemove);
+                    await browser.storage.session.remove(keysToRemove);
                 }
-            });
+            }).catch(() => {});
         }
     });
 

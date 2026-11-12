@@ -131,7 +131,7 @@
     const audioExtensions = [".3ga", ".aac", ".ac3", ".adts", ".aif", ".aiff", ".alac", ".ape", ".asf", ".au", ".dts", ".f4a", ".f4b", ".flac", ".isma", ".it", ".m4a", ".m4b", ".m4r", ".mid", ".mka", ".mod", ".mp1", ".mp2", ".mp3", ".mp4a", ".mpa", ".mpga", ".oga", ".ogg", ".ogx", ".opus", ".ra", ".shn", ".spx", ".vorbis", ".wav", ".weba", ".wma", ".xm"];
     const streamExtensions = [".f4f", ".f4m", ".m3u8", ".mpd", ".smil"];
     const subtitleExtensions = [".vtt", ".srt", ".ass", ".ssa", ".ttml", ".dfxp", ".lrc", ".smi", ".sub", ".sbv"];
-    const imageExtensions = [".webp", ".png", ".jpg", ".jpeg", ".gif"];
+    const imageExtensions = [".webp", ".png", ".jpg", ".jpeg", ".gif", ".avif", ".bmp", ".ico", ".tiff", ".tif"];
     const downloadExtensions = [".zip", ".rar", ".7z", ".tar", ".gz", ".exe", ".msi", ".apk", ".dmg", ".iso", ".bin", ".pdf", ".epub", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"];
     const allExtensions = videoExtensions.concat(audioExtensions, streamExtensions, subtitleExtensions, imageExtensions);
 
@@ -163,12 +163,9 @@
 
         if (!isHideSegments) return false;
 
-        return path.endsWith('.ts') || 
-               path.endsWith('.m4s') || 
-               path.endsWith('.m4v') || 
-               path.endsWith('.m4a') ||
-               path.endsWith('.m2ts') ||
-               path.endsWith('.mts');
+        if (path.endsWith('.m4s')) return true;
+        const hasSegmentKeyword = urlLower.includes('chunk') || urlLower.includes('fragment') || urlLower.includes('segment') || urlLower.includes('range/') || urlLower.includes('seg-');
+        return hasSegmentKeyword && (path.endsWith('.ts') || path.endsWith('.m4v') || path.endsWith('.m2ts') || path.endsWith('.mts'));
     }
 
     function getUrlType(url) {
@@ -179,7 +176,7 @@
         if (urlLower.includes('mime=audio') || urlLower.includes('#audio')) return 'audio';
 
         const urlPath = urlLower.split('?')[0].split('#')[0];
-        const hasExt = (ext) => urlPath.endsWith(ext) || urlLower.includes(ext + '&') || urlLower.includes(ext + '?') || urlLower.includes(ext + '#') || urlLower.endsWith(ext);
+        const hasExt = (ext) => urlPath.endsWith(ext);
 
         if (videoExtensions.some(hasExt)) return 'video';
         if (audioExtensions.some(hasExt)) return 'audio';
@@ -264,6 +261,21 @@
     }
 
     const detected = new Set();
+    const reportedUrls = new Set();
+    let lastReportUrl = window.location.href;
+    function resetDeteksiNekPindahHalaman() {
+        if (window.location.href === lastReportUrl) return;
+        lastReportUrl = window.location.href;
+        detected.clear();
+        reportedUrls.clear();
+        detectedImageDimensions.clear();
+        detectedImageSizes.clear();
+    }
+    ['pushState', 'replaceState'].forEach((method) => {
+        const asli = history[method].bind(history);
+        history[method] = (...args) => { const hasil = asli(...args); resetDeteksiNekPindahHalaman(); return hasil; };
+    });
+    window.addEventListener('popstate', resetDeteksiNekPindahHalaman);
     const detectedImageDimensions = new Map();
     const detectedImageSizes = new Map();
     const watchedImageDimensions = new WeakSet();
@@ -292,17 +304,25 @@
     }
 
     function report(isManualScan = false) {
-        if (detected.size === 0) return;
+        const newUrls = Array.from(detected).filter(u => !reportedUrls.has(u));
+        if (newUrls.length === 0 && !isManualScan) return;
+        const urlsToSend = isManualScan ? Array.from(detected) : newUrls;
+        if (urlsToSend.length === 0) return;
         try {
-            chrome.runtime.sendMessage({
+            const kirim = chrome.runtime.sendMessage({
                 action: 'reportDetectedMedia',
-                urls: Array.from(detected),
+                urls: urlsToSend,
                 imageDimensions: Object.fromEntries(detectedImageDimensions),
                 imageSizes: Object.fromEntries(detectedImageSizes),
                 pageTitle: getPageTitle(),
                 pageUrl: window.location.href,
                 isManualScan: !!isManualScan
             });
+            if (kirim && typeof kirim.then === 'function') {
+                kirim.then(() => urlsToSend.forEach(u => reportedUrls.add(u)), () => {});
+            } else {
+                urlsToSend.forEach(u => reportedUrls.add(u));
+            }
         } catch (e) {}
     }
 

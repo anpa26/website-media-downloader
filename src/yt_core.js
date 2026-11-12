@@ -19,6 +19,7 @@
 let youtubeDetectionEnabled = true;
 let youtubeDetectionTimer = null;
 let lastVideoId = '';
+let extractLagiMlaku = false;
 
 const flagEnabled = (value, fallback = true) => value == null ? fallback : value === '1' || value === true;
 
@@ -117,11 +118,21 @@ function checkForVideoChange(forceManual = false) {
     if (!youtubeDetectionEnabled) return;
     const videoId = getYoutubeVideoId();
     if (!videoId || (!forceManual && videoId === lastVideoId)) return;
-    lastVideoId = videoId;
+    if (extractLagiMlaku) return;
+    extractLagiMlaku = true;
+    const extractTimeout = setTimeout(() => { extractLagiMlaku = false; }, 10000);
+    const videoIdDicoba = videoId;
     chrome.runtime.sendMessage({ action: 'extract', videoId }, response => {
+        clearTimeout(extractTimeout);
+        extractLagiMlaku = false;
         if (!youtubeDetectionEnabled) return;
-        if (response?.success) reportYoutubeData(response.data, forceManual);
-        else if (!response?.disabled) console.error('[website-media-downloader] Extraction failed:', response?.error || 'No response');
+        if (response?.success) {
+            lastVideoId = videoIdDicoba;
+            reportYoutubeData(response.data, forceManual);
+        } else if (!response?.disabled) {
+            if (lastVideoId === videoIdDicoba) lastVideoId = '';
+            console.error('[website-media-downloader] Extraction failed:', response?.error || 'No response');
+        }
     });
 }
 

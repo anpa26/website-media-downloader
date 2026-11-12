@@ -182,6 +182,10 @@ function isFlagEnabled(val, defaultVal = false) {
   return val === '1' || val === 1 || val === true || val === 'true';
 }
 
+function escapeHtmlPopup(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 if (!browser.storage.session) {
   browser.storage.session = {
       get: (keys, cb) => browser.storage.local.get(keys, cb),
@@ -197,6 +201,7 @@ let allMediaRequests = [];
 let allFilteredRequests = [];
 let kunciMediaSudahDiunduh = new Set();
 let renderedCount = 0;
+let indeksChunkSabanjure = 0;
 const CHUNK_SIZE = 20;
 let intersectionObserver = null;
 let isRenderingChunk = false;
@@ -208,12 +213,94 @@ const mediaPreviewLoadObserver = new IntersectionObserver(entries => {
     mediaPreviewLoadObserver.unobserve(entry.target);
   });
 }, { rootMargin: '400px 0px' });
+const imageThumbObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const img = entry.target;
+    if (img.dataset.src) { img.src = img.dataset.src; delete img.dataset.src; }
+    imageThumbObserver.unobserve(img);
+  });
+}, { rootMargin: '400px 0px' });
 const uiCache = new Map();
 let isGroupingEnabled = false;
 let isGroupProgressEnabled = true;
 let activeGroup = null;
 let activeDownloadingElements = [];
 const activeGroupDownloads = new Map();
+
+function aliasProgresGrup(data, el) {
+  const metu = [];
+  const tambah = (v) => { if (v !== undefined && v !== null && String(v) !== '') metu.push(String(v)); };
+  tambah(data?.id);
+  tambah(data?.jobId);
+  tambah(data?.downloadId);
+  tambah(data?.url);
+  tambah(el?.dataset?.downloadId);
+  tambah(el?.dataset?.url);
+  return [...new Set(metu)];
+}
+
+function golekKunciProgresGrup(alias, el) {
+  const daftar = (Array.isArray(alias) ? alias : [alias]).filter(a => a !== undefined && a !== null && String(a) !== '');
+  for (const a of daftar) {
+    const k = String(a);
+    if (activeGroupDownloads.has(k)) return k;
+  }
+  for (const [k, v] of activeGroupDownloads) {
+    if (el && v.el && v.el === el) return k;
+    const aliasEntri = aliasProgresGrup(v, v.el);
+    if (daftar.some(a => aliasEntri.includes(String(a)))) return k;
+  }
+  return null;
+}
+
+function simpenProgresGrup(data, el, groupTypeKuwat) {
+  const alias = aliasProgresGrup(data, el);
+  const kunciLawas = golekKunciProgresGrup(alias, el);
+  const lawas = kunciLawas ? activeGroupDownloads.get(kunciLawas) : null;
+  const groupType = (lawas?.groupType && !groupTypeKuwat) ? lawas.groupType : (data.groupType || lawas?.groupType || null);
+  const kunci = kunciLawas || String(data.id || data.jobId || data.downloadId || data.url || '');
+  if (!kunci) return { kunci: null, groupTypeLawas: new Set() };
+  activeGroupDownloads.set(kunci, {
+    id: kunci,
+    jobId: data.jobId ?? lawas?.jobId ?? null,
+    downloadId: data.downloadId ?? lawas?.downloadId ?? null,
+    url: data.url ?? lawas?.url ?? null,
+    groupType,
+    filename: (data.filename && data.filename !== 'Media File') ? data.filename : (lawas?.filename ?? 'Media File'),
+    percent: data.percent !== undefined ? data.percent : (lawas?.percent ?? null),
+    indeterminate: data.indeterminate !== undefined ? !!data.indeterminate : !!lawas?.indeterminate,
+    text: data.text ?? lawas?.text ?? '',
+    isPaused: data.isPaused !== undefined ? !!data.isPaused : !!lawas?.isPaused,
+    el: el || lawas?.el || null,
+  });
+  const groupTypeLawas = new Set();
+  if (lawas?.groupType && lawas.groupType !== groupType) groupTypeLawas.add(lawas.groupType);
+  return { kunci, groupTypeLawas };
+}
+
+function busakProgresGrup(alias, el) {
+  const kena = new Set();
+  const daftar = (Array.isArray(alias) ? alias : [alias]).filter(a => a !== undefined && a !== null && String(a) !== '');
+  for (const [k, v] of [...activeGroupDownloads]) {
+    const aliasEntri = aliasProgresGrup(v, v.el);
+    const cocok = daftar.some(a => String(k) === String(a) || aliasEntri.includes(String(a))) || (el && v.el && v.el === el);
+    if (!cocok) continue;
+    if (v.groupType) kena.add(v.groupType);
+    activeGroupDownloads.delete(k);
+  }
+  return kena;
+}
+
+const zipProgressPerJob = new Map();
+
+function zipKanggoGrup(groupType) {
+  const metu = [];
+  for (const z of zipProgressPerJob.values()) {
+    if (!z.groupType || z.groupType === groupType) metu.push(z);
+  }
+  return metu;
+}
 
 function updateGlobalProgressVisibility() {
   const gC = document.getElementById('global-progress-container');
@@ -223,15 +310,17 @@ function updateGlobalProgressVisibility() {
   }
 }
 
-let currentZipProgressState = null;
 
 function syncZipProgressToGroupCards(text, percent, indeterminate, cancelCb, isPaused = false, pauseCb = null, groupType = null, jobId = null) {
+  const kunciZip = String(jobId ?? '__zip__');
+  const lawas = zipProgressPerJob.get(kunciZip);
   if (!groupType) {
     const gtSet = new Set();
     for (const [, entry] of activeGroupDownloads) { if (entry.groupType) gtSet.add(entry.groupType); }
     if (gtSet.size === 1) groupType = [...gtSet][0];
   }
-  currentZipProgressState = { text, percent, indeterminate, cancelCb, isPaused, pauseCb, groupType, jobId };
+  if (!groupType && lawas?.groupType) groupType = lawas.groupType;
+  zipProgressPerJob.set(kunciZip, { text, percent, indeterminate, cancelCb, isPaused, pauseCb, groupType, jobId: jobId ?? lawas?.jobId ?? null });
   if (!isGroupingEnabled || !isGroupProgressEnabled || activeGroup !== null) return;
   if (groupType) {
     syncGroupProgressCard(groupType);
@@ -243,12 +332,19 @@ function syncZipProgressToGroupCards(text, percent, indeterminate, cancelCb, isP
 }
 
 function clearZipProgressFromGroupCards(jobId = null) {
-  if (jobId !== null && currentZipProgressState?.jobId && String(currentZipProgressState.jobId) !== String(jobId)) return;
-  const gt = currentZipProgressState?.groupType;
-  currentZipProgressState = null;
+  const kena = new Set();
+  if (jobId !== null) {
+    const z = zipProgressPerJob.get(String(jobId));
+    if (!z) return;
+    if (z.groupType) kena.add(z.groupType);
+    zipProgressPerJob.delete(String(jobId));
+  } else {
+    for (const z of zipProgressPerJob.values()) { if (z.groupType) kena.add(z.groupType); }
+    zipProgressPerJob.clear();
+  }
   if (!isGroupingEnabled || !isGroupProgressEnabled || activeGroup !== null) return;
-  if (gt) {
-    syncGroupProgressCard(gt);
+  if (kena.size > 0) {
+    kena.forEach(syncGroupProgressCard);
   } else {
     document.querySelectorAll('.media-group-card[data-group-type]').forEach(card => {
       syncGroupProgressCard(card.dataset.groupType);
@@ -262,29 +358,24 @@ function syncGroupProgressCard(groupType) {
   if (!card) return;
 
   let container = card.querySelector(".group-progress-wrapper");
-  const seenEls = new Set();
-  const seenKeys = new Set();
+  const seenIds = new Set();
   const items = [];
   for (const d of activeGroupDownloads.values()) {
     if (d.groupType !== groupType) continue;
-    if (d.el) {
-      if (seenEls.has(d.el)) continue;
-      seenEls.add(d.el);
-    } else {
-      const key = d.filename || d.id;
-      if (seenKeys.has(key)) continue;
-      seenKeys.add(key);
-    }
+    const kid = String(d.id);
+    if (seenIds.has(kid)) continue;
+    seenIds.add(kid);
     items.push(d);
   }
-  const hasZip = !!currentZipProgressState && (!currentZipProgressState.groupType || currentZipProgressState.groupType === groupType);
+  const zipItems = zipKanggoGrup(groupType);
+  const hasZip = zipItems.length > 0;
 
   if (items.length === 0 && !hasZip) {
     if (container) container.remove();
     return;
   }
 
-  const totalCount = items.length + (hasZip ? 1 : 0);
+  const totalCount = items.length + zipItems.length;
   let totalPercent = 0;
   let validPercentCount = 0;
   let anyIndeterminate = false;
@@ -298,14 +389,14 @@ function syncGroupProgressCard(groupType) {
     }
   });
 
-  if (hasZip) {
-    if (!currentZipProgressState.indeterminate) {
-      totalPercent += Math.round(Math.min(100, Math.max(0, currentZipProgressState.percent ?? 0)));
+  zipItems.forEach(z => {
+    if (!z.indeterminate) {
+      totalPercent += Math.round(Math.min(100, Math.max(0, z.percent ?? 0)));
       validPercentCount++;
     } else {
       anyIndeterminate = true;
     }
-  }
+  });
 
   const avgPercent = validPercentCount > 0 ? Math.round(totalPercent / validPercentCount) : 0;
   const isCombinedIndeterminate = validPercentCount === 0 && anyIndeterminate;
@@ -314,7 +405,7 @@ function syncGroupProgressCard(groupType) {
   if (items.length > 0 && hasZip) {
     summaryText = `${totalCount} active${!isCombinedIndeterminate ? " (" + avgPercent + "%)" : ""}`;
   } else if (hasZip) {
-    summaryText = `1 zipping${!isCombinedIndeterminate ? " (" + avgPercent + "%)" : ""}`;
+    summaryText = `${zipItems.length} zipping${!isCombinedIndeterminate ? " (" + avgPercent + "%)" : ""}`;
   } else {
     summaryText = `${items.length} downloading${!isCombinedIndeterminate ? " (" + avgPercent + "%)" : ""}`;
   }
@@ -340,7 +431,7 @@ function syncGroupProgressCard(groupType) {
       <div style="display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0;">
         <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 6px;">
           <span class="group-mini-name" style="font-size: 0.73rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgb(var(--mdui-color-on-surface));">
-            ${item.filename || "Media File"}
+            ${escapeHtmlPopup(item.filename || "Media File")}
           </span>
           <span class="group-mini-percent" style="font-size: 0.68rem; font-weight: 700; color: var(--primary); flex-shrink: 0;">
             ${!isIndeterminate ? pct + "%" : "..."}
@@ -403,8 +494,7 @@ function syncGroupProgressCard(groupType) {
     return itemEl;
   };
 
-  const buildZipItemElement = () => {
-    const z = currentZipProgressState;
+  const buildZipItemElement = (z) => {
     const pct = z.indeterminate ? 0 : Math.round(Math.min(100, Math.max(0, z.percent ?? 0)));
     const detailText = z.text.replace(/^📦\s*/, '');
 
@@ -416,7 +506,7 @@ function syncGroupProgressCard(groupType) {
     el.innerHTML = `
       <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
-          <span class="group-mini-name" style="font-size:0.73rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgb(var(--mdui-color-on-surface));">📦 ${detailText}</span>
+          <span class="group-mini-name" style="font-size:0.73rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgb(var(--mdui-color-on-surface));">📦 ${escapeHtmlPopup(detailText)}</span>
           <span class="group-mini-percent" style="font-size:0.68rem;font-weight:700;color:var(--primary);flex-shrink:0;">${z.indeterminate ? '...' : pct + '%'}</span>
         </div>
         <mdui-linear-progress class="group-mini-bar" max="100" value="${pct}" ${z.indeterminate ? 'indeterminate' : ''} style="height:3px;border-radius:99px;"></mdui-linear-progress>
@@ -433,22 +523,21 @@ function syncGroupProgressCard(groupType) {
 
     el.querySelector(".group-zip-pause-btn")?.addEventListener("click", (e) => {
       e.stopPropagation();
-      const state = currentZipProgressState;
-      if (!state || (el.dataset.id !== '__zip__' && String(state.jobId) !== el.dataset.id)) return;
+      const state = zipProgressPerJob.get(String(el.dataset.id));
+      if (!state) return;
       state.pauseCb?.();
     });
     el.querySelector(".group-zip-cancel-btn")?.addEventListener("click", (e) => {
       e.stopPropagation();
-      const state = currentZipProgressState;
-      if (!state || (el.dataset.id !== '__zip__' && String(state.jobId) !== el.dataset.id)) return;
+      const state = zipProgressPerJob.get(String(el.dataset.id));
+      if (!state) return;
       state.cancelCb?.();
     });
 
     return el;
   };
 
-  const updateZipItemElement = (el) => {
-    const z = currentZipProgressState;
+  const updateZipItemElement = (el, z) => {
     const pct = z.indeterminate ? 0 : Math.round(Math.min(100, Math.max(0, z.percent ?? 0)));
     const detailText = `📦 ${z.text.replace(/^📦\s*/, '')}`;
 
@@ -600,7 +689,7 @@ function syncGroupProgressCard(groupType) {
     });
 
     const currentIds = new Set(items.map(it => String(it.id)));
-    if (hasZip) currentIds.add("__zip__");
+    zipItems.forEach(z => currentIds.add(String(z.jobId || '__zip__')));
 
     existingMap.forEach((el, id) => {
       if (!currentIds.has(id)) el.remove();
@@ -616,14 +705,15 @@ function syncGroupProgressCard(groupType) {
       }
     });
 
-    if (hasZip) {
-      const existingZip = existingMap.get("__zip__");
+    zipItems.forEach(z => {
+      const zipId = String(z.jobId || '__zip__');
+      const existingZip = existingMap.get(zipId);
       if (existingZip) {
-        updateZipItemElement(existingZip);
+        updateZipItemElement(existingZip, z);
       } else {
-        detailsList.appendChild(buildZipItemElement());
+        detailsList.appendChild(buildZipItemElement(z));
       }
-    }
+    });
   }
 }
 
@@ -1197,8 +1287,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     })
     .catch(error => console.error(`Failed to load ${initialTab} tab:`, error));
 
+  let searchDebounceTimer = null;
   document.getElementById('search-bar').addEventListener('input', (e) => {
-    filterAndRenderMediaList(e.target.value);
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => filterAndRenderMediaList(e.target.value), 200);
   });
 
   document.getElementById('select-all-checkbox').addEventListener('change', (e) => {
@@ -1283,6 +1375,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       confirmText: browser.i18n.getMessage("deleteSelectedButton") || "Delete",
       cancelText: browser.i18n.getMessage("cancelButton") || "Cancel",
       onConfirm: async () => {
+        let jumlahDibusak = 0;
         for (const item of selectedActiveRequests) {
           const url = item.bestRequest.originalUrl;
           browser.runtime.sendMessage({ action: 'removeMedia', url: url });
@@ -1291,7 +1384,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           allFilteredRequests = allFilteredRequests.filter(x => x.bestRequest.originalUrl !== url);
 
           const itemElement = Array.from(document.querySelectorAll('.media-item')).find(el => el.dataset.url === url);
-          if (itemElement) itemElement.remove();
+          if (itemElement) { itemElement.remove(); jumlahDibusak++; }
         }
 
         updateSelectedCount();
@@ -1299,6 +1392,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const mediaContainer = document.getElementById('media-list');
         if (mediaContainer && mediaContainer.querySelectorAll('.media-item').length === 0) {
           renderInitialList();
+        } else if (jumlahDibusak > 0) {
+          kurangiRenderedCount(jumlahDibusak);
         }
       }
     });
@@ -1371,10 +1466,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   window.addEventListener('pagehide', () => saveNavigationScroll());
 
+  let sessionChangeReloadTimer = null;
+  function jadwalRefreshListMedia() {
+    clearTimeout(sessionChangeReloadTimer);
+    sessionChangeReloadTimer = setTimeout(() => { loadMediaList().catch(() => {}); }, 600);
+  }
+  let refreshSelektifTimer = null;
+  function jadwalRefreshSelektif() {
+    clearTimeout(refreshSelektifTimer);
+    refreshSelektifTimer = setTimeout(() => { refreshListMediaSelektif().catch(() => {}); }, 600);
+  }
+  if (browser.tabs?.onActivated) {
+    browser.tabs.onActivated.addListener(() => {
+      if (document.getElementById('navbar')?.value === 'home' && document.visibilityState === 'visible') jadwalRefreshListMedia();
+    });
+  }
+  if (browser.tabs?.onUpdated) {
+    browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+      if (changeInfo.status === 'complete' && document.getElementById('navbar')?.value === 'home' && document.visibilityState === 'visible') jadwalRefreshListMedia();
+    });
+  }
+
   browser.storage.onChanged.addListener(async (changes, area) => {
     const activeNavigationTab = document.getElementById('navbar')?.value;
     if (area === 'session') {
-      if (activeNavigationTab !== 'home') navigationPageLoads.delete('home');
+      if (activeNavigationTab !== 'home') {
+        navigationPageLoads.delete('home');
+        return;
+      }
+      if (document.visibilityState !== 'visible') { navigationPageLoads.delete('home'); return; }
+      jadwalRefreshSelektif();
       return;
     }
     if (area !== 'local') return;
@@ -1582,11 +1703,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const headlineHtml = `
         <div style="display: flex; align-items: baseline; justify-content: space-between; width: 100%;">
-          <span>${content.headline}</span>
+          <span>${escapeHtmlPopup(content.headline || '')}</span>
           <span style="opacity: 0.5; font-size: 0.8rem; font-weight: normal; margin-left: 16px;">v${version}</span>
         </div>`;
 
-      const changelogHtml = `<ul style="padding-left: 20px; margin: 0;">${content.changes.map(change => `<li>${change}</li>`).join('')}</ul>`;
+      const changelogHtml = `<ul style="padding-left: 20px; margin: 0;">${(content.changes || []).map(change => `<li>${escapeHtmlPopup(change)}</li>`).join('')}</ul>`;
 
       const githubButton = document.createElement('mdui-button');
       githubButton.variant = "text";
@@ -1598,7 +1719,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></mdui-icon> ${browser.i18n.getMessage("githubRepositoryLabel") || "GitHub Repository"}
       `;
 
-      showDialog(changelogHtml, headlineHtml, [githubButton]);
+      showDialog(changelogHtml, headlineHtml, [githubButton], true);
     } catch (e) {
       console.error("Failed to load changelog:", e);
       const githubButton = document.createElement('mdui-button');
@@ -1658,14 +1779,16 @@ async function getTargetMediaTab() {
 
 async function updateMissingImageSizes(urls) {
   if (!Array.isArray(urls) || !urls.length) return;
-  const mediaRequests = await browser.runtime.sendMessage({ action: 'getMediaRequests' });
   const settings = await browser.storage.local.get(['hide-image-without-size', 'manual-scan']);
-  if (isFlagEnabled(settings['manual-scan'], false)) {
-    const anyScanned = urls.some(url => Array.isArray(mediaRequests?.[url]) && mediaRequests[url].some(r => r && (r.manualScanned || r.isManual)));
-    if (!anyScanned) return;
-  }
+  const manualScanMode = isFlagEnabled(settings['manual-scan'], false);
   let hiddenImageBecameVisible = false;
   for (const url of new Set(urls)) {
+    const mediaRequests = await browser.runtime.sendMessage({ action: 'getMediaRequests', url });
+    const requests = mediaRequests?.[url];
+    if (manualScanMode) {
+      const anyScanned = Array.isArray(requests) && requests.some(r => r && (r.manualScanned || r.isManual));
+      if (!anyScanned) continue;
+    }
     const item = Array.from(document.querySelectorAll('.media-item[data-type="image"]'))
       .find(element => element.dataset.originalUrl === url);
     if (!item) {
@@ -1673,7 +1796,6 @@ async function updateMissingImageSizes(urls) {
       continue;
     }
     if (parseInt(item.dataset.size, 10) > 0) continue;
-    const requests = mediaRequests?.[url];
     if (!Array.isArray(requests)) continue;
     const size = requests.reduce((largest, request) => Math.max(largest, parseInt(request.size, 10) || 0), 0);
     if (size <= 0) continue;
@@ -1686,6 +1808,7 @@ async function updateMissingImageSizes(urls) {
 }
 
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (sender && sender.id && sender.id !== browser.runtime.id) return;
   if (message.action === 'imageMetadataUpdated') {
     if (document.getElementById('navbar')?.value === 'home') updateMissingImageSizes(message.urls).catch(() => {});
     return;
@@ -1763,6 +1886,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             item.loadingBar.setAttribute('indeterminate', 'true');
         }
         let gType = item.element?.dataset?.downloadMode;
+        const grupKuwat = !!gType;
         if (!gType) {
           if (message.audioOnly || message.action === 'audioPopupStatus') gType = 'audio';
           else if (message.action === 'streamPopupStatus') gType = 'stream';
@@ -1779,21 +1903,13 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
           } catch (e) {}
         }
         const effectiveId = message.jobId || item.element?.dataset?.downloadId || String(message.id);
-        const affectedGroupTypes = new Set();
-        for (const [k, v] of activeGroupDownloads) {
-          if (k === String(effectiveId)) {
-            if (v.groupType && v.groupType !== gType) affectedGroupTypes.add(v.groupType);
-            continue;
-          }
-          if (v.id === String(effectiveId) || (v.el && v.el === item.element) || (item.element?.dataset?.url && (k === item.element.dataset.url || v.id === item.element.dataset.url))) {
-            if (v.groupType && v.groupType !== gType) affectedGroupTypes.add(v.groupType);
-            activeGroupDownloads.delete(k);
-          }
-        }
-        const existingEntry = activeGroupDownloads.get(String(effectiveId));
-        const resolvedIsPaused = message.isPaused !== undefined ? !!message.isPaused : (existingEntry?.isPaused ?? false);
-        activeGroupDownloads.set(String(effectiveId), {
-          id: String(effectiveId),
+        const kunciLawasStatus = golekKunciProgresGrup([String(effectiveId), message.jobId, String(message.id), item.element?.dataset?.url], item.element);
+        const entriLawasStatus = kunciLawasStatus ? activeGroupDownloads.get(kunciLawasStatus) : null;
+        const resolvedIsPaused = message.isPaused !== undefined ? !!message.isPaused : (entriLawasStatus?.isPaused ?? false);
+        const { groupTypeLawas } = simpenProgresGrup({
+          id: effectiveId,
+          jobId: message.jobId || null,
+          url: item.element?.dataset?.url || (String(message.id).startsWith('http') ? String(message.id) : null),
           groupType: gType,
           filename: fName || "Media File",
           percent: message.percent !== undefined && message.percent !== null ? Math.round(Number(message.percent)) : null,
@@ -1801,9 +1917,9 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
           text: message.text || "",
           isPaused: resolvedIsPaused,
           el: item.element
-        });
+        }, item.element, grupKuwat);
         syncGroupProgressCard(gType);
-        affectedGroupTypes.forEach(syncGroupProgressCard);
+        groupTypeLawas.forEach(syncGroupProgressCard);
     }
     const ctlId = message.jobId || item?.element?.dataset?.downloadId || message.id;
     updateGlobalOperationBar({
@@ -1829,7 +1945,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
   } else if (message.action === 'downloadPaused') {
     updateProgressUI(message.id, message.loaded, message.total, false, true);
-    const targetGroupItem = activeGroupDownloads.get(String(message.id));
+    const kunciPause = golekKunciProgresGrup([String(message.id), message.url], null);
+    const targetGroupItem = kunciPause ? activeGroupDownloads.get(kunciPause) : null;
     if (targetGroupItem) {
       targetGroupItem.isPaused = true;
       syncGroupProgressCard(targetGroupItem.groupType);
@@ -1841,10 +1958,12 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         gC.dataset.paused = '1';
         if (gPause) setGlobalPauseIcon(gPause, true);
       }
-    } else if (currentZipProgressState) {
-      currentZipProgressState.isPaused = true;
-      const { text, percent, indeterminate, cancelCb, pauseCb, groupType: czGT } = currentZipProgressState;
-      syncZipProgressToGroupCards(text, percent, indeterminate, cancelCb, true, pauseCb, czGT ?? null, currentZipProgressState?.jobId ?? null);
+    } else {
+      const zipDiPause = zipProgressPerJob.get(String(message.id)) || (zipProgressPerJob.size === 1 ? [...zipProgressPerJob.values()][0] : null);
+      if (zipDiPause) {
+        zipDiPause.isPaused = true;
+        syncZipProgressToGroupCards(zipDiPause.text, zipDiPause.percent, zipDiPause.indeterminate, zipDiPause.cancelCb, true, zipDiPause.pauseCb, zipDiPause.groupType ?? null, zipDiPause.jobId ?? null);
+      }
     }
   } else if (message.action === 'zipProgress') {
     const progressContainer = document.getElementById('global-progress-container');
@@ -1859,13 +1978,14 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     } else {
       progressContainer.style.display = 'none';
     }
-    progressBar.value = (message.loaded / message.total) * 100;
+    progressBar.value = (message.total > 0) ? (message.loaded / message.total) * 100 : 0;
+    if (!(message.total > 0)) progressBar.setAttribute('indeterminate', '');
     if (cancelGlobalBtn) {
       cancelGlobalBtn.style.display = 'inline-block';
       cancelGlobalBtn.onclick = () => {
         browser.runtime.sendMessage({ action: 'cancelDownload', id: message.id }).catch(() => {});
         progressContainer.style.display = 'none';
-        clearZipProgressFromGroupCards();
+        clearZipProgressFromGroupCards(message.id);
       };
     }
     if (pauseGlobalBtn && !inGroupOverview) {
@@ -1910,18 +2030,18 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const isPaused = !!message.isPaused;
       const cancelCb = () => {
         browser.runtime.sendMessage({ action: 'cancelDownload', id: message.id }).catch(() => {});
-        clearZipProgressFromGroupCards();
+        clearZipProgressFromGroupCards(message.id);
       };
       const pauseCb = () => {
-        const nowPaused = !currentZipProgressState?.isPaused;
+        const zipSaiki = zipProgressPerJob.get(String(message.id));
+        const nowPaused = !(zipSaiki?.isPaused);
         browser.runtime.sendMessage({ action: nowPaused ? 'pauseDownload' : 'resumeActiveDownload', id: message.id }).catch(() => {});
-        if (currentZipProgressState) {
-          currentZipProgressState.isPaused = nowPaused;
-          const { text, percent, indeterminate, cancelCb, groupType: czGT2 } = currentZipProgressState;
-          syncZipProgressToGroupCards(text, percent, indeterminate, cancelCb, nowPaused, pauseCb, czGT2 ?? null, currentZipProgressState?.jobId ?? null);
+        if (zipSaiki) {
+          zipSaiki.isPaused = nowPaused;
+          syncZipProgressToGroupCards(zipSaiki.text, zipSaiki.percent, zipSaiki.indeterminate, zipSaiki.cancelCb, nowPaused, pauseCb, zipSaiki.groupType ?? null, zipSaiki.jobId ?? null);
         }
       };
-      let zipGT = message.groupType || currentZipProgressState?.groupType || null;
+      let zipGT = message.groupType || zipProgressPerJob.get(String(message.id))?.groupType || null;
       if (!zipGT) {
         const gtSet = new Set();
         for (const [, entry] of activeGroupDownloads) { if (entry.groupType) gtSet.add(entry.groupType); }
@@ -1953,7 +2073,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (isGroupingEnabled && isGroupProgressEnabled && activeGroup === null) {
-      syncZipProgressToGroupCards(`📦 ZIP • ${completeText}`, 100, false, null, false, null, currentZipProgressState?.groupType ?? null);
+      syncZipProgressToGroupCards(`📦 ZIP • ${completeText}`, 100, false, null, false, null, zipProgressPerJob.get(String(message.id))?.groupType ?? null, message.id);
     }
     setTimeout(() => {
       progressContainer.style.display = 'none';
@@ -1972,7 +2092,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const errText = browser.i18n.getMessage("zipError", [message.error]);
       progressText.textContent = errText;
       if (isGroupingEnabled && isGroupProgressEnabled && activeGroup === null) {
-        syncZipProgressToGroupCards(`📦 ZIP Error: ${message.error || ''}`, 0, false, null, false, null, currentZipProgressState?.groupType ?? null);
+        syncZipProgressToGroupCards(`📦 ZIP Error: ${message.error || ''}`, 0, false, null, false, null, zipProgressPerJob.get(String(message.id))?.groupType ?? null, message.id);
       }
       setTimeout(() => {
         progressContainer.style.display = 'none';
@@ -2006,7 +2126,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     allMediaRequests = allMediaRequests.filter(item => item.bestRequest.originalUrl !== skipUrl);
     allFilteredRequests = allFilteredRequests.filter(item => item.bestRequest.originalUrl !== skipUrl);
     const skipEl = document.querySelector(`.media-item[data-url="${CSS.escape(skipUrl)}"]`);
-    if (skipEl) skipEl.remove();
+    if (skipEl) { skipEl.remove(); kurangiRenderedCount(1); }
     finishDownloadUI(skipUrl, false);
     if (typeof mdui !== 'undefined' && mdui.snackbar) {
       mdui.snackbar({ message: `Skipped (HTTP ${message.status || '4xx'}): ${skipUrl.split('/').pop() || skipUrl}`, placement: 'top' });
@@ -2082,7 +2202,7 @@ function entriUnduhanSelesai(downloadData) {
   return persenAkhir !== null && persenAkhir >= 100 && statusNormal === 'downloading';
 }
 
-function updateProgressUI(id, loaded, total, isParallel = false, isPaused = false, status = 'downloading', percent = null, finishedParts = null, totalParts = null) {
+function updateProgressUI(id, loaded, total, isParallel = false, isPaused = false, status = 'downloading', percent = null, finishedParts = null, totalParts = null, mediaTypeHint = null, filenameHint = null) {
   let item = uiCache.get(id);
   const statusNormal = String(status || 'downloading').trim().toLowerCase();
   const persenAkhir = percent !== undefined && percent !== null && !isNaN(percent)
@@ -2223,7 +2343,8 @@ function updateProgressUI(id, loaded, total, isParallel = false, isPaused = fals
 
     let gType = item.element?.dataset?.downloadMode;
     if (!gType) {
-      if (item.element?.dataset?.type) gType = item.element.dataset.type;
+      if (mediaTypeHint) gType = mediaTypeHint;
+      else if (item.element?.dataset?.type) gType = item.element.dataset.type;
       else if (id && String(id).startsWith('stream_')) gType = 'stream';
       else if (id && String(id).startsWith('audio_')) gType = 'audio';
       else gType = 'video';
@@ -2238,7 +2359,7 @@ function updateProgressUI(id, loaded, total, isParallel = false, isPaused = fals
         if (cleanPath) fName = decodeURIComponent(cleanPath);
       } catch (e) {}
     }
-    if (!fName) fName = item.element?.dataset?.originalUrl || "Media File";
+    if (!fName) fName = filenameHint || item.element?.dataset?.originalUrl || "Media File";
     let curPct = null;
     if (!loadingBar.indeterminate) {
       if (percent !== undefined && percent !== null && !isNaN(percent)) {
@@ -2248,21 +2369,17 @@ function updateProgressUI(id, loaded, total, isParallel = false, isPaused = fals
       }
     }
     const effectiveId = item.element?.dataset?.downloadId || String(id);
-    const affectedGroupTypes = new Set();
-    for (const [k, v] of activeGroupDownloads) {
-      if (k === String(effectiveId)) {
-        if (v.groupType && v.groupType !== gType) affectedGroupTypes.add(v.groupType);
-        if (sudahSelesai) activeGroupDownloads.delete(k);
-        continue;
-      }
-      if (v.id === String(effectiveId) || (v.el && v.el === item.element) || (item.element?.dataset?.url && (k === item.element.dataset.url || v.id === item.element.dataset.url))) {
-        if (v.groupType && v.groupType !== gType) affectedGroupTypes.add(v.groupType);
-        activeGroupDownloads.delete(k);
-      }
-    }
-    if (!sudahSelesai) {
-      activeGroupDownloads.set(String(effectiveId), {
-        id: String(effectiveId),
+    const dlIdMentah = item.element?.dataset?.downloadId || null;
+    const jobIdSakaKartu = dlIdMentah && dlIdMentah !== String(id) && /^(audio|stream|zip|popup)_/.test(dlIdMentah) ? dlIdMentah : null;
+    let groupTypeLawas = new Set();
+    if (sudahSelesai) {
+      groupTypeLawas = busakProgresGrup([String(effectiveId), String(id), item.element?.dataset?.url], item.element);
+    } else {
+      ({ groupTypeLawas } = simpenProgresGrup({
+        id: effectiveId,
+        jobId: jobIdSakaKartu,
+        downloadId: String(id).startsWith('http') ? null : String(id),
+        url: item.element?.dataset?.url || null,
         groupType: gType,
         filename: fName,
         percent: curPct,
@@ -2270,10 +2387,10 @@ function updateProgressUI(id, loaded, total, isParallel = false, isPaused = fals
         text: statusInfo.textContent || "",
         isPaused: !!isPaused,
         el: item.element
-      });
+      }, item.element, true));
     }
     syncGroupProgressCard(gType);
-    affectedGroupTypes.forEach(syncGroupProgressCard);
+    groupTypeLawas.forEach(syncGroupProgressCard);
   } else {
     const activeReq = (typeof allFilteredRequests !== 'undefined' ? allFilteredRequests : []).find(r =>
       r.bestRequest?.originalUrl === id || r.bestRequest?.url === id || String(r.downloadId) === String(id)
@@ -2281,7 +2398,7 @@ function updateProgressUI(id, loaded, total, isParallel = false, isPaused = fals
       r.bestRequest?.originalUrl === id || r.bestRequest?.url === id || String(r.downloadId) === String(id)
     );
 
-    let gType = activeReq?.type;
+    let gType = mediaTypeHint || activeReq?.type;
     if (!gType && id) {
       if (String(id).startsWith('stream_')) gType = 'stream';
       else if (String(id).startsWith('audio_')) gType = 'audio';
@@ -2289,7 +2406,7 @@ function updateProgressUI(id, loaded, total, isParallel = false, isPaused = fals
     }
     if (!gType) gType = "video";
 
-    let fName = activeReq?.bestRequest?.filename;
+    let fName = filenameHint || activeReq?.bestRequest?.filename;
     if (!fName && id) {
       try {
         const u = new URL(String(id).startsWith("http") ? id : (activeReq?.bestRequest?.originalUrl || ""));
@@ -2314,17 +2431,15 @@ function updateProgressUI(id, loaded, total, isParallel = false, isPaused = fals
     }
     if (isPaused) text = `[Paused] ${text}`;
 
-    const affectedGroupTypes = new Set();
-    const existingEntry = activeGroupDownloads.get(String(id));
-    if (existingEntry?.groupType && existingEntry.groupType !== gType) {
-      affectedGroupTypes.add(existingEntry.groupType);
-    }
-
+    const urlB2 = activeReq?.bestRequest?.originalUrl || activeReq?.bestRequest?.url || (String(id).startsWith('http') ? String(id) : null);
+    let groupTypeLawas = new Set();
     if (sudahSelesai) {
-      activeGroupDownloads.delete(String(id));
+      groupTypeLawas = busakProgresGrup([String(id), urlB2], null);
     } else {
-      activeGroupDownloads.set(String(id), {
+      ({ groupTypeLawas } = simpenProgresGrup({
         id: String(id),
+        downloadId: String(id).startsWith('http') ? null : String(id),
+        url: urlB2,
         groupType: gType,
         filename: fName,
         percent: curPct,
@@ -2332,10 +2447,10 @@ function updateProgressUI(id, loaded, total, isParallel = false, isPaused = fals
         text: text,
         isPaused: !!isPaused,
         el: null
-      });
+      }, null, false));
     }
     syncGroupProgressCard(gType);
-    affectedGroupTypes.forEach(syncGroupProgressCard);
+    groupTypeLawas.forEach(syncGroupProgressCard);
   }
 }
 
@@ -2382,12 +2497,15 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
   const activeIdSet = new Set(activeIds);
   const itemsById = new Map();
   const itemsByUrl = new Map();
+  const itemsByUrlTanpaQuery = new Map();
   for (const item of mediaItems) {
     if (item.dataset.downloadId) itemsById.set(item.dataset.downloadId, item);
     const url = item.dataset.url;
     if (url) {
       if (!itemsByUrl.has(url)) itemsByUrl.set(url, item);
-      if (!itemsByUrl.has(url.split('?')[0])) itemsByUrl.set(url.split('?')[0], item);
+      const tanpaQuery = url.split('?')[0];
+      if (!itemsByUrlTanpaQuery.has(tanpaQuery)) itemsByUrlTanpaQuery.set(tanpaQuery, []);
+      itemsByUrlTanpaQuery.get(tanpaQuery).push(item);
     }
   }
 
@@ -2407,6 +2525,10 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
         finishDownloadUI(id, true);
         hideGlobalProgressIfMatch(id, url);
         if (url) {
+          if (renderedMediaUrls.has(url) || renderedMediaUrls.has(getMediaRenderKey(url, downloadData.mediaType || 'file'))) {
+            busakKunciRenderSakaUrl(url, downloadData.mediaType || 'file');
+            kurangiRenderedCount(1);
+          }
           allMediaRequests = allMediaRequests.filter(item => item.bestRequest.originalUrl !== url);
           allFilteredRequests = allFilteredRequests.filter(item => item.bestRequest.originalUrl !== url);
         }
@@ -2456,7 +2578,7 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
         cancel.onclick = () => {
           browser.runtime.sendMessage({ action: 'cancelDownload', id }).catch(() => {});
           hideGlobalProgressIfMatch(id);
-          clearZipProgressFromGroupCards();
+          clearZipProgressFromGroupCards(id);
         };
       }
 
@@ -2469,19 +2591,19 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
         const finalTxt = zTxt;
         const cancelCb = () => {
           browser.runtime.sendMessage({ action: 'cancelDownload', id }).catch(() => {});
-          clearZipProgressFromGroupCards();
+          clearZipProgressFromGroupCards(id);
         };
         const pauseCb = () => {
           const nowPaused = !downloadData.isPaused;
           browser.runtime.sendMessage({ action: nowPaused ? 'pauseDownload' : 'resumeActiveDownload', id }).catch(() => {});
           downloadData.isPaused = nowPaused;
-          if (currentZipProgressState) {
-            currentZipProgressState.isPaused = nowPaused;
-            const { text, percent, indeterminate, cancelCb, groupType: czGT3 } = currentZipProgressState;
-            syncZipProgressToGroupCards(text, percent, indeterminate, cancelCb, nowPaused, pauseCb, czGT3 ?? null, currentZipProgressState?.jobId ?? null);
+          const zipSaiki2 = zipProgressPerJob.get(String(id));
+          if (zipSaiki2) {
+            zipSaiki2.isPaused = nowPaused;
+            syncZipProgressToGroupCards(zipSaiki2.text, zipSaiki2.percent, zipSaiki2.indeterminate, zipSaiki2.cancelCb, nowPaused, pauseCb, zipSaiki2.groupType ?? null, zipSaiki2.jobId ?? null);
           }
         };
-        let zipGT2 = downloadData.groupType || currentZipProgressState?.groupType || null;
+        let zipGT2 = downloadData.groupType || zipProgressPerJob.get(String(id))?.groupType || null;
         if (!zipGT2) {
           const gtSet2 = new Set();
           for (const [, entry] of activeGroupDownloads) { if (entry.groupType) gtSet2.add(entry.groupType); }
@@ -2494,8 +2616,11 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
 
     lastNonZipEntry = { id, downloadData };
 
-    const item = itemsById.get(String(id)) || itemsByUrl.get(url) ||
-      (url ? itemsByUrl.get(url.split('?')[0]) : null);
+    let item = itemsById.get(String(id)) || itemsByUrl.get(url) || null;
+    if (!item && url) {
+      const calon = itemsByUrlTanpaQuery.get(url.split('?')[0]) || [];
+      item = calon.find(k => downloadData.mediaType && k.dataset.type === downloadData.mediaType) || calon[0] || null;
+    }
 
     if (item) {
       item.dataset.downloadId = id;
@@ -2514,7 +2639,7 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
       const audioBtn = item.querySelector('#audio-only-button');
       if (audioBtn) audioBtn.style.display = 'none';
       if (downloadData.isAudioJob || downloadData.isStreamJob) {
-        updateProgressUI(id, downloadData.percent || 0, 100, false, downloadData.isPaused, downloadData.status, downloadData.percent);
+        updateProgressUI(id, downloadData.percent || 0, 100, false, downloadData.isPaused, downloadData.status, downloadData.percent, null, null, downloadData.mediaType, downloadData.filename);
         const progressItem = uiCache.get(id);
         if (progressItem?.statusInfo) {
           let text = downloadData.status || 'Processing...';
@@ -2523,7 +2648,7 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
           progressItem.statusInfo.textContent = text;
         }
       } else {
-        updateProgressUI(id, downloadData.loaded, downloadData.total, downloadData.isParallel, downloadData.isPaused, downloadData.status, downloadData.percent, downloadData.finishedParts ?? null, downloadData.totalParts ?? null);
+        updateProgressUI(id, downloadData.loaded, downloadData.total, downloadData.isParallel, downloadData.isPaused, downloadData.status, downloadData.percent, downloadData.finishedParts ?? null, downloadData.totalParts ?? null, downloadData.mediaType, downloadData.filename);
       }
       
       if (!activeDownloadingElements.includes(item)) {
@@ -2531,9 +2656,9 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
       }
     } else {
       if (downloadData.isAudioJob || downloadData.isStreamJob) {
-        updateProgressUI(id, downloadData.percent || 0, 100, false, downloadData.isPaused, downloadData.status, downloadData.percent);
+        updateProgressUI(id, downloadData.percent || 0, 100, false, downloadData.isPaused, downloadData.status, downloadData.percent, null, null, downloadData.mediaType, downloadData.filename);
       } else {
-        updateProgressUI(id, downloadData.loaded, downloadData.total, downloadData.isParallel, downloadData.isPaused, downloadData.status, downloadData.percent, downloadData.finishedParts ?? null, downloadData.totalParts ?? null);
+        updateProgressUI(id, downloadData.loaded, downloadData.total, downloadData.isParallel, downloadData.isPaused, downloadData.status, downloadData.percent, downloadData.finishedParts ?? null, downloadData.totalParts ?? null, downloadData.mediaType, downloadData.filename);
       }
     }
   });
@@ -2586,30 +2711,35 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
   segarkanHitunganGrup();
 }
 
+// Popup documents can miss progress events while closed. Keep the visible UI
+// reconciled with the authoritative background job state.
+setInterval(() => {
+  if (document.visibilityState !== 'visible') return;
+  if (downloadingCount <= 0 && !document.querySelector('.media-item[data-download-id]')) return;
+  restoreActiveDownloadsUI();
+}, 750);
+
 function finishDownloadUI(id, isSuccess = false) {
   const normalizedId = String(id ?? '');
-  const affectedGroupTypes = new Set();
-  for (const [key, entry] of activeGroupDownloads) {
-    const item = entry.el;
-    const matches = String(key) === normalizedId || String(entry.id) === normalizedId ||
-      String(item?.dataset?.downloadId || '') === normalizedId || String(item?.dataset?.url || '') === normalizedId;
-    if (!matches) continue;
-    if (entry.groupType) affectedGroupTypes.add(entry.groupType);
-    activeGroupDownloads.delete(key);
-  }
+  const kunciEntriGrup = golekKunciProgresGrup([normalizedId], null);
+  const entriGrup = kunciEntriGrup ? activeGroupDownloads.get(kunciEntriGrup) : null;
+  const aliasEntriGrup = entriGrup ? aliasProgresGrup(entriGrup, entriGrup.el) : [];
+  const aliasHitung = [...new Set([normalizedId, ...aliasEntriGrup])];
+  if (entriGrup || apakahUnduhanKeitung(aliasHitung)) kurangiHitunganSelesai(aliasHitung);
+  const affectedGroupTypes = busakProgresGrup([normalizedId], null);
   affectedGroupTypes.forEach(syncGroupProgressCard);
   const itemData = uiCache.get(id);
   if (itemData) {
       const { element, progressContainer } = itemData;
       activeDownloadingElements = activeDownloadingElements.filter(el => el !== element);
       const finishedGroupType = element?.dataset?.type || "video";
-      activeGroupDownloads.delete(String(id));
-      if (element?.dataset?.downloadId) activeGroupDownloads.delete(element.dataset.downloadId);
-      if (element?.dataset?.url) activeGroupDownloads.delete(element.dataset.url);
+      busakProgresGrup([String(id), element?.dataset?.downloadId, element?.dataset?.url], element);
       syncGroupProgressCard(finishedGroupType);
 
       if (isSuccess) {
           element.remove();
+          busakKunciRender(element);
+          kurangiRenderedCount(1);
 
           const mediaContainer = document.getElementById('media-list');
           if (mediaContainer && mediaContainer.querySelectorAll('.media-item').length === 0) {
@@ -2640,7 +2770,7 @@ function finishDownloadUI(id, isSuccess = false) {
       }
 
       uiCache.delete(id);
-      updateDownloadingCount(-1);
+      kurangiHitunganSelesai([String(id), element?.dataset?.downloadId, element?.dataset?.url, ...aliasEntriGrup]);
       return;
   }
 
@@ -2649,13 +2779,13 @@ function finishDownloadUI(id, isSuccess = false) {
     if (item.dataset.downloadId === id || item.dataset.url === id) {
       activeDownloadingElements = activeDownloadingElements.filter(el => el !== item);
       const finishedGroupType = item.dataset.type || "video";
-      activeGroupDownloads.delete(String(id));
-      if (item.dataset.downloadId) activeGroupDownloads.delete(item.dataset.downloadId);
-      if (item.dataset.url) activeGroupDownloads.delete(item.dataset.url);
+      busakProgresGrup([String(id), item.dataset.downloadId, item.dataset.url], item);
       syncGroupProgressCard(finishedGroupType);
 
       if (isSuccess) {
         item.remove();
+        busakKunciRender(item);
+        kurangiRenderedCount(1);
 
         const mediaContainer = document.getElementById('media-list');
         if (mediaContainer && mediaContainer.querySelectorAll('.media-item').length === 0) {
@@ -2686,7 +2816,7 @@ function finishDownloadUI(id, isSuccess = false) {
         if (audioBtn && (item.dataset.type === 'video' || item.dataset.type === 'stream')) audioBtn.style.display = 'inline-flex';
       }
 
-      updateDownloadingCount(-1);
+      kurangiHitunganSelesai([String(id), item.dataset.downloadId, item.dataset.url, ...aliasEntriGrup]);
     }
   });
 }
@@ -2703,6 +2833,25 @@ function updateDownloadingCount(change) {
   }
 }
 
+const unduhanSelesaiDihitung = new Set();
+function kurangiHitunganSelesai(alias) {
+  const daftar = (Array.isArray(alias) ? alias : [alias]).filter(a => a !== undefined && a !== null && String(a) !== '');
+  if (daftar.length === 0) return;
+  if (daftar.some(a => unduhanSelesaiDihitung.has(String(a)))) return;
+  daftar.forEach(a => unduhanSelesaiDihitung.add(String(a)));
+  updateDownloadingCount(-1);
+}
+
+function apakahUnduhanKeitung(alias) {
+  const daftar = (Array.isArray(alias) ? alias : [alias]).filter(a => a !== undefined && a !== null && String(a) !== '').map(String);
+  if (daftar.length === 0 || !activeDownloadSnapshot) return false;
+  for (const [kunci, entri] of Object.entries(activeDownloadSnapshot)) {
+    if (entri?.isZip || entri?.isCachedSave || entriUnduhanSelesai(entri)) continue;
+    if (daftar.includes(kunci) || (entri?.url && daftar.includes(String(entri.url)))) return true;
+  }
+  return false;
+}
+
 async function shouldSkipHttpError(status) {
   if (status !== 403 && status !== 404) return false;
   const setting = await browser.storage.local.get('skip-http-errors');
@@ -2713,7 +2862,11 @@ function handleSkippedHttpError(url, status) {
   allMediaRequests = allMediaRequests.filter(item => item.bestRequest.originalUrl !== url);
   allFilteredRequests = allFilteredRequests.filter(item => item.bestRequest.originalUrl !== url);
   const skipEl = document.querySelector(`.media-item[data-url="${CSS.escape(url)}"]`);
-  if (skipEl) skipEl.remove();
+  if (skipEl) {
+    skipEl.remove();
+    busakKunciRender(skipEl);
+    kurangiRenderedCount(1);
+  }
   finishDownloadUI(url, false);
   if (typeof mdui !== 'undefined' && mdui.snackbar) {
     mdui.snackbar({ message: `Skipped (HTTP ${status || '4xx'}): ${url.split('/').pop() || url}`, placement: 'top' });
@@ -2728,7 +2881,7 @@ function showConfirmDialog(message, title = null) {
     const description = document.createElement('div');
     description.setAttribute('slot', 'description');
     description.style.whiteSpace = 'pre-wrap';
-    description.innerHTML = message;
+    description.textContent = message;
     dialog.appendChild(description);
 
     const cancelButton = document.createElement('mdui-button');
@@ -2770,10 +2923,10 @@ function showConfirmDialog(message, title = null) {
   });
 }
 
-function showDialog(message, title = null, extraActions = []) {
+function showDialog(message, title = null, extraActions = [], isHtml = false) {
   const dialog = document.createElement('mdui-dialog');
 
-  if (title && typeof title === 'string' && title.includes('<')) {
+  if (isHtml && title && typeof title === 'string' && title.includes('<')) {
     const headline = document.createElement('div');
     headline.setAttribute('slot', 'headline');
     headline.style.width = '100%';
@@ -2785,7 +2938,8 @@ function showDialog(message, title = null, extraActions = []) {
 
   const description = document.createElement('div');
   description.setAttribute('slot', 'description');
-  description.innerHTML = message;
+  if (isHtml) description.innerHTML = message;
+  else description.textContent = message;
   dialog.appendChild(description);
 
   if (Array.isArray(extraActions)) {
@@ -2835,7 +2989,7 @@ async function showQRCode(url) {
       ${modifiedQrImageTag}
     </div>
     <div style="word-break: break-all; font-size: 12px; opacity: 0.7; text-align: center; max-width: 250px;">
-      ${url}
+      ${escapeHtmlPopup(url)}
     </div>
   `;
 
@@ -2868,7 +3022,10 @@ async function showQRCode(url) {
     iframeDialog.appendChild(headline);
 
     const iframe = document.createElement('iframe');
-    iframe.src = url;
+    try {
+      const parsedQrUrl = new URL(url);
+      if (parsedQrUrl.protocol === 'http:' || parsedQrUrl.protocol === 'https:') iframe.src = url;
+    } catch (_) {}
     iframe.style.width = '100%';
     iframe.style.height = 'calc(100vh - 80px)';
     iframe.style.border = 'none';
@@ -2916,7 +3073,7 @@ async function showQRCode(url) {
     });
   });
 
-  showDialog(container.outerHTML, browser.i18n.getMessage("qrCodeDialogTitle") || "Scan QR Code", [openButton]);
+  showDialog(container.outerHTML, browser.i18n.getMessage("qrCodeDialogTitle") || "Scan QR Code", [openButton], true);
 
   setTimeout(() => {
     const imgEl = document.getElementById(uniqueId);
@@ -3102,17 +3259,7 @@ function filterAndRenderMediaList(query = '') {
   if (!lowerQuery) {
     allFilteredRequests = [...allMediaRequests];
   } else {
-    allFilteredRequests = allMediaRequests.filter(item => {
-      const { bestRequest } = item;
-      const pageTitle = (bestRequest.pageTitle || '').toLowerCase();
-      const headline = getFileName(bestRequest.originalUrl, 200).toLowerCase();
-      const url = bestRequest.originalUrl.toLowerCase();
-      const type = (item.type || '').toLowerCase();
-      let hostname = '';
-      try { hostname = new URL(bestRequest.originalUrl).hostname.toLowerCase(); } catch(e) {}
-
-      return pageTitle.includes(lowerQuery) || headline.includes(lowerQuery) || url.includes(lowerQuery) || hostname.includes(lowerQuery) || type.includes(lowerQuery);
-    });
+    allFilteredRequests = allMediaRequests.filter(item => apakahItemCocokPanelusuran(item, lowerQuery));
   }
 
   renderInitialList();
@@ -3124,21 +3271,15 @@ function getMediaRenderKey(url, type = '') {
     const parsed = new URL(url);
     if (parsed.hostname === 'googlevideo.com' || parsed.hostname.endsWith('.googlevideo.com')) {
       const streamId = parsed.searchParams.get('id') || '';
-      return `googlevideo:${type}:${streamId || parsed.pathname}`;
+      if (streamId) return `googlevideo:${type}:${streamId}`;
+      return `googlevideo:${type}:${url}`;
     }
   } catch (_) {}
-  return `${type}:${url.split('?')[0]}`;
+  return `${type}:${url}`;
 }
 
 function kunciMediaDariUrl(url, type = 'file') {
-  const kunci = [url, getMediaRenderKey(url, type)];
-  let isGoogleVideo = false;
-  try {
-    const parsed = new URL(url);
-    isGoogleVideo = parsed.hostname === 'googlevideo.com' || parsed.hostname.endsWith('.googlevideo.com');
-  } catch (_) {}
-  if (!isGoogleVideo) kunci.push(url.split('?')[0]);
-  return kunci;
+  return [url, getMediaRenderKey(url, type)];
 }
 
 function muatKunciMediaSudahDiunduh(riwayat) {
@@ -3159,27 +3300,6 @@ function apakahMediaSudahDiunduh(item) {
   return apakahUrlSudahDiunduh(url, item?.type || 'file');
 }
 
-async function hapusRiwayatMediaTersembunyiSekali(itemTersembunyi, urlAktif) {
-  if (!itemTersembunyi.length) return;
-  const kunciTersembunyi = new Set();
-  for (const item of itemTersembunyi) {
-    const url = item?.bestRequest?.originalUrl || item?.bestRequest?.url || '';
-    if (!url) continue;
-    for (const kunci of kunciMediaDariUrl(url, item?.type || 'file')) kunciTersembunyi.add(kunci);
-  }
-  if (kunciTersembunyi.size === 0) return;
-  const hasilRiwayat = await browser.storage.local.get('download-history');
-  const riwayat = hasilRiwayat['download-history'] || [];
-  if (!riwayat.length) return;
-  const sisa = riwayat.filter(entri => {
-    const urlEntri = entri?.url || '';
-    if (!urlEntri) return true;
-    if (kunciMediaDariUrl(urlEntri, entri.mediaType || 'file').some(kunci => urlAktif.has(kunci))) return true;
-    return !kunciMediaDariUrl(urlEntri, entri.mediaType || 'file').some(kunci => kunciTersembunyi.has(kunci));
-  });
-  if (sisa.length === riwayat.length) return;
-  await browser.storage.local.set({ 'download-history': sisa });
-}
 
 function getMediaRepresentativeScore(item) {
   const request = item?.bestRequest || {};
@@ -3225,35 +3345,34 @@ function getGroupCounts(activeItems) {
     const type = item.dataset.type || "file";
     if (url) {
       countedUrls.add(getMediaRenderKey(url, type));
-      countedUrls.add(url.split('?')[0]);
-      countedUrls.add(`video:${url.split('?')[0]}`);
-      countedUrls.add(`stream:${url.split('?')[0]}`);
+      countedUrls.add(url);
     }
     if (origUrl && origUrl !== url) {
       countedUrls.add(getMediaRenderKey(origUrl, type));
-      countedUrls.add(origUrl.split('?')[0]);
-      countedUrls.add(`video:${origUrl.split('?')[0]}`);
-      countedUrls.add(`stream:${origUrl.split('?')[0]}`);
+      countedUrls.add(origUrl);
     }
     increment(type);
   });
 
-  // renderNextChunk hides detected URLs whose query-less URL is already rendered.
-  // Count that same visible set so a group badge matches the cards inside it.
   allFilteredRequests.forEach(item => {
     const url = item.bestRequest.originalUrl || item.bestRequest.url || "";
     const normalizedUrl = getMediaRenderKey(url, item.type || "file");
-    const urlNoQuery = url ? url.split('?')[0] : '';
-    if ((normalizedUrl && countedUrls.has(normalizedUrl)) || (urlNoQuery && countedUrls.has(urlNoQuery))) return;
+    if (url && countedUrls.has(url)) return;
+    if (normalizedUrl && countedUrls.has(normalizedUrl)) return;
+    if (url) countedUrls.add(url);
     if (normalizedUrl) countedUrls.add(normalizedUrl);
-    if (urlNoQuery) countedUrls.add(urlNoQuery);
     increment(item.type || "file");
   });
 
   return counts;
 }
 
+let segarkanHitunganGrupTimer = null;
 function segarkanHitunganGrup() {
+  if (segarkanHitunganGrupTimer) return;
+  segarkanHitunganGrupTimer = setTimeout(() => { segarkanHitunganGrupTimer = null; segarkanHitunganGrupNyata(); }, 500);
+}
+function segarkanHitunganGrupNyata() {
   if (!isGroupingEnabled || activeGroup !== null) return;
   const hitungan = getGroupCounts([...activeDownloadingElements]);
   document.querySelectorAll('.media-group-card[data-group-type]').forEach(kartu => {
@@ -3347,6 +3466,14 @@ function ensureMediaPreviewCleanupObserver(container) {
   container._previewCleanupObserver.observe(container, { childList: true, subtree: true });
 }
 
+function apakahKartuAktifCocokQuery(item, query) {
+  if (!query) return true;
+  const q = String(query).trim().toLowerCase();
+  if (!q) return true;
+  const haystack = [item.dataset.url || '', item.dataset.originalUrl || '', item.dataset.type || '', item.textContent || ''].join(' ').toLowerCase();
+  return haystack.includes(q);
+}
+
 function renderInitialList() {
   const mediaContainer = document.getElementById('media-list');
   ensureMediaPreviewCleanupObserver(mediaContainer);
@@ -3367,24 +3494,23 @@ function renderInitialList() {
     const type = item.dataset.type || 'file';
     if (url) {
       renderedMediaUrls.add(url);
-      renderedMediaUrls.add(url.split('?')[0]);
       renderedMediaUrls.add(getMediaRenderKey(url, type));
-      renderedMediaUrls.add(`video:${url.split('?')[0]}`);
-      renderedMediaUrls.add(`stream:${url.split('?')[0]}`);
-      renderedMediaUrls.add(`audio:${url.split('?')[0]}`);
-      renderedMediaUrls.add(`file:${url.split('?')[0]}`);
+      renderedMediaUrls.add(`video:${url}`);
+      renderedMediaUrls.add(`stream:${url}`);
+      renderedMediaUrls.add(`audio:${url}`);
+      renderedMediaUrls.add(`file:${url}`);
     }
     if (origUrl && origUrl !== url) {
       renderedMediaUrls.add(origUrl);
-      renderedMediaUrls.add(origUrl.split('?')[0]);
       renderedMediaUrls.add(getMediaRenderKey(origUrl, type));
-      renderedMediaUrls.add(`video:${origUrl.split('?')[0]}`);
-      renderedMediaUrls.add(`stream:${origUrl.split('?')[0]}`);
-      renderedMediaUrls.add(`audio:${origUrl.split('?')[0]}`);
-      renderedMediaUrls.add(`file:${origUrl.split('?')[0]}`);
+      renderedMediaUrls.add(`video:${origUrl}`);
+      renderedMediaUrls.add(`stream:${origUrl}`);
+      renderedMediaUrls.add(`audio:${origUrl}`);
+      renderedMediaUrls.add(`file:${origUrl}`);
     }
   });
   renderedCount = 0;
+  indeksChunkSabanjure = 0;
   if (intersectionObserver) intersectionObserver.disconnect();
 
   const selectedInfoBar = document.getElementById('selected-info-bar');
@@ -3443,9 +3569,8 @@ function renderInitialList() {
       }
     });
 
-    if (currentZipProgressState) {
-      const { text, percent, indeterminate, cancelCb, isPaused, pauseCb } = currentZipProgressState;
-      syncZipProgressToGroupCards(text, percent, indeterminate, cancelCb, isPaused, pauseCb, currentZipProgressState?.groupType ?? null, currentZipProgressState?.jobId ?? null);
+    for (const z of zipProgressPerJob.values()) {
+      syncZipProgressToGroupCards(z.text, z.percent, z.indeterminate, z.cancelCb, z.isPaused, z.pauseCb, z.groupType ?? null, z.jobId ?? null);
     }
 
     updateGlobalProgressVisibility();
@@ -3477,9 +3602,9 @@ function renderInitialList() {
       }
     });
   } else if (isSearching && isGroupingEnabled) {
-    activeItems.forEach(item => mediaContainer.appendChild(item));
+    activeItems.forEach(item => { if (apakahKartuAktifCocokQuery(item, query)) mediaContainer.appendChild(item); });
   } else {
-    activeItems.forEach(item => mediaContainer.appendChild(item));
+    activeItems.forEach(item => { if (!isSearching || apakahKartuAktifCocokQuery(item, query)) mediaContainer.appendChild(item); });
   }
 
   const requestsToRender = getActiveRequests();
@@ -3493,14 +3618,14 @@ function renderInitialList() {
     if (isGroupingEnabled && activeGroup !== null) {
       const emptyMsg = document.createElement('div');
       if (query) {
-        emptyMsg.innerHTML = `<div id="no-matches-msg" style="padding: 60px 20px; text-align: center; opacity: 0.8;">No matches found for "${query}"</div>`;
+        emptyMsg.innerHTML = `<div id="no-matches-msg" style="padding: 60px 20px; text-align: center; opacity: 0.8;">No matches found for "${escapeHtmlPopup(query)}"</div>`;
       } else {
         emptyMsg.innerHTML = getNoMediaDetectedHTML();
       }
       mediaContainer.appendChild(emptyMsg);
     } else {
       if (query) {
-        mediaContainer.innerHTML = `<div id="no-matches-msg" style="padding: 60px 20px; text-align: center; opacity: 0.8;">No matches found for "${query}"</div>`;
+        mediaContainer.innerHTML = `<div id="no-matches-msg" style="padding: 60px 20px; text-align: center; opacity: 0.8;">No matches found for "${escapeHtmlPopup(query)}"</div>`;
       } else {
         mediaContainer.innerHTML = getNoMediaDetectedHTML();
       }
@@ -3515,27 +3640,61 @@ function renderInitialList() {
   renderNextChunk();
 }
 
+function nungguManifestHls(hlsInstance, timeoutMs = 15000) {
+  return new Promise((resolve) => {
+    let rampung = false;
+    const rampungno = (sukses) => {
+      if (rampung) return;
+      rampung = true;
+      clearTimeout(timer);
+      try { hlsInstance.off(Hls.Events.MANIFEST_PARSED, onParsed); } catch (_) {}
+      try { hlsInstance.off(Hls.Events.ERROR, onError); } catch (_) {}
+      if (!sukses) { try { hlsInstance.destroy(); } catch (_) {} }
+      resolve(sukses);
+    };
+    const onParsed = () => rampungno(true);
+    const onError = () => rampungno(false);
+    const timer = setTimeout(() => rampungno(false), timeoutMs);
+    hlsInstance.on(Hls.Events.MANIFEST_PARSED, onParsed);
+    hlsInstance.on(Hls.Events.ERROR, onError);
+  });
+}
+
+function kurangiRenderedCount(jumlah) {
+  const mundur = Math.max(0, jumlah || 0);
+  renderedCount = Math.max(0, renderedCount - mundur);
+  indeksChunkSabanjure = Math.max(0, indeksChunkSabanjure - mundur);
+  if (isGroupingEnabled && activeGroup === null) return;
+  renderNextChunk();
+}
+
 function renderNextChunk() {
   if (isRenderingChunk) return;
   isRenderingChunk = true;
+  try {
   const mediaContainer = document.getElementById('media-list');
   const fragment = document.createDocumentFragment();
   const requestsToRender = getActiveRequests();
-  const nextChunk = requestsToRender.slice(renderedCount, renderedCount + CHUNK_SIZE);
-  const selectAllChecked = document.getElementById('select-all-checkbox').checked;
+  const nextChunk = requestsToRender.slice(indeksChunkSabanjure, indeksChunkSabanjure + CHUNK_SIZE);
+  let jumlahKartuDibuat = 0;
 
   nextChunk.forEach(item => {
     const itemUrl = item.bestRequest.originalUrl;
     const itemUrlBase = getMediaRenderKey(itemUrl, item.type || 'file');
-    const itemUrlNoQuery = itemUrl ? itemUrl.split('?')[0] : '';
-    if (renderedMediaUrls.has(itemUrlBase) || renderedMediaUrls.has(itemUrl) || (itemUrlNoQuery && renderedMediaUrls.has(itemUrlNoQuery))) return;
+    if (renderedMediaUrls.has(itemUrlBase) || renderedMediaUrls.has(itemUrl)) return;
     renderedMediaUrls.add(itemUrl);
-    if (itemUrlNoQuery) renderedMediaUrls.add(itemUrlNoQuery);
     renderedMediaUrls.add(itemUrlBase);
 
-    const mediaDiv = createMediaItem(item);
+    let mediaDiv;
+    try {
+      mediaDiv = createMediaItem(item);
+    } catch (e) {
+      console.error('[website-media-downloader] Skip item media rusak:', item?.bestRequest?.originalUrl, e);
+      return;
+    }
     if (item.downloadId !== undefined) mediaDiv.dataset.downloadId = item.downloadId;
     fragment.appendChild(mediaDiv);
+    jumlahKartuDibuat++;
   });
 
   const oldSentinel = document.getElementById('infinite-scroll-sentinel');
@@ -3545,9 +3704,10 @@ function renderNextChunk() {
   if (oldEndMsg) oldEndMsg.remove();
 
   mediaContainer.appendChild(fragment);
-  renderedCount += nextChunk.length;
+  indeksChunkSabanjure += nextChunk.length;
+  renderedCount += jumlahKartuDibuat;
 
-  if (renderedCount < requestsToRender.length) {
+  if (indeksChunkSabanjure < requestsToRender.length) {
     const sentinel = document.createElement('div');
     sentinel.id = 'infinite-scroll-sentinel';
     sentinel.style.height = '20px';
@@ -3581,7 +3741,9 @@ function renderNextChunk() {
 
   restoreActiveDownloadsUI();
   updateSelectedCount();
-  isRenderingChunk = false;
+  } finally {
+    isRenderingChunk = false;
+  }
 }
 
 const pendingStreamVariants = new Map();
@@ -3618,6 +3780,13 @@ function drainStreamVariantQueue() {
 }
 
 const m3u8VariantsCache = new Map();
+function simpenCacheVarian(cache, url, nilai) {
+  if (cache.size >= 200) {
+    const kunciLawas = cache.keys().next().value;
+    if (kunciLawas !== undefined) cache.delete(kunciLawas);
+  }
+  cache.set(url, nilai);
+}
 
 async function getM3U8Variants(url, signal) {
     if (m3u8VariantsCache.has(url)) {
@@ -3628,7 +3797,7 @@ async function getM3U8Variants(url, signal) {
         if (!response.ok) return [];
         const text = await response.text();
         if (!text.includes("#EXT-X-STREAM-INF")) {
-            m3u8VariantsCache.set(url, []);
+            simpenCacheVarian(m3u8VariantsCache, url, []);
             return [];
         }
 
@@ -3655,11 +3824,11 @@ async function getM3U8Variants(url, signal) {
                 }
             }
         }
-        m3u8VariantsCache.set(url, variants);
+        simpenCacheVarian(m3u8VariantsCache, url, variants);
         return variants;
     } catch (e) {
         console.warn("Failed to parse variants for", url, e);
-        m3u8VariantsCache.set(url, []);
+        simpenCacheVarian(m3u8VariantsCache, url, []);
         return [];
     }
 }
@@ -3681,7 +3850,7 @@ async function getMPDVariants(url, signal) {
         
         const periodList = xmlDoc.getElementsByTagNameNS(NS, "Period");
         if (!periodList || periodList.length === 0) {
-            mpdVariantsCache.set(url, []);
+            simpenCacheVarian(mpdVariantsCache, url, []);
             return [];
         }
         const period = periodList[0];
@@ -3699,7 +3868,7 @@ async function getMPDVariants(url, signal) {
         });
         
         if (!videoSet) {
-            mpdVariantsCache.set(url, []);
+            simpenCacheVarian(mpdVariantsCache, url, []);
             return [];
         }
         
@@ -3719,11 +3888,11 @@ async function getMPDVariants(url, signal) {
             }
         });
         
-        mpdVariantsCache.set(url, variants);
+        simpenCacheVarian(mpdVariantsCache, url, variants);
         return variants;
     } catch (e) {
         console.warn("Failed to parse MPD variants for", url, e);
-        mpdVariantsCache.set(url, []);
+        simpenCacheVarian(mpdVariantsCache, url, []);
         return [];
     }
 }
@@ -3732,7 +3901,12 @@ async function getMPDVariants(url, signal) {
 function createMediaItem(item) {
   const { bestRequest, isVideo, isAudio, isStream, isSubtitle, isFile, isImage } = item;
   const ytFormats = item.ytFormats || null;
-  const mediaURL = new URL(bestRequest.originalUrl);
+  let mediaURL;
+  try {
+    mediaURL = new URL(bestRequest.originalUrl);
+  } catch (_) {
+    throw new Error('URL media ora valid: ' + String(bestRequest?.originalUrl || ''));
+  }
 
   const mediaDiv = document.createElement('div');
   mediaDiv.classList.add('media-item');
@@ -3781,7 +3955,7 @@ function createMediaItem(item) {
           hlsLarge = new Hls();
           hlsLarge.loadSource(finalUrl);
           hlsLarge.attachMedia(targetVideo);
-          await new Promise(resolve => hlsLarge.on(Hls.Events.MANIFEST_PARSED, resolve));
+          if (!(await nungguManifestHls(hlsLarge))) hlsLarge = null;
         } else if (targetVideo.canPlayType('application/vnd.apple.mpegurl')) {
           const finalUrl = await getPlayableUrl(activeUrl);
           targetVideo.src = finalUrl;
@@ -3794,7 +3968,7 @@ function createMediaItem(item) {
           hls = new Hls();
           hls.loadSource(finalUrl);
           hls.attachMedia(targetVideo);
-          await new Promise(resolve => hls.on(Hls.Events.MANIFEST_PARSED, resolve));
+          if (!(await nungguManifestHls(hls))) hls = null;
         } else if (targetVideo.canPlayType('application/vnd.apple.mpegurl')) {
           const finalUrl = await getPlayableUrl(bestRequest.originalUrl);
           targetVideo.src = finalUrl;
@@ -3908,6 +4082,7 @@ function createMediaItem(item) {
               video.muted = isExpanded;
               video.play().catch(err => console.error("Playback failed:", err));
             });
+            hls.on(Hls.Events.ERROR, () => { try { hls.destroy(); } catch (_) {} hls = null; });
           } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             const finalUrl = await getPlayableUrl(bestRequest.originalUrl);
             video.src = finalUrl;
@@ -3926,7 +4101,8 @@ function createMediaItem(item) {
     });
   } else if (isImage) {
     const img = document.createElement('img');
-    img.src = bestRequest.originalUrl;
+    img.dataset.src = bestRequest.originalUrl;
+    imageThumbObserver.observe(img);
     img.loading = "lazy";
     img.style.width = "100%";
     img.style.height = "100%";
@@ -3970,7 +4146,8 @@ function createMediaItem(item) {
 
   const description = document.createElement('div');
   description.classList.add('media-description');
-  const timeStr = new Date(bestRequest.timeStamp).toLocaleTimeString();
+  const timeValue = Number(bestRequest.timeStamp) || 0;
+  const timeStr = timeValue > 0 ? new Date(timeValue).toLocaleTimeString() : '';
   const humanSize = getHumanReadableSize(bestRequest.size);
 
   let resLabel = '';
@@ -3980,7 +4157,8 @@ function createMediaItem(item) {
   description.dataset.mediaHost = mediaURL.hostname;
   description.dataset.mediaTime = timeStr;
   description.dataset.mediaResolution = resLabel;
-  description.textContent = `${mediaURL.hostname} • ${humanSize}${resLabel} • ${timeStr}`;
+  const hostLabel = mediaURL.hostname || (() => { try { return new URL(bestRequest.pageUrl || '').hostname; } catch (_) { return ''; } })();
+  description.textContent = [hostLabel, humanSize + resLabel, timeStr].filter(Boolean).join(' • ');
   info.appendChild(description);
   header.appendChild(info);
 
@@ -4491,7 +4669,8 @@ function createMediaItem(item) {
               mediaDiv.dataset.size = activeSize;
               const newHumanSize = getHumanReadableSize(activeSize);
               const newResLabel = firstFmt.label ? ` • ${firstFmt.label}` : '';
-              description.textContent = `${mediaURL.hostname} • ${newHumanSize}${newResLabel} • ${timeStr}`;
+              const hostLabel = mediaURL.hostname || description.dataset.mediaHost || '';
+              description.textContent = `${hostLabel} • ${newHumanSize}${newResLabel} • ${timeStr}`;
           }
           return;
       }
@@ -4508,7 +4687,8 @@ function createMediaItem(item) {
 
         const newHumanSize = getHumanReadableSize(activeSize);
         const newResLabel = fmt.label ? ` • ${fmt.label}` : '';
-        description.textContent = `${mediaURL.hostname} • ${newHumanSize}${newResLabel} • ${timeStr}`;
+        const hostLabel = mediaURL.hostname || description.dataset.mediaHost || '';
+        description.textContent = `${hostLabel} • ${newHumanSize}${newResLabel} • ${timeStr}`;
       }
     });
 
@@ -4602,6 +4782,7 @@ function createMediaItem(item) {
               hlsLarge.on(Hls.Events.MANIFEST_PARSED, () => {
                 largeVideo.play().catch(e => console.warn("Auto-play failed:", e));
               });
+              hlsLarge.on(Hls.Events.ERROR, () => { try { hlsLarge.destroy(); } catch (_) {} hlsLarge = null; });
             } else if (largeVideo.canPlayType('application/vnd.apple.mpegurl')) {
               const finalUrl = await getPlayableUrl(activeUrl);
               largeVideo.src = finalUrl;
@@ -4746,11 +4927,11 @@ function getMediaType(url, responseHeaders) {
     const audioExtensions = [".3ga", ".aac", ".ac3", ".adts", ".aif", ".aiff", ".alac", ".ape", ".asf", ".au", ".dts", ".f4a", ".f4b", ".flac", ".isma", ".it", ".m4a", ".m4b", ".m4r", ".mid", ".mka", ".mod", ".mp1", ".mp2", ".mp3", ".mp4a", ".mpa", ".mpga", ".oga", ".ogg", ".ogx", ".opus", ".ra", ".shn", ".spx", ".vorbis", ".wav", ".weba", ".wma", ".xm"];
     const streamExtensions = [".f4f", ".f4m", ".m3u8", ".mpd", ".smil"];
     const subtitleExtensions = [".vtt", ".srt", ".ass", ".ssa", ".ttml", ".dfxp", ".lrc", ".smi", ".sub", ".sbv"];
-    const imageExtensions = [".webp", ".png", ".jpg", ".jpeg", ".gif"];
+    const imageExtensions = [".webp", ".png", ".jpg", ".jpeg", ".gif", ".avif", ".bmp", ".ico", ".tiff", ".tif"];
     const downloadExtensions = [".zip", ".rar", ".7z", ".tar", ".gz", ".exe", ".msi", ".apk", ".dmg", ".iso", ".bin", ".pdf", ".epub", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"];
 
     const urlPath = urlLower.split('?')[0].split('#')[0];
-    const hasExt = (ext) => urlPath.endsWith(ext) || urlLower.includes(ext + '&') || urlLower.includes(ext + '?') || urlLower.includes(ext + '#') || urlLower.endsWith(ext);
+    const hasExt = (ext) => urlPath.endsWith(ext);
     let decodedUrlLower = urlLower;
     try { decodedUrlLower = decodeURIComponent(urlLower); } catch (_) {}
     const isStaticNonStream = imageExtensions.some(hasExt) || subtitleExtensions.some(hasExt) || downloadExtensions.some(hasExt) ||
@@ -4781,8 +4962,8 @@ function checkIsSegment(url, responseHeaders, settings) {
     const contentLength = responseHeaders?.find(h => h.name.toLowerCase() === "content-length")?.value || "0";
     const size = parseInt(contentLength) || 0;
 
-    const isHideSegments = settings ? isFlagEnabled(settings['hide-segments']) : true;
-    const isHidePageComponents = isHideSegments;
+    const isHideSegments = settings ? isFlagEnabled(settings['hide-segments'], true) : true;
+    const isHidePageComponents = settings ? isFlagEnabled(settings['hide-page-components'], true) : true;
 
     const path = urlLower.split('?')[0].split('#')[0];
     if (isHidePageComponents && (
@@ -4804,14 +4985,9 @@ function checkIsSegment(url, responseHeaders, settings) {
 
     if (!isHideSegments) return false;
 
-    if (path.endsWith('.ts') ||
-        path.endsWith('.m4s') ||
-        path.endsWith('.m4v') ||
-        path.endsWith('.m4a') ||
-        path.endsWith('.m2ts') ||
-        path.endsWith('.mts')) {
-        return true;
-    }
+    if (path.endsWith('.m4s')) return true;
+    const isSegmentLikeExt = path.endsWith('.ts') || path.endsWith('.m4v') || path.endsWith('.m2ts') || path.endsWith('.mts');
+    const hasSegmentKeyword = urlLower.includes('chunk') || urlLower.includes('fragment') || urlLower.includes('segment') || urlLower.includes('range/') || urlLower.includes('seg-');
 
     if (contentType === 'video/mp2t' ||
         contentType === 'video/iso.segment' ||
@@ -4819,112 +4995,44 @@ function checkIsSegment(url, responseHeaders, settings) {
         return true;
     }
 
-    if (size > 0 && size < 5242880) {
-        if (urlLower.includes('chunk') ||
-            urlLower.includes('fragment') ||
-            urlLower.includes('segment') ||
-            urlLower.includes('range/')) {
-            return true;
-        }
-    }
+    if (isSegmentLikeExt) return size > 0 && size < 5242880 && hasSegmentKeyword;
 
     return false;
 }
 
 let mediaListLoad = null;
 let mediaListReloadRequested = false;
-function loadMediaList() {
-  if (mediaListLoad) {
-    mediaListReloadRequested = true;
-    return mediaListLoad;
-  }
-  mediaListLoad = (async () => {
-    do {
-      mediaListReloadRequested = false;
-      await loadMediaListOnce();
-    } while (mediaListReloadRequested);
-  })().finally(() => { mediaListLoad = null; });
-  return mediaListLoad;
-}
-
-async function loadMediaListOnce() {
-  const mediaContainer = document.getElementById('media-list');
-  const loadingSpinner = document.getElementById('loading-media-list');
-  const globalLoading = document.getElementById('loading');
-  const mainContent = document.getElementById('main-content');
-  const mediaControls = document.getElementById('media-controls');
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const autoAudioUrl = urlParams.get('autoDownloadAudioUrl');
-  const autoVideoUrl = urlParams.get('autoDownloadVideoUrl');
-  const autoOpenUrl = urlParams.get('autoOpenUrl');
-  const autoDemuxer = urlParams.get('autoDemuxer') || '';
-  const autoCodec = urlParams.get('autoCodec') || '';
-  const autoQualityParam = urlParams.get('autoQuality') || '';
-
-  if (autoAudioUrl || autoVideoUrl || autoOpenUrl) {
-    const cleanUrl = window.location.pathname + (window.location.search.includes('mode=tab') ? '?mode=tab' : '');
-    window.history.replaceState({}, document.title, cleanUrl);
-  }
-
-  if (mainContent) mainContent.style.display = 'block';
-  if (loadingSpinner) loadingSpinner.style.display = 'block';
-
-  document.getElementById('search-bar').value = '';
-  document.getElementById('select-all-checkbox').checked = false;
-  selectedUrls.clear();
-  updateSelectedCount();
-
-  const activeItems = new Map();
-  activeDownloadingElements.forEach(item => {
-    if (item.dataset.url) {
-      activeItems.set(item.dataset.url, item);
-      activeItems.set(item.dataset.url.split('?')[0], item);
-    }
-    if (item.dataset.originalUrl) {
-      activeItems.set(item.dataset.originalUrl, item);
-      activeItems.set(item.dataset.originalUrl.split('?')[0], item);
-    }
-  });
-  mediaContainer.querySelectorAll('.media-item').forEach(item => {
-    if (item.querySelector('mdui-linear-progress')) {
-      if (item.dataset.url) {
-        activeItems.set(item.dataset.url, item);
-        activeItems.set(item.dataset.url.split('?')[0], item);
-      }
-      if (item.dataset.originalUrl) {
-        activeItems.set(item.dataset.originalUrl, item);
-        activeItems.set(item.dataset.originalUrl.split('?')[0], item);
-      }
-    }
-  });
-
-  mediaContainer.innerHTML = '';
-  [...new Set(activeItems.values())].forEach(item => mediaContainer.appendChild(item));
-
-  try {
-    const activeDownloadsPromise = getActiveDownloadSnapshot();
-    const [mediaRequests, settings, targetWebTab] = await Promise.all([
+async function ambilDataMediaMentah() {
+    const loadTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Wektu muat daftar media entek (10 detik)')), 10000));
+    const [mediaRequests, settings, targetWebTab] = await Promise.race([Promise.all([
       browser.runtime.sendMessage({ action: "getMediaRequests" }),
       browser.storage.local.get(["manual-scan", "manual-scan-keep-tabs", "top-header-design", "bottom-bar-design", "filename-template", "only-video", "only-audio", "only-stream", "only-image", "only-subtitle", "only-file", "hide-segments", "hide-page-components", "media-sort-order", "limit-media-list", "limit-media-list-custom", "min-file-size", "min-file-size-custom", "image-min-side", "image-min-side-custom", "image-min-file-size", "image-min-file-size-custom", "hide-image-without-size", "optimize-low-end", "group-by-type", "group-download-progress", "disable-deduplication", "download-history"]),
       getTargetMediaTab()
-    ]);
+    ]), loadTimeout]);
     const currentActiveTabId = targetWebTab?.id;
     let currentActiveHost = '';
     try { if (targetWebTab?.url) currentActiveHost = new URL(targetWebTab.url).hostname.toLowerCase().replace(/^www\./, ''); } catch (e) {}
-    let activeDownloads = activeDownloadSnapshot || {};
-    const quickActiveDownloads = await Promise.race([activeDownloadsPromise, new Promise(resolve => setTimeout(() => resolve(null), 100))]);
-    if (quickActiveDownloads) activeDownloads = quickActiveDownloads;
-    else activeDownloadsPromise.then(snapshot => restoreActiveDownloadsUI(snapshot)).catch(() => {});
-    if (globalLoading) globalLoading.style.display = 'none';
-    if (mainContent) mainContent.style.display = 'block';
+  return { mediaRequests, settings, targetWebTab, currentActiveTabId, currentActiveHost };
+}
 
+function kumpulkanActiveItems() {
+  const mediaContainer = document.getElementById('media-list');
+  const activeItems = new Map();
+  activeDownloadingElements.forEach(item => {
+    if (item.dataset.url) activeItems.set(item.dataset.url, item);
+    if (item.dataset.originalUrl) activeItems.set(item.dataset.originalUrl, item);
+  });
+  mediaContainer.querySelectorAll('.media-item').forEach(item => {
+    if (item.querySelector('mdui-linear-progress')) {
+      if (item.dataset.url) activeItems.set(item.dataset.url, item);
+      if (item.dataset.originalUrl) activeItems.set(item.dataset.originalUrl, item);
+    }
+  });
 
-    isGroupingEnabled = settings['group-by-type'] === '1' || settings['group-by-type'] === true;
-    isGroupProgressEnabled = settings['group-download-progress'] === undefined || settings['group-download-progress'] === '1' || settings['group-download-progress'] === true;
-    updateGlobalProgressVisibility();
-    applyManualScanUI(isFlagEnabled(settings['manual-scan'], false), settings['bottom-bar-design'] || 'v3');
+  return activeItems;
+}
 
+async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId, currentActiveHost, activeItems, activeDownloads) {
     const minFileSizeSetting = settings['min-file-size'] || '0';
     const imageMinSideSelection = String(settings['image-min-side'] ?? '0');
     const imageMinSide = imageMinSideSelection === 'custom'
@@ -4941,33 +5049,11 @@ async function loadMediaListOnce() {
     } else {
       minSizeBytes = (parseInt(minFileSizeSetting) || 0) * 1024;
     }
-
-    if (isGroupingEnabled) {
-      if (autoAudioUrl) {
-        const decodedUrl = decodeURIComponent(autoAudioUrl);
-        const isYouTube = decodedUrl.includes('googlevideo.com') || decodedUrl.includes('youtube.com') || decodedUrl.includes('youtu.be');
-        activeGroup = isYouTube ? 'video' : 'audio';
-      } else if (autoVideoUrl) {
-        activeGroup = 'video';
-      } else if (autoOpenUrl) {
-        const decodedUrl = decodeURIComponent(autoOpenUrl);
-        const isYouTube = decodedUrl.includes('googlevideo.com') || decodedUrl.includes('youtube.com') || decodedUrl.includes('youtu.be');
-        if (isYouTube) {
-          activeGroup = 'video';
-        } else {
-          const type = getMediaType(decodedUrl);
-          if (type) {
-            activeGroup = type;
-          }
-        }
-      }
-    }
-
     const mediaGroups = new Map();
     let mediaScanIndex = 0;
     for (const rawUrl in mediaRequests) {
       if (++mediaScanIndex % 20 === 0) await new Promise(resolve => requestAnimationFrame(resolve));
-      if (activeItems.has(rawUrl) || activeItems.has(rawUrl.split('?')[0])) continue;
+      if (activeItems.has(rawUrl)) continue;
 
       const requests = mediaRequests[rawUrl];
       if (!Array.isArray(requests) || requests.length === 0) continue;
@@ -5017,7 +5103,6 @@ async function loadMediaListOnce() {
           }
 
           if (matchesTabId) return true;
-          if ((r.tabId == null || r.tabId < 0) && !r.pageUrl) return true;
           return currentActiveTabId == null && !currentActiveHost;
         });
 
@@ -5062,7 +5147,7 @@ async function loadMediaListOnce() {
       if (type === 'file' && !showFile) continue;
 
       if (minSizeBytes > 0 && type !== 'stream') {
-        const reqSize = parseInt(requests[requests.length - 1].size) || 0;
+        const reqSize = requests.reduce((maks, r) => Math.max(maks, parseInt(r.size) || 0), 0);
         if (reqSize > 0 && reqSize < minSizeBytes) continue;
       }
 
@@ -5138,6 +5223,7 @@ async function loadMediaListOnce() {
                 const baseName = item.resolvedFilename.replace(/\.[a-zA-Z0-9]+$/, '').toLowerCase();
                 nameKey = baseName + '_' + item.group.type + '_media_group';
             }
+            try { nameKey += '@' + new URL(item.bestRequest.originalUrl || item.bestRequest.url || '').hostname.toLowerCase(); } catch (_) {}
             if (item.size > 0) {
                 nameKey += '_' + item.size;
             } else {
@@ -5257,7 +5343,7 @@ async function loadMediaListOnce() {
       limit = parseInt(limitStr);
     }
     if (settings['optimize-low-end'] === '1' || settings['optimize-low-end'] === true) {
-      limit = 0;
+      limit = 50;
     }
     muatKunciMediaSudahDiunduh(settings['download-history'] || []);
     const semuaTampil = deduplicateMediaForDisplay(flattenedRequests);
@@ -5269,28 +5355,20 @@ async function loadMediaListOnce() {
       if (!url) continue;
       for (const kunci of kunciMediaDariUrl(url, downloadData.mediaType || 'file')) urlAktif.add(kunci);
     }
-    hapusRiwayatMediaTersembunyiSekali(itemTersembunyi, urlAktif).catch(() => {});
     if (limit > 0 && displayRequests.length > limit) {
       displayRequests.length = limit;
     }
 
-    allMediaRequests = displayRequests;
-    allFilteredRequests = [...allMediaRequests];
+    let daftarMedia = displayRequests;
 
-    if (loadingSpinner) loadingSpinner.style.display = 'none';
 
     activeDownloadingElements = [...new Set(activeItems.values())];
     const requestUrls = new Set();
-    allFilteredRequests.forEach(item => {
+    daftarMedia.forEach(item => {
       const u = item.bestRequest?.originalUrl || item.bestRequest?.url || '';
       if (!u) return;
       requestUrls.add(u);
-      requestUrls.add(u.split('?')[0]);
       requestUrls.add(getMediaRenderKey(u, item.type || 'file'));
-      requestUrls.add(`video:${u.split('?')[0]}`);
-      requestUrls.add(`stream:${u.split('?')[0]}`);
-      requestUrls.add(`audio:${u.split('?')[0]}`);
-      requestUrls.add(`file:${u.split('?')[0]}`);
     });
     const downloadModels = [];
     let activeCount = 0;
@@ -5300,13 +5378,11 @@ async function loadMediaListOnce() {
       const url = downloadData.url || '';
       if (url && apakahUrlSudahDiunduh(url, downloadData.mediaType || 'file')) continue;
       activeCount++;
-      const urlNoQuery = url ? url.split('?')[0] : '';
       const type = downloadData.mediaType || 'file';
       const renderKey = getMediaRenderKey(url, type);
-      if (requestUrls.has(renderKey) || requestUrls.has(url) || (urlNoQuery && requestUrls.has(urlNoQuery)) || activeItems.has(url) || (urlNoQuery && activeItems.has(urlNoQuery))) continue;
+      if (requestUrls.has(renderKey) || requestUrls.has(url) || activeItems.has(url)) continue;
       requestUrls.add(renderKey);
       if (url) requestUrls.add(url);
-      if (urlNoQuery) requestUrls.add(urlNoQuery);
       downloadModels.push({
         downloadId: id,
         bestRequest: { originalUrl: url, size: downloadData.total,
@@ -5317,12 +5393,382 @@ async function loadMediaListOnce() {
       });
     }
     // Only the current category/page creates cards, including background downloads.
-    allMediaRequests = [...downloadModels, ...allMediaRequests];
+    return { items: [...downloadModels, ...daftarMedia], activeCount };
+}
+
+
+let sudahMuatListAwal = false;
+let setelanStrukturalPalingAnyar = null;
+let butuhRefreshSelektifSawiseLoad = false;
+const KUNCI_SETELAN_STRUKTURAL = ['group-by-type', 'manual-scan', 'manual-scan-keep-tabs', 'only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file', 'hide-segments', 'disable-deduplication', 'min-file-size', 'min-file-size-custom', 'image-min-side', 'image-min-side-custom', 'image-min-file-size', 'image-min-file-size-custom', 'hide-image-without-size', 'media-sort-order', 'limit-media-list', 'limit-media-list-custom', 'optimize-low-end'];
+
+function apakahItemCocokPanelusuran(item, lowerQuery) {
+  if (!lowerQuery) return true;
+  const { bestRequest } = item;
+  const pageTitle = (bestRequest.pageTitle || '').toLowerCase();
+  const headline = getFileName(bestRequest.originalUrl, 200).toLowerCase();
+  const resolvedName = (item.resolvedFilename || '').toLowerCase();
+  const url = (bestRequest.originalUrl || '').toLowerCase();
+  const type = (item.type || '').toLowerCase();
+  let hostname = '';
+  try { hostname = new URL(bestRequest.originalUrl).hostname.toLowerCase(); } catch(e) {}
+  return pageTitle.includes(lowerQuery) || headline.includes(lowerQuery) || resolvedName.includes(lowerQuery) || url.includes(lowerQuery) || hostname.includes(lowerQuery) || type.includes(lowerQuery);
+}
+
+function sidikJariItemMedia(item) {
+  const r = item?.bestRequest || {};
+  const ringkesanFormat = Array.isArray(r.ytFormats)
+    ? r.ytFormats.map(f => `${f.itag || ''}:${f.width || ''}x${f.height || ''}:${f.label || ''}`).join(',')
+    : '';
+  const ringkesanSubtitle = Array.isArray(item?.ytSubtitles)
+    ? item.ytSubtitles.map(s => `${s.displayName || s.language || ''}:${s.vttUrl || ''}`).join(',')
+    : '';
+  return [
+    parseInt(r.size) || 0,
+    item?.resolvedFilename || '',
+    item?.type || '',
+    Array.isArray(r.ytFormats) ? r.ytFormats.length : 0,
+    ringkesanFormat,
+    ringkesanSubtitle,
+    r.pageTitle || '',
+    item?.hasQuality ? 1 : 0,
+    r.timeStamp || r.timestamp || 0,
+    parseInt(r.imageWidth) || 0,
+    parseInt(r.imageHeight) || 0
+  ].join('|');
+}
+
+function busakKunciRenderSakaUrl(url, type = 'file') {
+  if (!url) return;
+  renderedMediaUrls.delete(url);
+  renderedMediaUrls.delete(getMediaRenderKey(url, type));
+  for (const p of ['video', 'stream', 'audio', 'file']) renderedMediaUrls.delete(`${p}:${url}`);
+}
+
+function busakKunciRender(el) {
+  if (!el) return;
+  const urls = [el.dataset?.url, el.dataset?.originalUrl].filter(Boolean);
+  for (const u of urls) busakKunciRenderSakaUrl(u, el.dataset?.type || 'file');
+}
+
+let generasiModelMedia = 0;
+let refreshSelektifKotor = false;
+let refreshSelektifMlaku = false;
+async function refreshListMediaSelektif() {
+  if (refreshSelektifMlaku) { refreshSelektifKotor = true; return; }
+  if (!sudahMuatListAwal) { loadMediaList().catch(() => {}); return; }
+  if (document.getElementById('navbar')?.value !== 'home' || document.visibilityState !== 'visible') return;
+  if (mediaListLoad) { butuhRefreshSelektifSawiseLoad = true; return; }
+  refreshSelektifMlaku = true;
+  const generasiSadurunge = generasiModelMedia;
+  try {
+    const { mediaRequests, settings, currentActiveTabId, currentActiveHost } = await ambilDataMediaMentah();
+    if (setelanStrukturalPalingAnyar && KUNCI_SETELAN_STRUKTURAL.some(k => String(settings[k] ?? '') !== String(setelanStrukturalPalingAnyar[k] ?? ''))) {
+      loadMediaList().catch(() => {});
+      return;
+    }
+    let activeDownloads = activeDownloadSnapshot || {};
+    const activeDownloadsPromise = getActiveDownloadSnapshot();
+    const quickActiveDownloads = await Promise.race([activeDownloadsPromise, new Promise(resolve => setTimeout(() => resolve(null), 100))]);
+    if (quickActiveDownloads) activeDownloads = quickActiveDownloads;
+    const { items: itemsBaru } = await hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId, currentActiveHost, kumpulkanActiveItems(), activeDownloads);
+    if (generasiModelMedia !== generasiSadurunge || mediaListLoad) {
+      if (mediaListLoad) butuhRefreshSelektifSawiseLoad = true;
+      return;
+    }
+    terapnoSelisihDaftarMedia(itemsBaru);
+  } catch (e) {
+    console.warn('[website-media-downloader] Refresh selektif gagal, list lawas dipertahanno:', e);
+  } finally {
+    refreshSelektifMlaku = false;
+    if (refreshSelektifKotor) { refreshSelektifKotor = false; refreshListMediaSelektif().catch(() => {}); }
+  }
+}
+
+function kartuLagiDipake(el) {
+  if (!el) return false;
+  if (el.classList.contains('expanded')) return true;
+  if (el.dataset?.url && el.dataset?.originalUrl && el.dataset.url !== el.dataset.originalUrl) return true;
+  return false;
+}
+
+function selarasnoSeleksi(modelLawas, modelAnyar) {
+  if (!selectedUrls || selectedUrls.size === 0) return;
+  const kunciLawasKanggoUrl = new Map();
+  for (const item of modelLawas || []) {
+    const url = item?.bestRequest?.originalUrl || '';
+    if (!url || kunciLawasKanggoUrl.has(url)) continue;
+    kunciLawasKanggoUrl.set(url, getMediaRenderKey(url, item?.type || 'file'));
+  }
+  const urlAnyarKanggoKunci = new Map();
+  const urlAnyarKabeh = new Set();
+  for (const item of modelAnyar || []) {
+    const url = item?.bestRequest?.originalUrl || '';
+    if (!url) continue;
+    urlAnyarKabeh.add(url);
+    const kunci = getMediaRenderKey(url, item?.type || 'file');
+    if (!urlAnyarKanggoKunci.has(kunci)) urlAnyarKanggoKunci.set(kunci, url);
+  }
+  for (const url of [...selectedUrls]) {
+    if (urlAnyarKabeh.has(url)) continue;
+    const kunci = kunciLawasKanggoUrl.get(url);
+    selectedUrls.delete(url);
+    const urlAnyar = kunci ? urlAnyarKanggoKunci.get(kunci) : undefined;
+    if (urlAnyar) selectedUrls.add(urlAnyar);
+  }
+}
+
+function terapnoSelisihDaftarMedia(itemsBaru) {
+  const mediaContainer = document.getElementById('media-list');
+  if (!mediaContainer) return;
+  const query = document.getElementById('search-bar')?.value.trim() || '';
+  const lowerQuery = query.toLowerCase();
+  const isSearching = !!lowerQuery;
+
+  const kunciSakaItem = (item) => {
+    const url = item?.bestRequest?.originalUrl || item?.bestRequest?.url || '';
+    return url ? getMediaRenderKey(url, item?.type || 'file') : '';
+  };
+
+  const lawasMiturutKunci = new Map();
+  for (const item of allMediaRequests) {
+    if (item.downloadId !== undefined) continue;
+    const kunci = kunciSakaItem(item);
+    if (kunci) lawasMiturutKunci.set(kunci, item);
+  }
+  const anyarMiturutKunci = new Map();
+  for (const item of itemsBaru) {
+    if (item.downloadId !== undefined) continue;
+    const kunci = kunciSakaItem(item);
+    if (kunci) anyarMiturutKunci.set(kunci, item);
+  }
+
+  selarasnoSeleksi(allMediaRequests, itemsBaru);
+  allMediaRequests = itemsBaru;
+  allFilteredRequests = isSearching
+    ? itemsBaru.filter(item => apakahItemCocokPanelusuran(item, lowerQuery))
+    : [...itemsBaru];
+  generasiModelMedia++;
+
+  if (isGroupingEnabled && activeGroup === null && !isSearching) {
+    const hitungan = getGroupCounts([...activeDownloadingElements]);
+    const tipeAnyar = Object.keys(hitungan).filter(t => hitungan[t] > 0);
+    const kartuGrup = [...mediaContainer.querySelectorAll('.media-group-card[data-group-type]')].map(el => el.dataset.groupType);
+    const tipeBerubah = tipeAnyar.length !== kartuGrup.length || tipeAnyar.some(t => !kartuGrup.includes(t));
+    if (tipeBerubah) { loadMediaList().catch(() => {}); return; }
+    segarkanHitunganGrup();
+    return;
+  }
+
+  const kartuMiturutKunci = new Map();
+  mediaContainer.querySelectorAll('.media-item').forEach(el => {
+    if (el.querySelector('mdui-linear-progress')) return;
+    if (el.dataset.downloadId) return;
+    const kunci = getMediaRenderKey(el.dataset.originalUrl || el.dataset.url || '', el.dataset.type || 'file');
+    if (kunci) kartuMiturutKunci.set(kunci, el);
+  });
+
+  const katon = getActiveRequests().filter(item => item.downloadId === undefined && (!isSearching || apakahItemCocokPanelusuran(item, lowerQuery)));
+  const indeksKaton = new Map();
+  katon.forEach((item, i) => {
+    const kunci = kunciSakaItem(item);
+    if (kunci) indeksKaton.set(kunci, i);
+  });
+
+  if (renderedCount === 0 && mediaContainer.querySelectorAll('.media-item').length === 0 && katon.length > 0) {
+    loadMediaList().catch(() => {});
+    return;
+  }
+
+  function golekAnchorSisipan(indeks) {
+    for (let i = indeks + 1; i < katon.length; i++) {
+      const el = kartuMiturutKunci.get(kunciSakaItem(katon[i]));
+      if (el) return el;
+    }
+    return null;
+  }
+  function sisipnoKartuMiturutUrutan(kartu, indeks) {
+    const anchor = golekAnchorSisipan(indeks);
+    const sentinel = document.getElementById('infinite-scroll-sentinel');
+    const endMsg = document.getElementById('end-of-media-list');
+    if (anchor) mediaContainer.insertBefore(kartu, anchor);
+    else if (sentinel) mediaContainer.insertBefore(kartu, sentinel);
+    else if (endMsg) mediaContainer.insertBefore(kartu, endMsg);
+    else mediaContainer.appendChild(kartu);
+  }
+
+  let jumlahKartuDibusak = 0;
+  for (const [kunci, el] of [...kartuMiturutKunci]) {
+    if (!anyarMiturutKunci.has(kunci) || !indeksKaton.has(kunci)) {
+      el.remove();
+      kartuMiturutKunci.delete(kunci);
+      busakKunciRender(el);
+      if (el.dataset?.url) uiCache.delete(el.dataset.url);
+      if (el.dataset?.originalUrl) uiCache.delete(el.dataset.originalUrl);
+      renderedCount = Math.max(0, renderedCount - 1);
+      indeksChunkSabanjure = Math.max(0, indeksChunkSabanjure - 1);
+      jumlahKartuDibusak++;
+    }
+  }
+
+  for (const [kunci, itemAnyar] of anyarMiturutKunci) {
+    const el = kartuMiturutKunci.get(kunci);
+    if (!el || !indeksKaton.has(kunci)) continue;
+    const itemLawas = lawasMiturutKunci.get(kunci);
+    if (itemLawas && sidikJariItemMedia(itemLawas) !== sidikJariItemMedia(itemAnyar)) {
+      if (kartuLagiDipake(el)) continue;
+      let kartuAnyar;
+      try {
+        kartuAnyar = createMediaItem(itemAnyar);
+      } catch (e) {
+        console.error('[website-media-downloader] Skip item media rusak pas refresh selektif:', itemAnyar?.bestRequest?.originalUrl, e);
+        continue;
+      }
+      el.replaceWith(kartuAnyar);
+      kartuMiturutKunci.set(kunci, kartuAnyar);
+      sisipnoKartuMiturutUrutan(kartuAnyar, indeksKaton.get(kunci));
+    }
+  }
+
+  const jumlahModelUnduhan = getActiveRequests().filter(item => item.downloadId !== undefined).length;
+  const batasKaton = Math.max(0, renderedCount - jumlahModelUnduhan);
+  const pesenKosong = mediaContainer.querySelector('.no-media-container');
+  const pesenOraCocok = mediaContainer.querySelector('#no-matches-msg');
+  for (const [kunci, itemAnyar] of anyarMiturutKunci) {
+    if (kartuMiturutKunci.has(kunci)) continue;
+    const indeks = indeksKaton.get(kunci);
+    if (indeks === undefined) continue;
+    if (indeks >= batasKaton) continue;
+    let kartuAnyar;
+    try {
+      kartuAnyar = createMediaItem(itemAnyar);
+    } catch (e) {
+      console.error('[website-media-downloader] Skip item media rusak pas refresh selektif:', itemAnyar?.bestRequest?.originalUrl, e);
+      continue;
+    }
+    if (pesenKosong) pesenKosong.remove();
+    if (pesenOraCocok) pesenOraCocok.remove();
+    sisipnoKartuMiturutUrutan(kartuAnyar, indeks);
+    renderedMediaUrls.add(itemAnyar.bestRequest.originalUrl);
+    renderedMediaUrls.add(kunci);
+    renderedCount++;
+    kartuMiturutKunci.set(kunci, kartuAnyar);
+  }
+
+  if (mediaContainer.querySelectorAll('.media-item').length === 0 && mediaContainer.querySelectorAll('.media-group-card').length === 0) {
+    mediaContainer.innerHTML = isSearching
+      ? `<div id="no-matches-msg" style="padding: 60px 20px; text-align: center; opacity: 0.8;">No matches found for "${escapeHtmlPopup(query)}"</div>`
+      : getNoMediaDetectedHTML();
+    updateSelectedCount();
+    return;
+  }
+  if (jumlahKartuDibusak > 0) renderNextChunk();
+  updateSelectedCount();
+}
+
+
+function loadMediaList() {
+  if (mediaListLoad) {
+    mediaListReloadRequested = true;
+    return mediaListLoad;
+  }
+  let loadSukses = false;
+  mediaListLoad = (async () => {
+    do {
+      mediaListReloadRequested = false;
+      await loadMediaListOnce();
+    } while (mediaListReloadRequested);
+    loadSukses = true;
+  })().finally(() => {
+    mediaListLoad = null;
+    if (loadSukses && butuhRefreshSelektifSawiseLoad) {
+      butuhRefreshSelektifSawiseLoad = false;
+      refreshListMediaSelektif().catch(() => {});
+    } else {
+      butuhRefreshSelektifSawiseLoad = false;
+    }
+  });
+  return mediaListLoad;
+}
+
+async function loadMediaListOnce() {
+  const mediaContainer = document.getElementById('media-list');
+  const loadingSpinner = document.getElementById('loading-media-list');
+  const globalLoading = document.getElementById('loading');
+  const mainContent = document.getElementById('main-content');
+  const mediaControls = document.getElementById('media-controls');
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const autoAudioUrl = urlParams.get('autoDownloadAudioUrl');
+  const autoVideoUrl = urlParams.get('autoDownloadVideoUrl');
+  const autoOpenUrl = urlParams.get('autoOpenUrl');
+  const autoDemuxer = urlParams.get('autoDemuxer') || '';
+  const autoCodec = urlParams.get('autoCodec') || '';
+  const autoQualityParam = urlParams.get('autoQuality') || '';
+
+  if (autoAudioUrl || autoVideoUrl || autoOpenUrl) {
+    const cleanUrl = window.location.pathname + (window.location.search.includes('mode=tab') ? '?mode=tab' : '');
+    window.history.replaceState({}, document.title, cleanUrl);
+  }
+
+  if (mainContent) mainContent.style.display = 'block';
+  if (loadingSpinner) loadingSpinner.style.display = 'block';
+
+
+  const activeItems = kumpulkanActiveItems();
+  mediaContainer.innerHTML = '';
+  [...new Set(activeItems.values())].forEach(item => mediaContainer.appendChild(item));
+
+  try {
+    const activeDownloadsPromise = getActiveDownloadSnapshot();
+    const { mediaRequests, settings, targetWebTab, currentActiveTabId, currentActiveHost } = await ambilDataMediaMentah();
+    let activeDownloads = activeDownloadSnapshot || {};
+    const quickActiveDownloads = await Promise.race([activeDownloadsPromise, new Promise(resolve => setTimeout(() => resolve(null), 100))]);
+    if (quickActiveDownloads) activeDownloads = quickActiveDownloads;
+    else activeDownloadsPromise.then(snapshot => restoreActiveDownloadsUI(snapshot)).catch(() => {});
+    if (globalLoading) globalLoading.style.display = 'none';
+    if (mainContent) mainContent.style.display = 'block';
+
+
+    isGroupingEnabled = settings['group-by-type'] === '1' || settings['group-by-type'] === true;
+    isGroupProgressEnabled = settings['group-download-progress'] === undefined || settings['group-download-progress'] === '1' || settings['group-download-progress'] === true;
+    updateGlobalProgressVisibility();
+    applyManualScanUI(isFlagEnabled(settings['manual-scan'], false), settings['bottom-bar-design'] || 'v3');
+
+
+    if (isGroupingEnabled) {
+      if (autoAudioUrl) {
+        const decodedUrl = decodeURIComponent(autoAudioUrl);
+        const isYouTube = decodedUrl.includes('googlevideo.com') || decodedUrl.includes('youtube.com') || decodedUrl.includes('youtu.be');
+        activeGroup = isYouTube ? 'video' : 'audio';
+      } else if (autoVideoUrl) {
+        activeGroup = 'video';
+      } else if (autoOpenUrl) {
+        const decodedUrl = decodeURIComponent(autoOpenUrl);
+        const isYouTube = decodedUrl.includes('googlevideo.com') || decodedUrl.includes('youtube.com') || decodedUrl.includes('youtu.be');
+        if (isYouTube) {
+          activeGroup = 'video';
+        } else {
+          const type = getMediaType(decodedUrl);
+          if (type) {
+            activeGroup = type;
+          }
+        }
+      }
+    }
+
+    const { items: daftarMediaAnyar, activeCount } = await hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId, currentActiveHost, activeItems, activeDownloads);
+    if (loadingSpinner) loadingSpinner.style.display = 'none';
+    selarasnoSeleksi(allMediaRequests, daftarMediaAnyar);
+    allMediaRequests = daftarMediaAnyar;
     allFilteredRequests = [...allMediaRequests];
+    generasiModelMedia++;
     downloadingCount = activeCount;
     updateDownloadingCount(0);
 
     renderInitialList();
+    sudahMuatListAwal = true;
+    setelanStrukturalPalingAnyar = settings;
 
     if (autoAudioUrl) {
       const decodedUrl = decodeURIComponent(autoAudioUrl);
@@ -5440,6 +5886,21 @@ async function loadMediaListOnce() {
     if (globalLoading) globalLoading.style.display = 'none';
     if (mainContent) mainContent.style.display = 'block';
     if (loadingSpinner) loadingSpinner.style.display = 'none';
+    if (mediaContainer) {
+      const errorEl = document.createElement('div');
+      errorEl.id = 'media-list-error';
+      errorEl.style.cssText = 'padding: 60px 20px; text-align: center;';
+      const errorText = document.createElement('div');
+      errorText.style.cssText = 'opacity: 0.8; margin-bottom: 16px;';
+      errorText.textContent = 'Gagal muat daftar media. Service worker mungkin lagi turu utawa sibuk.';
+      const retryBtn = document.createElement('mdui-button');
+      retryBtn.setAttribute('variant', 'filled');
+      retryBtn.textContent = 'Coba maneh';
+      retryBtn.addEventListener('click', () => loadMediaList().catch(() => {}));
+      errorEl.appendChild(errorText);
+      errorEl.appendChild(retryBtn);
+      mediaContainer.appendChild(errorEl);
+    }
   }
 }
 
@@ -6128,7 +6589,7 @@ async function downloadAllAsZip(items) {
               syncZipProgressToGroupCards(
                 `📦 ZIP • ${txt}`,
                 localZipPct, false,
-                () => { if (window.activeCancellations) window.activeCancellations.add('global_zip'); clearZipProgressFromGroupCards(); },
+                () => { if (window.activeCancellations) window.activeCancellations.add('global_zip'); clearZipProgressFromGroupCards(zipJobId); },
                 isLocalZipPaused,
                 () => { isLocalZipPaused = !isLocalZipPaused; updateLocalZipUI(); },
                 zipGroupType, zipJobId
@@ -6175,7 +6636,7 @@ async function downloadAllAsZip(items) {
         if (typeof finalizeDownload === 'function') {
             const downloadMethod = await browser.storage.local.get('download-method').then(res => res['download-method'] || 'browser');
             await finalizeDownload(zipBlob, zipName, downloadMethod, progressBar, false, false);
-            progressContainer.style.display = 'none'; clearZipProgressFromGroupCards();
+            progressContainer.style.display = 'none'; clearZipProgressFromGroupCards(zipJobId);
         } else {
             const blobUrl = URL.createObjectURL(zipBlob);
             const a = document.createElement("a");
@@ -6188,7 +6649,7 @@ async function downloadAllAsZip(items) {
               document.body.removeChild(a);
               URL.revokeObjectURL(blobUrl);
               progressContainer.style.display = 'none';
-              clearZipProgressFromGroupCards();
+              clearZipProgressFromGroupCards(zipJobId);
             }, 2000);
         }
 
@@ -6202,10 +6663,10 @@ async function downloadAllAsZip(items) {
           console.error("Local ZIP error:", e);
           showDialog(browser.i18n.getMessage("zipError", [e.message]));
           syncZipProgressToGroupCards(`📦 ZIP Error: ${e.message}`, 0, false, null, false, null, zipGroupType, zipJobId);
-          setTimeout(() => clearZipProgressFromGroupCards(), 5000);
+          setTimeout(() => clearZipProgressFromGroupCards(zipJobId), 5000);
         }
         progressContainer.style.display = 'none';
-        clearZipProgressFromGroupCards();
+        clearZipProgressFromGroupCards(zipJobId);
       }
     } else {
 
@@ -6362,6 +6823,9 @@ async function extractAudioFromBlob(blob, filename, downloadMethod, loadingBar, 
 }
 
 async function downloadAudioOnly(url, mediaDiv, specificSize) {
+  const kunciDownloadAudio = `audio-only::${url}`;
+  if (downloadFileAktif.has(kunciDownloadAudio)) return;
+  downloadFileAktif.add(kunciDownloadAudio);
   let wakeLock = null;
   try { wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
 
@@ -6572,6 +7036,7 @@ try {
     }
     finishDownloadUI(url);
   } finally {
+    downloadFileAktif.delete(kunciDownloadAudio);
     const restoreCb = window.activeCancellations.restoreCallbacks.get(url);
     if (restoreCb) restoreCb();
     window.activeCancellations.restoreCallbacks.delete(url);
@@ -6750,7 +7215,11 @@ async function cobaDelegasiYoutube(konteks) {
     }
 }
 
+const downloadFileAktif = new Set();
 async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUrl = null, subtitleUrl = null, customFilename = null) {
+  const kunciDownload = `${url}::${audioUrl || ''}`;
+  if (downloadFileAktif.has(kunciDownload)) return;
+  downloadFileAktif.add(kunciDownload);
   let wakeLock = null;
   try { wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
 
@@ -7520,6 +7989,7 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
         window.activeCancellations.restoreCallbacks.delete(url);
     }
     if (wakeLock) wakeLock.release();
+    downloadFileAktif.delete(kunciDownload);
   }
 }
 
@@ -7681,7 +8151,8 @@ function showAddManualUrlDialog() {
 async function addManualUrl(url) {
     if (!url) return;
     try {
-        new URL(url);
+        const parsedManualUrl = new URL(url);
+        if (parsedManualUrl.protocol !== 'http:' && parsedManualUrl.protocol !== 'https:') throw new Error('Skema URL ora didukung');
     } catch (e) {
         showDialog("Please enter a valid URL.", "Invalid URL");
         return;
