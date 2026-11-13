@@ -50,20 +50,45 @@
     "background": {
         "service_worker": "network_detector.js",
         "scripts": [
-            "debug_logger.js",
-            "detection_exclusions.js",
-            "media_filename.js",
+            "lib/debug_logger.js",
+            "lib/detection_exclusions.js",
+            "lib/media_filename.js",
             "libraries/wymd.js",
-            "popup_blocker.js",
-            "stream_jobs.js",
-            "download_recovery.js",
+            "background/popup_blocker.js",
+            "background/stream_jobs.js",
+            "background/download_recovery.js",
+            "background/boot.js",
+            "background/detection/m3u8-youtube.js",
+            "background/jobs/persistent-jobs.js",
+            "background/cache/cache-db.js",
+            "background/detection/media-types.js",
+            "background/detection/headers.js",
+            "background/settings.js",
+            "background/ui/toast.js",
+            "background/ui/notifikasi.js",
+            "background/jobs/history.js",
+            "background/jobs/autodownload.js",
+            "background/detection/listeners.js",
+            "background/audio/audio.js",
+            "background/audio/audio-base.js",
+            "background/router.js",
+            "background/download/zip.js",
+            "background/download/fetch-core.js",
+            "background/cloud/cloud-upload.js",
+            "background/cloud/cloud-save.js",
+            "background/cloud/cloud-paralel.js",
+            "background/cloud/cloud-auth.js",
+            "background/cloud/cloud-stream.js",
+            "background/download/fetch-download.js",
+            "background/init.js",
+            "background/cache/cache.js",
             "network_detector.js"
         ]
     },
     "content_scripts": [
         {
             "matches": ["<all_urls>"],
-            "js": ["redirect_guard_main.js"],
+            "js": ["content/redirect_guard_main.js"],
             "run_at": "document_start",
             "world": "MAIN",
             "all_frames": true,
@@ -72,7 +97,7 @@
         },
         {
             "matches": ["<all_urls>"],
-            "js": ["popup_blocker_content.js"],
+            "js": ["content/popup_blocker_content.js"],
             "run_at": "document_start",
             "all_frames": true,
             "match_about_blank": true,
@@ -86,10 +111,42 @@
                 "styles/content-toast.css"
             ],
             "js": [
-                "surgical_scrapers.js",
-                "media_compute_client.js",
-                "offlineStreamConvert.js",
-                "content_detector.js"
+                "content/surgical_scrapers.js",
+                "lib/media_compute_client.js",
+                "entries/offlineStreamConvert.js",
+                "converter/util.js",
+                "converter/cache/cache-db.js",
+                "converter/segmen.js",
+                "converter/mux/transmux.js",
+                "converter/spoof.js",
+                "converter/cache/cache-media.js",
+                "converter/antrean.js",
+                "converter/cloud/cloud-stream.js",
+                "converter/cloud/cloud-auth.js",
+                "converter/cloud/cloud-upload.js",
+                "converter/media-types.js",
+                "converter/finalize.js",
+                "converter/audio.js",
+                "converter/m3u8/m3u8-varian.js",
+                "converter/m3u8/m3u8-unduh.js",
+                "converter/mux/gabung-mp4.js",
+                "converter/mpd/mpd.js",
+                "converter/mpd/pilih-mpd.js",
+                "converter/progress.js",
+                "converter/youtube/youtube-mux.js",
+                "converter/youtube/youtube-chunk.js",
+                "converter/youtube/youtube-vtt.js",
+                "converter/youtube/youtube-subtitle.js",
+                "detector/boot.js",
+                "detector/pengaturan.js",
+                "detector/tipe-media.js",
+                "detector/scan/deteksi.js",
+                "detector/scan/pindai.js",
+                "detector/scan/pengamat.js",
+                "detector/init.js",
+                "detector/toast.js",
+                "detector/router-pesan.js",
+                "content/content_detector.js"
             ],
             "run_at": "document_end"
         },
@@ -99,7 +156,7 @@
             ],
             "js": [
                 "libraries/wymd.js",
-                "yt_core.js"
+                "content/yt_core.js"
             ],
             "run_at": "document_end",
             "all_frames": true
@@ -113,7 +170,7 @@
             ],
             "js": [
                 "libraries/wymd.js",
-                "yt_core.js"
+                "content/yt_core.js"
             ],
             "run_at": "document_end",
             "all_frames": false
@@ -128,9 +185,9 @@
     },
     "web_accessible_resources": [{
         "resources": [
-            "media_compute_worker.js",
+            "workers/media_compute_worker.js",
             "libraries/mux.js",
-            "mp4_duration.js",
+            "workers/mp4_duration.js",
             "libraries/client-zip.js",
             "libraries/subsrt.bundle.js",
             "libraries/libav.js"
@@ -138,5 +195,5 @@
         "matches": ["<all_urls>"]
     }],
     "default_locale": "en",
-    "options_page": "popup.html?options=true"
+    "options_page": "pages/popup.html?options=true"
 }

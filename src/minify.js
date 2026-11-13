@@ -28,7 +28,7 @@ const cleanCss = new CleanCSS({ level: 1 });
 function extractAndPreserveHeader(content, isHtml) {
     let header = '';
     let body = content;
-    
+
     if (isHtml) {
         const match = content.match(/^([\s\S]*?<!--[\s\S]*?Copyright[\s\S]*?-->)/i);
         if (match) {
@@ -49,7 +49,7 @@ async function minifyFile(filePath) {
     try {
         const code = fs.readFileSync(filePath, 'utf8');
         const { header, body } = extractAndPreserveHeader(code, false);
-        
+
         const result = await minify(body, {
             format: {
                 comments: false
@@ -57,7 +57,43 @@ async function minifyFile(filePath) {
             compress: true,
             mangle: true
         });
-        
+
+        if (result.code !== undefined) {
+            fs.writeFileSync(filePath, header + result.code, 'utf8');
+            console.log(`[Minified JS] ${path.relative(BUILD_DIR, filePath)}`);
+        }
+    } catch (e) {
+        console.error(`[Error minifying JS] ${filePath}:`, e);
+    }
+}
+
+function apakahModulScopeBersama(filePath) {
+    const parts = filePath.split(path.sep);
+    if (filePath.endsWith('.js') && (parts.includes('background') || parts.includes('download') || parts.includes('popup') || parts.includes('settings') || parts.includes('converter') || parts.includes('detector'))) {
+        return true;
+    }
+    const namaBerkas = parts[parts.length - 1];
+    return namaBerkas === 'download.js' || namaBerkas === 'offlineStreamConvert.js' || namaBerkas === 'settings.js' || namaBerkas === 'content_detector.js';
+}
+
+async function minifyBackgroundFile(filePath) {
+    try {
+        const code = fs.readFileSync(filePath, 'utf8');
+        const { header, body } = extractAndPreserveHeader(code, false);
+
+        const result = await minify(body, {
+            format: {
+                comments: false
+            },
+            compress: {
+                toplevel: false
+            },
+            mangle: {
+                toplevel: false,
+                keep_fnames: true
+            }
+        });
+
         if (result.code !== undefined) {
             fs.writeFileSync(filePath, header + result.code, 'utf8');
             console.log(`[Minified JS] ${path.relative(BUILD_DIR, filePath)}`);
@@ -71,14 +107,14 @@ async function minifyHtmlFile(filePath) {
     try {
         const html = fs.readFileSync(filePath, 'utf8');
         const { header, body } = extractAndPreserveHeader(html, true);
-        
+
         const result = await minifyHtml(body, {
             collapseWhitespace: true,
             removeComments: true,
             minifyJS: true,
             minifyCSS: true
         });
-        
+
         fs.writeFileSync(filePath, header + result, 'utf8');
         console.log(`[Minified HTML] ${path.relative(BUILD_DIR, filePath)}`);
     } catch (e) {
@@ -90,7 +126,7 @@ async function minifyCssFile(filePath) {
     try {
         const css = fs.readFileSync(filePath, 'utf8');
         const { header, body } = extractAndPreserveHeader(css, false);
-        
+
         const minified = cleanCss.minify(body);
         if (minified.styles !== undefined) {
             fs.writeFileSync(filePath, header + minified.styles, 'utf8');
@@ -122,7 +158,11 @@ async function walkDirAndMinify(dir) {
             if (file === 'libraries') continue;
             await walkDirAndMinify(fullPath);
         } else if (file.endsWith('.js')) {
-            await minifyFile(fullPath);
+            if (apakahModulScopeBersama(fullPath)) {
+                await minifyBackgroundFile(fullPath);
+            } else {
+                await minifyFile(fullPath);
+            }
         } else if (file.endsWith('.html')) {
             await minifyHtmlFile(fullPath);
         } else if (file.endsWith('.css')) {

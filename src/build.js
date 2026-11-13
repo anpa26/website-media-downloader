@@ -50,7 +50,9 @@ const LIGHT_MP3_FILES = ['lame.min.js', 'mp3_worker.js'];
 const LIGHT_STREAM_CONVERSION_FILES = ['mux.js', 'mp4_duration.js'];
 
 const FIREFOX_EXCLUDES = new Set(['chrome_audio_jobs.js', 'offscreen.html', 'offscreen.js']);
-const BERKAS_KHUSUS_YOUTUBE = ['yt_core.js', 'wymd.js'];
+const BERKAS_KHUSUS_YOUTUBE = ['yt_core.js', 'wymd.js', 'youtube-mux.js', 'youtube-chunk.js', 'youtube-vtt.js', 'youtube-subtitle.js'];
+const BERKAS_KHUSUS_FIREFOX = ['audio-base.js', 'cache.js'];
+const BERKAS_KHUSUS_CHROME = ['ts-converter.js'];
 const BERKAS_CADANGAN_FIREFOX = ['download_recovery.js', 'audio_processor.html'];
 const BERKAS_RINGAN_BERSAMA = ['libav.js', ...LIGHT_MP3_FILES, ...LIGHT_STREAM_CONVERSION_FILES];
 
@@ -58,11 +60,11 @@ const FIREFOX_BASED_TARGETS = new Set(['firefox', 'firefox-amo', 'firefox-light'
 const TARGET_AMO = new Set(['firefox-amo', 'firefox-light-amo']);
 
 const EXCLUDE_PER_TARGET = {
-    chrome: new Set([...BERKAS_KHUSUS_YOUTUBE, ...MEDIABUNNY_FILES]),
-    'chrome-yt': new Set(MEDIABUNNY_FILES),
+    chrome: new Set([...BERKAS_KHUSUS_YOUTUBE, ...BERKAS_KHUSUS_FIREFOX, ...BERKAS_KHUSUS_CHROME, ...MEDIABUNNY_FILES]),
+    'chrome-yt': new Set([...BERKAS_KHUSUS_FIREFOX, ...MEDIABUNNY_FILES]),
     firefox: new Set([...FIREFOX_EXCLUDES, ...MEDIABUNNY_FILES]),
-    'chrome-light': new Set([...BERKAS_KHUSUS_YOUTUBE, ...BERKAS_CADANGAN_FIREFOX, ...BERKAS_RINGAN_BERSAMA]),
-    'chrome-yt-light': new Set([...BERKAS_CADANGAN_FIREFOX, ...BERKAS_RINGAN_BERSAMA]),
+    'chrome-light': new Set([...BERKAS_KHUSUS_YOUTUBE, ...BERKAS_KHUSUS_FIREFOX, ...BERKAS_KHUSUS_CHROME, ...BERKAS_CADANGAN_FIREFOX, ...BERKAS_RINGAN_BERSAMA]),
+    'chrome-yt-light': new Set([...BERKAS_KHUSUS_FIREFOX, ...BERKAS_CADANGAN_FIREFOX, ...BERKAS_RINGAN_BERSAMA]),
     'firefox-light': new Set([...FIREFOX_EXCLUDES, ...BERKAS_RINGAN_BERSAMA]),
 };
 EXCLUDE_PER_TARGET['firefox-amo'] = new Set(EXCLUDE_PER_TARGET.firefox);
@@ -175,15 +177,15 @@ function mergeJsonFile(basePath, overridePath) {
  * - JSON files are merged at the top-level key level
  * - Non-JSON files fully replace the base
  */
-function applyOverrides(target, outDir) {
+function applyOverrides(target, outDir, excludeSet = new Set()) {
     const overrideTargets = OVERRIDE_CHAIN_PER_TARGET[target] || [target];
     for (const overrideTarget of overrideTargets) {
         const overrideDir = path.join(OVERRIDES_DIR, overrideTarget);
-        if (fs.existsSync(overrideDir)) applyOverridesRecursive(overrideDir, outDir);
+        if (fs.existsSync(overrideDir)) applyOverridesRecursive(overrideDir, outDir, excludeSet);
     }
 }
 
-function applyOverridesRecursive(overrideDir, outDir) {
+function applyOverridesRecursive(overrideDir, outDir, excludeSet = new Set()) {
     for (const entry of fs.readdirSync(overrideDir)) {
         const overridePath = path.join(overrideDir, entry);
         const destPath = path.join(outDir, entry);
@@ -191,7 +193,9 @@ function applyOverridesRecursive(overrideDir, outDir) {
 
         if (stat.isDirectory()) {
             fs.mkdirSync(destPath, { recursive: true });
-            applyOverridesRecursive(overridePath, destPath);
+            applyOverridesRecursive(overridePath, destPath, excludeSet);
+        } else if (excludeSet.has(entry)) {
+            continue;
         } else if (entry.endsWith('.json') && fs.existsSync(destPath)) {
             mergeJsonFile(destPath, overridePath);
         } else {
@@ -329,42 +333,164 @@ function replaceSection(filePath, startText, endText, replacement) {
     fs.writeFileSync(filePath, source, 'utf8');
 }
 
+function gantiSeksiNgantiAkhir(filePath, startText, replacement) {
+    let source = fs.readFileSync(filePath, 'utf8');
+    const start = source.indexOf(startText);
+    if (start === -1) {
+        throw new Error(`[light] Missing section boundary in ${path.relative(SRC_DIR, filePath)}`);
+    }
+    source = source.slice(0, start) + replacement.trim() + '\n';
+    fs.writeFileSync(filePath, source, 'utf8');
+}
+
+const URUTAN_MODUL_LATAR = [
+    'boot.js', 'detection/m3u8-youtube.js', 'jobs/persistent-jobs.js', 'cache/cache-db.js', 'detection/media-types.js',
+    'detection/headers.js', 'settings.js', 'ui/toast.js', 'ui/notifikasi.js', 'jobs/history.js', 'jobs/autodownload.js',
+    'detection/listeners.js', 'audio/audio.js', 'audio/audio-base.js', 'router.js', 'download/zip.js',
+    'download/fetch-core.js', 'cloud/cloud-upload.js', 'cloud/cloud-save.js', 'cloud/cloud-paralel.js', 'cloud/cloud-auth.js', 'cloud/cloud-stream.js', 'download/fetch-download.js', 'init.js', 'cache/cache.js'
+];
+
+function dhaftarJsRekursif(dir, awalan = '') {
+    const hasil = [];
+    for (const entri of fs.readdirSync(dir, { withFileTypes: true })) {
+        const relatif = awalan ? awalan + '/' + entri.name : entri.name;
+        if (entri.isDirectory()) hasil.push(...dhaftarJsRekursif(path.join(dir, entri.name), relatif));
+        else if (entri.name.endsWith('.js')) hasil.push(relatif);
+    }
+    return hasil.sort();
+}
+
+function daftarBerkasLatar(outDir) {
+    const daftar = [path.join(outDir, 'network_detector.js')];
+    const latarDir = path.join(outDir, 'background');
+    if (fs.existsSync(latarDir)) {
+        const ono = new Set(dhaftarJsRekursif(latarDir));
+        for (const nama of URUTAN_MODUL_LATAR) {
+            if (ono.has(nama)) {
+                daftar.push(path.join(latarDir, ...nama.split('/')));
+                ono.delete(nama);
+            }
+        }
+        for (const nama of [...ono].sort()) daftar.push(path.join(latarDir, ...nama.split('/')));
+    }
+    return daftar;
+}
+
+function wocoGabunganLatar(outDir) {
+    return daftarBerkasLatar(outDir).map(berkas => fs.readFileSync(berkas, 'utf8')).join('\n');
+}
+
+const URUTAN_MODUL_UNDUHAN = [
+    'cache-db.js', 'cloud/cloud-auth.js', 'cloud/cloud-upload.js', 'nama-file.js',
+    'unduhan.js', 'init.js'
+];
+
+function wocoGabunganUnduhan(outDir) {
+    const daftar = [path.join(outDir, 'pages', 'download.js')];
+    const unduhanDir = path.join(outDir, 'download');
+    if (fs.existsSync(unduhanDir)) {
+        const ono = new Set(dhaftarJsRekursif(unduhanDir));
+        for (const nama of URUTAN_MODUL_UNDUHAN) {
+            if (ono.has(nama)) {
+                daftar.push(path.join(unduhanDir, ...nama.split('/')));
+                ono.delete(nama);
+            }
+        }
+        for (const nama of [...ono].sort()) daftar.push(path.join(unduhanDir, ...nama.split('/')));
+    }
+    return daftar.map(berkas => fs.readFileSync(berkas, 'utf8')).join('\n');
+}
+
+const URUTAN_MODUL_PENGATURAN = [
+    'state.js', 'notif.js', 'tampilan/tema.js', 'perawatan/ekspor.js', 'perawatan/debug.js', 'perawatan/cache-indexeddb.js',
+    'alat/ts-converter.js', 'tampilan/konfirmasi.js', 'pengaturan.js', 'tampilan/tata-letak.js',
+    'alat/speedtest.js', 'boot.js'
+];
+
+function wocoGabunganPengaturan(outDir) {
+    const daftar = [path.join(outDir, 'entries', 'settings.js')];
+    const pengaturanDir = path.join(outDir, 'settings');
+    if (fs.existsSync(pengaturanDir)) {
+        const ono = new Set(dhaftarJsRekursif(pengaturanDir));
+        for (const nama of URUTAN_MODUL_PENGATURAN) {
+            if (ono.has(nama)) {
+                daftar.push(path.join(pengaturanDir, ...nama.split('/')));
+                ono.delete(nama);
+            }
+        }
+        for (const nama of [...ono].sort()) daftar.push(path.join(pengaturanDir, ...nama.split('/')));
+    }
+    return daftar.map(berkas => fs.readFileSync(berkas, 'utf8')).join('\n');
+}
+
+const URUTAN_MODUL_KONVERTER = [
+    'util.js', 'cache/cache-db.js', 'segmen.js', 'mux/transmux.js', 'spoof.js',
+    'cache/cache-media.js', 'antrean.js', 'cloud/cloud-stream.js', 'cloud/cloud-auth.js', 'cloud/cloud-upload.js', 'media-types.js',
+    'finalize.js', 'audio.js', 'm3u8/m3u8-varian.js', 'm3u8/m3u8-unduh.js', 'mux/gabung-mp4.js', 'mpd/mpd.js',
+    'mpd/pilih-mpd.js', 'progress.js', 'youtube/youtube-mux.js', 'youtube/youtube-chunk.js', 'youtube/youtube-vtt.js', 'youtube/youtube-subtitle.js'
+];
+
+function wocoGabunganKonverter(outDir) {
+    const daftar = [path.join(outDir, 'entries', 'offlineStreamConvert.js')];
+    const konverterDir = path.join(outDir, 'converter');
+    if (fs.existsSync(konverterDir)) {
+        const ono = new Set(dhaftarJsRekursif(konverterDir));
+        for (const nama of URUTAN_MODUL_KONVERTER) {
+            if (ono.has(nama)) {
+                daftar.push(path.join(konverterDir, ...nama.split('/')));
+                ono.delete(nama);
+            }
+        }
+        for (const nama of [...ono].sort()) daftar.push(path.join(konverterDir, ...nama.split('/')));
+    }
+    return daftar.map(berkas => fs.readFileSync(berkas, 'utf8')).join('\n');
+}
+
 function stripLibAvCode(outDir) {
-    const muxReplacement = fs.readFileSync(path.join(SRC_DIR, 'light_mediabunny_mux.js'), 'utf8');
-    const subtitleReplacement = fs.readFileSync(path.join(SRC_DIR, 'light_mediabunny_subtitles.js'), 'utf8');
-    const converterPath = path.join(outDir, 'offlineStreamConvert.js');
-    let converter = fs.readFileSync(converterPath, 'utf8');
-    const muxResult = replaceNamedFunction(converter, 'downloadAndMuxYoutube', muxReplacement);
-    converter = muxResult.source;
-
-    const subtitleResult = replaceNamedFunction(
-        converter,
-        'embedSubtitlesWithLibAV',
-        subtitleReplacement
-    );
-    converter = subtitleResult.source;
-
-    const gabungResult = replaceNamedFunction(
-        converter,
-        'gabungkanVideoAudioKeMp4',
-        'async function gabungkanVideoAudioKeMp4() { throw new Error("Muxing is not available in the light edition."); }'
-    );
-    converter = gabungResult.source;
-
-    fs.copyFileSync(
-        path.join(SRC_DIR, 'light_mediabunny_worker.js'),
-        path.join(outDir, 'light_mediabunny_worker.js')
-    );
-
-    const mpdFlag = 'if (mpdToMp4Enabled) {';
-    const mpdStart = converter.lastIndexOf(mpdFlag);
-    if (mpdStart !== -1) {
-        const openBrace = converter.indexOf('{', mpdStart);
-        const end = findMatchingBrace(converter, openBrace);
-        converter = converter.slice(0, mpdStart) + 'if (false) {}' + converter.slice(end + 1);
+    const muxReplacement = fs.readFileSync(path.join(SRC_DIR, 'workers', 'light_mediabunny_mux.js'), 'utf8');
+    const subtitleReplacement = fs.readFileSync(path.join(SRC_DIR, 'workers', 'light_mediabunny_subtitles.js'), 'utf8');
+    const youtubeMuxPath = path.join(outDir, 'converter', 'youtube', 'youtube-mux.js');
+    const youtubeSubtitlePath = path.join(outDir, 'converter', 'youtube', 'youtube-subtitle.js');
+    let muxResult = { replaced: false };
+    if (fs.existsSync(youtubeMuxPath)) {
+        let youtubeMux = fs.readFileSync(youtubeMuxPath, 'utf8');
+        muxResult = replaceNamedFunction(youtubeMux, 'downloadAndMuxYoutube', muxReplacement);
+        fs.writeFileSync(youtubeMuxPath, muxResult.source, 'utf8');
+    }
+    if (fs.existsSync(youtubeSubtitlePath)) {
+        let youtubeSubtitle = fs.readFileSync(youtubeSubtitlePath, 'utf8');
+        const subtitleResult = replaceNamedFunction(
+            youtubeSubtitle,
+            'embedSubtitlesWithLibAV',
+            subtitleReplacement
+        );
+        fs.writeFileSync(youtubeSubtitlePath, subtitleResult.source, 'utf8');
     }
 
-    fs.writeFileSync(converterPath, converter, 'utf8');
+    const gabungPath = path.join(outDir, 'converter', 'mux', 'gabung-mp4.js');
+    let gabung = fs.readFileSync(gabungPath, 'utf8');
+    gabung = replaceNamedFunction(
+        gabung,
+        'gabungkanVideoAudioKeMp4',
+        'async function gabungkanVideoAudioKeMp4() { throw new Error("Muxing is not available in the light edition."); }'
+    ).source;
+    fs.writeFileSync(gabungPath, gabung, 'utf8');
+
+    fs.copyFileSync(
+        path.join(SRC_DIR, 'workers', 'light_mediabunny_worker.js'),
+        path.join(outDir, 'workers', 'light_mediabunny_worker.js')
+    );
+
+    const mpdPath = path.join(outDir, 'converter', 'mpd', 'mpd.js');
+    let mpd = fs.readFileSync(mpdPath, 'utf8');
+    const mpdFlag = 'if (mpdToMp4Enabled) {';
+    const mpdStart = mpd.lastIndexOf(mpdFlag);
+    if (mpdStart !== -1) {
+        const openBrace = mpd.indexOf('{', mpdStart);
+        const end = findMatchingBrace(mpd, openBrace);
+        mpd = mpd.slice(0, mpdStart) + 'if (false) {}' + mpd.slice(end + 1);
+    }
+    fs.writeFileSync(mpdPath, mpd, 'utf8');
 
     const replaceLegacySubtitleCall = dir => {
         for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -405,79 +531,105 @@ function stripLibAvCode(outDir) {
         return;
     }
 
-    for (const htmlName of ['popup.html', 'audio_processor.html', 'offscreen.html', 'stream_processor.html']) {
+    for (const htmlName of ['pages/popup.html', 'pages/audio_processor.html', 'pages/offscreen.html', 'pages/stream_processor.html']) {
         const htmlPath = path.join(outDir, htmlName);
         if (!fs.existsSync(htmlPath)) continue;
         let html = fs.readFileSync(htmlPath, 'utf8');
-        if (!html.includes('offlineStreamConvert.js')) continue;
+        if (!html.includes('entries/offlineStreamConvert.js')) continue;
         html = html.replace(
-            /(<script\s+src=["']offlineStreamConvert\.js["']><\/script>)/,
-            '<script src="libraries/mediabunny.min.js"></script>\n$1'
+            /(<script\s+src=["']\.\.\/entries\/offlineStreamConvert\.js["']><\/script>)/,
+            '<script src="../libraries/mediabunny.min.js"></script>\n$1'
         );
         fs.writeFileSync(htmlPath, html, 'utf8');
     }
 }
 
 function stripMp3Conversion(outDir) {
-    const converterPath = path.join(outDir, 'offlineStreamConvert.js');
-    let converter = fs.readFileSync(converterPath, 'utf8');
-    converter = replaceNamedFunction(
-        converter,
+    const audioPath = path.join(outDir, 'converter', 'audio.js');
+    let audio = fs.readFileSync(audioPath, 'utf8');
+    audio = replaceNamedFunction(
+        audio,
         'convertM4aToMp3Direct',
         `async function convertM4aToMp3Direct(blob, filename) {\n    return { blob, filename: filename.replace(/\\.mp3$/i, '.m4a') };\n}`
     ).source;
-    converter = replaceNamedFunction(
-        converter,
+    audio = replaceNamedFunction(
+        audio,
         'convertAudioToMp3IfEnabled',
         `async function convertAudioToMp3IfEnabled(blob, filename) {\n    return { blob, filename: filename.replace(/\\.mp3$/i, '.wav') };\n}`
     ).source;
-    fs.writeFileSync(converterPath, converter, 'utf8');
+    fs.writeFileSync(audioPath, audio, 'utf8');
 }
 
 function stripDisabledIntegrations(outDir) {
     const unavailable = `throw new Error('This integration is not available in the Light edition.');`;
-    const cloudStubs = [
+    const stubKelasCloud = `class CloudUploadController { pause() {} resume() {} cancel() {} }`;
+    const cloudStreamStubs = [
         'startDropboxStreamUpload', 'appendDropboxStream', 'finishDropboxStream',
-        'startGDriveStreamUpload', 'uploadStreamChunk', 'reauthDropbox', 'reauthGDrive',
+        'startGDriveStreamUpload', 'uploadStreamChunk'
+    ].map(name => `async function ${name}() { ${unavailable} }`).join('\n') + '\n' + stubKelasCloud;
+    const cloudAuthStubs = [
+        'reauthDropbox', 'reauthGDrive'
+    ].map(name => `async function ${name}() { ${unavailable} }`).join('\n');
+    const cloudUploadStubs = [
         'uploadToDropbox', 'uploadToGDrive', 'uploadChunks'
     ].map(name => `async function ${name}() { ${unavailable} }`).join('\n');
-    const backgroundCloudStubs = [
+    const backgroundCloudStreamStubs = [
         'startDropboxStreamUpload', 'appendDropboxStream', 'finishDropboxStream',
-        'startGDriveStreamUpload', 'uploadStreamChunk', 'reauthDropbox', 'reauthGDrive',
+        'startGDriveStreamUpload', 'uploadStreamChunk',
         'uploadToGDrive', 'uploadChunks'
+    ].map(name => `async function ${name}() { ${unavailable} }`).join('\n') + '\n' + stubKelasCloud;
+    const backgroundCloudAuthStubs = [
+        'reauthDropbox', 'reauthGDrive'
     ].map(name => `async function ${name}() { ${unavailable} }`).join('\n');
 
-    const converterPath = path.join(outDir, 'offlineStreamConvert.js');
-    replaceSection(converterPath, 'class CloudUploadController', 'function getExtFromMime', cloudStubs);
+    const konverterDir = path.join(outDir, 'converter');
+    gantiSeksiNgantiAkhir(path.join(konverterDir, 'cloud', 'cloud-stream.js'), 'class CloudUploadController', cloudStreamStubs);
+    gantiSeksiNgantiAkhir(path.join(konverterDir, 'cloud', 'cloud-auth.js'), 'async function reauthDropbox', cloudAuthStubs);
+    gantiSeksiNgantiAkhir(path.join(konverterDir, 'cloud', 'cloud-upload.js'), 'function uploadToDropbox', cloudUploadStubs);
     replaceSection(
-        converterPath,
+        path.join(konverterDir, 'm3u8', 'm3u8-unduh.js'),
         '    let transmuxer = null;',
         '    let nextUploadIndex = 0;',
         '    let transmuxer = null;\n    const transmuxedOutputQueue = [];'
     );
-    stripDisabledFunctionBodies(converterPath, {
+    stripDisabledFunctionBodies(path.join(konverterDir, 'mux', 'transmux.js'), {
         transmuxToMp4: unavailable
     });
-    let converter = fs.readFileSync(converterPath, 'utf8');
-    converter = converter.replace("const ensureMuxJsLoaded = () => ensureOptionalLibraryLoaded('libraries/mux.js', 'muxjs');\n", '');
-    fs.writeFileSync(converterPath, converter, 'utf8');
+    let utilKonverter = fs.readFileSync(path.join(konverterDir, 'util.js'), 'utf8');
+    utilKonverter = utilKonverter.replace("const ensureMuxJsLoaded = () => ensureOptionalLibraryLoaded('libraries/mux.js', 'muxjs');\n", '');
+    fs.writeFileSync(path.join(konverterDir, 'util.js'), utilKonverter, 'utf8');
 
-    const backgroundPath = path.join(outDir, 'network_detector.js');
+    const latarDir = path.join(outDir, 'background');
     replaceSection(
-        backgroundPath,
+        path.join(latarDir, 'cloud', 'cloud-upload.js'),
         'function uploadToDropbox',
         'async function assembleBlobFromCache',
         `async function uploadToDropbox() { ${unavailable} }\nasync function uploadFromCacheToDropbox() { ${unavailable} }\nasync function uploadFromCacheToGDrive() { ${unavailable} }`
     );
-    replaceSection(backgroundPath, 'class CloudUploadController', 'async function handleFetchDownload', backgroundCloudStubs);
-    stripDisabledFunctionBodies(backgroundPath, {
+    gantiSeksiNgantiAkhir(path.join(latarDir, 'cloud', 'cloud-stream.js'), 'class CloudUploadController', backgroundCloudStreamStubs);
+    gantiSeksiNgantiAkhir(path.join(latarDir, 'cloud', 'cloud-auth.js'), 'async function reauthDropbox', backgroundCloudAuthStubs);
+    stripDisabledFunctionBodies(path.join(latarDir, 'jobs', 'autodownload.js'), {
         maybeAutoDownloadMedia: 'return false;',
         scheduleExistingMediaAutoDownload: 'return;'
     });
 
-    replaceSection(path.join(outDir, 'download.js'), 'class CloudUploadController', 'const activeJobs', cloudStubs);
+    const stubAuthUnduhan = ['reauthDropbox', 'reauthGDrive']
+        .map(name => `async function ${name}() { ${unavailable} }`).join('\n');
+    const stubUnggahUnduhan = [
+        'startDropboxStreamUpload', 'appendDropboxStream', 'finishDropboxStream',
+        'startGDriveStreamUpload', 'uploadStreamChunk',
+        'uploadToDropbox', 'uploadToGDrive', 'uploadChunks'
+    ].map(name => `async function ${name}() { ${unavailable} }`).join('\n') + '\n' + stubKelasCloud;
+    const tulisStubUnduhan = (namaModul, stub) => {
+        const berkasModul = path.join(outDir, 'download', namaModul);
+        const isiLawas = fs.readFileSync(berkasModul, 'utf8');
+        const header = isiLawas.split('\n').slice(0, 19).join('\n');
+        fs.writeFileSync(berkasModul, `${header}\n${stub}\n`, 'utf8');
+    };
+    tulisStubUnduhan('cloud/cloud-auth.js', stubAuthUnduhan);
+    tulisStubUnduhan('cloud/cloud-upload.js', stubUnggahUnduhan);
     replaceSection(
-        path.join(outDir, 'settings.js'),
+        path.join(outDir, 'settings', 'pengaturan.js'),
         "    const gdriveBtn = document.getElementById('gdrive-login-btn');\n    const gdriveText = document.getElementById('gdrive-login-text');",
         "    const layoutResult = await browser.storage.local.get('settings-layout');",
         ''
@@ -486,25 +638,26 @@ function stripDisabledIntegrations(outDir) {
     const removeIfPresent = (filePath, functionNames) => {
         let source = fs.readFileSync(filePath, 'utf8');
         for (const functionName of functionNames) {
-            const occurrences = source.match(new RegExp(`\\b${functionName}\\b`, 'g'))?.length || 0;
+            const gabungan = wocoGabunganLatar(outDir);
+            const occurrences = gabungan.match(new RegExp(`\\b${functionName}\\b`, 'g'))?.length || 0;
             if (occurrences !== 1) continue;
-            source = replaceNamedFunction(source, functionName, '').source;
+            const hasil = replaceNamedFunction(source, functionName, '');
+            if (!hasil.replaced) continue;
+            source = hasil.source;
         }
         fs.writeFileSync(filePath, source, 'utf8');
     };
-    removeIfPresent(backgroundPath, [
-        'getM3U8VariantsBg',
-        'restoreActiveDownloadsFromSession',
-        'injectNotificationScript',
-        'autoUpdateHistoryLink',
-        'showSimpleToast',
-        'normalizeAutoDownloadDomain',
-        'assembleBlobFromCache'
-    ]);
+    removeIfPresent(path.join(latarDir, 'detection', 'm3u8-youtube.js'), ['getM3U8VariantsBg']);
+    removeIfPresent(path.join(latarDir, 'settings.js'), ['restoreActiveDownloadsFromSession']);
+    removeIfPresent(path.join(latarDir, 'ui', 'notifikasi.js'), ['injectNotificationScript']);
+    removeIfPresent(path.join(latarDir, 'ui', 'toast.js'), ['showSimpleToast']);
+    removeIfPresent(path.join(latarDir, 'jobs', 'history.js'), ['autoUpdateHistoryLink']);
+    removeIfPresent(path.join(latarDir, 'jobs', 'autodownload.js'), ['normalizeAutoDownloadDomain']);
+    removeIfPresent(path.join(latarDir, 'cloud', 'cloud-upload.js'), ['assembleBlobFromCache']);
 }
 
 function stripLightFeatures(outDir) {
-    const popupPath = path.join(outDir, 'popup.html');
+    const popupPath = path.join(outDir, 'pages', 'popup.html');
     removeMarkedSections(popupPath, 'SPEED_TEST');
     removeMarkedSections(popupPath, 'CLOUD_SETTINGS');
     removeMarkedSections(popupPath, 'DEVICE_NOTIFICATIONS');
@@ -517,14 +670,15 @@ function stripLightFeatures(outDir) {
         ''
     );
     fs.writeFileSync(popupPath, popup, 'utf8');
-    removeMarkedSections(path.join(outDir, 'settings.js'), 'SPEED_TEST');
+    removeMarkedSections(path.join(outDir, 'settings', 'boot.js'), 'SPEED_TEST');
+    removeMarkedSections(path.join(outDir, 'settings', 'alat', 'speedtest.js'), 'SPEED_TEST');
     stripLibAvCode(outDir);
     stripMp3Conversion(outDir);
     stripDisabledIntegrations(outDir);
 
     const manifestPath = path.join(outDir, 'manifest.json');
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-    const workerResources = ['light_mediabunny_worker.js', 'libraries/mediabunny.min.js'];
+    const workerResources = ['workers/light_mediabunny_worker.js', 'libraries/mediabunny.min.js'];
     manifest.web_accessible_resources = manifest.web_accessible_resources || [];
     for (const entry of manifest.web_accessible_resources) {
         if (Array.isArray(entry.resources)) {
@@ -594,29 +748,27 @@ function removeDebugSections(filePath) {
 }
 
 function stripDebugFeatures(outDir) {
-    for (const htmlName of ['popup.html', 'download.html', 'offscreen.html', 'stream_processor.html', 'audio_processor.html']) {
+    for (const htmlName of ['pages/popup.html', 'pages/download.html', 'pages/offscreen.html', 'pages/stream_processor.html', 'pages/audio_processor.html']) {
         const htmlPath = path.join(outDir, htmlName);
         if (!fs.existsSync(htmlPath)) continue;
         let html = fs.readFileSync(htmlPath, 'utf8');
-        html = html.replace(/^[ \t]*<script\s+src=["']debug_logger\.js["']><\/script>\r?\n/gm, '');
-        html = html.replace(/<script\s+src=["']debug_logger\.js["']><\/script>/g, '');
+        html = html.replace(/^[ \t]*<script\s+src=["']\.\.\/lib\/debug_logger\.js["']><\/script>\r?\n/gm, '');
+        html = html.replace(/<script\s+src=["']\.\.\/lib\/debug_logger\.js["']><\/script>/g, '');
         fs.writeFileSync(htmlPath, html, 'utf8');
     }
 
-    const popupPath = path.join(outDir, 'popup.html');
+    const popupPath = path.join(outDir, 'pages', 'popup.html');
     if (fs.existsSync(popupPath)) {
         removeDebugSections(popupPath);
     }
 
-    const settingsPath = path.join(outDir, 'settings.js');
-    if (fs.existsSync(settingsPath)) {
-        removeDebugSections(settingsPath);
-    }
+    removeDebugSections(path.join(outDir, 'settings', 'perawatan', 'debug.js'));
+    removeDebugSections(path.join(outDir, 'settings', 'boot.js'));
 
     const backgroundPath = path.join(outDir, 'network_detector.js');
     if (fs.existsSync(backgroundPath)) {
         let background = fs.readFileSync(backgroundPath, 'utf8');
-        background = background.replace(/importScripts\(\s*['"]debug_logger\.js['"]\s*,\s*/g, 'importScripts(');
+        background = background.replace(/importScripts\(\s*['"]lib\/debug_logger\.js['"]\s*,\s*/g, 'importScripts(');
         fs.writeFileSync(backgroundPath, background, 'utf8');
     }
 
@@ -624,7 +776,7 @@ function stripDebugFeatures(outDir) {
     if (fs.existsSync(manifestPath)) {
         const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
         if (manifest.background && Array.isArray(manifest.background.scripts)) {
-            manifest.background.scripts = manifest.background.scripts.filter(script => script !== 'debug_logger.js');
+            manifest.background.scripts = manifest.background.scripts.filter(script => script !== 'lib/debug_logger.js');
         }
         fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 4) + '\n', 'utf8');
     }
@@ -642,7 +794,7 @@ function stripDebugFeatures(outDir) {
 }
 
 function stripChromeUnsupportedMediaCache(outDir) {
-    const popupPath = path.join(outDir, 'popup.html');
+    const popupPath = path.join(outDir, 'pages', 'popup.html');
     if (fs.existsSync(popupPath)) {
         const startMarker = 'FIREFOX_ONLY_MEDIA_CACHE_START';
         const endMarker = 'FIREFOX_ONLY_MEDIA_CACHE_END';
@@ -657,11 +809,13 @@ function stripChromeUnsupportedMediaCache(outDir) {
         fs.writeFileSync(popupPath, content, 'utf8');
     }
 
-    const settingsPath = path.join(outDir, 'settings.js');
-    if (fs.existsSync(settingsPath)) {
-        let settings = fs.readFileSync(settingsPath, 'utf8');
-        settings = settings.replace(/'media-cache',\s*/g, '');
-        fs.writeFileSync(settingsPath, settings, 'utf8');
+    for (const namaModul of ['state.js', 'pengaturan.js']) {
+        const settingsPath = path.join(outDir, 'settings', namaModul);
+        if (fs.existsSync(settingsPath)) {
+            let settings = fs.readFileSync(settingsPath, 'utf8');
+            settings = settings.replace(/'media-cache',\s*/g, '');
+            fs.writeFileSync(settingsPath, settings, 'utf8');
+        }
     }
 }
 
@@ -694,18 +848,23 @@ function finalizeManifest(target, outDir, isDebug = false) {
 }
 
 function validasiBerkasTerlarang(baseTarget, outDir, targetLabel) {
-    for (const namaBerkas of EXCLUDE_PER_TARGET[baseTarget] || []) {
-        for (const lokasi of [path.join(outDir, namaBerkas), path.join(outDir, 'libraries', namaBerkas)]) {
-            if (fs.existsSync(lokasi)) {
-                throw new Error(`[${targetLabel}] Excluded file leaked into build: ${namaBerkas}`);
+    const terlarang = new Set(EXCLUDE_PER_TARGET[baseTarget] || []);
+    if (terlarang.size === 0) return;
+    const cekDir = (dir) => {
+        for (const entri of fs.readdirSync(dir, { withFileTypes: true })) {
+            const jalur = path.join(dir, entri.name);
+            if (entri.isDirectory()) cekDir(jalur);
+            else if (terlarang.has(entri.name)) {
+                throw new Error(`[${targetLabel}] Excluded file leaked into build: ${entri.name}`);
             }
         }
-    }
+    };
+    cekDir(outDir);
 }
 
 function validasiLoggerDebug(berkas, outDir, isDebug, targetLabel) {
     if (!isDebug) {
-        if (fs.existsSync(path.join(outDir, 'debug_logger.js'))) {
+        if (fs.existsSync(path.join(outDir, 'lib', 'debug_logger.js'))) {
             throw new Error(`[${targetLabel}] debug_logger.js leaked into non-debug build`);
         }
         if (berkas.popup.includes('debug_logger.js') || berkas.popup.includes('download-debug-log')) {
@@ -715,9 +874,9 @@ function validasiLoggerDebug(berkas, outDir, isDebug, targetLabel) {
             throw new Error(`[${targetLabel}] Debug logger controls leaked into settings.js`);
         }
         if (berkas.latar.includes('debug_logger.js')) {
-            throw new Error(`[${targetLabel}] debug_logger.js import leaked into network_detector.js`);
+            throw new Error(`[${targetLabel}] debug_logger.js import leaked into background files`);
         }
-    } else if (!fs.existsSync(path.join(outDir, 'debug_logger.js'))) {
+    } else if (!fs.existsSync(path.join(outDir, 'lib', 'debug_logger.js'))) {
         throw new Error(`[${targetLabel}] debug_logger.js is missing from debug build`);
     }
 }
@@ -728,6 +887,25 @@ function validasiFungsiLatar(berkas, target) {
     }
     if (berkas.latar.includes('restorePersistentProcessingJobs(') && !berkas.latar.includes('function restorePersistentProcessingJobs(')) {
         throw new Error(`[${target}] restorePersistentProcessingJobs is used but not defined`);
+    }
+}
+
+function validasiFungsiDibusak(berkas, target) {
+    const calonDibusak = [
+        'getM3U8VariantsBg',
+        'restoreActiveDownloadsFromSession',
+        'injectNotificationScript',
+        'autoUpdateHistoryLink',
+        'showSimpleToast',
+        'normalizeAutoDownloadDomain',
+        'assembleBlobFromCache'
+    ];
+    for (const nama of calonDibusak) {
+        const dipakai = new RegExp(`\\b${nama}\\b`).test(berkas.latar);
+        const didefinisikno = berkas.latar.includes(`function ${nama}(`);
+        if (dipakai && !didefinisikno) {
+            throw new Error(`[${target}] ${nama} is used but not defined in Light build`);
+        }
     }
 }
 
@@ -777,8 +955,8 @@ function validasiManifes(berkas, target, targetLabel) {
 function validasiRingan(berkas, outDir, target) {
     const popup = berkas.popup;
     const pengaturan = berkas.pengaturan;
-    const unduhan = fs.readFileSync(path.join(outDir, 'download.js'), 'utf8');
-    const konverter = fs.readFileSync(path.join(outDir, 'offlineStreamConvert.js'), 'utf8');
+    const unduhan = wocoGabunganUnduhan(outDir);
+    const konverter = wocoGabunganKonverter(outDir);
     const sumberRingan = [konverter, berkas.latar, unduhan, pengaturan].join('\n');
     for (const notificationSetting of ['media-notification']) {
         if (!popup.includes(`id="${notificationSetting}"`)) {
@@ -863,14 +1041,15 @@ function validateTarget(baseTarget, outDir, isDebug = false) {
     const target = baseTarget;
     const berkas = {
         manifes: JSON.parse(fs.readFileSync(path.join(outDir, 'manifest.json'), 'utf8')),
-        popup: fs.readFileSync(path.join(outDir, 'popup.html'), 'utf8'),
-        latar: fs.readFileSync(path.join(outDir, 'network_detector.js'), 'utf8'),
-        pengaturan: fs.readFileSync(path.join(outDir, 'settings.js'), 'utf8'),
+        popup: fs.readFileSync(path.join(outDir, 'pages', 'popup.html'), 'utf8'),
+        latar: wocoGabunganLatar(outDir),
+        pengaturan: wocoGabunganPengaturan(outDir),
     };
     validasiBerkasTerlarang(baseTarget, outDir, targetLabel);
     validasiLoggerDebug(berkas, outDir, isDebug, targetLabel);
     validasiFungsiLatar(berkas, target);
     validasiManifes(berkas, target, targetLabel);
+    if (LIGHT_TARGETS.has(target)) validasiFungsiDibusak(berkas, target);
     if (LIGHT_TARGETS.has(target)) validasiRingan(berkas, outDir, target);
 }
 
@@ -887,10 +1066,10 @@ function buildTarget(target) {
     }
     for (const entry of fs.readdirSync(SRC_DIR)) {
         if (EXCLUDE_FROM_BUILD.has(entry) || targetExcludes.has(entry)) continue;
-        copyRecursive(path.join(SRC_DIR, entry), path.join(outDir, entry), targetExcludes);
+        copyRecursive(path.join(SRC_DIR, entry), path.join(outDir, entry), new Set([...targetExcludes, ...EXCLUDE_FROM_BUILD]));
     }
 
-    applyOverrides(baseTarget, outDir);
+    applyOverrides(baseTarget, outDir, targetExcludes);
     if (!FIREFOX_BASED_TARGETS.has(baseTarget)) stripChromeUnsupportedMediaCache(outDir);
     if (!isDebug) stripDebugFeatures(outDir);
     if (LIGHT_TARGETS.has(baseTarget)) stripLightFeatures(outDir);

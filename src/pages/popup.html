@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<!--
+    website-media-downloader - A versatile tool to detect and download videos, music, and streams from almost any website.
+    Copyright (C) 2026 anpa26
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<html lang="en" class="mdui-theme-auto is-popup" style="width: 550px; height: 600px; zoom: 85%;">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-translate="extensionName">Website Media Downloader</title>
+  <script src="../lib/debug_logger.js"></script>
+  <link rel="stylesheet" href="../styles/mdui.css">
+  <script src="../libraries/mdui.global.js"></script>
+  <script src="../lib/media_compute_client.js"></script>
+  <script src="../entries/offlineStreamConvert.js"></script>
+  <script src="../converter/util.js"></script>
+  <script src="../converter/cache/cache-db.js"></script>
+  <script src="../converter/segmen.js"></script>
+  <script src="../converter/mux/transmux.js"></script>
+  <script src="../converter/spoof.js"></script>
+  <script src="../converter/cache/cache-media.js"></script>
+  <script src="../converter/antrean.js"></script>
+  <script src="../converter/cloud/cloud-stream.js"></script>
+  <script src="../converter/cloud/cloud-auth.js"></script>
+  <script src="../converter/cloud/cloud-upload.js"></script>
+  <script src="../converter/media-types.js"></script>
+  <script src="../converter/finalize.js"></script>
+  <script src="../converter/audio.js"></script>
+  <script src="../converter/m3u8/m3u8-varian.js"></script>
+  <script src="../converter/m3u8/m3u8-unduh.js"></script>
+  <script src="../converter/mux/gabung-mp4.js"></script>
+  <script src="../converter/mpd/mpd.js"></script>
+  <script src="../converter/mpd/pilih-mpd.js"></script>
+  <script src="../converter/progress.js"></script>
+  <script src="../converter/youtube/youtube-mux.js"></script>
+  <script src="../converter/youtube/youtube-chunk.js"></script>
+  <script src="../converter/youtube/youtube-vtt.js"></script>
+  <script src="../converter/youtube/youtube-subtitle.js"></script>
+  <link rel="stylesheet" href="../styles/style.css">
+</head>
+
+<body class="is-popup">
+  <div id="loading">
+    <mdui-circular-progress></mdui-circular-progress>
+  </div>
+
+  <div id="main-content" style="display: none;">
+    <div id="update-notification" style="display: none; background: rgb(var(--mdui-color-primary-container)); color: rgb(var(--mdui-color-on-primary-container)); padding: 8px 16px; align-items: center; gap: 12px; border-bottom: 1px solid rgb(var(--mdui-color-outline-variant));">
+      <mdui-icon style="color: var(--primary);"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M11 15h2v2h-2zm0-8h2v6h-2zm.99-5C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg></mdui-icon>
+      <div style="flex-grow: 1;">
+        <span style="font-size: 13px; font-weight: 500;" data-translate="updateAvailable">New version available!</span>
+        <span id="update-source-label" style="display: none; font-size: 10px; opacity: 0.7; margin-left: 6px; background: rgba(0,0,0,0.1); padding: 1px 6px; border-radius: 99px; font-weight: 600;"></span>
+      </div>
+      <mdui-button variant="text" id="update-link" style="--mdui-shape-corner-extra-small: 16px; height: 32px;" data-translate="updateButton">Update</mdui-button>
+      <mdui-button-icon id="close-update-notification" style="width: 32px; height: 32px; min-width: 32px; --mdui-shape-corner-extra-small: 16px;">
+        <mdui-icon><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></mdui-icon>
+      </mdui-button-icon>
+    </div>
+    <div id="app-header">
+      <div class="app-header-brand">
+        <img class="app-header-logo" src="../icons/icon.png" alt="">
+        <span class="app-header-title" data-translate="extensionName">Website Media Downloader</span>
+      </div>
+      <div class="app-header-menu" id="app-nav-menu">
+        <div class="app-nav-list" id="app-nav-list">
+          <mdui-button variant="tonal" class="app-nav-item" data-nav-tab="home" data-translate="homeTab">Home</mdui-button>
+          <mdui-button variant="tonal" class="app-nav-item" data-nav-tab="history" id="app-nav-history" data-translate="historyTab">History</mdui-button>
+          <mdui-button variant="tonal" class="app-nav-item" data-nav-tab="about" data-translate="aboutTab">About</mdui-button>
+          <mdui-button variant="tonal" class="app-nav-item" data-nav-tab="settings" data-translate="settingsTab">Settings</mdui-button>
+        </div>
+        <mdui-button variant="filled" id="app-nav-toggle" aria-expanded="false" style="--mdui-shape-corner-extra-small: 16px;" data-translate="menuButton">Menu</mdui-button>
+      </div>
+    </div>
+    <mdui-tabs id="navbar" value="home">
+      <mdui-tab value="home" data-translate="homeTab">Home</mdui-tab>
+      <mdui-tab value="history" id="history-tab" style="display: none;" data-translate="historyTab">History</mdui-tab>
+      <mdui-tab value="about" data-translate="aboutTab">About</mdui-tab>
+      <mdui-tab value="settings" data-translate="settingsTab">Settings</mdui-tab>
+
+      <mdui-tab-panel slot="panel" value="home">
+
+        <div id="loading-media-list" style="display: none;">
+          <mdui-circular-progress></mdui-circular-progress>
+        </div>
+
+        <div id="media-controls" style="display: none;">
+          <mdui-text-field id="search-bar" variant="outlined" data-label-translate="searchLabel" clearable>
+            <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></mdui-icon>
+          </mdui-text-field>
+          <div id="selected-info-bar">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <mdui-checkbox id="select-all-checkbox"></mdui-checkbox>
+              <span id="selected-count" data-translate="selectedCount" style="font-size: 12px; opacity: 0.7; font-weight: 500;">0 selected</span>
+            </div>
+            <div style="display: flex; gap: 4px;">
+              <mdui-button variant="text" id="download-selected" style="display: none;" data-translate="downloadSelectedButton">Download</mdui-button>
+              <mdui-button variant="text" id="cancel-selected" style="display: none; color: rgb(var(--mdui-color-error));" data-translate="cancelSelectedButton">Cancel</mdui-button>
+              <mdui-button variant="text" id="delete-selected" style="display: none; color: rgb(var(--mdui-color-error));" data-translate="deleteSelectedButton">Delete</mdui-button>
+              <mdui-button variant="filled" id="download-all" data-translate="downloadAllButton" style="--mdui-shape-corner-extra-small: 16px; height: 32px; margin-top: 4px;">Download All</mdui-button>
+              <mdui-button variant="text" id="cancel-all" style="display: none; color: rgb(var(--mdui-color-error));" data-translate="cancelAllButton">Cancel All</mdui-button>
+            </div>
+          </div>
+          <div id="global-progress-container" style="display: none; flex-direction: column; gap: 4px; padding: 8px 0;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+               <div id="global-progress-text" style="font-size: 11px; font-weight: 500; opacity: 0.9; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1;"></div>
+               <mdui-button-icon id="pause-global-operation" style="width: 24px; height: 24px; min-width: 24px; --mdui-shape-corner-extra-small: 12px; display: none;">
+                  <mdui-icon style="font-size: 16px;"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></mdui-icon>
+               </mdui-button-icon>
+               <mdui-button-icon id="cancel-global-operation" style="width: 24px; height: 24px; min-width: 24px; --mdui-shape-corner-extra-small: 12px; display: none;">
+                  <mdui-icon style="font-size: 16px;"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></mdui-icon>
+               </mdui-button-icon>
+            </div>
+            <mdui-linear-progress id="global-progress-bar"></mdui-linear-progress>
+          </div>
+        </div>
+
+        <div id="media-list">
+          <div id="no-media-detected">
+            <mdui-icon><svg viewBox="0 0 24 24"><path d="M18 15v3H6v-3H4v3c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-3h-2zm-1-4l-1.41-1.41L13 12.17V4h-2v8.17L8.41 9.59 7 11l5 5 5-5z"/></svg></mdui-icon>
+            <div data-translate="noMediaDetected">No media detected on this page. Play a video to detect links.</div>
+          </div>
+        </div>
+
+        <mdui-bottom-app-bar>
+          <div class="bottom-content">
+            <mdui-button-icon id="help-button">
+              <mdui-icon>
+                <svg viewBox="0 -960 960 960"><path d="M480-280q17 0 28.5-11.5T520-320q0-17-11.5-28.5T480-360q-17 0-28.5 11.5T440-320q0 17 11.5 28.5T480-280Zm-40-160h80q0-32 6.5-52.5T560-542q30-26 45-50.5t15-57.5q0-58-41-94t-101-36q-59 0-98.5 34.5T329-647l68 31q13-31 36.5-47.5T481-680q26 0 42.5 15.5T540-628q0 20-11.5 37.5T500-562q-40 33-50 56.5t-10 65.5Zm40 360q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>
+              </mdui-icon>
+            </mdui-button-icon>
+            <div class="bottom-actions speed-dial-container" id="bottom-speed-dial">
+              <div class="speed-dial-menu" id="speed-dial-menu">
+                <mdui-button variant="tonal" class="speed-dial-item" id="clear-list">
+                  <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></mdui-icon>
+                  <span data-translate="clearListButton">Clear list</span>
+                </mdui-button>
+                <mdui-button variant="tonal" class="speed-dial-item" id="refresh-list">
+                  <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></mdui-icon>
+                  <span data-translate="refreshListButton">Refresh list</span>
+                </mdui-button>
+                <mdui-button variant="tonal" class="speed-dial-item" id="add-manual-url-btn-bottom">
+                  <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></mdui-icon>
+                  <span data-translate="addManualUrlButton">Add URL</span>
+                </mdui-button>
+                <mdui-button variant="filled" class="speed-dial-item" id="manual-scan-btn-bottom">
+                  <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></mdui-icon>
+                  <span data-translate="scanNowButton">Scan</span>
+                </mdui-button>
+              </div>
+              <mdui-button variant="filled" id="speed-dial-toggle" aria-expanded="false" style="--mdui-shape-corner-extra-small: 16px;" data-translate="listActionsButton">List options</mdui-button>
+            </div>
+          </div>
+        </mdui-bottom-app-bar>
+      </mdui-tab-panel>
+
+      <mdui-tab-panel slot="panel" value="history">
+        <input type="file" id="import-history-input" accept=".json" style="display: none;">
+        <div id="history-list">
+
+        </div>
+        <mdui-bottom-app-bar>
+          <div class="bottom-content" style="justify-content: center;">
+            <div class="history-actions">
+              <mdui-button variant="tonal" id="export-history" data-translate="exportHistoryButton">Export</mdui-button>
+              <mdui-button variant="tonal" id="clear-history" data-translate="clearHistoryButton">Clear</mdui-button>
+              <mdui-button variant="tonal" id="import-history" data-translate="importHistoryButton">Import</mdui-button>
+            </div>
+          </div>
+        </mdui-bottom-app-bar>
+      </mdui-tab-panel>
+
+      <mdui-tab-panel slot="panel" value="about">
+        <div id="about-container">
+          <div id="loading-about" style="padding: 40px; text-align: center;">
+            <mdui-circular-progress></mdui-circular-progress>
+          </div>
+
+        </div>
+      </mdui-tab-panel>
+
+      <mdui-tab-panel slot="panel" value="settings">
+        <div id="settings-container">
+
+          <!-- LIGHT_EXCLUDE_AUTO_DOWNLOAD_START -->
+          <div class="settings-group">
+            <h2 class="settings-section-title collapsible-header">
+              <mdui-icon><svg viewBox="0 0 24 24"><path fill="currentColor" d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66s.06-.11.08-.15L13 3h1l-1 7h3.5c.49 0 .56.34.42.61l-6 10.39z"/></svg></mdui-icon>
+              <span data-translate="settingsAutoSectionTitle">Auto</span>
+              <mdui-icon class="collapse-icon" style="margin-left: auto; display: none;"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></mdui-icon>
+            </h2>
+            <div class="settings-items-container">
+              <div class="setting-item"><div class="setting-text"><h3 data-translate="autoDownloadMediaTitle">Auto-download media</h3><p id="auto-download-media-explain" data-translate="autoDownloadMediaExplain">Automatically download matching media from the domains below. Requires Background download and is off by default.</p></div><mdui-switch id="auto-download-media"></mdui-switch></div>
+              <div class="setting-item">
+                 <div class="setting-text">
+                   <h3 data-translate="autoDownloadQualityTitle">Auto-download Quality</h3>
+                   <p data-translate="autoDownloadQualityExplain">Select quality preference for auto-downloaded media.</p>
+                 </div>
+                 <div class="pill-select-wrapper">
+                   <select id="auto-download-quality" class="pill-select">
+                      <option value="highest" data-translate="autoDownloadQualityHighest">Highest Quality</option>
+                      <option value="lowest" data-translate="autoDownloadQualityLowest">Lowest Quality</option>
+                   </select>
+                 </div>
+              </div>
+              <div class="setting-item">
+                 <div class="setting-text">
+                   <h3 data-translate="autoDownloadYoutubeModeTitle">YouTube auto-download</h3>
+                   <p data-translate="autoDownloadYoutubeModeExplain">Choose whether YouTube auto-download saves video or audio only.</p>
+                 </div>
+                 <div class="pill-select-wrapper">
+                   <select id="auto-download-youtube-mode" class="pill-select">
+                      <option value="video" data-translate="autoDownloadYoutubeModeVideo">Video</option>
+                      <option value="audio" data-translate="autoDownloadYoutubeModeAudio">Audio only</option>
+                   </select>
+                 </div>
+              </div>
+              <div class="setting-item"><div class="setting-text"><h3 data-translate="autoDownloadAllDomainsTitle">Enable for all domains / sites</h3><p data-translate="autoDownloadAllDomainsExplain">Apply auto-download on every site. When off, only domains listed below are enabled.</p></div><mdui-switch id="auto-download-all-domains"></mdui-switch></div>
+              <div id="auto-download-domains-container" class="setting-item" style="display: block;"><div class="setting-text"><h3><label for="auto-download-domains" data-translate="autoDownloadDomainsTitle">Enabled sites / domains</label></h3><p data-translate="autoDownloadDomainsExplain">One domain per line or separated by commas. Subdomains are included.</p></div><textarea id="auto-download-domains" class="pill-input" rows="2" placeholder="example.com, media.example.org" style="width: 100%; box-sizing: border-box; resize: vertical; margin-top: 12px;"></textarea></div>
+            </div>
+            <div class="settings-items-container">
+              <div class="setting-item"><div class="setting-text"><h3 data-translate="autoDownloadVideoTitle">Video</h3><p data-translate="autoDownloadVideoExplain">Automatically download detected video files.</p></div><mdui-switch id="auto-download-video"></mdui-switch></div>
+              <div class="setting-item"><div class="setting-text"><h3 data-translate="autoDownloadStreamTitle">Stream</h3><p data-translate="autoDownloadStreamExplain">Automatically download detected HLS and DASH streams.</p></div><mdui-switch id="auto-download-stream"></mdui-switch></div>
+            </div>
+            <div class="settings-items-container detection-exclusions-card">
+                <div class="setting-item" style="display: block;">
+                  <div class="setting-text">
+                    <h3><label for="auto-skip-download-names" data-translate="autoSkipDownloadNamesTitle">Skip names / keywords</label></h3>
+                    <p data-translate="autoSkipDownloadNamesExplain">Skip matching media URLs, filenames, and page titles (case insensitive). Separate entries with new lines or commas.</p>
+                  </div>
+                  <textarea id="auto-skip-download-names" class="pill-input" rows="1" placeholder="trailer, promo" style="width: 100%; box-sizing: border-box; resize: none; margin-top: 12px;"></textarea>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-text">
+                    <h3 data-translate="autoSkipDownloadNamesOnlyTitle">Skip names only</h3>
+                    <p data-translate="autoSkipDownloadNamesOnlyExplain">Only match filenames. Do not match the media URL or page title.</p>
+                  </div>
+                  <mdui-switch id="auto-skip-download-names-only"></mdui-switch>
+                </div>
+                <div id="auto-skip-download-domains-container" class="setting-item" style="display: block;">
+                  <div class="setting-text">
+                    <h3><label for="auto-skip-download-domains" data-translate="autoSkipDownloadDomainsTitle">Skip domains</label></h3>
+                    <p data-translate="autoSkipDownloadDomainsExplain">Skip these sites or media hosts from auto-download, including subdomains. Separate entries with new lines or commas.</p>
+                  </div>
+                  <textarea id="auto-skip-download-domains" class="pill-input" rows="1" placeholder="example.com, cdn.example.org" style="width: 100%; box-sizing: border-box; resize: none; margin-top: 12px;"></textarea>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-text">
+                    <h3 data-translate="autoIgnoreExcludedMediaTitle">Do not auto-download excluded media</h3>
+                    <p data-translate="autoIgnoreExcludedMediaExplain">Apply the name and domain exclusions above to auto-download. Detected items remain visible in the media list.</p>
+                  </div>
+                  <mdui-switch id="auto-ignore-excluded-media"></mdui-switch>
+                </div>
+            </div>
+          </div>
+          <!-- LIGHT_EXCLUDE_AUTO_DOWNLOAD_END -->
+          <div class="settings-group">
+            <h2 class="settings-section-title collapsible-header">
+              <mdui-icon>
+                <svg viewBox="0 -960 960 960"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v160H520v-160H160v480h240v80H160Zm0-80v-360 40-160 480ZM864-80 756-188q-22 13-46 20.5t-50 7.5q-75 0-127.5-52.5T480-340q0-75 52.5-127.5T660-520q75 0 127.5 52.5T840-340q0 26-7.5 50T812-244l108 108-56 56ZM731-269q29-29 29-71t-29-71q-29-29-71-29t-71 29q-29 29-29 71t29 71q29 29 71 29t71-29Z"/></svg>
+              </mdui-icon>
+              <span data-translate="settingsDetectionSectionTitle">Detection settings</span>
+              <mdui-icon class="collapse-icon" style="margin-left: auto; display: none;"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></mdui-icon>
+            </h2>
+
+            <div class="settings-items-container">
+
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="urlDetectionCheckbox">Detection via URL</h3>
+                  <p data-translate="urlDetectionExplain">Fast, but might miss some media types.</p>
+                </div>
+                <mdui-switch id="url-detection"></mdui-switch>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="youtubeDetectionCheckbox">YouTube Detection</h3>
+                  <p data-translate="youtubeDetectionExplain">Advanced detection for YouTube videos and audio formats.</p>
+                </div>
+                <mdui-switch id="youtube-detection"></mdui-switch>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="mimeDetectionCheckbox">Detection via MIME</h3>
+                  <p data-translate="mimeDetectionExplain">Reliable, but monitors all traffic.</p>
+                </div>
+                <mdui-switch id="mime-detection"></mdui-switch>
+              </div>
+
+            </div>
+
+            <div class="settings-items-container">
+              <div class="setting-item"><div class="setting-text"><h3 data-translate="manualScanTitle">Manual scan only</h3><p data-translate="manualScanExplain">Only scan and show media when you click the Scan button. Streams are still captured in the background.</p></div><mdui-switch id="manual-scan"></mdui-switch></div>
+              <div class="setting-item"><div class="setting-text"><h3 data-translate="manualScanKeepTabsTitle">Keep media from other tabs</h3><p data-translate="manualScanKeepTabsExplain">Continue showing media detected from other tabs when switching between tabs. When disabled, only media from the active tab is shown.</p></div><mdui-switch id="manual-scan-keep-tabs"></mdui-switch></div>
+              <div class="setting-item"><div class="setting-text"><h3 data-translate="removeOnTabCloseTitle">Remove detected media on tab close</h3><p data-translate="removeOnTabCloseExplain">Automatically remove detected media from the list when the tab where it was found is closed.</p></div><mdui-switch id="remove-on-tab-close"></mdui-switch></div>
+            </div>
+
+            <div class="settings-items-container">
+              <div class="setting-item"><div class="setting-text"><h3 data-translate="documentScanTitle">Enable document scanning</h3><p data-translate="documentScanExplain">Find media available directly on the page and update results when the page content changes.</p></div><mdui-switch id="document-scan"></mdui-switch></div>
+              <div class="setting-item"><div class="setting-text"><h3 data-translate="documentScanModeTitle">Document scanning mode</h3><p data-translate="documentScanModeExplain">Light scans once and uses fewer resources. Maximum keeps scanning page changes to find more media.</p></div><div class="pill-select-wrapper"><select id="document-scan-mode" class="pill-select"><option value="light" data-translate="documentScanModeLight">Light</option><option value="maximal" data-translate="documentScanModeMaximal">Maximum</option></select></div></div>
+              <div class="setting-item"><div class="setting-text"><h3 data-translate="detectDownloadLinksCheckbox">Detect download links</h3><p data-translate="detectDownloadLinksExplain">Detect links that have a download attribute or point to files.</p></div><mdui-switch id="detect-download-links"></mdui-switch></div>
+            </div>
+
+            <div class="settings-items-container">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="hideSegmentsTitle">Hide segments</h3>
+                  <p data-translate="hideSegmentsExplain">Hide small stream segments.</p>
+                </div>
+                <mdui-switch id="hide-segments"></mdui-switch>
+              </div>
+
+
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="disableDeduplicationTitle">Jangan deduplikasi daftar yang terdeteksi</h3>
+                  <p data-translate="disableDeduplicationExplain">Tampilkan semua file terdeteksi secara terpisah tanpa menyembunyikan duplikat.</p>
+                </div>
+                <mdui-switch id="disable-deduplication"></mdui-switch>
+              </div>
+
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="mediaSortOrderTitle">Sort media by</h3>
+                  <p data-translate="mediaSortOrderExplain">Choose how detected media should be ordered</p>
+                </div>
+                <div class="pill-select-wrapper">
+                  <select id="media-sort-order" class="pill-select">
+                    <option value="newest" data-translate="sortNewest">Newest</option>
+                    <option value="oldest" data-translate="sortOldest">Oldest</option>
+                    <option value="letter_asc" data-translate="sortLetterAsc">Letter (A-Z)</option>
+                    <option value="letter_desc" data-translate="sortLetterDesc">Letter (Z-A)</option>
+                    <option value="number_desc" data-translate="sortNumberDesc">Number (9-0)</option>
+                    <option value="number_asc" data-translate="sortNumberAsc">Number (0-9)</option>
+                    <option value="size_desc" data-translate="sortSizeDesc">Size (Largest first)</option>
+                    <option value="size_asc" data-translate="sortSizeAsc">Size (Smallest first)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="settings-items-container detection-exclusions-card">
+                <div class="setting-item" style="display: block;">
+                  <div class="setting-text">
+                    <h3><label for="skip-detection-names" data-translate="skipDetectionNamesTitle">Skip names / keywords</label></h3>
+                    <p data-translate="skipDetectionNamesExplain">Skip matching media URLs, filenames, and page titles (case insensitive). Separate entries with new lines or commas.</p>
+                  </div>
+                  <textarea id="skip-detection-names" class="pill-input" rows="1" placeholder="trailer, promo" style="width: 100%; box-sizing: border-box; resize: none; margin-top: 12px;"></textarea>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-text">
+                    <h3 data-translate="skipDetectionNamesOnlyTitle">Skip names only</h3>
+                    <p data-translate="skipDetectionNamesOnlyExplain">Only match filenames. Do not match media URLs or page titles.</p>
+                  </div>
+                  <mdui-switch id="skip-detection-names-only"></mdui-switch>
+                </div>
+                <div class="setting-item" style="display: block;">
+                  <div class="setting-text">
+                    <h3><label for="skip-detection-domains" data-translate="skipDetectionDomainsTitle">Skip domains</label></h3>
+                    <p data-translate="skipDetectionDomainsExplain">Skip these websites or media hosts, including subdomains. Separate entries with new lines or commas. Matches will not appear in detection results or notifications.</p>
+                  </div>
+                  <textarea id="skip-detection-domains" class="pill-input" rows="1" placeholder="example.com, cdn.example.org" style="width: 100%; box-sizing: border-box; resize: none; margin-top: 12px;"></textarea>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-text">
+                    <h3 data-translate="ignoreExcludedMediaTitle">Do not detect excluded media</h3>
+                    <p data-translate="ignoreExcludedMediaExplain">Stop detecting matching names and domains above to reduce processing. When off, matches are still hidden from the list and notifications.</p>
+                  </div>
+                  <mdui-switch id="ignore-excluded-media"></mdui-switch>
+                </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h2 class="settings-section-title collapsible-header">
+              <mdui-icon>
+                <svg viewBox="0 -960 960 960"><path d="M480-40q-42 0-71-29t-29-71h200q0 42-29 71t-71 29ZM200-200v-80h80v-280q0-83 50-147.5T460-800v-20q0-25 17.5-42.5T520-880q25 0 42.5 17.5T580-820v20q80 14 130 78.5T760-560v280h80v80H200Z"/></svg>
+              </mdui-icon>
+              <span data-translate="settingsNotificationSectionTitle">Notification Settings</span>
+              <mdui-icon class="collapse-icon" style="margin-left: auto; display: none;"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></mdui-icon>
+            </h2>
+
+            <div class="settings-items-container">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="mediaNotificationCheckbox">Enable in-page detection notification</h3>
+                  <p data-translate="mediaNotificationExplain">Show a toast popup inside the page when new media is detected.</p>
+                </div>
+                <mdui-switch id="media-notification"></mdui-switch>
+              </div>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="audioProcessNotificationCheckbox">Show progress notification for audio, stream, and zip downloads</h3>
+                  <p data-translate="audioProcessNotificationExplain">Shows progress for audio, stream, and zip file downloads inside web pages. The background job continues when disabled.</p>
+                </div>
+                <mdui-switch id="audio-process-notification"></mdui-switch>
+              </div>
+              <!-- LIGHT_EXCLUDE_DEVICE_NOTIFICATIONS_START -->
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="mediaSystemNotificationCheckbox">Enable system detection notification</h3>
+                  <p data-translate="mediaSystemNotificationExplain">Shows a notification in the system tray when new media is detected.</p>
+                </div>
+                <mdui-switch id="media-system-notification"></mdui-switch>
+              </div>
+              <!-- LIGHT_EXCLUDE_DEVICE_NOTIFICATIONS_END -->
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="stackNotificationsCheckbox">Stack notifications</h3>
+                  <p data-translate="stackNotificationsExplain">Show multiple notifications instead of closing previous ones.</p>
+                </div>
+                <mdui-switch id="stack-notifications"></mdui-switch>
+              </div>
+              <!-- LIGHT_EXCLUDE_DEVICE_NOTIFICATIONS_START -->
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="fetchNotificationTitle">Download notifications</h3>
+                  <p data-translate="fetchNotificationExplain">Show notifications in system tray when download starts and finishes.</p>
+                </div>
+                <mdui-switch id="fetch-notification"></mdui-switch>
+              </div>
+              <!-- LIGHT_EXCLUDE_DEVICE_NOTIFICATIONS_END -->
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h2 class="settings-section-title collapsible-header">
+              <mdui-icon>
+                <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+              </mdui-icon>
+              <span data-translate="settingsDisplaySectionTitle">Display Settings</span>
+              <mdui-icon class="collapse-icon" style="margin-left: auto; display: none;"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></mdui-icon>
+            </h2>
+
+            <div class="settings-items-container">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="onlyVideoTitle">Show video</h3>
+                  <p data-translate="onlyVideoExplain">Show detected video files in the list.</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <mdui-button-icon class="info-extensions" data-type="video" style="opacity: 0.7; transform: scale(0.8);">
+                    <mdui-icon><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></mdui-icon>
+                  </mdui-button-icon>
+                  <mdui-switch id="only-video"></mdui-switch>
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="onlyAudioTitle">Show audio</h3>
+                  <p data-translate="onlyAudioExplain">Show detected audio files in the list.</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <mdui-button-icon class="info-extensions" data-type="audio" style="opacity: 0.7; transform: scale(0.8);">
+                    <mdui-icon><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></mdui-icon>
+                  </mdui-button-icon>
+                  <mdui-switch id="only-audio"></mdui-switch>
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="onlyStreamTitle">Show streams</h3>
+                  <p data-translate="onlyStreamExplain">Show detected media streams (HLS, DASH).</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <mdui-button-icon class="info-extensions" data-type="stream" style="opacity: 0.7; transform: scale(0.8);">
+                    <mdui-icon><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></mdui-icon>
+                  </mdui-button-icon>
+                  <mdui-switch id="only-stream"></mdui-switch>
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="onlySubtitleTitle">Show subtitles</h3>
+                  <p data-translate="onlySubtitleExplain">Show detected subtitle and caption files.</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <mdui-button-icon class="info-extensions" data-type="subtitle" style="opacity: 0.7; transform: scale(0.8);">
+                    <mdui-icon><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></mdui-icon>
+                  </mdui-button-icon>
+                  <mdui-switch id="only-subtitle"></mdui-switch>
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="onlyFileTitle">Show download links</h3>
+                  <p data-translate="onlyFileExplain">Show detected download links and files.</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <mdui-button-icon class="info-extensions" data-type="file" style="opacity: 0.7; transform: scale(0.8);">
+                    <mdui-icon><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></mdui-icon>
+                  </mdui-button-icon>
+                  <mdui-switch id="only-file"></mdui-switch>
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="ignoreDisabledTypesTitle">Jangan deteksi yang dimatikan</h3>
+                  <p data-translate="ignoreDisabledTypesExplain">Matikan deteksi untuk jenis media yang dimatikan di atas agar pemrosesan lebih ringan.</p>
+                </div>
+                <mdui-switch id="ignore-disabled-types"></mdui-switch>
+              </div>
+            </div>
+
+            <div class="settings-items-container">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="groupByTypeTitle">Group by media type</h3>
+                  <p data-translate="groupByTypeExplain">Groups detected media into folders on the Home tab.</p>
+                </div>
+                <mdui-switch id="group-by-type"></mdui-switch>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="groupProgressTitle">Download progress on groups</h3>
+                  <p data-translate="groupProgressExplain">Display active download progress list with pause and cancel controls on group cards.</p>
+                </div>
+                <mdui-switch id="group-download-progress"></mdui-switch>
+              </div>
+            </div>
+            <div class="settings-items-container">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="onlyImageTitle">Show images</h3>
+                  <p data-translate="onlyImageExplain">Show detected image files (WebP, PNG, JPG, GIF).</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <mdui-button-icon class="info-extensions" data-type="image" style="opacity: 0.7; transform: scale(0.8);">
+                    <mdui-icon><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></mdui-icon>
+                  </mdui-button-icon>
+                  <mdui-switch id="only-image"></mdui-switch>
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="setting-text" style="flex: 1 1 auto; min-width: 0; text-align: left;">
+                  <h3><label for="image-min-side" data-translate="imageMinSideTitle">Hide small images</label></h3>
+                  <p data-translate="imageMinSideExplain">Hide images whose shorter side is below this size. Set to 0 to show all sizes.</p>
+                </div>
+                <div class="pill-select-wrapper" style="flex: 0 0 auto; margin-left: auto;">
+                  <select id="image-min-side" class="pill-select">
+                    <option value="0" data-translate="imageMinSideOff">Off</option>
+                    <option value="128">128 px</option>
+                    <option value="256">256 px</option>
+                    <option value="512">512 px</option>
+                    <option value="1024">1024 px</option>
+                    <option value="custom" data-translate="imageMinSideCustom">Custom</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-item" id="setting-image-min-side-custom" style="display: none;">
+                <div class="setting-text">
+                  <h3 data-translate="imageMinSideCustomTitle">Custom minimum side (px)</h3>
+                  <p data-translate="imageMinSideCustomExplain">Set the minimum length of an image's shorter side in pixels.</p>
+                </div>
+                <div>
+                  <input type="number" id="image-min-side-custom" class="pill-input" min="1" max="10000" value="512" style="min-width: 60px; width: 80px; text-align: center; padding: 6px 16px; font-size: 0.85rem;">
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="setting-text" style="flex: 1 1 auto; min-width: 0; text-align: left;">
+                  <h3><label for="image-min-file-size" data-translate="imageMinFileSizeTitle">Minimum image file size</label></h3>
+                  <p data-translate="imageMinFileSizeExplain">Hide images smaller than the selected file size.</p>
+                </div>
+                <div class="pill-select-wrapper" style="flex: 0 0 auto; margin-left: auto;">
+                  <select id="image-min-file-size" class="pill-select">
+                    <option value="0" data-translate="imageMinFileSizeOff">Off</option>
+                    <option value="100">100 KB</option>
+                    <option value="256">256 KB</option>
+                    <option value="512">512 KB</option>
+                    <option value="1024">1 MB</option>
+                    <option value="2048">2 MB</option>
+                    <option value="5120">5 MB</option>
+                    <option value="custom" data-translate="imageMinFileSizeCustom">Custom</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-item" id="setting-image-min-file-size-custom" style="display: none;">
+                <div class="setting-text">
+                  <h3 data-translate="imageMinFileSizeCustomTitle">Custom minimum image file size (KB)</h3>
+                  <p data-translate="imageMinFileSizeCustomExplain">Enter the minimum image file size in KB (0 = disable).</p>
+                </div>
+                <div>
+                  <input type="number" id="image-min-file-size-custom" class="pill-input" min="0" max="102400" value="0" style="min-width: 60px; width: 80px; text-align: center; padding: 6px 16px; font-size: 0.85rem;">
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="hideImageWithoutSizeTitle">Hide images without a detected size</h3>
+                  <p data-translate="hideImageWithoutSizeExplain">Hide images whose file size is unknown.</p>
+                </div>
+                <mdui-switch id="hide-image-without-size"></mdui-switch>
+              </div>
+            </div>
+          </div>
+          <div class="settings-group">
+            <h2 class="settings-section-title collapsible-header">
+              <mdui-icon>
+                <svg viewBox="0 -960 960 960"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg>
+              </mdui-icon>
+              <span data-translate="settingsDownloadSectionTitle">Download settings</span>
+              <mdui-icon class="collapse-icon" style="margin-left: auto; display: none;"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></mdui-icon>
+            </h2>
+
+            <div class="settings-items-container">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="downloadMethodTitle">Download method</h3>
+                  <p data-translate="downloadMethodExplain">Default download mechanism.</p>
+                </div>
+                <div class="pill-select-wrapper">
+                  <select id="download-method" class="pill-select">
+                     <option value="fetch" data-translate="fetchDownloadCheckbox">Fetch API</option>
+                     <option value="browser" data-translate="browserDownloadCheckbox">Native</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="backgroundDownloadTitle">Background download</h3>
+                  <p data-translate="backgroundDownloadExplain">Allows downloads to continue in the background.</p>
+                </div>
+                <mdui-switch id="background-download"></mdui-switch>
+              </div>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="skipHttpErrorsTitle">Skip 403/404 errors</h3>
+                  <p data-translate="skipHttpErrorsExplain">Automatically skip and remove media that returns a 403 or 404 error during download, instead of failing.</p>
+                </div>
+                <mdui-switch id="skip-http-errors"></mdui-switch>
+              </div>
+            </div>
+
+            <div class="settings-items-container">
+              <!-- FIREFOX_ONLY_MEDIA_CACHE_START -->
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="mediaCacheTitle">Media cache</h3>
+                  <p data-translate="mediaCacheExplain">Faster downloads, higher RAM usage.</p>
+                </div>
+                <mdui-switch id="media-cache"></mdui-switch>
+              </div>
+              <!-- FIREFOX_ONLY_MEDIA_CACHE_END -->
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="cacheStorageTitle">Cache storage</h3>
+                  <p id="indexeddb-cache-status" data-translate="cacheStorageCalculating">Calculating cache usage...</p>
+                </div>
+                <mdui-button id="clear-indexeddb-cache" variant="tonal" data-translate="cacheStorageClear">Clear cache</mdui-button>
+              </div>
+            </div>
+
+            <div class="settings-items-container">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="speedBoostTitle">Speed boost</h3>
+                  <p data-translate="speedBoostExplain">Parallel downloads for faster speed.</p>
+                </div>
+                <mdui-switch id="speed-boost"></mdui-switch>
+              </div>
+              <div class="setting-item">
+                 <h3 data-translate="connectionsTitle">Parallel connections</h3>
+                 <div class="pill-select-wrapper">
+                   <select id="connections" class="pill-select">
+                      <option value="2">2</option>
+                      <option value="4">4</option>
+                      <option value="8">8</option>
+                      <option value="16">16</option>
+                   </select>
+                 </div>
+              </div>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="speedBoostResumeTitle">Force Speed Boost on Resume</h3>
+                  <p data-translate="speedBoostResumeExplain">Enable parallel downloading even when resuming.</p>
+                </div>
+                <mdui-switch id="speed-boost-resume"></mdui-switch>
+              </div>
+            </div>
+
+
+
+            <div class="settings-items-container">
+              <div class="setting-item">
+                 <h3 data-translate="streamDownloadTitle">Stream preference</h3>
+                 <div class="pill-select-wrapper">
+                   <select id="stream-download" class="pill-select">
+                      <option value="stream" data-translate="streamFileDownloadCheckbox">Manifest</option>
+                      <option value="offline" data-translate="offlineDownloadChecbox">Offline File</option>
+                   </select>
+                 </div>
+              </div>
+              <div class="setting-item">
+                 <h3 data-translate="streamQualityTitle">Stream quality</h3>
+                 <div class="pill-select-wrapper">
+                   <select id="stream-quality" class="pill-select">
+                      <option value="ask" data-translate="askStreamQualityCheckbox">Ask</option>
+                      <option value="highest" data-translate="highestStreamQualityCheckbox">Highest</option>
+                      <option value="lowest" data-translate="lowestStreamQualityCheckbox">Lowest</option>
+                   </select>
+                 </div>
+              </div>
+              <div class="setting-item">
+                 <h3 data-translate="subtitleConversionTitle">Convert subtitle to</h3>
+                 <div class="pill-select-wrapper">
+                   <select id="subtitle-conversion" class="pill-select">
+                      <option value="none" data-translate="subtitleConversionNone">Original (Don't convert)</option>
+                      <option value="srt">SRT</option>
+                      <option value="vtt">VTT</option>
+                      <option value="ass">ASS</option>
+                      <option value="ssa">SSA</option>
+                      <option value="sub">SUB</option>
+                      <option value="smi">SMI</option>
+                      <option value="lrc">LRC</option>
+                      <option value="sbv">SBV</option>
+                      <option value="json">JSON</option>
+                   </select>
+                 </div>
+              </div>
+            </div>
+
+
+            <div class="settings-items-container">
+              <div class="setting-item vertical" style="padding-top: 4px; padding-bottom: 10px; gap: 6px;">
+                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                    <h3 data-translate="filenameTemplateTitle" style="margin: 0;">Filename template</h3>
+                    <mdui-button-icon id="auto-generate-template" style="margin-right: -8px;" data-title-translate="filenameTemplateAutoGenerateTitle">
+                       <mdui-icon>
+                          <svg viewBox="0 0 24 24"><path d="m19 1-1.26 2.74L15 5l2.74 1.26L19 9l1.26-2.74L23 5l-2.74-1.26L19 1m-10 6L6.5 12.5 1 15l5.5 2.5L9 23l2.5-5.5 5.5-2.5-5.5-2.5L9 7m10 8-1.26 2.74L15 19l2.74 1.26L19 23l1.26-2.74L23 19l-2.74-1.26L19 15z"/></svg>
+                       </mdui-icon>
+                    </mdui-button-icon>
+                 </div>
+                 <div style="display: flex; flex-direction: column; gap: 4px; width: 100%;">
+                    <input type="text" id="filename-template" class="pill-input" data-placeholder-translate="filenameTemplateTitle" style="width: 100%; box-sizing: border-box;">
+                    <div class="pill-helper-text" data-translate="filenameTemplateHelper"></div>
+                 </div>
+              </div>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="disableRenameDialogTitle">Disable rename file dialog</h3>
+                  <p data-translate="disableRenameDialogExplain">Skip the filename confirmation dialog and start downloads immediately using the default name.</p>
+                </div>
+                <mdui-switch id="disable-rename-dialog"></mdui-switch>
+              </div>
+            </div>
+          </div>
+
+          <!-- LIGHT_EXCLUDE_CLOUD_SETTINGS_START -->
+          <div class="settings-group">
+            <h2 class="settings-section-title collapsible-header">
+              <mdui-icon>
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M19.35 10.04C18.67 6.59 15.64 4 12 4C9.11 4 6.6 5.64 5.35 8.04C2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5c0-2.64-2.05-4.78-4.65-4.96z"/></svg>
+              </mdui-icon>
+              <span data-translate="settingsCloudSectionTitle">Cloud Integration</span>
+              <mdui-icon class="collapse-icon" style="margin-left: auto; display: none;"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></mdui-icon>
+            </h2>
+
+            <div class="settings-items-container">
+              <div class="setting-item" style="padding-top: 10px; padding-bottom: 10px;">
+                <div class="setting-text">
+                  <h3 data-translate="cloudSaveLocation">Save Location</h3>
+                  <p data-translate="cloudSaveLocationDesc">Choose where to save downloads.</p>
+                </div>
+                <div class="pill-select-wrapper" style="flex-shrink: 0;">
+                  <select id="cloud-save-location" class="pill-select">
+                    <option value="local" data-translate="cloudSaveLocal">Local Device Only</option>
+                    <option value="gdrive" data-translate="cloudSaveGDrive">Google Drive</option>
+                    <option value="dropbox" data-translate="cloudSaveDropbox">Dropbox</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id="gdrive-details-container" style="display: none; flex-direction: column;">
+                <div id="gdrive-login-container" class="setting-item" style="padding-top: 10px; padding-bottom: 10px; border-top: 1px solid var(--mdui-color-surface-variant);">
+                  <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0;">
+                    <h3 data-translate="gdriveAccountTitle" style="margin: 0;">Google Drive Account</h3>
+                    <div id="gdrive-user-info" style="display: none; font-size: 11px; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                      <span id="gdrive-user-email"></span>
+                    </div>
+                  </div>
+                  <mdui-button variant="tonal" id="gdrive-login-btn" style="--mdui-shape-corner-extra-small: 16px; height: 32px; flex-shrink: 0; margin-left: 12px; align-self: center;">
+                    <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12.48 10.92v3.28h4.74c-.2 1.06-.9 1.95-2.04 2.71a6.49 6.49 0 0 1-10.36-4.59 6.49 6.49 0 0 1 10.36-4.59l2.56-2.56A10.003 10.003 0 0 0 2.48 12c0 5.52 4.48 10 10 10 5.52 0 10-4.48 10-10 0-.68-.08-1.34-.23-1.98h-9.77z"/></svg></mdui-icon>
+                    <span id="gdrive-login-text" data-translate="gdriveLoginButton">Login</span>
+                  </mdui-button>
+                </div>
+                <div id="gdrive-stream-container" class="setting-item" style="display: none;">
+                  <div class="setting-text">
+                    <h3 data-translate="gdriveStreamTitle">Stream upload</h3>
+                    <p data-translate="gdriveStreamExplain">Upload chunks while downloading.</p>
+                  </div>
+                  <mdui-switch id="gdrive-stream"></mdui-switch>
+                </div>
+              </div>
+
+              <div id="dropbox-details-container" style="display: none; flex-direction: column;">
+                <div id="dropbox-login-container" class="setting-item" style="padding-top: 10px; padding-bottom: 10px; border-top: 1px solid var(--mdui-color-surface-variant);">
+                  <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0;">
+                    <h3 data-translate="dropboxAccountTitle" style="margin: 0;">Dropbox Account</h3>
+                    <div id="dropbox-user-info" style="display: none; font-size: 11px; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                      <span id="dropbox-user-email"></span>
+                    </div>
+                  </div>
+                  <mdui-button variant="tonal" id="dropbox-login-btn" style="--mdui-shape-corner-extra-small: 16px; height: 32px; flex-shrink: 0; margin-left: 12px; align-self: center;">
+                    <mdui-icon slot="icon"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12.01 2.375l-7.07 4.545l7.07 4.41l7.07-4.41l-7.07-4.545zm-7.07 13.5l7.07-4.545l-7.07-4.41l-7.07 4.41l7.07 4.545zm14.14 0l-7.07-4.41l7.07-4.545l7.07 4.41l-7.07 4.545zm-7.07 1.055l-7.07-4.545l-2.93 1.95v1.205L12.01 21.63l10-6.095v-1.205l-2.93-1.95l-7.07 4.545z"/></svg></mdui-icon>
+                    <span id="dropbox-login-text" data-translate="dropboxLoginButton">Login</span>
+                  </mdui-button>
+                </div>
+                <div id="dropbox-stream-container" class="setting-item" style="display: none;">
+                  <div class="setting-text">
+                    <h3 data-translate="dropboxStreamTitle">Stream upload to Dropbox</h3>
+                    <p data-translate="dropboxStreamExplain">Upload chunks to Dropbox while downloading.</p>
+                  </div>
+                  <mdui-switch id="dropbox-stream"></mdui-switch>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- LIGHT_EXCLUDE_CLOUD_SETTINGS_END -->
+
+          <div class="settings-group">
+            <h2 class="settings-section-title collapsible-header">
+              <mdui-icon>
+                <svg viewBox="0 -960 960 960"><path d="m370-80-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-1 13.5l103 78-110 190-119-50q-11 8-23 15t-24 12L590-80H370Zm70-80h80l12-100q26-9 47-23.5t39-32.5l94 40 40-68-82-62q5-14 7-28.5t2-29.5q0-15-2-30t-7-29l82-62-40-68-94 40q-18-18-39-32.5T532-780l-12-100h-80l-12 100q-26 9-47 23.5T342-724l-94-40-40 68 82 62q-5 14-7 28.5t-2 29.5q0 15 2 30t7 29l-82 62 40 68 94 40q18 18 39 32.5t47 23.5l12 100Zm40-160q58 0 99-41t41-99q0-58-41-99t-99-41q-58 0-99 41t-41 99q0 58 41 99t99 41Zm0-140Z"/></svg>
+              </mdui-icon>
+              <span data-translate="settingsAdvancedSectionTitle">Advanced settings</span>
+              <mdui-icon class="collapse-icon" style="margin-left: auto; display: none;"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></mdui-icon>
+            </h2>
+
+            <div class="settings-items-container">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="blockIncomingPopupsTitle">Block unwanted redirects and ads</h3>
+                  <p data-translate="blockIncomingPopupsExplain">Prevents websites from moving the current page or opening ad tabs without permission. May not work on some websites.</p>
+                </div>
+                <mdui-switch id="block-incoming-popups"></mdui-switch>
+              </div>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="redirectGuardClicksTitle">Taps required to open</h3>
+                  <p data-translate="redirectGuardClicksExplain">Choose how many times an external link must be tapped before it opens.</p>
+                </div>
+                <div class="pill-select-wrapper">
+                  <select id="redirect-guard-clicks" class="pill-select">
+                    <option value="1">1×</option><option value="2" selected>2×</option><option value="3">3×</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="redirectGuardHideContentTitle">Hide blocked content</h3>
+                  <p data-translate="redirectGuardHideContentExplain">Hides the clicked ad or link from the webpage when its redirect is blocked.</p>
+                </div>
+                <mdui-switch id="redirect-guard-hide-content"></mdui-switch>
+              </div>
+            </div>
+
+            <div class="settings-items-container">
+
+
+              <div class="setting-item">
+                 <div class="setting-text">
+                   <h3 data-translate="mpdFixCheckbox">Fix MPD files (recommended)</h3>
+                   <p data-translate="mpdFixExplain">Modify .mpd manifests to include only the downloaded quality, ensuring compatibility with players like VLC.</p>
+                 </div>
+                 <mdui-switch id="mpd-fix"></mdui-switch>
+               </div>
+              <!-- LIGHT_EXCLUDE_MEDIA_PROCESSING_OPTIONS_START -->
+              <div class="setting-item">
+                 <div class="setting-text">
+                   <h3 data-translate="gabungStreamCheckbox">Merge stream audio and video</h3>
+                   <p data-translate="gabungStreamExplain">Merge the chosen stream video and audio tracks into a single file. Both are packed into a single TS file instead of zipping them.</p>
+                 </div>
+                 <mdui-switch id="gabung-stream"></mdui-switch>
+              </div>
+              <div class="setting-item">
+                 <div class="setting-text">
+                   <h3 data-translate="mpdToMp4Checkbox">Merge stream audio and video into MP4</h3>
+                   <p data-translate="mpdToMp4Explain">Muxes the chosen video and audio representations into a single MP4 file instead of a TS file.</p>
+                 </div>
+                 <mdui-switch id="mpd-to-mp4"></mdui-switch>
+               </div>
+              <!-- LIGHT_EXCLUDE_MEDIA_PROCESSING_OPTIONS_END -->
+            </div>
+
+            <div class="settings-items-container">
+              <!-- LIGHT_EXCLUDE_MEDIA_PROCESSING_OPTIONS_START -->
+              <div class="setting-item">
+                 <div class="setting-text">
+                   <h3 data-translate="muxAllAudiosCheckbox">Mux all audio tracks (YouTube)</h3>
+                   <p data-translate="muxAllAudiosExplain">Combines all audio tracks into the final video file as multiple selectable audio tracks instead of zipping them separately.</p>
+                 </div>
+                 <mdui-switch id="mux-all-audios"></mdui-switch>
+               </div>
+              <!-- LIGHT_EXCLUDE_MEDIA_PROCESSING_OPTIONS_END -->
+              <div class="setting-item">
+                  <div class="setting-text">
+                    <h3 data-translate="embedSubtitlesMkvTitle">Embed all subtitles into video (YouTube)</h3>
+                    <p data-translate="embedSubtitlesMkvExplain">When enabled, "All Subtitles" downloads a single video file with all subtitle tracks embedded (MP4). When disabled, all subtitles are downloaded as a ZIP.</p>
+                  </div>
+                  <mdui-switch id="embed-subtitles-mkv"></mdui-switch>
+                </div>
+            </div>
+
+            <div class="settings-items-container">
+              <!-- LIGHT_EXCLUDE_MP3_CONVERSION_START -->
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="audioToMp3Setting">Convert audio to MP3</h3>
+                  <p data-translate="audioToMp3SettingDesc">Automatically convert audio-only downloads from WAV/PCM to MP3 format.</p>
+                </div>
+                <mdui-switch id="audio-to-mp3"></mdui-switch>
+              </div>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="mp3BitrateTitle">MP3 bitrate quality</h3>
+                  <p data-translate="mp3BitrateExplain">Set the bitrate quality when converting audio to MP3.</p>
+                </div>
+                <div class="pill-select-wrapper">
+                  <select id="mp3-bitrate" class="pill-select">
+                    <option value="96">96 kbps</option><option value="128">128 kbps</option><option value="192">192 kbps</option><option value="256">256 kbps</option><option value="320">320 kbps</option>
+                  </select>
+                </div>
+              </div>
+              <!-- LIGHT_EXCLUDE_MP3_CONVERSION_END -->
+                <div class="setting-item">
+                   <div class="setting-text">
+                     <h3 data-translate="embedSubtitlesNonYtTitle">Embed subtitles into video (Standard video)</h3>
+                     <p data-translate="embedSubtitlesNonYtExplain">When enabled, shows subtitle selector card for standard video downloads to embed selected subtitles.</p>
+                   </div>
+                   <mdui-switch id="embed-subtitles-nonyt"></mdui-switch>
+                 </div>
+              <div class="setting-item" id="setting-embed-subtitles-container" style="display: none !important;">
+                  <h3 data-translate="embedSubtitlesContainerTitle">Subtitle embed container</h3>
+                  <div class="pill-select-wrapper">
+                    <select id="embed-subtitles-container" class="pill-select">
+                       <option value="mp4" selected>MP4</option>
+                    </select>
+                  </div>
+               </div>
+            </div>
+
+            <!-- LIGHT_EXCLUDE_STREAM_MP4_START -->
+            <div class="settings-items-container">
+              <div class="setting-item" id="manual-ts-converter" style="align-items: flex-start;">
+                <div class="setting-text" style="min-width: 0; flex: 1;">
+                  <h3 data-translate="manualTsConvertTitle">Convert a TS file manually</h3>
+                  <p data-translate="manualTsConvertExplain">Select an MPEG-TS file, convert it to MP4, and save it directly to your device.</p>
+                  <span id="manual-ts-filename" data-translate="manualTsNoFile" style="display: block; margin-top: 8px; font-size: 12px; color: rgb(var(--mdui-color-on-surface-variant)); overflow-wrap: anywhere;">No file selected</span>
+                  <mdui-linear-progress id="manual-ts-progress" value="0" max="100" style="display: none; margin-top: 12px;"></mdui-linear-progress>
+                  <p id="manual-ts-status" role="status" aria-live="polite" style="display: none; margin-top: 8px;"></p>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: stretch; gap: 8px; flex: 0 0 auto;">
+                  <input type="file" id="manual-ts-file" accept=".ts" style="display: none;">
+                  <mdui-button id="manual-ts-select" variant="outlined" data-translate="manualTsSelectFile">Select</mdui-button>
+                  <mdui-button id="manual-ts-convert" variant="filled" disabled data-translate="manualTsConvertButton">Convert</mdui-button>
+                </div>
+              </div>
+            </div>
+            <!-- LIGHT_EXCLUDE_STREAM_MP4_END -->
+
+            <div class="settings-items-container">
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="optimizeLowEndTitle">Resource-saving mode</h3>
+                  <p data-translate="optimizeLowEndExplain">Reduces page scanning and displayed results, uses clean view, and disables media cache. Some media may not be found.</p>
+                </div>
+                <mdui-switch id="optimize-low-end"></mdui-switch>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="limitMediaListTitle">Limit detected media list</h3>
+                  <p data-translate="limitMediaListExplain">Limit the number of media shown.</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div class="pill-select-wrapper">
+                    <select id="limit-media-list" class="pill-select">
+                      <option value="5">5</option>
+                      <option value="10">10</option>
+                      <option value="15">15</option>
+                      <option value="20">20</option>
+                      <option value="custom" data-translate="limitMediaListCustom">Custom (0 = all)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="setting-item" id="setting-limit-media-custom" style="display: none;">
+                <div class="setting-text">
+                  <h3 data-translate="limitMediaListCustomTitle">Custom media limit</h3>
+                  <p data-translate="limitMediaListCustomExplain">Enter custom limit (0 = all)</p>
+                </div>
+                <div>
+                  <input type="number" id="limit-media-list-custom" class="pill-input" min="0" value="0" style="min-width: 60px; width: 60px; text-align: center; padding: 6px 16px; font-size: 0.85rem;">
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="minFileSizeTitle">Minimum file size filter</h3>
+                  <p data-translate="minFileSizeExplain">Hide detected media smaller than selected size.</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div class="pill-select-wrapper">
+                    <select id="min-file-size" class="pill-select">
+                      <option value="0" data-translate="minFileSizeNone">None (0 KB)</option>
+                      <option value="100">100 KB</option>
+                      <option value="500">500 KB</option>
+                      <option value="1024">1 MB</option>
+                      <option value="5120">5 MB</option>
+                      <option value="10240">10 MB</option>
+                      <option value="custom" data-translate="minFileSizeCustom">Custom (KB)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="setting-item" id="setting-min-file-size-custom" style="display: none;">
+                <div class="setting-text">
+                  <h3 data-translate="minFileSizeCustomTitle">Custom minimum size (KB)</h3>
+                  <p data-translate="minFileSizeCustomExplain">Enter minimum size in KB (0 = disable)</p>
+                </div>
+                <div>
+                  <input type="number" id="min-file-size-custom" class="pill-input" min="0" value="0" style="min-width: 60px; width: 80px; text-align: center; padding: 6px 16px; font-size: 0.85rem;">
+                </div>
+              </div>
+
+            </div>
+
+            <!-- DEBUG_ONLY_START -->
+            <div class="settings-items-container">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="debugLogTitle">Full debug log</h3>
+                  <p data-translate="debugLogExplain">Download a complete diagnostic log of extension activity, system &amp; browser information, settings, and error reports for troubleshooting.</p>
+                  <span id="debug-log-status" style="display: block; margin-top: 6px; font-size: 12px; color: rgb(var(--mdui-color-on-surface-variant));"></span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px; align-items: stretch; flex-shrink: 0;">
+                  <mdui-button id="download-debug-log" variant="tonal" data-translate="downloadDebugLogButton">Download log</mdui-button>
+                  <mdui-button id="clear-debug-log" variant="outlined" data-translate="clearDebugLogButton">Clear log</mdui-button>
+                </div>
+              </div>
+            </div>
+            <!-- DEBUG_ONLY_END -->
+          </div>
+
+          <div class="settings-group">
+            <h2 class="settings-section-title collapsible-header">
+              <mdui-icon>
+                <svg viewBox="0 -960 960 960"><path d="M480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 32.5-156t88-127Q256-817 330-848.5T488-880q80 0 151 27.5t124.5 76q53.5 48.5 85 115T880-518q0 115-70 176.5T640-280h-74q-9 0-12.5 5t-3.5 11q0 12 15 34.5t15 51.5q0 50-27.5 74T480-80Zm0-400Zm-177 23q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm120-160q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm200 0q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm120 160q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17ZM480-160q9 0 14.5-5t5.5-13q0-14-15-33t-15-57q0-42 29-67t71-25h70q66 0 113-38.5T800-518q0-121-92.5-201.5T488-800q-136 0-232 93t-96 227q0 133 93.5 226.5T480-160Z"/></svg>
+              </mdui-icon>
+              <span data-translate="settingsInterfaceSectionTitle">Interface settings</span>
+              <mdui-icon class="collapse-icon" style="margin-left: auto; display: none;"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></mdui-icon>
+            </h2>
+
+            <div class="settings-items-container">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="settingsLayoutTitle">Settings view layout</h3>
+                  <p data-translate="settingsLayoutExplain">Choose how settings are presented.</p>
+                </div>
+                <div class="pill-select-wrapper">
+                  <select id="settings-layout" class="pill-select">
+                    <option value="default" data-translate="layoutDefault">Default</option>
+                    <option value="clean" data-translate="layoutClean">Clean</option>
+                    <option value="sidebar" data-translate="layoutSidebar">Sidebar</option>
+                    <option value="tabs" data-translate="layoutTabs">Tabs (Text)</option>
+                    <option value="tabs-icons" data-translate="layoutTabsIcons">Tabs (Icons)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="topHeaderDesignTitle">Top header design</h3>
+                  <p data-translate="topHeaderDesignExplain">Choose between the new navigation menu header (v2) and the classic tabs header (v1).</p>
+                </div>
+                <div class="pill-select-wrapper">
+                  <select id="top-header-design" class="pill-select">
+                    <option value="v1" data-translate="topHeaderV1">v1</option>
+                    <option value="v2" data-translate="topHeaderV2">v2</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="bottomBarDesignTitle">Bottom action bar design</h3>
+                  <p data-translate="bottomBarDesignExplain">Choose the button layout style for the bottom media action bar.</p>
+                </div>
+                <div class="pill-select-wrapper">
+                  <select id="bottom-bar-design" class="pill-select">
+                    <option value="v3" data-translate="bottomBarV3">v3</option>
+                    <option value="v2" data-translate="bottomBarV2">v2</option>
+                    <option value="v1" data-translate="bottomBarV1">v1</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="uiScaleTitle">UI Scale / DPI</h3>
+                  <p data-translate="uiScaleExplain">Adjust the scale and size of the extension interface.</p>
+                </div>
+                <div class="pill-select-wrapper">
+                  <select id="ui-scale" class="pill-select">
+                    <option value="100%">100%</option>
+                    <option value="95%">95%</option>
+                    <option value="90%">90%</option>
+                    <option value="85%">85% (Default)</option>
+                    <option value="80%">80%</option>
+                    <option value="75%">75%</option>
+                    <option value="70%">70%</option>
+                    <option value="65%">65%</option>
+                    <option value="60%">60%</option>
+                    <option value="55%">55%</option>
+                    <option value="50%">50% (Compact)</option>
+                    <option value="custom" data-translate="limitCustom">Custom</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="setting-item" id="setting-ui-scale-custom" style="display: none;">
+                <div class="setting-text">
+                  <h3 data-translate="customUiScaleTitle">Custom scale percentage (50% - 150%)</h3>
+                </div>
+                <input type="number" id="ui-scale-custom" class="pill-input" min="50" max="150" value="80" style="min-width: 60px; width: 80px; text-align: center; padding: 6px 16px; font-size: 0.85rem;">
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="openPreference">Opening preference</h3>
+                  <p data-translate="openPreferenceExplain">Preferred way to open the extension. Note: mobile devices do not support 'Window'.</p>
+                </div>
+                <div class="pill-select-wrapper">
+                   <select id="open-preference" class="pill-select">
+                      <option value="tab" data-translate="newTabCheckbox">Tab</option>
+                      <option value="window" data-translate="newWindowCheckbox">Window</option>
+                      <option value="popup" data-translate="popupCheckbox">Popup</option>
+                   </select>
+                 </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="settingsBackupTitle">Settings configuration</h3>
+                  <p data-translate="settingsBackupExplain">Export or import your extension settings.</p>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px; align-items: stretch;">
+                  <input type="file" id="import-settings-input" accept="application/json,.json" style="display: none;">
+                  <mdui-button id="export-settings" variant="tonal" data-translate="exportSettingsButton">Export</mdui-button>
+                  <mdui-button id="import-settings" variant="tonal" data-translate="importSettingsButton">Import</mdui-button>
+                </div>
+              </div>
+
+
+            </div>
+
+            <div class="settings-items-container interface-appearance-card">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="themeModeTitle">Theme mode</h3>
+                  <p data-translate="themeModeExplain">Choose between Auto, Light, Dark, or Pitch Black theme.</p>
+                </div>
+                <div class="pill-select-wrapper">
+                  <select id="theme-mode" class="pill-select">
+                    <option value="auto" data-translate="themeModeAuto">Auto (System)</option>
+                    <option value="light" data-translate="themeModeLight">Light</option>
+                    <option value="dark" data-translate="themeModeDark">Dark</option>
+                    <option value="pitch-black" data-translate="themeModePitchBlack">Pitch Black</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-item vertical">
+                <h3 data-translate="colorPickerTitle">Theme color</h3>
+                <div class="theme-color-controls">
+                    <canvas id="theme-color-wheel" class="theme-color-wheel" width="180" height="180" aria-label="Theme color wheel"></canvas>
+                    <input type="range" id="theme-color-brightness" class="theme-color-brightness" min="15" max="100" value="100" aria-label="Color brightness">
+                    <div class="theme-color-value-row">
+                    <input type="text" id="color-hex-input" class="pill-input" placeholder="#BBDEFB" style="width: 90px; text-align: center; font-family: monospace; text-transform: uppercase; font-weight: 800; font-size: 0.8rem;">
+                    </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-items-container interface-system-card">
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="autoCheckUpdateTitle">Automatic update check</h3>
+                  <p data-translate="autoCheckUpdateExplain">Automatically check for extension updates when opened.</p>
+                </div>
+                <mdui-switch id="auto-check-update"></mdui-switch>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="badgeCounterTitle">Badge counter on icon</h3>
+                  <p data-translate="badgeCounterExplain">Show active running downloads count on extension icon.</p>
+                </div>
+                <mdui-switch id="badge-counter"></mdui-switch>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-text">
+                  <h3 data-translate="historyPageTitle">Enable history page</h3>
+                  <p data-translate="historyPageExplain">Keep a local record of your downloads.</p>
+                </div>
+                <mdui-switch id="history-page"></mdui-switch>
+              </div>
+            </div>
+          </div>
+
+          <!-- LIGHT_EXCLUDE_SPEED_TEST_START -->
+          <div class="settings-group">
+            <h2 class="settings-section-title collapsible-header">
+              <mdui-icon>
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 3a9 9 0 0 0-9 9 9.07 9.07 0 0 0 .76 3.61l1.43-1.43a7.14 7.14 0 0 1-.19-2.18 7 7 0 1 1 11.23 5.62l1.43 1.43A9 9 0 0 0 12 3zm0 5a4 4 0 0 0-4 4 3.93 3.93 0 0 0 .19 1.18l2.25-2.25a2 2 0 1 1 2.82 2.82l-2.25 2.25A3.93 3.93 0 0 0 12 16a4 4 0 0 0 4-4 4 4 0 0 0-4-4z"/></svg>
+              </mdui-icon>
+              <span data-translate="settingsSpeedTestSectionTitle">Network Speed Test</span>
+              <mdui-icon class="collapse-icon" style="margin-left: auto; display: none;"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></mdui-icon>
+            </h2>
+
+            <div class="settings-items-container">
+              <div class="setting-item vertical" style="padding: 16px 20px; gap: 12px; align-items: stretch; display: flex; flex-direction: column; width: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                  <span style="font-weight: 500; font-size: 13px;" data-translate="speedTestIntro">Test your download and upload connection speed.</span>
+                  <mdui-button id="start-speed-test" variant="filled" style="--mdui-shape-corner-extra-small: 16px; height: 36px; flex-shrink: 0;" data-translate="runSpeedTestBtn">Run Test</mdui-button>
+                </div>
+
+                <div id="speedometer-container" style="display: none; justify-content: center; align-items: center; margin: 16px auto; position: relative; width: 160px; height: 160px;">
+                  <svg width="160" height="160" viewBox="0 0 200 200" style="transform: rotate(135deg);">
+                    <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(var(--mdui-color-on-surface), 0.08)" stroke-width="12" stroke-dasharray="376.99 502.65" stroke-linecap="round" />
+                    <circle id="speedometer-progress" cx="100" cy="100" r="80" fill="none" stroke="rgb(var(--mdui-color-primary))" stroke-width="12" stroke-dasharray="0 502.65" stroke-linecap="round" style="transition: stroke-dasharray 0.15s ease-out, stroke 0.3s; filter: drop-shadow(0 0 4px rgba(var(--mdui-color-primary), 0.4));" />
+                  </svg>
+                  <div style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                    <span id="speedometer-value" style="font-size: 28px; font-weight: 800; color: rgb(var(--mdui-color-on-surface)); font-family: monospace; letter-spacing: -0.5px; line-height: 1;">0.00</span>
+                    <span id="speedometer-unit" style="font-size: 10px; opacity: 0.6; font-weight: 700; text-transform: uppercase; margin-top: 4px; letter-spacing: 0.5px;">Mbps</span>
+                  </div>
+                </div>
+
+                <div id="speed-test-results" style="display: none; flex-direction: column; gap: 12px; margin-top: 8px; border-top: 1px solid rgb(var(--mdui-color-outline-variant)); padding-top: 12px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <mdui-icon style="color: rgb(var(--mdui-color-primary));"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg></mdui-icon>
+                      <span style="font-weight: 500; font-size: 13px;" data-translate="downloadNormal">Download (Normal)</span>
+                    </div>
+                    <span id="download-speed-value" style="font-weight: 800; font-size: 15px; font-family: monospace;">-</span>
+                  </div>
+                  <mdui-linear-progress id="download-test-progress" value="0" style="display: none;"></mdui-linear-progress>
+
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <mdui-icon style="color: rgb(var(--mdui-color-primary)); filter: drop-shadow(0 0 4px rgba(var(--mdui-color-primary), 0.6));"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg></mdui-icon>
+                      <span style="font-weight: 700; font-size: 13px; color: rgb(var(--mdui-color-primary));" data-translate="downloadSpeedBoost">Download (Speed Boost)</span>
+                    </div>
+                    <span id="download-boost-speed-value" style="font-weight: 800; font-size: 15px; font-family: monospace; color: rgb(var(--mdui-color-primary));">-</span>
+                  </div>
+                  <mdui-linear-progress id="download-boost-test-progress" value="0" style="display: none;"></mdui-linear-progress>
+
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <mdui-icon style="color: rgb(var(--mdui-color-secondary));"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v-4h-4v4H7l5 5 5-5h-3z"/></svg></mdui-icon>
+                      <span style="font-weight: 500; font-size: 13px;" data-translate="uploadNormal">Upload (Normal)</span>
+                    </div>
+                    <span id="upload-speed-value" style="font-weight: 800; font-size: 15px; font-family: monospace;">-</span>
+                  </div>
+                  <mdui-linear-progress id="upload-test-progress" value="0" style="display: none;"></mdui-linear-progress>
+
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <mdui-icon style="color: rgb(var(--mdui-color-secondary)); filter: drop-shadow(0 0 4px rgba(var(--mdui-color-secondary), 0.6));"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v-4h-4v4H7l5 5 5-5h-3z"/></svg></mdui-icon>
+                      <span style="font-weight: 700; font-size: 13px; color: rgb(var(--mdui-color-secondary));" data-translate="uploadSpeedBoost">Upload (Speed Boost)</span>
+                    </div>
+                    <span id="upload-boost-speed-value" style="font-weight: 800; font-size: 15px; font-family: monospace; color: rgb(var(--mdui-color-secondary));">-</span>
+                  </div>
+                  <mdui-linear-progress id="upload-boost-test-progress" value="0" style="display: none;"></mdui-linear-progress>
+
+                  <div id="speed-test-status" style="font-size: 11px; opacity: 0.7; text-align: center; margin-top: 4px;"></div>
+                </div>
+              </div>
+            </div>
+        </div>
+        <!-- LIGHT_EXCLUDE_SPEED_TEST_END -->
+        </div>
+      </mdui-tab-panel>
+
+    </mdui-tabs>
+
+    <mdui-bottom-app-bar id="settings-apply-bar" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;">
+      <div class="bottom-content" style="padding: 0 16px; width: 100%; display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-weight: 500; font-size: 0.9rem;" data-translate="applyChangesPrompt">Apply changes?</span>
+        <div style="display: flex; gap: 8px;">
+          <mdui-button variant="text" id="cancel-settings" data-translate="cancelButton">Cancel</mdui-button>
+          <mdui-button variant="filled" id="apply-settings" data-translate="applyButton">Apply</mdui-button>
+        </div>
+      </div>
+    </mdui-bottom-app-bar>
+  </div>
+
+  <div id="welcome-overlay" style="
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: wOverlayIn 0.25s ease;
+  ">
+    <div id="welcome-card" style="
+      width: 100%;
+      max-width: 340px;
+      background: rgb(var(--mdui-color-surface-container-high));
+      border-radius: 24px;
+      padding: 28px 22px 22px;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.28), 0 2px 8px rgba(0,0,0,0.12);
+      animation: wCardZoomIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      position: relative;
+    ">
+      <div style="display:flex; justify-content:center; margin-bottom:18px;">
+        <div style="
+          width:64px; height:64px; border-radius:18px;
+          background: linear-gradient(135deg, rgb(var(--mdui-color-primary)) 0%, rgb(var(--mdui-color-secondary)) 100%);
+          display:flex; align-items:center; justify-content:center;
+          box-shadow: 0 6px 24px rgba(0,0,0,0.22);
+          overflow:hidden;
+        ">
+          <img id="welcome-icon-img" src="../icons/icon.png" style="width:46px; height:46px; object-fit:contain;" alt="WMD Icon">
+        </div>
+      </div>
+
+      <div style="text-align:center; margin-bottom:10px;">
+        <div style="font-size:16px; font-weight:700; color:rgb(var(--mdui-color-on-surface)); line-height:1.3; margin-bottom:4px;" data-translate="welcomeTitle">New to this extension?</div>
+        <div style="font-size:11px; font-weight:500; color:rgb(var(--mdui-color-primary)); letter-spacing:0.3px;">Website Media Downloader</div>
+      </div>
+
+      <div style="height:1px; background:rgb(var(--mdui-color-outline-variant)); margin: 14px 0;"></div>
+
+      <p data-translate="welcomeDescription" style="
+        font-size:13px;
+        color:rgb(var(--mdui-color-on-surface-variant));
+        line-height:1.65;
+        margin: 0 0 20px;
+        text-align:center;
+      ">
+        Pelajari cara menggunakan extension ini dengan benar agar media dapat terdeteksi dan tidak bingung saat tidak ada yang muncul.
+      </p>
+
+      <div style="display:flex; gap:8px; flex-direction:column;">
+        <mdui-button
+          id="welcome-learn-btn"
+          variant="filled"
+          style="width:100%; --mdui-shape-corner-extra-small:14px; height:44px; font-size:13.5px; font-weight:600;"
+          data-translate="welcomeLearnBtn"
+        >
+          Pelajari Fitur Sekarang
+        </mdui-button>
+        <mdui-button
+          id="welcome-dismiss-btn"
+          variant="text"
+          style="width:100%; height:36px; font-size:12.5px; color:rgb(var(--mdui-color-on-surface-variant));"
+          data-translate="welcomeDismissBtn"
+        >
+          Lewati
+        </mdui-button>
+      </div>
+    </div>
+  </div>
+
+  <div id="reinstall-overlay" style="
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: wOverlayIn 0.25s ease;
+  ">
+    <div id="reinstall-card" style="
+      width: 100%;
+      max-width: 340px;
+      background: rgb(var(--mdui-color-surface-container-high));
+      border-radius: 24px;
+      padding: 28px 22px 22px;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.28), 0 2px 8px rgba(0,0,0,0.12);
+      animation: wCardZoomIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      position: relative;
+    ">
+      <div style="text-align:center; margin-bottom:10px;">
+        <div style="font-size:16px; font-weight:700; color:rgb(var(--mdui-color-on-surface)); line-height:1.3; margin-bottom:4px;" data-translate="reinstallTitle">Disarankan Instal Ulang</div>
+        <div style="font-size:11px; font-weight:500; color:rgb(var(--mdui-color-error)); letter-spacing:0.3px;">Website Media Downloader</div>
+      </div>
+
+      <div style="height:1px; background:rgb(var(--mdui-color-outline-variant)); margin: 14px 0;"></div>
+
+      <p id="reinstall-description" style="
+        font-size:13px;
+        color:rgb(var(--mdui-color-on-surface-variant));
+        line-height:1.65;
+        margin: 0 0 20px;
+        text-align:center;
+      ">
+        Sebelumnya Anda menggunakan versi lama. Sangat disarankan untuk menginstal ulang ekstensi ini jika beberapa media tidak terdeteksi atau mengalami error 403 (akses ditolak) karena adanya perubahan sistem penanganan CORS yang besar pada versi ini. Jika baru memasang ekstensi ini, Anda bisa melewatinya.
+      </p>
+
+      <div style="display:flex; gap:8px; flex-direction:column;">
+        <mdui-button
+          id="reinstall-action-btn"
+          variant="filled"
+          style="width:100%; --mdui-shape-corner-extra-small:14px; height:44px; font-size:13.5px; font-weight:600; --mdui-color-primary: var(--mdui-color-error); --mdui-color-on-primary: white;"
+          data-translate="reinstallActionBtn"
+        >
+          Buka Toko
+        </mdui-button>
+        <mdui-button
+          id="reinstall-skip-btn"
+          variant="text"
+          style="width:100%; height:36px; font-size:12.5px; color:rgb(var(--mdui-color-on-surface-variant));"
+          data-translate="reinstallSkipBtn"
+        >
+          Lewati
+        </mdui-button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes wOverlayIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes wCardZoomIn {
+      from { transform: scale(0.85); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+    @keyframes wCardZoomOut {
+      from { transform: scale(1);    opacity: 1; }
+      to   { transform: scale(0.85); opacity: 0; }
+    }
+  </style>
+
+  <script src="../lib/translations.js"></script>
+
+  <script src="../lib/media_filename.js"></script>
+  <script src="../popup/boot.js"></script>
+  <script src="../popup/navigasi.js"></script>
+  <script src="../popup/state.js"></script>
+  <script src="../popup/progres/progres-grup.js"></script>
+  <script src="../popup/progres/kartu-progres.js"></script>
+  <script src="../popup/progres/aktif.js"></script>
+  <script src="../popup/update.js"></script>
+  <script src="../popup/event-popup.js"></script>
+  <script src="../popup/init.js"></script>
+  <script src="../popup/daftar/tab-media.js"></script>
+  <script src="../popup/router-pesan.js"></script>
+  <script src="../popup/progres/progres.js"></script>
+  <script src="../popup/progres/sinkron-unduhan.js"></script>
+  <script src="../popup/progres/selesai.js"></script>
+  <script src="../popup/dialog.js"></script>
+  <script src="../popup/daftar/daftar-media.js"></script>
+  <script src="../popup/daftar/grup.js"></script>
+  <script src="../popup/daftar/render.js"></script>
+  <script src="../popup/kartu/varian.js"></script>
+  <script src="../popup/kartu/kartu-media.js"></script>
+  <script src="../popup/tipe-media.js"></script>
+  <script src="../popup/daftar/refresh.js"></script>
+  <script src="../popup/daftar/refresh-selektif.js"></script>
+  <script src="../popup/daftar/muat-daftar.js"></script>
+  <script src="../popup/riwayat.js"></script>
+  <script src="../popup/about.js"></script>
+  <script src="../popup/unduhan/zip.js"></script>
+  <script src="../popup/audio.js"></script>
+  <script src="../popup/unduhan/recovery.js"></script>
+  <script src="../popup/unduhan/download-audio.js"></script>
+  <script src="../popup/unduhan/delegasi-youtube.js"></script>
+  <script src="../popup/unduhan/download.js"></script>
+  <script src="../popup/unduhan/rename.js"></script>
+  <script src="../popup/format-didukung.js"></script>
+  <script src="../popup/unduhan/manual-url.js"></script>
+  <script src="../popup/kartu/mpd.js"></script>
+
+  <script src="../welcome.js"></script>
+
+</body>
+
+</html>
