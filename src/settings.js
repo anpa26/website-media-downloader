@@ -20,6 +20,48 @@ if (typeof browser === 'undefined') {
     var browser = chrome;
 }
 
+function tampilnoNotif(pesen, opsi = {}) {
+  if (pesen === undefined || pesen === null || pesen === '') return;
+  if (!document.body) return;
+  let el = document.getElementById('wmd-notif');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'wmd-notif';
+    el.className = 'wmd-notif';
+    el.setAttribute('role', 'status');
+    document.body.appendChild(el);
+  }
+  el.textContent = '';
+  const teks = document.createElement('span');
+  teks.className = 'wmd-notif-teks';
+  teks.textContent = String(pesen);
+  el.appendChild(teks);
+  if (opsi.aksi && opsi.aksi.label && typeof opsi.aksi.lakokno === 'function') {
+    const tombol = document.createElement('button');
+    tombol.type = 'button';
+    tombol.className = 'wmd-notif-aksi';
+    tombol.textContent = String(opsi.aksi.label);
+    tombol.addEventListener('click', () => {
+      try { opsi.aksi.lakokno(); } catch (_) {}
+      el.classList.remove('tampil');
+    });
+    el.appendChild(tombol);
+  }
+  el.classList.add('tampil');
+  if (el._wmdNotifTimer) clearTimeout(el._wmdNotifTimer);
+  const durasi = opsi.durasi === undefined ? 5000 : opsi.durasi;
+  if (durasi > 0) {
+    el._wmdNotifTimer = setTimeout(() => {
+      el.classList.remove('tampil');
+      el._wmdNotifTimer = null;
+    }, durasi);
+  } else {
+    el._wmdNotifTimer = null;
+  }
+}
+
+
+
 const getRedirectURL = () => {
     if (typeof browser !== 'undefined' && browser.identity && typeof browser.identity.getRedirectURL === 'function') {
         return browser.identity.getRedirectURL();
@@ -73,7 +115,7 @@ const SETTINGS_KEYS = [
 function showSettingsMessage(key, fallback, substitutions = null) {
     if (typeof mdui === 'undefined' || !mdui.snackbar) return;
     const translated = substitutions === null ? browser.i18n.getMessage(key) : browser.i18n.getMessage(key, substitutions);
-    mdui.snackbar({ message: translated || fallback, placement: 'top' });
+    tampilnoNotif(translated || fallback);
 }
 
 async function exportSettingsConfiguration() {
@@ -311,9 +353,9 @@ function setupIndexedDBCacheControls() {
         try {
             await clearIndexedDBCache();
             await refresh();
-            if (typeof mdui !== 'undefined' && mdui.snackbar) mdui.snackbar({ message: cacheMessage('cacheStorageCleared', null, 'Cache cleared'), placement: 'top' });
+            if (typeof mdui !== 'undefined' && mdui.snackbar) tampilnoNotif(cacheMessage('cacheStorageCleared', null, 'Cache cleared'));
         } catch (error) {
-            if (typeof mdui !== 'undefined' && mdui.snackbar) mdui.snackbar({ message: error.message, placement: 'top' });
+            if (typeof mdui !== 'undefined' && mdui.snackbar) tampilnoNotif(error.message);
         } finally {
             clearButton.loading = false;
             clearButton.disabled = false;
@@ -521,10 +563,7 @@ function setupConfirmationBar() {
             pendingChanges = {};
             bar.style.display = 'none';
             if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                mdui.snackbar({
-                    message: browser.i18n.getMessage('settingsSaved') || 'Settings saved',
-                    placement: 'top'
-                });
+                tampilnoNotif(browser.i18n.getMessage('settingsSaved') || 'Settings saved');
             }
         } catch (error) {
             console.error('Failed to save settings:', error);
@@ -1031,7 +1070,7 @@ async function initializeSettings() {
                     const downloadMethod = document.getElementById('download-method');
                     if (downloadMethod && downloadMethod.value === 'browser') {
                         if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                            mdui.snackbar({ message: (browser.i18n.getMessage("streamUploadMethodWarning") || "Note: Stream Upload works best with 'Fetch' download method."), placement: "top" });
+                            tampilnoNotif((browser.i18n.getMessage("streamUploadMethodWarning") || "Note: Stream Upload works best with 'Fetch' download method."));
                         }
                     }
                 }
@@ -1350,7 +1389,7 @@ async function initializeSettings() {
                 await browser.storage.local.remove(['gdrive_token', 'gdrive_user']);
                 checkGDriveLogin();
                 if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                    mdui.snackbar({ message: "Logged out from Google Drive", placement: "top" });
+                    tampilnoNotif("Logged out from Google Drive");
                 }
             } else {
                 let isPopup = window.location.pathname.endsWith('popup.html') && !window.location.search.includes('options=true');
@@ -1454,14 +1493,14 @@ async function initializeSettings() {
                         }
 
                         if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                            mdui.snackbar({ message: "Successfully logged in to Google Drive", placement: "top" });
+                            tampilnoNotif("Successfully logged in to Google Drive");
                         }
                     }
 
                 } catch (error) {
                     console.error("GDrive Login Error:", error);
                     if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                        mdui.snackbar({ message: "Login failed: " + error.message, placement: "top" });
+                        tampilnoNotif("Login failed: " + error.message);
                     }
                 }
             }
@@ -1476,7 +1515,7 @@ async function initializeSettings() {
                 await browser.storage.local.remove(['dropbox_token', 'dropbox_user']);
                 checkDropboxLogin();
                 if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                    mdui.snackbar({ message: "Logged out from Dropbox", placement: "top" });
+                    tampilnoNotif("Logged out from Dropbox");
                 }
             } else {
                 let isPopup = window.location.pathname.endsWith('popup.html') && !window.location.search.includes('options=true');
@@ -1587,13 +1626,13 @@ async function initializeSettings() {
                         checkDropboxLogin();
 
                         if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                            mdui.snackbar({ message: "Successfully logged in to Dropbox!", placement: "top" });
+                            tampilnoNotif("Successfully logged in to Dropbox!");
                         }
                     }
                 } catch (e) {
                     console.error("Dropbox Login Error", e);
                     if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                        mdui.snackbar({ message: "Login failed: " + e.message, placement: "top" });
+                        tampilnoNotif("Login failed: " + e.message);
                     }
                 }
             }
@@ -1641,10 +1680,7 @@ async function initializeSettings() {
             updateDisableRenameState();
 
             if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                mdui.snackbar({
-                    message: browser.i18n.getMessage("settingsTemplateAutoGenerated", [defaultTemplate]),
-                    placement: "top"
-                });
+                tampilnoNotif(browser.i18n.getMessage("settingsTemplateAutoGenerated", [defaultTemplate]));
             }
         };
     }

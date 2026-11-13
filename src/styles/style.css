@@ -1769,3 +1769,51 @@ html.bottom-bar-v3 .speed-dial-container #refresh-list mdui-icon {
     height: 0 !important;
 }
 
+
+.wmd-notif {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 2400;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: min(420px, calc(100vw - 32px));
+    padding: 12px 18px;
+    background: rgb(var(--mdui-color-surface-container-high));
+    color: rgb(var(--mdui-color-on-surface));
+    border: 1px solid rgb(var(--mdui-color-outline-variant));
+    border-radius: 9999px;
+    box-shadow: var(--mdui-elevation-level3);
+    font-size: 14px;
+    line-height: 1.4;
+    text-align: left;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.wmd-notif.tampil {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+.wmd-notif-teks {
+    min-width: 0;
+    overflow-wrap: break-word;
+}
+.wmd-notif-aksi {
+    flex: none;
+    pointer-events: auto;
+    padding: 6px 12px;
+    margin: -6px -8px -6px 2px;
+    border: none;
+    border-radius: var(--mdui-shape-corner-small, 8px);
+    background: transparent;
+    color: rgb(var(--mdui-color-primary));
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+.wmd-notif-aksi:hover {
+    background: rgba(var(--mdui-color-primary), 0.08);
+}

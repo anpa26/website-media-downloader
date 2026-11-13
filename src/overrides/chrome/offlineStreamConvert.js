@@ -31,6 +31,48 @@ if (typeof browser !== 'undefined' && (!browser.i18n || !browser.i18n.getMessage
 
 const optionalLibraryLoads = new Map();
 
+function tampilnoNotif(pesen, opsi = {}) {
+  if (pesen === undefined || pesen === null || pesen === '') return;
+  if (!document.body) return;
+  let el = document.getElementById('wmd-notif');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'wmd-notif';
+    el.className = 'wmd-notif';
+    el.setAttribute('role', 'status');
+    document.body.appendChild(el);
+  }
+  el.textContent = '';
+  const teks = document.createElement('span');
+  teks.className = 'wmd-notif-teks';
+  teks.textContent = String(pesen);
+  el.appendChild(teks);
+  if (opsi.aksi && opsi.aksi.label && typeof opsi.aksi.lakokno === 'function') {
+    const tombol = document.createElement('button');
+    tombol.type = 'button';
+    tombol.className = 'wmd-notif-aksi';
+    tombol.textContent = String(opsi.aksi.label);
+    tombol.addEventListener('click', () => {
+      try { opsi.aksi.lakokno(); } catch (_) {}
+      el.classList.remove('tampil');
+    });
+    el.appendChild(tombol);
+  }
+  el.classList.add('tampil');
+  if (el._wmdNotifTimer) clearTimeout(el._wmdNotifTimer);
+  const durasi = opsi.durasi === undefined ? 5000 : opsi.durasi;
+  if (durasi > 0) {
+    el._wmdNotifTimer = setTimeout(() => {
+      el.classList.remove('tampil');
+      el._wmdNotifTimer = null;
+    }, durasi);
+  } else {
+    el._wmdNotifTimer = null;
+  }
+}
+
+
+
 function ensureOptionalLibraryLoaded(src, globalName) {
   if (globalThis[globalName] !== undefined) return Promise.resolve();
   if (optionalLibraryLoads.has(src)) return optionalLibraryLoads.get(src);
@@ -1266,12 +1308,7 @@ async function finalizeDownload(blob, filename, downloadMethod, loadingBar = nul
         const controller = new CloudUploadController();
         try {
             if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                mdui.snackbar({ 
-                    message: `Uploading ${filename} to Dropbox...`, 
-                    placement: "top",
-                    action: "Cancel",
-                    onActionClick: () => controller.cancel()
-                });
+                tampilnoNotif(`Uploading ${filename} to Dropbox...`, { aksi: { label: "Cancel", lakokno: () => controller.cancel() } });
             }
             
             if (loadingBar) {
@@ -1291,7 +1328,7 @@ async function finalizeDownload(blob, filename, downloadMethod, loadingBar = nul
             }, controller);
 
             if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                mdui.snackbar({ message: `Successfully uploaded ${filename} to Dropbox`, placement: "top" });
+                tampilnoNotif(`Successfully uploaded ${filename} to Dropbox`);
             }
             if (loadingBar) {
                 const statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
@@ -1302,7 +1339,7 @@ async function finalizeDownload(blob, filename, downloadMethod, loadingBar = nul
         } catch (e) {
             console.error("Dropbox fallback upload failed:", e);
             if (e.message !== "Upload cancelled" && typeof mdui !== 'undefined' && mdui.snackbar) {
-                mdui.snackbar({ message: `Dropbox Upload Failed: ${e.message}`, placement: "top" });
+                tampilnoNotif(`Dropbox Upload Failed: ${e.message}`);
             }
             triggerLocalDownload();
         }
@@ -1313,12 +1350,7 @@ async function finalizeDownload(blob, filename, downloadMethod, loadingBar = nul
         const controller = new CloudUploadController();
         try {
             if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                mdui.snackbar({ 
-                    message: browser.i18n.getMessage("uploadingToGDrive", [filename]) || `Uploading ${filename} to Google Drive...`, 
-                    placement: "top",
-                    action: "Cancel",
-                    onActionClick: () => controller.cancel()
-                });
+                tampilnoNotif(browser.i18n.getMessage("uploadingToGDrive", [filename]) || `Uploading ${filename} to Google Drive...`, { aksi: { label: "Cancel", lakokno: () => controller.cancel() } });
             }
             
             if (loadingBar) {
@@ -1346,17 +1378,17 @@ async function finalizeDownload(blob, filename, downloadMethod, loadingBar = nul
             }
 
             if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                mdui.snackbar({ message: browser.i18n.getMessage("uploadSuccessGDrive", [filename]) || `Successfully saved ${filename} to Google Drive!`, placement: "top" });
+                tampilnoNotif(browser.i18n.getMessage("uploadSuccessGDrive", [filename]) || `Successfully saved ${filename} to Google Drive!`);
             }
         } catch (error) {
             if (error.message === "Upload cancelled") {
                 if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                    mdui.snackbar({ message: browser.i18n.getMessage("uploadCancelledTitle") || "Upload Cancelled", placement: "top" });
+                    tampilnoNotif(browser.i18n.getMessage("uploadCancelledTitle") || "Upload Cancelled");
                 }
             } else {
                 console.error("GDrive upload failed, falling back to local download:", error);
                 if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                    mdui.snackbar({ message: (browser.i18n.getMessage("uploadFailedGDrive") || "Cloud upload failed") + `: ${error.message}. Downloading locally instead.`, placement: "top" });
+                    tampilnoNotif((browser.i18n.getMessage("uploadFailedGDrive") || "Cloud upload failed") + `: ${error.message}. Downloading locally instead.`);
                 }
                 await triggerLocalDownload();
                 if (loadingBar) {
@@ -1641,14 +1673,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
   }
   if (audioUrl) {
     
-    const snackbar = document.createElement('mdui-snackbar');
-    snackbar.setAttribute('open', true);
-    snackbar.setAttribute('timeout', 10000);
-    snackbar.textContent = browser.i18n.getMessage("splitDownloadWarningSnackbar")
-    document.body.appendChild(snackbar);
-    snackbar.addEventListener('close', () => {
-      snackbar.remove();
-    });
+    tampilnoNotif(browser.i18n.getMessage("splitDownloadWarningSnackbar"), { durasi: 10000 });
   }
 
   async function downloadSegments(playlistUrl, isAudio = false, customFilename = null, tanpaTransmux = false) {
@@ -1813,10 +1838,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
             const uploadFilename = isAudio ? `${baseFileName}_audio.mp4` : `${baseFileName}${streamExt}`;
             dropboxSessionId = await startDropboxStreamUpload(uploadFilename);
             if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                mdui.snackbar({ 
-                    message: browser.i18n.getMessage("uploadingToDropbox", [uploadFilename]) || `Uploading ${uploadFilename} to Dropbox...`, 
-                    placement: "top"
-                });
+                tampilnoNotif(browser.i18n.getMessage("uploadingToDropbox", [uploadFilename]) || `Uploading ${uploadFilename} to Dropbox...`);
             }
         } catch(e) { console.error("Failed to start Dropbox stream upload for M3U8:", e); }
     }
@@ -1829,10 +1851,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
             
             gdriveSessionUri = await startGDriveStreamUpload(uploadFilename, null, mimeType);
             if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                mdui.snackbar({ 
-                    message: browser.i18n.getMessage("uploadingToGDrive", [uploadFilename]) || `Uploading ${uploadFilename} to Google Drive...`, 
-                    placement: "top"
-                });
+                tampilnoNotif(browser.i18n.getMessage("uploadingToGDrive", [uploadFilename]) || `Uploading ${uploadFilename} to Google Drive...`);
             }
         } catch (e) {
             console.error("Failed to start GDrive stream upload for M3U8:", e);
@@ -2089,13 +2108,13 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
               if (gdriveSessionUri) {
                   await uploadStreamChunk(gdriveSessionUri, new Uint8Array(0), currentUploadOffset, currentUploadOffset);
                   if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                      mdui.snackbar({ message: browser.i18n.getMessage("uploadSuccessGDrive", [uploadFilename]) || `Successfully saved ${uploadFilename} to Google Drive!`, placement: "top" });
+                      tampilnoNotif(browser.i18n.getMessage("uploadSuccessGDrive", [uploadFilename]) || `Successfully saved ${uploadFilename} to Google Drive!`);
                   }
               }
               if (dropboxSessionId) {
                   await finishDropboxStream(dropboxSessionId, dropboxOffset, uploadFilename);
                   if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                      mdui.snackbar({ message: browser.i18n.getMessage("uploadSuccessDropbox", [uploadFilename]) || `Successfully saved ${uploadFilename} to Dropbox!`, placement: "top" });
+                      tampilnoNotif(browser.i18n.getMessage("uploadSuccessDropbox", [uploadFilename]) || `Successfully saved ${uploadFilename} to Dropbox!`);
                   }
               }
           } catch (e) {
@@ -2223,14 +2242,7 @@ async function downloadM3U8Offline(m3u8Url, headers, downloadMethod, loadingBar,
   if (audioUrl) {
     const baseFileName = customFilename ? (customFilename.substring(0, customFilename.lastIndexOf('.')) || customFilename) : getFileName(m3u8Url);
     loadingBar.setAttribute('aria-label', browser.i18n.getMessage("downloadingAudioSnackbar"));
-    const snackbar = document.createElement('mdui-snackbar');
-    snackbar.setAttribute('open', true);
-    snackbar.setAttribute('timeout', 10000);
-    snackbar.textContent = browser.i18n.getMessage("downloadingAudioSnackbar")
-    document.body.appendChild(snackbar);
-    snackbar.addEventListener('close', () => {
-      snackbar.remove();
-    });
+    tampilnoNotif(browser.i18n.getMessage("downloadingAudioSnackbar"), { durasi: 10000 });
     const { blob: audioBlob, ext: extAudio, streamed: audioStreamed, streamedToGDrive: audioStreamedToGDrive, streamedToDropbox: audioStreamedToDropbox } = await downloadSegments(audioUrl, true, customFilename, akanGabung);
 
     let finalAudioBlob = audioBlob;
@@ -2836,14 +2848,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
   }
 
   if (isSegmentBaseOnly) {
-    const snackbar = document.createElement('mdui-snackbar');
-    snackbar.setAttribute('open', true);
-    snackbar.setAttribute('timeout', 10000);
-    snackbar.textContent = browser.i18n.getMessage("splitDownloadWarningSnackbar")
-    document.body.appendChild(snackbar);
-    snackbar.addEventListener('close', () => {
-      snackbar.remove();
-    });
+    tampilnoNotif(browser.i18n.getMessage("splitDownloadWarningSnackbar"), { durasi: 10000 });
     const downloads = [];
     if (chosenVideoRep) downloads.push({ rep: chosenVideoRep, label: "video" });
     if (chosenAudioRep) downloads.push({ rep: chosenAudioRep, label: "audio" });
@@ -2924,14 +2929,9 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
   const mpdToMp4Settings = await browser.storage.local.get(["gabung-stream", "mpd-to-mp4"]);
   const mpdToMp4Enabled = audioOnly || (mpdToMp4Settings["gabung-stream"] !== "0");
 
-  const snackbar = document.createElement('mdui-snackbar');
-  snackbar.setAttribute('open', true);
-  snackbar.setAttribute('timeout', 10000);
-  snackbar.textContent = mpdToMp4Enabled 
+  tampilnoNotif(mpdToMp4Enabled
     ? browser.i18n.getMessage("mpdDownloadMergeExplainSnackbar")
-    : browser.i18n.getMessage("mpdDownloadExplainSnackbar");
-  document.body.appendChild(snackbar);
-  snackbar.addEventListener('close', () => snackbar.remove());
+    : browser.i18n.getMessage("mpdDownloadExplainSnackbar"), { durasi: 10000 });
 
   function substituteVars(path, rep, extra = {}) {
     return path
@@ -3340,10 +3340,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
         try {
             gdriveSessionUri = await startGDriveStreamUpload(zipName, null, 'application/zip');
             if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                mdui.snackbar({ 
-                    message: browser.i18n.getMessage("uploadingToGDrive", [zipName]) || `Uploading ${zipName} to Google Drive...`, 
-                    placement: "top"
-                });
+                tampilnoNotif(browser.i18n.getMessage("uploadingToGDrive", [zipName]) || `Uploading ${zipName} to Google Drive...`);
             }
             if (loadingBar) {
               const statusInfo = loadingBar.parentNode.querySelector('.download-status-info');
@@ -3422,7 +3419,7 @@ async function downloadMPDOffline(mpdUrl, headers, downloadMethod, loadingBar, r
 
             await uploadStreamChunk(gdriveSessionUri, new Uint8Array(0), offset, offset);
             if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                mdui.snackbar({ message: browser.i18n.getMessage("uploadSuccessGDrive", [zipName]) || `Successfully saved ${zipName} to Google Drive!`, placement: "top" });
+                tampilnoNotif(browser.i18n.getMessage("uploadSuccessGDrive", [zipName]) || `Successfully saved ${zipName} to Google Drive!`);
             }
             await finalizeDownload(null, zipName, downloadMethod, loadingBar, true);
         } catch (e) {

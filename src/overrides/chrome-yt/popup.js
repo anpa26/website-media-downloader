@@ -1344,10 +1344,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (startedCount > 0 && typeof mdui !== 'undefined' && mdui.snackbar) {
-      mdui.snackbar({
-        message: browser.i18n.getMessage('downloadStartedSnackbar') || browser.i18n.getMessage('downloadStarted') || 'Download started...',
-        placement: 'top'
-      });
+      tampilnoNotif(browser.i18n.getMessage('downloadStartedSnackbar') || browser.i18n.getMessage('downloadStarted') || 'Download started...');
     }
   }
 
@@ -2129,7 +2126,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (skipEl) { skipEl.remove(); kurangiRenderedCount(1); }
     finishDownloadUI(skipUrl, false);
     if (typeof mdui !== 'undefined' && mdui.snackbar) {
-      mdui.snackbar({ message: `Skipped (HTTP ${message.status || '4xx'}): ${skipUrl.split('/').pop() || skipUrl}`, placement: 'top' });
+      tampilnoNotif(`Skipped (HTTP ${message.status || '4xx'}): ${skipUrl.split('/').pop() || skipUrl}`);
     }
   } else if (message.action === 'downloadError') {
     const id = message.id || message.url;
@@ -2145,20 +2142,14 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     if (message.error === "USER_CANCELED") {
       if (typeof mdui !== 'undefined' && mdui.snackbar) {
-        mdui.snackbar({
-          message: browser.i18n.getMessage("downloadCancelled") || "Download cancelled",
-          placement: "top"
-        });
+        tampilnoNotif(browser.i18n.getMessage("downloadCancelled") || "Download cancelled");
       }
       finishDownloadUI(id, false);
       return;
     }
 
     if (typeof mdui !== 'undefined' && mdui.snackbar) {
-      mdui.snackbar({
-        message: browser.i18n.getMessage("downloadError", [message.error]) || ("Download error: " + message.error),
-        placement: "top"
-      });
+      tampilnoNotif(browser.i18n.getMessage("downloadError", [message.error]) || ("Download error: " + message.error));
     } else {
       showDialog(browser.i18n.getMessage("downloadError", [message.error]) || ("Download error: " + message.error));
     }
@@ -2869,7 +2860,7 @@ function handleSkippedHttpError(url, status) {
   }
   finishDownloadUI(url, false);
   if (typeof mdui !== 'undefined' && mdui.snackbar) {
-    mdui.snackbar({ message: `Skipped (HTTP ${status || '4xx'}): ${url.split('/').pop() || url}`, placement: 'top' });
+    tampilnoNotif(`Skipped (HTTP ${status || '4xx'}): ${url.split('/').pop() || url}`);
   }
 }
 
@@ -5002,6 +4993,46 @@ function checkIsSegment(url, responseHeaders, settings) {
 
 let mediaListLoad = null;
 let mediaListReloadRequested = false;
+function tampilnoNotif(pesen, opsi = {}) {
+  if (pesen === undefined || pesen === null || pesen === '') return;
+  if (!document.body) return;
+  let el = document.getElementById('wmd-notif');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'wmd-notif';
+    el.className = 'wmd-notif';
+    el.setAttribute('role', 'status');
+    document.body.appendChild(el);
+  }
+  el.textContent = '';
+  const teks = document.createElement('span');
+  teks.className = 'wmd-notif-teks';
+  teks.textContent = String(pesen);
+  el.appendChild(teks);
+  if (opsi.aksi && opsi.aksi.label && typeof opsi.aksi.lakokno === 'function') {
+    const tombol = document.createElement('button');
+    tombol.type = 'button';
+    tombol.className = 'wmd-notif-aksi';
+    tombol.textContent = String(opsi.aksi.label);
+    tombol.addEventListener('click', () => {
+      try { opsi.aksi.lakokno(); } catch (_) {}
+      el.classList.remove('tampil');
+    });
+    el.appendChild(tombol);
+  }
+  el.classList.add('tampil');
+  if (el._wmdNotifTimer) clearTimeout(el._wmdNotifTimer);
+  const durasi = opsi.durasi === undefined ? 5000 : opsi.durasi;
+  if (durasi > 0) {
+    el._wmdNotifTimer = setTimeout(() => {
+      el.classList.remove('tampil');
+      el._wmdNotifTimer = null;
+    }, durasi);
+  } else {
+    el._wmdNotifTimer = null;
+  }
+}
+
 async function ambilDataMediaMentah() {
     const loadTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Wektu muat daftar media entek (10 detik)')), 10000));
     const [mediaRequests, settings, targetWebTab] = await Promise.race([Promise.all([
@@ -5994,7 +6025,7 @@ async function loadHistoryList(reset = true) {
       e.stopPropagation();
       navigator.clipboard.writeText(item.url).then(() => {
         if (typeof mdui !== 'undefined' && mdui.snackbar) {
-          mdui.snackbar({ message: browser.i18n.getMessage("copyURLSuccess") || "URL copied to clipboard", placement: "top" });
+          tampilnoNotif(browser.i18n.getMessage("copyURLSuccess") || "URL copied to clipboard");
         }
       });
     });
@@ -6006,10 +6037,7 @@ async function loadHistoryList(reset = true) {
       visitBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         if (typeof mdui !== 'undefined' && mdui.snackbar) {
-          mdui.snackbar({
-            message: browser.i18n.getMessage("historyRefreshInstruction") || "Please play the video to refresh the link",
-            placement: "top"
-          });
+          tampilnoNotif(browser.i18n.getMessage("historyRefreshInstruction") || "Please play the video to refresh the link");
         }
         setTimeout(() => {
           browser.tabs.create({ url: item.pageUrl });
@@ -6038,7 +6066,7 @@ async function loadHistoryList(reset = true) {
             mediaType: item.mediaType || getMediaType(item.url, [])
           });
           if (typeof mdui !== 'undefined' && mdui.snackbar) {
-            mdui.snackbar({ message: browser.i18n.getMessage("downloadStartedSnackbar") || "Download started...", placement: "top" });
+            tampilnoNotif(browser.i18n.getMessage("downloadStartedSnackbar") || "Download started...");
           }
         } else {
           browser.downloads.download({
@@ -6126,11 +6154,11 @@ async function handleImportHistory(e) {
     await browser.storage.local.set({ 'download-history': merged });
     loadHistoryList();
     if (typeof mdui !== 'undefined' && mdui.snackbar) {
-      mdui.snackbar({ message: browser.i18n.getMessage('historyImportSuccess') || 'History imported successfully!', placement: 'top' });
+      tampilnoNotif(browser.i18n.getMessage('historyImportSuccess') || 'History imported successfully!');
     }
   } catch (err) {
     if (typeof mdui !== 'undefined' && mdui.snackbar) {
-      mdui.snackbar({ message: browser.i18n.getMessage('historyImportError', [err.message]) || `Failed to import history: ${err.message}`, placement: 'top' });
+      tampilnoNotif(browser.i18n.getMessage('historyImportError', [err.message]) || `Failed to import history: ${err.message}`);
     }
   }
 }
@@ -6654,7 +6682,7 @@ async function downloadAllAsZip(items) {
         }
 
         if (typeof mdui !== 'undefined' && mdui.snackbar) {
-          mdui.snackbar({ message: browser.i18n.getMessage("zipComplete") || "ZIP download complete!", placement: "top" });
+          tampilnoNotif(browser.i18n.getMessage("zipComplete") || "ZIP download complete!");
         }
         syncZipProgressToGroupCards(`📦 ZIP • ${browser.i18n.getMessage("zipComplete") || "ZIP download complete!"}`, 100, false, null, false, null, zipGroupType, zipJobId);
 
@@ -6677,10 +6705,7 @@ async function downloadAllAsZip(items) {
       });
 
       if (typeof mdui !== 'undefined' && mdui.snackbar) {
-        mdui.snackbar({
-          message: browser.i18n.getMessage("zipStartedInBackground") || "ZIP download started in background",
-          placement: "top"
-        });
+        tampilnoNotif(browser.i18n.getMessage("zipStartedInBackground") || "ZIP download started in background");
       }
     }
 
@@ -6930,10 +6955,7 @@ try {
                     if (cachedItem) uiCache.set(backgroundJob.jobId, cachedItem);
                 }
                 if (typeof mdui !== 'undefined' && mdui.snackbar) {
-                    mdui.snackbar({
-                        message: browser.i18n.getMessage("downloadStarted") || "Download started in background tab",
-                        placement: "top"
-                    });
+                    tampilnoNotif(browser.i18n.getMessage("downloadStarted") || "Download started in background tab");
                 }
                 return;
             }
@@ -7206,7 +7228,7 @@ async function cobaDelegasiYoutube(konteks) {
             if (cachedItem) uiCache.set(backgroundJob.jobId, cachedItem);
         }
         if (typeof mdui !== 'undefined' && mdui.snackbar) {
-            mdui.snackbar({ message: browser.i18n.getMessage('downloadStarted') || 'Download started in background', placement: 'top' });
+            tampilnoNotif(browser.i18n.getMessage('downloadStarted') || 'Download started in background');
         }
         return true;
     } catch (err) {
