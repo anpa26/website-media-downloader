@@ -782,6 +782,8 @@ mdui-bottom-app-bar {
     cursor: crosshair;
     touch-action: none;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.22);
+    outline: 1px solid rgb(var(--mdui-color-outline-variant));
+    outline-offset: -1px;
 }
 
 .theme-color-wheel:focus-visible {

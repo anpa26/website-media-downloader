@@ -1570,6 +1570,7 @@ async function initializeSettings() {
 
     const activeColor = colorResult['theme-color'] || '#bbdefb';
     let selectedHsv = hexToHsv(activeColor) || hexToHsv('#bbdefb');
+    let baseSaturation = selectedHsv.s;
     mdui.setColorScheme(activeColor);
     if (hexInput) hexInput.value = activeColor;
     if (brightnessInput) brightnessInput.value = Math.round(selectedHsv.v * 100);
@@ -1597,8 +1598,9 @@ async function initializeSettings() {
         }
         context.putImageData(image, 0, 0);
         const angle = selectedHsv.h * Math.PI / 180;
-        const markerX = radius + Math.cos(angle) * selectedHsv.s * radius;
-        const markerY = radius + Math.sin(angle) * selectedHsv.s * radius;
+        const markerS = Math.min(selectedHsv.s, (radius - 8) / radius);
+        const markerX = radius + Math.cos(angle) * markerS * radius;
+        const markerY = radius + Math.sin(angle) * markerS * radius;
         context.beginPath();
         context.arc(markerX, markerY, 6, 0, Math.PI * 2);
         context.lineWidth = 3;
@@ -1629,6 +1631,7 @@ async function initializeSettings() {
         const radius = colorWheel.width / 2;
         selectedHsv.h = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360;
         selectedHsv.s = Math.min(1, Math.sqrt(dx * dx + dy * dy) / radius);
+        baseSaturation = selectedHsv.s;
         stageWheelColor();
     };
 
@@ -1645,6 +1648,7 @@ async function initializeSettings() {
     if (brightnessInput) {
         brightnessInput.oninput = event => {
             selectedHsv.v = Number(event.target.value) / 100;
+            selectedHsv.s = Math.min(1, baseSaturation * (1 + (1 - selectedHsv.v)));
             stageWheelColor();
         };
     }
@@ -1658,6 +1662,7 @@ async function initializeSettings() {
             const hsv = hexToHsv(value);
             if (hsv) {
                 selectedHsv = hsv;
+                baseSaturation = selectedHsv.s;
                 if (brightnessInput) brightnessInput.value = Math.round(hsv.v * 100);
                 mdui.setColorScheme(value);
                 drawColorWheel();
