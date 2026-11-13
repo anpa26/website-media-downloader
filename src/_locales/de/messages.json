@@ -1511,7 +1511,7 @@
     "description": "Developer attribution string."
   },
   "leadDeveloperDescription": {
-    "message": "Ein Hauptentwickler, der sich auf die Verbesserung und Modernisierung der Erweiterung konzentriert. Er hat Funktionen wie Hintergrund-Downloads, Verlauf und UI-Verbesserungen hinzugefügt, um die Erweiterung auf ihren aktuellen Stand zu bringen.",
+    "message": "Hauptentwickler, verantwortlich für die fortlaufende Entwicklung und Weiterentwicklung der Erweiterung. Treibt laufende Verbesserungen und neue Ergänzungen voran, gestaltet deren Ausrichtung und wahrt ihre Gesamtqualität.",
     "description": "Developer attribution string."
   },
   "maintainedByTitle": {
@@ -1527,7 +1527,7 @@
     "description": "Contributor attribution string."
   },
   "legacyContributorDescription": {
-    "message": "Beteiligung an den frühen Versionen der Kern-Engine des Projekts.",
+    "message": "Hat zur ursprünglichen Entwicklung der Kern-Engine des Projekts beigetragen und den Grundstein für dessen anfängliche Architektur und Funktionalität gelegt. Diese frühe Arbeit diente als Ausgangspunkt für die weitere Entwicklung des Projekts.",
     "description": "Contributor attribution string."
   },
   "usefulLinksTitle": {

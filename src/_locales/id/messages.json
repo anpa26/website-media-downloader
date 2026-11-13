@@ -1483,7 +1483,7 @@
     "description": "Developer attribution string."
   },
   "leadDeveloperDescription": {
-    "message": "Pengembang utama yang fokus pada peningkatan dan modernisasi ekstensi, menambahkan fitur seperti pengunduhan latar belakang, riwayat, dan peningkatan UI untuk membawanya ke kondisinya saat ini.",
+    "message": "Pengembang utama yang bertanggung jawab atas pengembangan dan evolusi ekstensi yang berkelanjutan. Mendorong peningkatan dan penambahan baru secara terus-menerus, sekaligus membentuk arahnya dan menjaga kualitasnya secara keseluruhan.",
     "description": "Developer attribution string."
   },
   "maintainedByTitle": {
@@ -1499,7 +1499,7 @@
     "description": "Contributor attribution string."
   },
   "legacyContributorDescription": {
-    "message": "Berkontribusi pada versi awal mesin inti proyek.",
+    "message": "Berkontribusi pada pengembangan awal mesin inti proyek dan meletakkan fondasi bagi arsitektur serta fungsionalitas awalnya. Pekerjaan awalnya menjadi titik awal bagi evolusi proyek yang berkelanjutan.",
     "description": "Contributor attribution string."
   },
   "usefulLinksTitle": {

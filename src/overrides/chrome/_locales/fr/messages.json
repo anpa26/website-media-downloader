@@ -1255,7 +1255,7 @@
         "description": "Developer attribution string."
     },
     "leadDeveloperDescription": {
-        "message": "Un développeur principal axé sur l amélioration et la modernisation de l extension, ajoutant des fonctionnalités telles que les téléchargements en arrière-plan, l historique et les améliorations de l interface utilisateur pour l amener à son état actuel.",
+        "message": "Développeur principal responsable du développement continu et de l'évolution de l'extension. Il pilote les améliorations continues et les nouveaux ajouts, tout en définissant son orientation et en maintenant sa qualité globale.",
         "description": "Developer attribution string."
     },
     "maintainedByTitle": {
@@ -1271,7 +1271,7 @@
         "description": "Contributor attribution string."
     },
     "legacyContributorDescription": {
-        "message": "A contribué aux premières versions du moteur de base du projet.",
+        "message": "A contribué au développement initial du moteur principal du projet et a posé les fondations de son architecture et de ses fonctionnalités initiales. Son travail précoce a servi de point de départ à l'évolution continue du projet.",
         "description": "Contributor attribution string."
     },
     "usefulLinksTitle": {

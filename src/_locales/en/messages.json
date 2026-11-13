@@ -1516,7 +1516,7 @@
     "description": "Developer attribution string."
   },
   "leadDeveloperDescription": {
-    "message": "A lead developer focused on improving and modernizing the extension, adding features like bg downloads, history, and UI enhancements to bring it to its current state.",
+    "message": "Lead developer responsible for the continued development and evolution of the extension. Driving ongoing improvements and new additions while shaping its direction and maintaining its overall quality.",
     "description": "Developer attribution string."
   },
   "maintainedByTitle": {
@@ -1532,7 +1532,7 @@
     "description": "Contributor attribution string."
   },
   "legacyContributorDescription": {
-    "message": "Contributed to the early versions of the project core engine.",
+    "message": "Contributed to the original development of the project's core engine and laid the foundation for its initial architecture and functionality. Their early work served as the starting point for the project's continued evolution.",
     "description": "Contributor attribution string."
   },
   "usefulLinksTitle": {

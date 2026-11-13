@@ -1511,7 +1511,7 @@
     "description": "Developer attribution string."
   },
   "leadDeveloperDescription": {
-    "message": "백그라운드 다운로드, 기록, UI 개선 등 기능을 추가하여 확장 프로그램을 현대화하고 현재 상태로 개선하는 데 주력한 리드 개발자입니다.",
+    "message": "확장 프로그램의 지속적인 개발과 발전을 책임지는 리드 개발자. 지속적인 개선과 새로운 기능 추가를 이끌며 방향성을 정하고 전반적인 품질을 유지합니다.",
     "description": "Developer attribution string."
   },
   "maintainedByTitle": {
@@ -1527,7 +1527,7 @@
     "description": "Contributor attribution string."
   },
   "legacyContributorDescription": {
-    "message": "프로젝트 핵심 엔진의 초기 버전에 기여했습니다.",
+    "message": "프로젝트 핵심 엔진의 초기 개발에 기여하고 초기 아키텍처와 기능의 토대를 마련했습니다. 그 초기 작업은 프로젝트의 지속적인 발전을 위한 출발점이 되었습니다.",
     "description": "Contributor attribution string."
   },
   "usefulLinksTitle": {

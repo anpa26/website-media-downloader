@@ -1255,7 +1255,7 @@
         "description": "Developer attribution string."
     },
     "leadDeveloperDescription": {
-        "message": "Um desenvolvedor líder focado em melhorar e modernizar a extensão, adicionando recursos como downloads em segundo plano, histórico e aprimoramentos de interface do usuário para trazê-la ao seu estado atual.",
+        "message": "Desenvolvedor principal responsável pelo desenvolvimento contínuo e pela evolução da extensão. Impulsiona melhorias constantes e novas adições, moldando sua direção e mantendo sua qualidade geral.",
         "description": "Developer attribution string."
     },
     "maintainedByTitle": {
@@ -1271,7 +1271,7 @@
         "description": "Contributor attribution string."
     },
     "legacyContributorDescription": {
-        "message": "Contribuiu para as versões iniciais do motor principal do projeto.",
+        "message": "Contribuiu para o desenvolvimento original do motor principal do projeto e lançou as bases de sua arquitetura e funcionalidade iniciais. Seu trabalho inicial serviu como ponto de partida para a evolução contínua do projeto.",
         "description": "Contributor attribution string."
     },
     "usefulLinksTitle": {

@@ -12,14 +12,14 @@
             "github": "https://github.com/anpa26",
             "repo": "https://github.com/anpa26/website-media-downloader",
             "avatar": "https://avatars.githubusercontent.com/u/278016362",
-            "description": "A lead developer focused on improving and modernizing the extension, adding features like bg downloads, history, and UI enhancements to bring it to its current state."
+            "description": "Lead developer responsible for the continued development and evolution of the extension. Driving ongoing improvements and new additions while shaping its direction and maintaining its overall quality."
         },
         {
             "role": "Legacy Contributor",
             "name": "helloyanis",
             "github": "https://github.com/helloyanis",
             "avatar": "https://avatars.githubusercontent.com/u/40769776",
-            "description": "Contributed to the early versions of the project's core engine."
+            "description": "Contributed to the original development of the project's core engine and laid the foundation for its initial architecture and functionality. Their early work served as the starting point for the project's continued evolution."
         }
     ],
     "links": [

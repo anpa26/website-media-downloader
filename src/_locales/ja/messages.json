@@ -1511,7 +1511,7 @@
     "description": "Developer attribution string."
   },
   "leadDeveloperDescription": {
-    "message": "拡張機能の改善と最新化に重点を置いたリードデベロッパー。バックグラウンドダウンロード、履歴、UIの機能強化などの機能を追加し、現在の状態に仕上げました。",
+    "message": "拡張機能の継続的な開発と進化を担うリード開発者。継続的な改善と新機能の追加を推進し、その方向性を形作りながら全体的な品質を維持しています。",
     "description": "Developer attribution string."
   },
   "maintainedByTitle": {
@@ -1527,7 +1527,7 @@
     "description": "Contributor attribution string."
   },
   "legacyContributorDescription": {
-    "message": "プロジェクトの初期コアエンジンの開発に貢献しました。",
+    "message": "プロジェクトのコアエンジンの初期開発に貢献し、その初期アーキテクチャと機能の基盤を築きました。その初期の取り組みは、プロジェクトの継続的な進化の出発点となりました。",
     "description": "Contributor attribution string."
   },
   "usefulLinksTitle": {
