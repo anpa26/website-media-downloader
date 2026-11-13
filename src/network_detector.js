@@ -1079,7 +1079,7 @@ function injectNotificationScript(tabId, filename, url, mediaType, title, themeC
                 border: 1px solid rgba(255,255,255,0.18);
                 transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                 animation: mdu-toast-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                touch-action: pan-y; user-select: none; -webkit-user-select: none;
+                touch-action: none; user-select: none; -webkit-user-select: none;
                 zoom: ${uiScale || '85%'};
             `;
             if (uiScale) toast.style.zoom = uiScale;
@@ -1487,19 +1487,24 @@ function injectNotificationScript(tabId, filename, url, mediaType, title, themeC
             // Swipe / Drag dismiss logic
             let isDragging = false;
             let startX = 0;
+            let startY = 0;
             let diffX = 0;
+            let diffY = 0;
 
-            const handleStart = (clientX) => {
+            const handleStart = (clientX, clientY) => {
                 isDragging = true;
                 startX = clientX;
+                startY = clientY;
                 toast.style.transition = 'none';
             };
 
-            const handleMove = (clientX) => {
+            const handleMove = (clientX, clientY) => {
                 if (!isDragging) return;
                 diffX = clientX - startX;
-                const dragOpacity = Math.max(0, 1 - Math.abs(diffX) / 150);
-                toast.style.transform = `translateX(calc(-50% + ${diffX}px))`;
+                diffY = clientY - startY;
+                const dragDist = Math.sqrt(diffX * diffX + diffY * diffY);
+                const dragOpacity = Math.max(0, 1 - dragDist / 150);
+                toast.style.transform = `translateX(calc(-50% + ${diffX}px)) translateY(${diffY}px)`;
                 toast.style.opacity = dragOpacity;
             };
 
@@ -1507,9 +1512,16 @@ function injectNotificationScript(tabId, filename, url, mediaType, title, themeC
                 if (!isDragging) return;
                 isDragging = false;
                 toast.style.transition = 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-                if (Math.abs(diffX) > 80) {
-                    const slideDir = diffX > 0 ? 200 : -200;
-                    toast.style.transform = `translateX(calc(-50% + ${slideDir}px))`;
+                if (Math.abs(diffX) > 80 || Math.abs(diffY) > 80) {
+                    let endTransform;
+                    if (Math.abs(diffX) >= Math.abs(diffY)) {
+                        const slideDir = diffX > 0 ? 200 : -200;
+                        endTransform = `translateX(calc(-50% + ${slideDir}px))`;
+                    } else {
+                        const slideDir = diffY > 0 ? 200 : -200;
+                        endTransform = `translateX(-50%) translateY(${slideDir}px)`;
+                    }
+                    toast.style.transform = endTransform;
                     toast.style.opacity = '0';
                     setTimeout(() => {
                         if (toast.parentNode) toast.remove();
@@ -1519,27 +1531,35 @@ function injectNotificationScript(tabId, filename, url, mediaType, title, themeC
                     toast.style.opacity = '1';
                 }
                 diffX = 0;
+                diffY = 0;
+            };
+
+            const isInteractiveTarget = (target) => {
+                return target.tagName === 'BUTTON' || target.tagName === 'SELECT' || target.closest('button') || target.closest('select');
             };
 
             toast.addEventListener('touchstart', (e) => {
-                handleStart(e.touches[0].clientX);
+                if (isInteractiveTarget(e.target)) return;
+                const t = e.touches[0];
+                handleStart(t.clientX, t.clientY);
             }, { passive: true });
 
             toast.addEventListener('touchmove', (e) => {
-                handleMove(e.touches[0].clientX);
+                const t = e.touches[0];
+                handleMove(t.clientX, t.clientY);
             }, { passive: true });
 
             toast.addEventListener('touchend', handleEnd, { passive: true });
 
             toast.addEventListener('mousedown', (e) => {
                 if (e.button !== 0) return;
-                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT' || e.target.closest('button') || e.target.closest('select')) {
+                if (isInteractiveTarget(e.target)) {
                     return;
                 }
-                handleStart(e.clientX);
+                handleStart(e.clientX, e.clientY);
                 
                 const onMouseMove = (moveEvt) => {
-                    handleMove(moveEvt.clientX);
+                    handleMove(moveEvt.clientX, moveEvt.clientY);
                 };
                 
                 const onMouseUp = () => {
