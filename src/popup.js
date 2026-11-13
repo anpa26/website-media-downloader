@@ -241,7 +241,7 @@ const imageThumbObserver = new IntersectionObserver(entries => {
   });
 }, { rootMargin: '400px 0px' });
 const uiCache = new Map();
-let isGroupingEnabled = false;
+let isGroupingEnabled = true;
 let isGroupProgressEnabled = true;
 let activeGroup = null;
 let activeDownloadingElements = [];

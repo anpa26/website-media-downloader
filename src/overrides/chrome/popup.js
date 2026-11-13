@@ -223,7 +223,7 @@ const imageThumbObserver = new IntersectionObserver(entries => {
   });
 }, { rootMargin: '400px 0px' });
 const uiCache = new Map();
-let isGroupingEnabled = false;
+let isGroupingEnabled = true;
 let isGroupProgressEnabled = true;
 let activeGroup = null;
 let activeDownloadingElements = [];
@@ -5735,7 +5735,7 @@ async function loadMediaListOnce() {
     if (mainContent) mainContent.style.display = 'block';
 
 
-    isGroupingEnabled = settings['group-by-type'] === '1' || settings['group-by-type'] === true;
+    isGroupingEnabled = settings['group-by-type'] === undefined || settings['group-by-type'] === '1' || settings['group-by-type'] === true;
     isGroupProgressEnabled = settings['group-download-progress'] === undefined || settings['group-download-progress'] === '1' || settings['group-download-progress'] === true;
     updateGlobalProgressVisibility();
     applyManualScanUI(isFlagEnabled(settings['manual-scan'], false), settings['bottom-bar-design'] || 'v3');
