@@ -1,133 +1,163 @@
 {
   "require_uninstall": false,
   "en": {
-    "headline": "What's New (v2.5.5)",
+    "headline": "What's New (v2.6.0)",
     "changes": [
-      "Added new top header layout with extension branding and dropdown navigation menu.",
-      "Added manual scan mode with tab-specific media filtering and manual scan trigger.",
-      "Added option to automatically remove detected media when its source tab is closed.",
-      "Revamped bottom action bar with adaptive options and quick Add URL button.",
-      "Added Spanish (es) locale support (#4).",
-      "Minimizable and freely draggable download toast with persistent position (#6).",
-      "Unified download progress across all media types with popup pause, resume and cancel controls (#6).",
-      "You can now view, pause, resume and cancel download progress in group mode without opening the group media list."
+      "Optimized popup list rendering with lazy loading.",
+      "Improved theme color picker and slider responsiveness in interface settings.",
+      "Fixed HLS audio and video merging into a single MP4 file options.",
+      "Fixed downloads getting stuck in the popup list.",
+      "Fixed delays when initializing the list view on first launch.",
+      "Fixed toast dragging issues.",
+      "Fixed notifications overlapping the top area.",
+      "Fixed download progress and media handling issues in the popup.",
+      "Fixed parallel download handling when parts are skipped or fail, including recovery from chunk writing errors.",
+      "Removed dead code and deduplicated some code.",
+      "Refined project credits and attribution."
     ]
   },
   "id": {
-    "headline": "Yang Baru (v2.5.5)",
+    "headline": "Yang Baru (v2.6.0)",
     "changes": [
-      "Desain header atas baru dengan logo/nama ekstensi dan menu navigasi dropdown.",
-      "Fitur mode hanya pindai manual dengan deteksi situs aktif dan tombol Pindai.",
-      "Opsi otomatis menghapus media terdeteksi saat tab sumbernya ditutup.",
-      "Pembaruan bilah aksi bawah yang adaptif dan tombol cepat Tambah URL.",
-      "Dukungan bahasa Spanyol (es) (#4).",
-      "Notifikasi download mengambang (toast) kini dapat diminimalkan, digeser bebas (draggable) dan posisinya tersimpan (#6).",
-      "Penyatuan indikator progres unduhan untuk semua tipe media lengkap dengan kontrol jeda, lanjut dan batal di popup (#6).",
-      "Kini kamu dapat melihat, menjeda, melanjutkan dan membatalkan progres unduhan dalam mode grup tanpa membuka daftar media grup."
+      "Optimalisasi rendering daftar popup dengan lazy loading.",
+      "Peningkatan responsivitas color picker tema dan slider di pengaturan tampilan.",
+      "Perbaikan penggabungan audio dan video HLS menjadi satu file MP4.",
+      "Perbaikan download yang macet di daftar popup.",
+      "Perbaikan delay saat menginisialisasi tampilan daftar pada peluncuran pertama.",
+      "Perbaikan masalah drag pada toast.",
+      "Perbaikan notifikasi yang menumpuk di area atas.",
+      "Perbaikan progres download dan penanganan media di popup.",
+      "Perbaikan penanganan download paralel saat ada bagian yang dilewati atau gagal, termasuk pemulihan dari error penulisan chunk.",
+      "Penghapusan dead code dan deduplikasi sebagian kode.",
+      "Penyempurnaan kredit dan atribusi proyek."
     ]
   },
   "de": {
-    "headline": "Was gibt's Neues (v2.5.5)",
+    "headline": "Was gibt's Neues (v2.6.0)",
     "changes": [
-      "Neues oberes Header-Layout mit Markenlogo und Dropdown-Navigationsmenü.",
-      "Manueller Scanmodus mit tab-spezifischer Medienfilterung und Scan-Schaltfläche.",
-      "Option zum automatischen Entfernen erkannter Medien beim Schließen des Quell-Tabs.",
-      "Überarbeitete untere Aktionsleiste mit adaptiven Optionen und Schnellschaltfläche zum Hinzufügen von URLs.",
-      "Unterstützung für die spanische (es) Sprache hinzugefügt (#4).",
-      "Minimierbarer und frei verschiebbarer Download-Toast mit gespeicherter Position (#6).",
-      "Einheitlicher Download-Fortschritt für alle Medientypen mit Pausier-, Fortsetzungs- und Abbruch-Steuerung im Popup (#6).",
-      "Im Gruppenmodus kannst du den Download-Fortschritt jetzt anzeigen, pausieren, fortsetzen und abbrechen ohne die Medienliste der Gruppe zu öffnen."
+      "Optimiertes Rendering der Popup-Liste mit Lazy Loading.",
+      "Verbesserte Reaktionsfähigkeit der Theme-Farbauswahl und der Schieberegler in den Oberflächeneinstellungen.",
+      "Behobenes Zusammenführen von HLS-Audio und -Video in eine einzelne MP4-Datei.",
+      "Behobene Downloads, die in der Popup-Liste stecken blieben.",
+      "Behobene Verzögerungen beim Initialisieren der Listenansicht beim ersten Start.",
+      "Behobene Probleme beim Ziehen von Toasts.",
+      "Behobene Benachrichtigungen, die den oberen Bereich überlappten.",
+      "Behobene Probleme mit Download-Fortschritt und Medienbehandlung im Popup.",
+      "Behobene parallele Download-Verarbeitung, wenn Teile übersprungen werden oder fehlschlagen, einschließlich Wiederherstellung nach Fehlern beim Schreiben von Chunks.",
+      "Entfernen von totem Code und Deduplizierung von Code.",
+      "Verfeinerte Projekt-Credits und Zuschreibung."
     ]
   },
   "fr": {
-    "headline": "Nouveautés (v2.5.5)",
+    "headline": "Nouveautés (v2.6.0)",
     "changes": [
-      "Nouvelle disposition de l'en-tête supérieur avec logo et menu de navigation déroulant.",
-      "Mode d'analyse manuelle avec filtrage des médias par onglet et bouton d'analyse.",
-      "Option de suppression automatique des médias détectés lors de la fermeture de l'onglet source.",
-      "Barre d'actions inférieure repensée avec options adaptatives et bouton rapide d'ajout d'URL.",
-      "Ajout de la prise en charge de la langue espagnole (es) (#4).",
-      "Notification de téléchargement (toast) réductible, déplaçable librement et mémorisant sa position (#6).",
-      "Progression de téléchargement unifiée pour tous les types de médias avec commandes pause, reprise et annulation dans le popup (#6).",
-      "Vous pouvez désormais afficher, mettre en pause, reprendre et annuler la progression des téléchargements en mode groupe sans ouvrir la liste des médias du groupe."
+      "Rendu optimisé de la liste du popup avec chargement différé.",
+      "Amélioration de la réactivité du sélecteur de couleur du thème et des curseurs dans les paramètres d'interface.",
+      "Correction de la fusion audio et vidéo HLS en un seul fichier MP4.",
+      "Correction des téléchargements bloqués dans la liste du popup.",
+      "Correction des délais lors de l'initialisation de la vue de liste au premier lancement.",
+      "Correction des problèmes de glissement des toasts.",
+      "Correction des notifications qui chevauchaient la zone supérieure.",
+      "Correction des problèmes de progression des téléchargements et de gestion des médias dans le popup.",
+      "Correction de la gestion des téléchargements parallèles lorsque des parties sont ignorées ou échouent, y compris la récupération après des erreurs d'écriture de morceaux.",
+      "Suppression du code mort et déduplication d'une partie du code.",
+      "Affinement des crédits et de l'attribution du projet."
     ]
   },
   "ja": {
-    "headline": "新機能 (v2.5.5)",
+    "headline": "新機能 (v2.6.0)",
     "changes": [
-      "拡張機能のブランド表示とドロップダウンナビゲーションメニューを備えた新しいトップヘッダー。",
-      "タブ固有のメディアフィルタリングとスキャンボタンを備えた手動スキャンモード。",
-      "元のタブが閉じられたときに検出されたメディアを自動的に削除するオプション。",
-      "適応型オプションとクイックURL追加ボタンを備えた刷新された下部アクションバー。",
-      "スペイン語（es）のサポートを追加 (#4)。",
-      "最小化可能で自由にドラッグ移動でき位置が記憶されるダウンロードトースト (#6)。",
-      "すべてのメディアタイプでダウンロード進捗を統合しポップアップに一時停止・再開・キャンセルの操作を追加 (#6)。",
-      "グループのメディア一覧を開かなくてもグループモードでダウンロードの進捗確認、一時停止、再開、キャンセルができるようになりました。"
+      "遅延読み込みによるポップアップリストのレンダリングを最適化しました。",
+      "インターフェース設定のテーマカラーピッカーとスライダーの応答性を改善しました。",
+      "HLSの音声と動画を1つのMP4ファイルに結合するオプションを修正しました。",
+      "ポップアップリストでダウンロードが止まる問題を修正しました。",
+      "初回起動時のリストビュー初期化の遅延を修正しました。",
+      "トーストのドラッグ問題を修正しました。",
+      "通知が上部エリアに重なる問題を修正しました。",
+      "ポップアップのダウンロード進捗とメディア処理の問題を修正しました。",
+      "一部がスキップまたは失敗した場合の並列ダウンロード処理を修正しました（チャンク書き込みエラーからの復旧を含む）。",
+      "デッドコードを削除し、一部のコードを重複排除しました。",
+      "プロジェクトのクレジットと帰属を洗練しました。"
     ]
   },
   "ko": {
-    "headline": "새로운 기능 (v2.5.5)",
+    "headline": "새로운 기능 (v2.6.0)",
     "changes": [
-      "확장 프로그램 브랜딩 및 드롭다운 탐색 메뉴가 포함된 새로운 상단 헤더 레이아웃.",
-      "탭별 미디어 필터링 및 수동 스캔 버튼이 포함된 수동 스캔 모드.",
-      "원본 탭이 닫힐 때 감지된 미디어를 자동으로 제거하는 옵션.",
-      "적응형 옵션 및 빠른 URL 추가 버튼이 포함된 새로워진 하단 작업 표시줄.",
-      "스페인어(es) 언어 지원 추가 (#4).",
-      "최소화 가능하며 자유롭게 드래그하여 위치가 저장되는 다운로드 토스트 (#6).",
-      "모든 미디어 유형의 다운로드 진행률을 통합하고 팝업에 일시중지, 재개 및 취소 제어 추가 (#6).",
-      "이제 그룹 미디어 목록을 열지 않고도 그룹 모드에서 다운로드 진행 상황을 확인하고 일시중지, 재개 및 취소할 수 있습니다."
+      "지연 로딩을 통한 팝업 목록 렌더링 최적화.",
+      "인터페이스 설정의 테마 색상 선택기와 슬라이더 반응성 개선.",
+      "HLS 오디오와 비디오를 하나의 MP4 파일로 병합하는 옵션 수정.",
+      "팝업 목록에서 다운로드가 멈추는 문제 수정.",
+      "첫 실행 시 목록 보기 초기화 지연 수정.",
+      "토스트 드래그 문제 수정.",
+      "알림이 상단 영역과 겹치는 문제 수정.",
+      "팝업의 다운로드 진행률 및 미디어 처리 문제 수정.",
+      "일부가 건너뛰거나 실패할 때의 병렬 다운로드 처리 수정(청크 쓰기 오류 복구 포함).",
+      "데드 코드 제거 및 일부 코드 중복 제거.",
+      "프로젝트 크레딧 및 기여 표시 개선."
     ]
   },
   "pt": {
-    "headline": "Novidades (v2.5.5)",
+    "headline": "Novidades (v2.6.0)",
     "changes": [
-      "Novo layout de cabeçalho superior com marca da extensão e menu suspenso de navegação.",
-      "Modo de verificação manual com filtragem de mídia por guia e botão de verificação.",
-      "Opção para remover automaticamente as mídias detectadas ao fechar a guia de origem.",
-      "Barra de ações inferior renovada com opções adaptáveis e botão rápido para adicionar URL.",
-      "Suporte ao idioma espanhol (es) adicionado (#4).",
-      "Aviso flutuante (toast) de download minimizável, arrastável e com posição persistente (#6).",
-      "Progresso de download unificado para todos os tipos de mídia com controles de pausa, retomada e cancelamento no popup (#6).",
-      "Agora você pode visualizar, pausar, retomar e cancelar o progresso dos downloads no modo de grupo sem abrir a lista de mídias do grupo."
+      "Renderização otimizada da lista do popup com carregamento preguiçoso.",
+      "Melhoria na responsividade do seletor de cores do tema e dos controles deslizantes nas configurações de interface.",
+      "Correção da mesclagem de áudio e vídeo HLS em um único arquivo MP4.",
+      "Correção de downloads travados na lista do popup.",
+      "Correção de atrasos ao inicializar a visualização de lista na primeira execução.",
+      "Correção de problemas ao arrastar notificações toast.",
+      "Correção de notificações sobrepondo a área superior.",
+      "Correção de problemas de progresso de download e manipulação de mídia no popup.",
+      "Correção do tratamento de downloads paralelos quando partes são ignoradas ou falham, incluindo recuperação de erros de gravação de partes.",
+      "Remoção de código morto e deduplicação de parte do código.",
+      "Refinamento dos créditos e da atribuição do projeto."
     ]
   },
   "ru": {
-    "headline": "Что нового (v2.5.5)",
+    "headline": "Что нового (v2.6.0)",
     "changes": [
-      "Новый верхний заголовок с брендингом расширения и выпадающим меню навигации.",
-      "Режим ручного сканирования с фильтрацией медиа по вкладке и кнопкой сканирования.",
-      "Опция автоматического удаления обнаруженных медиа при закрытии исходной вкладки.",
-      "Обновленная нижняя панель действий с адаптивными опциями и быстрой кнопкой добавления URL.",
-      "Добавлена поддержка испанского (es) языка (#4).",
-      "Плавающее уведомление (toast) загрузки теперь можно свернуть, свободно перемещать и сохранять его позицию (#6).",
-      "Единый прогресс загрузки для всех типов медиа с кнопками паузы, возобновления и отмены в попапе (#6).",
-      "Теперь в групповом режиме можно просматривать прогресс загрузки, приостанавливать, возобновлять и отменять загрузки без открытия списка медиа группы."
+      "Оптимизирован рендеринг списка во всплывающем окне с ленивой загрузкой.",
+      "Улучшена отзывчивость выбора цвета темы и ползунков в настройках интерфейса.",
+      "Исправлено объединение аудио и видео HLS в один MP4-файл.",
+      "Исправлены загрузки, застревавшие в списке всплывающего окна.",
+      "Исправлены задержки при инициализации списка при первом запуске.",
+      "Исправлены проблемы с перетаскиванием всплывающих уведомлений.",
+      "Исправлены уведомления, перекрывавшие верхнюю область.",
+      "Исправлены проблемы с прогрессом загрузки и обработкой медиа во всплывающем окне.",
+      "Исправлена параллельная загрузка, когда части пропускаются или завершаются ошибкой, включая восстановление после ошибок записи фрагментов.",
+      "Удалён мёртвый код, продублированный код объединён.",
+      "Уточнены кредиты проекта и атрибуция."
     ]
   },
   "ar": {
-    "headline": "ما الجديد (v2.5.5)",
+    "headline": "ما الجديد (v2.6.0)",
     "changes": [
-      "تصميم جديد للرأس العلوي يتضمن شعار الإضافة وقائمة تنقل منسدلة.",
-      "وضع الفحص اليدوي مع تصفية الوسائط لكل علامة تبويب وزر فحص مباشر.",
-      "خيار الحذف التلقائي للوسائط المكتشفة عند إغلاق علامة التبويب المصدر.",
-      "شريط إجراءات سفلي متجدد مع خيارات تكيفية وزر سريع لإضافة الرابط.",
-      "إضافة دعم اللغة الإسبانية (es) (#4).",
-      "إشعار تنزيل عائم قابل للتصغير والسحب بحرية مع حفظ موضعه (#6).",
-      "مؤشر تقدم تنزيل موحد لجميع أنواع الوسائط مع أزرار الإيقاف المؤقت والاستئناف والإلغاء في النافذة المنبثقة (#6).",
-      "يمكنك الآن عرض تقدم التنزيلات وإيقافها مؤقتًا واستئنافها وإلغاؤها في وضع المجموعة دون فتح قائمة وسائط المجموعة."
+      "تحسين عرض قائمة النافذة المنبثقة مع التحميل الكسول.",
+      "تحسين استجابة منتقي ألوان السمة وأشرطة التمرير في إعدادات الواجهة.",
+      "إصلاح دمج صوت وفيديو HLS في ملف MP4 واحد.",
+      "إصلاح التنزيلات العالقة في قائمة النافذة المنبثقة.",
+      "إصلاح التأخير عند تهيئة عرض القائمة عند التشغيل الأول.",
+      "إصلاح مشاكل سحب التنبيهات.",
+      "إصلاح الإشعارات التي تتداخل مع المنطقة العلوية.",
+      "إصلاح مشاكل تقدم التنزيل ومعالجة الوسائط في النافذة المنبثقة.",
+      "إصلاح معالجة التنزيلات المتوازية عند تخطي أجزاء أو فشلها، بما في ذلك الاسترداد من أخطاء كتابة الأجزاء.",
+      "إزالة التعليمات البرمجية الميتة وإزالة تكرار بعض التعليمات البرمجية.",
+      "تحسين اعتمادات المشروع ونسبته."
     ]
   },
   "es": {
-    "headline": "Novedades (v2.5.5)",
+    "headline": "Novedades (v2.6.0)",
     "changes": [
-      "Nuevo diseño de encabezado superior con la marca de la extensión y menú de navegación desplegable.",
-      "Modo de escaneo manual con filtrado de medios por pestaña y botón de escaneo.",
-      "Opción para eliminar automáticamente los medios detectados al cerrar la pestaña de origen.",
-      "Barra de acciones inferior renovada con opciones adaptativas y botón rápido para agregar URL.",
-      "Soporte para el idioma español (es) (#4).",
-      "Notificación flotante (toast) de descarga minimizable, arrastrable y con posición persistente (#6).",
-      "Progreso de descarga unificado para todos los tipos de medios con controles de pausa, reanudación y cancelación en el popup (#6).",
-      "Ahora puedes ver, pausar, reanudar y cancelar el progreso de las descargas en el modo de grupo sin abrir la lista de medios del grupo."
+      "Renderizado optimizado de la lista del popup con carga diferida.",
+      "Mejora de la capacidad de respuesta del selector de color del tema y los controles deslizantes en la configuración de la interfaz.",
+      "Corrección de la fusión de audio y video HLS en un solo archivo MP4.",
+      "Corrección de descargas atascadas en la lista del popup.",
+      "Corrección de retrasos al inicializar la vista de lista en el primer inicio.",
+      "Corrección de problemas al arrastrar notificaciones toast.",
+      "Corrección de notificaciones que se superponían al área superior.",
+      "Corrección de problemas de progreso de descarga y manejo de medios en el popup.",
+      "Corrección del manejo de descargas paralelas cuando se omiten partes o fallan, incluida la recuperación de errores de escritura de fragmentos.",
+      "Eliminación de código muerto y deduplicación de parte del código.",
+      "Refinamiento de los créditos y la atribución del proyecto."
     ]
   }
 }
