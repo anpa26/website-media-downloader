@@ -145,9 +145,27 @@ async function offlineExtractAudioToWav(blob, loadingBar, checkCancel = null) {
     }
 }
 
-async function convertAudioToMp3IfEnabled(blob, filename, loadingBar = null, checkCancel = null) {
+async function convertM4aToMp3Direct(blob, filename, loadingBar = null, checkCancel = null) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) throw new Error("Web Audio API is not available");
+
+    const statusInfo = loadingBar?.parentNode?.querySelector('.download-status-info');
+    const audioContext = new AudioContextClass();
+    try {
+        if (statusInfo) statusInfo.textContent = browser.i18n.getMessage("decodingAudio") || "Decoding audio...";
+        const audioBuffer = await audioContext.decodeAudioData(await blob.arrayBuffer());
+        if (checkCancel && checkCancel()) throw new Error("Cancelled");
+        const wavBlob = await offlineAudioBufferToWav(audioBuffer, null, checkCancel);
+        const wavFilename = filename.replace(/\.(wav|m4a|mp4|webm|ogg|opus|aac|mp3)$/i, '') + '.wav';
+        return convertAudioToMp3IfEnabled(wavBlob, wavFilename, loadingBar, checkCancel, true);
+    } finally {
+        try { await audioContext.close(); } catch (e) {}
+    }
+}
+
+async function convertAudioToMp3IfEnabled(blob, filename, loadingBar = null, checkCancel = null, force = false) {
     const settings = await browser.storage.local.get('audio-to-mp3');
-    if (settings['audio-to-mp3'] !== '1') return { blob, filename };
+    if (!force && settings['audio-to-mp3'] !== '1') return { blob, filename };
 
     const isWav = blob.type.includes('wav') || /\.wav$/i.test(filename);
 
@@ -161,7 +179,7 @@ async function convertAudioToMp3IfEnabled(blob, filename, loadingBar = null, che
     }
 
     return new Promise((resolve, reject) => {
-        const worker = new Worker('workers/mp3_worker.js');
+        const worker = new Worker(browser.runtime.getURL('workers/mp3_worker.js'));
         let cancelInterval = null;
 
         if (checkCancel) {

@@ -50,12 +50,15 @@ function createMediaItem(item) {
   let hlsLarge = null;
   let isSyncing = false;
   let resolvedM3u8Url = null;
+  let inlinePreview = null;
+  let largeVideo = null;
 
   const getPlayableUrl = async (url) => {
     if (!url) return url;
     if (url.toLowerCase().includes('.mpd')) {
       if (resolvedM3u8Url) return resolvedM3u8Url;
       try {
+        await ensureScriptLoaded('popup/kartu/mpd.js', 'getM3u8BlobUrlFromMpd');
         resolvedM3u8Url = await getM3u8BlobUrlFromMpd(url, bestRequest.responseHeaders);
         return resolvedM3u8Url;
       } catch (e) {
@@ -168,19 +171,19 @@ function createMediaItem(item) {
       previewContainer.classList.add('playing');
       const isExpanded = mediaDiv.classList.contains('expanded');
       video.muted = isExpanded;
-      if (typeof largeVideo !== 'undefined') largeVideo.muted = !isExpanded;
-      syncPlayback(video, largeVideo, true);
+      if (largeVideo) largeVideo.muted = !isExpanded;
+      if (largeVideo) syncPlayback(video, largeVideo, true);
     });
     video.addEventListener('pause', () => {
       previewContainer.classList.remove('playing');
-      syncPlayback(video, largeVideo, true);
+      if (largeVideo) syncPlayback(video, largeVideo, true);
     });
     video.addEventListener('ended', () => {
       previewContainer.classList.remove('playing');
-      syncPlayback(video, largeVideo, true);
+      if (largeVideo) syncPlayback(video, largeVideo, true);
     });
     video.addEventListener('timeupdate', () => {
-      syncPlayback(video, largeVideo, true);
+      if (largeVideo) syncPlayback(video, largeVideo, true);
     });
 
     previewContainer.addEventListener('click', async (e) => {
@@ -293,12 +296,32 @@ function createMediaItem(item) {
   header.appendChild(qrBtn);
   mediaDiv.appendChild(header);
 
-  const inlinePreview = document.createElement('div');
-  inlinePreview.classList.add('inline-preview-area');
-  const largeVideo = document.createElement('video');
-  largeVideo.controls = true;
-  inlinePreview.appendChild(largeVideo);
-  mediaDiv.appendChild(inlinePreview);
+  function gawePratinjauGede() {
+    if (largeVideo) return largeVideo;
+    inlinePreview = document.createElement('div');
+    inlinePreview.classList.add('inline-preview-area');
+    largeVideo = document.createElement('video');
+    largeVideo.controls = true;
+    inlinePreview.appendChild(largeVideo);
+    if (actionsWrapper.parentNode === mediaDiv) mediaDiv.insertBefore(inlinePreview, actionsWrapper);
+    else mediaDiv.appendChild(inlinePreview);
+    largeVideo.addEventListener('play', () => {
+      if (!video) return;
+      const isExpanded = mediaDiv.classList.contains('expanded');
+      largeVideo.muted = !isExpanded;
+      video.muted = isExpanded;
+      syncPlayback(largeVideo, video, false);
+    });
+    largeVideo.addEventListener('pause', () => {
+      if (!video) return;
+      syncPlayback(largeVideo, video, false);
+    });
+    largeVideo.addEventListener('timeupdate', () => {
+      if (!video) return;
+      syncPlayback(largeVideo, video, false);
+    });
+    return largeVideo;
+  }
 
   mediaDiv.cleanupMediaPreview = () => {
     mediaPreviewLoadObserver.unobserve(mediaDiv);
@@ -318,22 +341,6 @@ function createMediaItem(item) {
     if (resolvedM3u8Url?.startsWith('blob:')) URL.revokeObjectURL(resolvedM3u8Url);
     resolvedM3u8Url = null;
   };
-
-  largeVideo.addEventListener('play', () => {
-    if (!video) return;
-    const isExpanded = mediaDiv.classList.contains('expanded');
-    largeVideo.muted = !isExpanded;
-    video.muted = isExpanded;
-    syncPlayback(largeVideo, video, false);
-  });
-  largeVideo.addEventListener('pause', () => {
-    if (!video) return;
-    syncPlayback(largeVideo, video, false);
-  });
-  largeVideo.addEventListener('timeupdate', () => {
-    if (!video) return;
-    syncPlayback(largeVideo, video, false);
-  });
 
   if ((isVideo || isStream) && !ytFormats && typeof embedSubtitlesWithLibAV !== 'undefined') {
      browser.storage.local.get(['embed-subtitles-nonyt']).then(res => {
@@ -876,6 +883,7 @@ function createMediaItem(item) {
       const isExpanded = mediaDiv.classList.toggle('expanded');
 
       if (isExpanded) {
+        gawePratinjauGede();
         if (isImage) {
           largeVideo.style.display = 'none';
           let largeImg = inlinePreview.querySelector('img');
@@ -916,9 +924,11 @@ function createMediaItem(item) {
         }
         prvBtn.setAttribute('selected', '');
       } else {
-        largeVideo.pause();
-        largeVideo.src = "";
-        const largeImg = inlinePreview.querySelector('img');
+        if (largeVideo) {
+          largeVideo.pause();
+          largeVideo.src = "";
+        }
+        const largeImg = inlinePreview ? inlinePreview.querySelector('img') : null;
         if (largeImg) largeImg.src = "";
 
         if (hlsLarge) {

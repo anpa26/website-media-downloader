@@ -16,8 +16,6 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-let zipConfirmResolver = null;
-
 async function askUserToContinue(filename, error) {
     return new Promise((resolve) => {
         zipConfirmResolver = resolve;

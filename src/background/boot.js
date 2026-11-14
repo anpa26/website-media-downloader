@@ -44,3 +44,10 @@ let urlList = [];
 let headersSentListener, headersReceivedListener;
 const activeDownloads = new Map();
 
+function muatZipLatar() {
+    if (typeof handleDownloadAllAsZip === 'function') return;
+    if (typeof importScripts !== 'function') throw new Error('muatZipLatar: importScripts ora kasedhiya lan handleDownloadAllAsZip durung ke-load');
+    importScripts('background/download/zip.js');
+    if (typeof handleDownloadAllAsZip !== 'function') throw new Error('background/download/zip.js ke-load nanging handleDownloadAllAsZip ora ketemu');
+}
+

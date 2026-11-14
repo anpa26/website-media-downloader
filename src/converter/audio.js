@@ -198,7 +198,7 @@ async function convertAudioToMp3IfEnabled(blob, filename, loadingBar = null, che
     }
 
     return new Promise((resolve, reject) => {
-        const worker = new Worker('workers/mp3_worker.js');
+        const worker = new Worker(browser.runtime.getURL('workers/mp3_worker.js'));
         let cancelInterval = null;
 
         if (checkCancel) {

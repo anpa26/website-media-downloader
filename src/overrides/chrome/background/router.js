@@ -507,6 +507,13 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     if (message.action === 'startDownloadAll') {
         const downloadId = 'zip_' + Date.now();
+        try {
+            muatZipLatar();
+        } catch (error) {
+            console.error('Gagal muat modul ZIP latar:', error);
+            sendResponse({ success: false, downloadId, error: error.message });
+            return;
+        }
         handleDownloadAllAsZip(message.items, downloadId);
         sendResponse({ downloadId });
         return;

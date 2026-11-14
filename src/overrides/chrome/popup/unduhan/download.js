@@ -340,6 +340,11 @@ async function downloadFile(url, mediaDiv, specificSize, silent = false, audioUr
         quality: selectedRes || 'highest', request: targetRequest, downloadMethod, subData: subDataStream
       });
       if (!streamJob?.success) throw new Error(streamJob?.error || 'Unable to start stream download');
+      if (streamJob.jobId && mediaDiv) {
+        mediaDiv.dataset.downloadId = streamJob.jobId;
+        const itemTersimpen = uiCache.get(downloadId) || uiCache.get(url);
+        if (itemTersimpen) uiCache.set(streamJob.jobId, itemTersimpen);
+      }
       return;
     } else if (bgDownloadEnabled && downloadMethod === 'browser' && !cloudEnabled && !skipHttpErrorsOn) {
 

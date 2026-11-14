@@ -25,7 +25,7 @@ if (typeof importScripts === 'function') importScripts('lib/debug_logger.js', 'l
 if (typeof importScripts === 'function') importScripts(
     'background/boot.js', 'background/detection/m3u8-youtube.js', 'background/jobs/persistent-jobs.js', 'background/cache/cache-db.js', 'background/detection/media-types.js',
     'background/detection/headers.js', 'background/settings.js', 'background/ui/toast.js', 'background/ui/notifikasi.js', 'background/jobs/history.js', 'background/jobs/autodownload.js',
-    'background/detection/listeners.js', 'background/audio/audio.js', 'background/router.js', 'background/download/zip.js', 'background/download/fetch-core.js',
+    'background/detection/listeners.js', 'background/audio/audio.js', 'background/router.js', 'background/download/fetch-core.js',
     'background/cloud/cloud-upload.js', 'background/cloud/cloud-save.js', 'background/cloud/cloud-paralel.js', 'background/cloud/cloud-auth.js', 'background/cloud/cloud-stream.js', 'background/download/fetch-download.js', 'background/init.js'
 );
 importScripts('background/popup_blocker.js');

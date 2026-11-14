@@ -18,6 +18,15 @@
 
 
 
+async function muatUlangKacaAbout() {
+  try {
+    await ensureScriptLoaded('popup/about.js', 'loadAboutPage');
+    if (typeof window.loadAboutPage === 'function') await window.loadAboutPage();
+  } catch (error) {
+    console.warn('Gagal muat ulang kaca About:', error);
+  }
+}
+
 async function checkForUpdates() {
   const settings = await browser.storage.local.get('auto-check-update');
   if (settings['auto-check-update'] === '0') {
@@ -69,7 +78,7 @@ async function checkForUpdates() {
         };
         navigationPageLoads.delete("about");
         if (typeof currentNavigationTab !== "undefined" && currentNavigationTab === "about") {
-          loadAboutPage();
+          muatUlangKacaAbout();
         }
       }
     } catch (error) {
@@ -78,7 +87,7 @@ async function checkForUpdates() {
   } else {
     navigationPageLoads.delete("about");
     if (typeof currentNavigationTab !== "undefined" && currentNavigationTab === "about") {
-      loadAboutPage();
+      muatUlangKacaAbout();
     }
   }
 }

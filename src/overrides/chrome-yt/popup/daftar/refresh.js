@@ -434,7 +434,6 @@ async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId
       if (downloadData.isZip || downloadData.isCachedSave) continue;
       if (entriUnduhanSelesai(downloadData)) continue;
       const url = downloadData.url || '';
-      if (url && apakahUrlSudahDiunduh(url, downloadData.mediaType || 'file')) continue;
       activeCount++;
       const type = downloadData.mediaType || 'file';
       const renderKey = getMediaRenderKey(url, type);

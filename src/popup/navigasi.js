@@ -108,11 +108,29 @@ async function activateNavigationTab(tab) {
     });
   }
   if (tab === 'about') {
-    return loadNavigationPageOnce(tab, loadAboutPage);
+    return loadNavigationPageOnce(tab, async () => {
+      try {
+        await ensureScriptLoaded('popup/about.js', 'loadAboutPage');
+        await window.loadAboutPage();
+      } catch (error) {
+        const wadahAbout = document.getElementById('about-container');
+        if (wadahAbout) wadahAbout.innerHTML = '<div style="padding: 40px; text-align: center;">' + (browser.i18n.getMessage('failedToLoadAbout') || 'Failed to load About page information.') + '</div>';
+        throw error;
+      }
+    });
   }
   if (tab === 'history') {
-    initializeHistoryPage();
-    return loadNavigationPageOnce(tab, loadHistoryList);
+    return loadNavigationPageOnce(tab, async () => {
+      try {
+        await ensureScriptLoaded('popup/riwayat.js', 'loadHistoryList');
+        initializeHistoryPage();
+        await window.loadHistoryList();
+      } catch (error) {
+        const wadahRiwayat = document.getElementById('history-list');
+        if (wadahRiwayat) wadahRiwayat.innerHTML = '<div style="padding: 60px 20px; text-align: center;">Failed to load History.</div>';
+        throw error;
+      }
+    });
   }
   if (tab === 'home') {
     if (!navigationPageLoads.has(tab)) activeGroup = null;
@@ -131,7 +149,7 @@ function waitForNavigationIdle() {
 }
 
 async function warmNavigationTabs(initialTab) {
-  const warmOrder = ['history', 'about', 'settings', 'home'];
+  const warmOrder = ['home'];
   for (const tab of warmOrder) {
     if (tab === initialTab || navigationPageLoads.has(tab)) continue;
     await waitForNavigationIdle();

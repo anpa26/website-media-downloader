@@ -131,11 +131,17 @@ function updateProgressUI(id, loaded, total, isParallel = false, isPaused = fals
 
     if (status === 'uploading') {
         const pct = percent || (total > 0 ? Math.round((loaded / total) * 100) : 0);
-        loadingBar.value = 100;
-        loadingBar.indeterminate = false;
         loadingBar.classList.add('uploading-phase');
         const statusText = (browser.i18n.getMessage("uploadingToGDriveShort") || "Uploading to Cloud...");
-        statusInfo.textContent = (isPaused ? `[${(browser?.i18n?.getMessage?.("pausedStatus") || chrome?.i18n?.getMessage?.("pausedStatus")) || "Paused"}] ` : "") + statusText + ` (${pct}%)`;
+        const teksUnggah = (isPaused ? `[${(browser?.i18n?.getMessage?.("pausedStatus") || chrome?.i18n?.getMessage?.("pausedStatus")) || "Paused"}] ` : "") + statusText + ` (${pct}%)`;
+        if (item.persenPungkasan !== 100 || item.teksPungkasan !== teksUnggah || item.jedaPungkasan !== !!isPaused) {
+            loadingBar.value = 100;
+            loadingBar.indeterminate = false;
+            statusInfo.textContent = teksUnggah;
+            item.persenPungkasan = 100;
+            item.teksPungkasan = teksUnggah;
+            item.jedaPungkasan = !!isPaused;
+        }
         return;
     }
 
@@ -181,14 +187,24 @@ function updateProgressUI(id, loaded, total, isParallel = false, isPaused = fals
       }
 
       if (isPaused) text = `[Paused] ${text}`;
-      statusInfo.textContent = text;
-      loadingBar.indeterminate = false;
-      loadingBar.max = 100;
-      loadingBar.value = percent;
+      if (item.persenPungkasan !== percent || item.teksPungkasan !== text || item.jedaPungkasan !== !!isPaused || loadingBar.indeterminate) {
+        statusInfo.textContent = text;
+        loadingBar.indeterminate = false;
+        loadingBar.max = 100;
+        loadingBar.value = percent;
+        item.persenPungkasan = percent;
+        item.teksPungkasan = text;
+        item.jedaPungkasan = !!isPaused;
+      }
     } else {
       let text = (browser.i18n.getMessage("streamProgressNoSize", [loadedMB]) || `${loadedMB} MB downloaded`) + speedText;
       if (isPaused) text = `[Paused] ${text}`;
-      statusInfo.textContent = text;
+      if (item.persenPungkasan !== null || item.teksPungkasan !== text || item.jedaPungkasan !== !!isPaused) {
+        statusInfo.textContent = text;
+        item.persenPungkasan = null;
+        item.teksPungkasan = text;
+        item.jedaPungkasan = !!isPaused;
+      }
       if (loadingBar.indeterminate !== true && !loadingBar.value) {
           loadingBar.indeterminate = true;
       }

@@ -23,7 +23,7 @@ let activeDownloadSnapshotTime = 0;
 let activeDownloadSnapshotRead = null;
 function getActiveDownloadSnapshot() {
   if (activeDownloadSnapshotRead) return activeDownloadSnapshotRead;
-  if (activeDownloadSnapshot && Date.now() - activeDownloadSnapshotTime < 500) {
+  if (activeDownloadSnapshot && Date.now() - activeDownloadSnapshotTime < 1000) {
     return Promise.resolve(activeDownloadSnapshot);
   }
   activeDownloadSnapshotRead = Promise.all([
@@ -51,6 +51,8 @@ function restoreActiveDownloadsUI(snapshot = null) {
 
 const waktuSelesaiTerlihat = new Map();
 const BATAS_TUNGGU_SELESAI_MS = 2000;
+const waktuJobIlangTerlihat = new Map();
+const BATAS_TUNGGU_JOB_ILANG_MS = 2000;
 
 async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
   const activeDownloads = activeDownloadsPassed || await getActiveDownloadSnapshot();
@@ -100,7 +102,7 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
       return;
     }
     waktuSelesaiTerlihat.delete(id);
-    if (url && apakahUrlSudahDiunduh(url, downloadData.mediaType || 'file')) return;
+    if (url && apakahUrlSudahDiunduh(url, downloadData.mediaType || 'file') && !downloadData.isStreamJob) return;
 
     if (downloadData.isZip) {
       hasZip = true;
@@ -263,14 +265,25 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
   mediaItems.forEach(item => {
     const jobId = item.dataset.downloadId || '';
     if (!jobId || activeIdSet.has(jobId)) return;
+    if (jobId.startsWith('stream_')) return;
     const bar = item.querySelector('mdui-linear-progress');
     const nilaiBar = Number(bar?.value ?? uiCache.get(jobId)?.loadingBar?.value ?? 0);
     if (nilaiBar >= 100) {
       finishDownloadUI(jobId, true);
-    } else if (jobId.startsWith('audio_') || jobId.startsWith('stream_') || jobId.startsWith('dl_')) {
-      finishDownloadUI(jobId, false);
+    } else if (jobId.startsWith('audio_')) {
+      const pertamaKaliIlang = waktuJobIlangTerlihat.get(jobId);
+      if (pertamaKaliIlang === undefined) {
+        waktuJobIlangTerlihat.set(jobId, Date.now());
+      } else if (Date.now() - pertamaKaliIlang >= BATAS_TUNGGU_JOB_ILANG_MS) {
+        waktuJobIlangTerlihat.delete(jobId);
+        finishDownloadUI(jobId, false);
+      }
     }
   });
+
+  for (const idIlang of [...waktuJobIlangTerlihat.keys()]) {
+    if (activeIdSet.has(idIlang)) waktuJobIlangTerlihat.delete(idIlang);
+  }
 
   segarkanHitunganGrup();
 }

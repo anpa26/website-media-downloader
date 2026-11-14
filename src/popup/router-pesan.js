@@ -18,6 +18,8 @@
 
 
 
+const statusPopupPungkasan = new Map();
+
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender && sender.id && sender.id !== browser.runtime.id) return;
   if (message.action === 'imageMetadataUpdated') {
@@ -39,6 +41,22 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return;
   }
   if (message.action === 'customStatus' || message.action === 'audioPopupStatus' || message.action === 'streamPopupStatus') {
+    if (message.action === 'audioPopupStatus' || message.action === 'streamPopupStatus') {
+      const kunciJobStatus = String(message.jobId || message.id);
+      const persenStatus = message.percent !== undefined && message.percent !== null && !isNaN(message.percent) ? Math.round(Number(message.percent)) : null;
+      const teksStatus = message.text || '';
+      const terminalStatus = (persenStatus !== null && persenStatus >= 100) || /selesai|complete|gagal|error|failed|batal|cancel/i.test(teksStatus);
+      if (terminalStatus) {
+        statusPopupPungkasan.delete(kunciJobStatus);
+      } else {
+        const sidikStatus = [persenStatus, teksStatus, !!message.isPaused, !!message.indeterminate].join('|');
+        if (statusPopupPungkasan.get(kunciJobStatus) === sidikStatus) {
+          sendResponse({ success: true });
+          return;
+        }
+        statusPopupPungkasan.set(kunciJobStatus, sidikStatus);
+      }
+    }
     let item = uiCache.get(message.id);
     if (!item) {
       const mediaItems = [...new Set([...document.querySelectorAll('.media-item'), ...activeDownloadingElements])];

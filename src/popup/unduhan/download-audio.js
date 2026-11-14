@@ -222,6 +222,11 @@ try {
                   request: targetRequest, downloadMethod
               });
               if (!streamJob?.success) throw new Error(streamJob?.error || 'Unable to start stream download');
+              if (streamJob.jobId && mediaDiv) {
+                mediaDiv.dataset.downloadId = streamJob.jobId;
+                const itemTersimpen = uiCache.get(url);
+                if (itemTersimpen) uiCache.set(streamJob.jobId, itemTersimpen);
+              }
               return;
           }
           const result = url.toLowerCase().includes('.mpd')

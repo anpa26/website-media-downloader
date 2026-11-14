@@ -18,6 +18,8 @@
 
 
 
+const sidikGrupPungkasan = new Map();
+
 function syncGroupProgressCard(groupType) {
   if (!isGroupProgressEnabled || !isGroupingEnabled || activeGroup !== null) return;
   const card = document.querySelector(`.media-group-card[data-group-type="${groupType}"]`);
@@ -37,6 +39,8 @@ function syncGroupProgressCard(groupType) {
   const hasZip = zipItems.length > 0;
 
   if (items.length === 0 && !hasZip) {
+    if (sidikGrupPungkasan.get(groupType) === 'kosong' && !container) return;
+    sidikGrupPungkasan.set(groupType, 'kosong');
     if (container) container.remove();
     return;
   }
@@ -75,6 +79,11 @@ function syncGroupProgressCard(groupType) {
   } else {
     summaryText = `${items.length} downloading${!isCombinedIndeterminate ? " (" + avgPercent + "%)" : ""}`;
   }
+
+  const rincianGrup = items.map(it => [it.id, (it.indeterminate || it.percent === null || it.percent === undefined) ? '...' : Math.round(Math.min(100, Math.max(0, it.percent))), it.isPaused ? 1 : 0, it.filename || ''].join(',')).join(';') + '|' + zipItems.map(z => [z.jobId || '__zip__', z.indeterminate ? '...' : Math.round(Math.min(100, Math.max(0, z.percent ?? 0))), z.isPaused ? 1 : 0, z.text || ''].join(',')).join(';');
+  const sidikGrupSaiki = [summaryText, rincianGrup].join('|');
+  if (sidikGrupPungkasan.get(groupType) === sidikGrupSaiki && container) return;
+  sidikGrupPungkasan.set(groupType, sidikGrupSaiki);
 
   const buildItemElement = (item) => {
     const isIndeterminate = item.indeterminate || item.percent === null || item.percent === undefined;

@@ -76,6 +76,106 @@ function busakKunciRender(el) {
 let generasiModelMedia = 0;
 let refreshSelektifKotor = false;
 let refreshSelektifMlaku = false;
+let sidikJariRefreshMentahPalingAnyar = null;
+
+function campurSidikJari(teks, hash) {
+  const untai = String(teks ?? '');
+  for (let i = 0; i < untai.length; i++) {
+    hash ^= untai.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  hash ^= 59;
+  hash = Math.imul(hash, 16777619);
+  return hash >>> 0;
+}
+
+function sidikJariTajuk(tajuk) {
+  if (!Array.isArray(tajuk)) return '';
+  let hasil = '';
+  for (const h of tajuk) {
+    if (!h) continue;
+    hasil += (h.name || '').toLowerCase() + ':' + (h.value || '') + ';';
+  }
+  return hasil;
+}
+
+function hitungSidikJariRefreshMentah(mediaRequests, settings, tabId, host, itemAktif, unduhanAktif) {
+  let hash = 2166136261;
+  const campur = (nilai) => { hash = campurSidikJari(nilai, hash); };
+  campur(tabId);
+  campur(host);
+  const kunciUrl = Object.keys(mediaRequests || {}).sort();
+  campur(kunciUrl.length);
+  for (const urlMentah of kunciUrl) {
+    campur(urlMentah);
+    const daftar = mediaRequests[urlMentah];
+    if (!Array.isArray(daftar)) { campur('ora-array'); continue; }
+    campur(daftar.length);
+    for (const r of daftar) {
+      if (!r) continue;
+      campur(r.timeStamp ?? r.timestamp ?? 0);
+      campur(r.size ?? 0);
+      campur(r.tabId ?? -1);
+      campur(r.pageTitle || '');
+      campur(r.pageUrl || '');
+      campur(r.isManual ? 1 : 0);
+      campur(r.manualScanned ? 1 : 0);
+      campur(r.imageWidth ?? 0);
+      campur(r.imageHeight ?? 0);
+      if (Array.isArray(r.requestHeaders)) {
+        for (const h of r.requestHeaders) {
+          const nama = (h?.name || '').toLowerCase();
+          if ((nama === 'referer' || nama === 'origin') && h.value) campur(h.value);
+        }
+      }
+      if (Array.isArray(r.ytFormats)) {
+        campur(r.ytFormats.length);
+        for (const f of r.ytFormats) campur((f?.itag ?? '') + ':' + (f?.width ?? '') + 'x' + (f?.height ?? '') + ':' + (f?.label ?? ''));
+      }
+    }
+    const pungkasan = daftar[daftar.length - 1];
+    if (pungkasan) campur(sidikJariTajuk(pungkasan.responseHeaders));
+  }
+  const kunciSetelan = Object.keys(settings || {}).sort();
+  for (const k of kunciSetelan) {
+    campur(k);
+    if (k === 'download-history') {
+      const riwayat = settings[k];
+      if (Array.isArray(riwayat)) {
+        campur(riwayat.length);
+        const kapisan = riwayat[0];
+        if (kapisan) campur((kapisan.url || '') + '|' + (kapisan.timestamp || 0) + '|' + (kapisan.filename || ''));
+        const pungkasanRiwayat = riwayat[riwayat.length - 1];
+        if (pungkasanRiwayat && pungkasanRiwayat !== kapisan) campur((pungkasanRiwayat.url || '') + '|' + (pungkasanRiwayat.timestamp || 0) + '|' + (pungkasanRiwayat.filename || ''));
+      } else {
+        campur(String(riwayat ?? ''));
+      }
+    } else {
+      campur(String(settings[k] ?? ''));
+    }
+  }
+  campur(JSON.stringify(unduhanAktif || {}));
+  campur(itemAktif ? itemAktif.size : 0);
+  if (itemAktif) {
+    const kunciAktif = [...itemAktif.keys()].sort();
+    for (const k of kunciAktif) campur(k);
+  }
+  if (typeof m3u8VariantsCache !== 'undefined') {
+    campur(m3u8VariantsCache.size);
+    const kunciVarian = [...m3u8VariantsCache.keys()].sort();
+    for (const k of kunciVarian) campur(k + ':' + ((m3u8VariantsCache.get(k) || []).length));
+  }
+  if (typeof mpdVariantsCache !== 'undefined') {
+    campur(mpdVariantsCache.size);
+    const kunciVarian = [...mpdVariantsCache.keys()].sort();
+    for (const k of kunciVarian) campur(k + ':' + ((mpdVariantsCache.get(k) || []).length));
+  }
+  campur(document.getElementById('search-bar')?.value.trim() || '');
+  campur(isGroupingEnabled ? 1 : 0);
+  campur(activeGroup || '');
+  return hash;
+}
+
 async function refreshListMediaSelektif() {
   if (refreshSelektifMlaku) { refreshSelektifKotor = true; return; }
   if (!sudahMuatListAwal) { loadMediaList().catch(() => {}); return; }
@@ -93,12 +193,16 @@ async function refreshListMediaSelektif() {
     const activeDownloadsPromise = getActiveDownloadSnapshot();
     const quickActiveDownloads = await Promise.race([activeDownloadsPromise, new Promise(resolve => setTimeout(() => resolve(null), 100))]);
     if (quickActiveDownloads) activeDownloads = quickActiveDownloads;
-    const { items: itemsBaru } = await hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId, currentActiveHost, kumpulkanActiveItems(), activeDownloads);
+    const itemAktif = kumpulkanActiveItems();
+    const sidikJariMentah = hitungSidikJariRefreshMentah(mediaRequests, settings, currentActiveTabId, currentActiveHost, itemAktif, activeDownloads);
+    if (sidikJariMentah === sidikJariRefreshMentahPalingAnyar) return;
+    const { items: itemsBaru } = await hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId, currentActiveHost, itemAktif, activeDownloads);
     if (generasiModelMedia !== generasiSadurunge || mediaListLoad) {
       if (mediaListLoad) butuhRefreshSelektifSawiseLoad = true;
       return;
     }
     terapnoSelisihDaftarMedia(itemsBaru);
+    sidikJariRefreshMentahPalingAnyar = sidikJariMentah;
   } catch (e) {
     console.warn('[website-media-downloader] Refresh selektif gagal, list lawas dipertahanno:', e);
   } finally {

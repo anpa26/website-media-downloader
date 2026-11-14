@@ -27,8 +27,8 @@ function applyHeaderAndBottomBarDesign(headerDesign, barDesign) {
   htmlEl.classList.add(bDesign === 'v1' ? 'bottom-bar-v1' : bDesign === 'v3' ? 'bottom-bar-v3' : 'bottom-bar-v2');
 }
 
-async function initTheme() {
-  const result = await browser.storage.local.get(['theme-color', 'theme-mode']);
+async function initTheme(hasilTema) {
+  const result = hasilTema || await browser.storage.local.get(['theme-color', 'theme-mode']);
   const themeColor = result['theme-color'] || '#bbdefb';
   const themeMode = result['theme-mode'] || 'auto';
 
@@ -51,19 +51,26 @@ async function initTheme() {
   }
 }
 
+function jadwalPemeriksaanAwal() {
+  const jalankanPemeriksaan = () => {
+    checkForUpdates();
+    checkAndShowEventPopup();
+  };
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(jalankanPemeriksaan, { timeout: 2000 });
+  } else {
+    setTimeout(jalankanPemeriksaan, 0);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
-  checkForUpdates();
-  checkAndShowEventPopup();
-  await initTheme();
-  const designSettings = await browser.storage.local.get(['top-header-design', 'bottom-bar-design']);
-  applyHeaderAndBottomBarDesign(designSettings['top-header-design'], designSettings['bottom-bar-design']);
+  const setelanAwal = await browser.storage.local.get(['theme-color', 'theme-mode', 'top-header-design', 'bottom-bar-design', 'ui-scale', 'history-page']);
+  await initTheme(setelanAwal);
+  applyHeaderAndBottomBarDesign(setelanAwal['top-header-design'], setelanAwal['bottom-bar-design']);
 
+  document.documentElement.style.zoom = setelanAwal['ui-scale'] || '85%';
 
-  const scaleResult = await browser.storage.local.get('ui-scale');
-  document.documentElement.style.zoom = scaleResult['ui-scale'] || '85%';
-
-  const historyPageResult = await browser.storage.local.get('history-page');
-  if (historyPageResult['history-page'] === '1') {
+  if (setelanAwal['history-page'] === '1') {
     document.getElementById('history-tab').style.display = 'inline-flex';
     const navbar = document.getElementById('navbar');
     if (navbar) {
@@ -97,8 +104,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     .then(() => {
       restoreNavigationScroll(initialTab);
       warmNavigationTabs(initialTab);
+      jadwalPemeriksaanAwal();
     })
-    .catch(error => console.error(`Failed to load ${initialTab} tab:`, error));
+    .catch(error => {
+      console.error(`Failed to load ${initialTab} tab:`, error);
+      jadwalPemeriksaanAwal();
+    });
 
   let searchDebounceTimer = null;
   document.getElementById('search-bar').addEventListener('input', (e) => {
@@ -435,9 +446,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     closeSpeedDial();
     loadMediaList();
   });
-  document.getElementById('clear-list').addEventListener('click', () => {
+  document.getElementById('clear-list').addEventListener('click', async () => {
     closeSpeedDial();
-    clearMediaList();
+    try {
+      await ensureScriptLoaded('popup/riwayat.js', 'clearMediaList');
+      clearMediaList();
+    } catch (e) {
+      tampilnoNotif('Failed to load History.');
+    }
   });
 
   const handleManualScanClick = async (scanBtn) => {
