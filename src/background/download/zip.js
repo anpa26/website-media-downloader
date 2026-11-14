@@ -405,18 +405,3 @@ async function handleDownloadAllAsZip(items, downloadId) {
         cancelledZipDownloads.delete(downloadId);
     }
 }
-
-
-function getFileName(url, maxLength = 30) {
-    try {
-        let parsedUrl = new URL(url);
-        let fileName = parsedUrl.pathname.substring(parsedUrl.pathname.lastIndexOf('/') + 1).split('?')[0];
-        try {
-            fileName = decodeURIComponent(fileName);
-        } catch (e) {}
-        fileName = fileName.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_');
-        if (!fileName) fileName = parsedUrl.hostname;
-        if (fileName.length > maxLength) fileName = fileName.substring(0, maxLength) + '…';
-        return fileName;
-    } catch (e) { return browser.i18n.getMessage("defaultMediaName") || "Media File"; }
-}

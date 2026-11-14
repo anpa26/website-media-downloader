@@ -1,16 +1,3 @@
-if (typeof browser === 'undefined') {
-    var browser = (typeof chrome !== 'undefined' ? chrome : {});
-}
-if (typeof browser !== 'undefined' && (!browser.i18n || !browser.i18n.getMessage)) {
-    browser.i18n = browser.i18n || {};
-    browser.i18n.getMessage = (key, subs) => {
-        if (typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getMessage) {
-            try { return chrome.i18n.getMessage(key, subs); } catch (e) {}
-        }
-        return "";
-    };
-}
-
 /*
     website-media-downloader - A versatile tool to detect and download videos, music, and streams from almost any website.
     Copyright (C) 2026 anpa26
@@ -28,3 +15,16 @@ if (typeof browser !== 'undefined' && (!browser.i18n || !browser.i18n.getMessage
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+
+if (typeof browser === 'undefined') {
+    var browser = (typeof chrome !== 'undefined' ? chrome : {});
+}
+if (typeof browser !== 'undefined' && (!browser.i18n || !browser.i18n.getMessage)) {
+    browser.i18n = browser.i18n || {};
+    browser.i18n.getMessage = (key, subs) => {
+        if (typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getMessage) {
+            try { return chrome.i18n.getMessage(key, subs); } catch (e) {}
+        }
+        return "";
+    };
+}

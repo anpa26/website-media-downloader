@@ -1,7 +1,7 @@
 {
     "name": "Website Media Downloader",
     "manifest_version": 3,
-    "version": "2.5.5",
+    "version": "2.6.0",
     "description": "__MSG_extensionDescription__",
     "author": "anpa26",
     "developer": {
@@ -113,6 +113,7 @@
             "js": [
                 "content/surgical_scrapers.js",
                 "lib/media_compute_client.js",
+                "lib/media_filename.js",
                 "entries/offlineStreamConvert.js",
                 "converter/util.js",
                 "converter/cache/cache-db.js",
