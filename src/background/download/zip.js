@@ -234,7 +234,7 @@ async function handleDownloadAllAsZip(items, downloadId) {
                 browser.runtime.sendMessage({
                     action: 'zipProgress',
                     id: downloadId,
-                    loaded: items.length,
+                    loaded: 0,
                     total: items.length,
                     status: 'uploading',
                     percent: 0
@@ -273,10 +273,18 @@ async function handleDownloadAllAsZip(items, downloadId) {
                         zipBuffer = [remainder];
                         zipBufferSize = remainder.byteLength;
 
+                        const butirZip = activeDownloads.get(downloadId);
+                        if (butirZip) {
+                            butirZip.percent = Math.min(99, Math.round((offset / (zipBlob.size || offset * 1.1)) * 100));
+                            butirZip.loaded = offset;
+                            butirZip.total = zipBlob.size;
+                        }
+
                         browser.runtime.sendMessage({
                             action: 'zipProgress',
                             id: downloadId,
                             loaded: offset,
+                            total: zipBlob.size,
                             status: 'uploading',
                             percent: Math.min(99, Math.round((offset / (zipBlob.size || offset * 1.1)) * 100))
                         }).catch(() => {});
@@ -316,7 +324,7 @@ async function handleDownloadAllAsZip(items, downloadId) {
                 browser.runtime.sendMessage({
                     action: 'zipProgress',
                     id: downloadId,
-                    loaded: items.length,
+                    loaded: 0,
                     total: items.length,
                     status: 'uploading',
                     percent: 0
@@ -357,7 +365,7 @@ async function handleDownloadAllAsZip(items, downloadId) {
                 browser.runtime.sendMessage({
                     action: 'zipProgress',
                     id: downloadId,
-                    loaded: items.length,
+                    loaded: 0,
                     total: items.length,
                     status: 'uploading',
                     percent: 0

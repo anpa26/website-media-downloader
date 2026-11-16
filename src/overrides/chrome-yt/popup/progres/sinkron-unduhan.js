@@ -149,7 +149,7 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
       }
 
       if (isGroupingEnabled && isGroupProgressEnabled && activeGroup === null) {
-        const pct = downloadData.percent ?? downloadData.loaded ?? 0;
+        const pct = downloadData.percent ?? (downloadData.total > 0 ? ((downloadData.loaded ?? 0) / downloadData.total) * 100 : 0);
         const isIndet = downloadData.status === 'generating' || (downloadData.percent === undefined && !downloadData.loaded);
         const zTxt = downloadData.status === 'generating'
           ? (browser.i18n.getMessage('zipGenerating') || 'Generating ZIP archive...')

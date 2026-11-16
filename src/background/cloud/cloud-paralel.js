@@ -71,7 +71,15 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
         let lastReportTime = 0;
         let lastStateSaveTime = 0;
         const totalChunks = Math.ceil(total / CHUNK_SIZE);
-        let savedChunks = Math.floor(startOffset / CHUNK_SIZE);
+        function cacahBagianDimuat() {
+            const cacah = Math.round(totalLoaded / CHUNK_SIZE);
+            return cacah > totalChunks ? totalChunks : cacah;
+        }
+        const butirParalel = activeDownloads.get(downloadId);
+        if (butirParalel) {
+            butirParalel.finishedParts = cacahBagianDimuat();
+            butirParalel.totalParts = totalChunks;
+        }
 
         const partPromises = [];
 
@@ -83,6 +91,7 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
             partPromises.push((async (pIdx, pStart, pEnd) => {
                 let currentPos = pStart;
                 let NggonKesimpen = pStart;
+                let rentangDisimpen = [];
                 let retries = 0;
                 const maxRetries = 5;
 
@@ -129,8 +138,17 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                                 const awalChunk = chunkOffset;
                                 const akhirChunk = chunkOffset + blob.size;
                                 const writePromise = storeChunkInCache(downloadId, chunkOffset, blob).then(() => {
-                                    savedChunks++;
-                                    if (awalChunk === NggonKesimpen) NggonKesimpen = akhirChunk;
+                                    rentangDisimpen.push([awalChunk, akhirChunk]);
+                                    rentangDisimpen.sort((a, b) => a[0] - b[0]);
+                                    let watesAnyar = NggonKesimpen;
+                                    for (const [awalRentang, akhirRentang] of rentangDisimpen) {
+                                        if (awalRentang > watesAnyar) break;
+                                        if (akhirRentang > watesAnyar) watesAnyar = akhirRentang;
+                                    }
+                                    if (watesAnyar > NggonKesimpen) {
+                                        NggonKesimpen = watesAnyar;
+                                    }
+                                    rentangDisimpen = rentangDisimpen.filter((rentang) => rentang[1] > NggonKesimpen);
                                     const now = Date.now();
                                     if (now - lastStateSaveTime > 1500) {
                                         lastStateSaveTime = now;
@@ -184,7 +202,7 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                             if (now - lastReportTime > 200) {
                                 lastReportTime = now;
                                 if (currentItem) {
-                                    currentItem.finishedParts = savedChunks;
+                                    currentItem.finishedParts = cacahBagianDimuat();
                                     currentItem.totalParts = totalChunks;
                                 }
                                 browser.runtime.sendMessage({
@@ -194,7 +212,7 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                                     loaded: parseInt(totalLoaded) || 0,
                                     total: parseInt(total) || 0,
                                     isParallel: true,
-                                    finishedParts: savedChunks,
+                                    finishedParts: cacahBagianDimuat(),
                                     totalParts: totalChunks
                                 }).catch(() => {});
                                 broadcastAudioJob({
@@ -224,6 +242,12 @@ async function handleParallelFetchDownload(url, filename, total, connections, ba
                         }
                         retries++;
                         console.warn(`Part ${pIdx} failed (attempt ${retries}/${maxRetries}) at position ${currentPos}:`, error);
+                        const jumlahBaleni = currentPos - NggonKesimpen;
+                        if (jumlahBaleni > 0) {
+                            totalLoaded -= jumlahBaleni;
+                            const butirBaleni = activeDownloads.get(downloadId);
+                            if (butirBaleni) butirBaleni.loaded = totalLoaded;
+                        }
                         currentPos = NggonKesimpen;
 
                         const errorItemCheck = activeDownloads.get(downloadId);

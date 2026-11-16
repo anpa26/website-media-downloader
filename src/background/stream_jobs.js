@@ -264,9 +264,10 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 percent: message.percent, loaded: message.loaded, total: message.total,
                 indeterminate: message.indeterminate, groupType: job.groupType
             });
+            const itemSimpen = typeof activeDownloads !== 'undefined' ? activeDownloads.get(message.jobId) : null;
             const progress = message.percent !== undefined
                 ? `${Math.max(0, Math.min(100, Math.round(message.percent)))}%`
-                : `${message.loaded || 0}/${message.total || job.items?.length || 0}`;
+                : `${itemSimpen?.loaded ?? message.loaded ?? 0}/${itemSimpen?.total ?? message.total ?? job.items?.length ?? 0}`;
             showZipNotification(
                 message.jobId,
                 browser.i18n.getMessage('downloadingTitle') || 'Downloading...',

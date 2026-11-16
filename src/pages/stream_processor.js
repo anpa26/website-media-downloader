@@ -352,7 +352,6 @@ async function runPersistentZipJob(jobId, options = {}) {
                 if (typeof ensureFileExtension === 'function') filename = ensureFileExtension(filename, blob.type);
                 entries.push({ name: uniqueZipFilename(filename, usedNames), input: blob });
             }
-            report('downloading', { loaded: index + 1, total: items.length, currentFile: item.filename });
         }
 
         throwIfCancelled();
