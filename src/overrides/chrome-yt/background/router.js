@@ -815,6 +815,41 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
         return;
     }
+    function hostCocok(r, host) {
+      if (!host) return false;
+      const cands = [r.pageUrl];
+      if (Array.isArray(r.requestHeaders)) {
+        for (const h of r.requestHeaders) {
+          const n = h?.name?.toLowerCase();
+          if ((n === 'referer' || n === 'origin') && h.value) cands.push(h.value);
+        }
+      }
+      for (const c of cands) {
+        if (!c) continue;
+        let h = '';
+        try { h = new URL(c).hostname.toLowerCase().replace(/^www\./, ''); } catch (e) { continue; }
+        if (!h) continue;
+        if (h === host || h.endsWith('.' + host) || host.endsWith('.' + h)) return true;
+      }
+      return false;
+    }
+
+    function saringPermintaanMiturutTab(items, tabId, host) {
+      if (tabId == null && !host) return items;
+      const hasil = {};
+      for (const [url, requests] of Object.entries(items || {})) {
+        if (!Array.isArray(requests) || requests.length === 0) continue;
+        const cocok = requests.some(r => {
+          if (!r) return false;
+          if (r.isManual || r.manualScanned) return true;
+          if (tabId != null && r.tabId === tabId) return true;
+          if (host && hostCocok(r, host)) return true;
+          return false;
+        });
+        if (cocok) hasil[url] = requests;
+      }
+      return hasil;
+    }
     if (message.action === 'getMediaRequests') {
         const onlyUrl = typeof message.url === 'string' && message.url ? message.url : null;
         browser.storage.session.get(onlyUrl || null, async function (items) {
@@ -822,6 +857,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             items = Object.fromEntries(Object.entries(items || {}).map(([url, requests]) => [
                 url, Array.isArray(requests) ? requests.filter(request => !detectionExclusions.matches({ ...request, url })) : []
             ]).filter(([, requests]) => requests.length));
+            if (!onlyUrl && (message.tabId != null || message.host)) items = saringPermintaanMiturutTab(items, message.tabId, message.host);
             if (cachedSettings.ignoreDisabledTypes) {
                 const filtered = {};
                 for (const [url, reqs] of Object.entries(items || {})) {

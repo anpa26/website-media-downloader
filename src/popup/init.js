@@ -117,72 +117,97 @@ document.addEventListener('DOMContentLoaded', async () => {
     searchDebounceTimer = setTimeout(() => filterAndRenderMediaList(e.target.value), 200);
   });
 
-  document.getElementById('select-all-checkbox').addEventListener('change', (e) => {
-    const isChecked = e.target.checked;
-    const activeRequests = getActiveRequests();
-    if (isChecked) {
-      activeRequests.forEach(item => {
-        selectedUrls.add(item.bestRequest.originalUrl);
+  document.getElementById('select-all-checkbox').addEventListener('change', async (e) => {
+    try {
+      await tungguMuatDaftarRampung();
+      const isChecked = e.target.checked;
+      const activeRequests = getActiveRequests();
+      if (isChecked) {
+        activeRequests.forEach(item => {
+          selectedUrls.add(item.bestRequest.originalUrl);
+        });
+      } else {
+        activeRequests.forEach(item => {
+          selectedUrls.delete(item.bestRequest.originalUrl);
+        });
+      }
+      const items = document.querySelectorAll('.media-item');
+      items.forEach(item => {
+        const cb = item.querySelector('.media-checkbox');
+        if (cb) cb.checked = isChecked;
       });
-    } else {
-      activeRequests.forEach(item => {
-        selectedUrls.delete(item.bestRequest.originalUrl);
-      });
+      updateSelectedCount();
+    } catch (galat) {
+      tampilnoNotif(browser.i18n.getMessage("downloadError", [galat?.message || galat]) || ("Download error: " + (galat?.message || galat)));
     }
-    const items = document.querySelectorAll('.media-item');
-    items.forEach(item => {
-      const cb = item.querySelector('.media-checkbox');
-      if (cb) cb.checked = isChecked;
-    });
-    updateSelectedCount();
   });
 
+  async function tungguMuatDaftarRampung() {
+    try {
+      if (typeof mediaListLoad !== 'undefined' && mediaListLoad) await mediaListLoad;
+    } catch (_) {}
+  }
+
   async function triggerBatchDownload(requests) {
-    if (!requests || requests.length === 0) return;
-    const hasYouTube = requests.some(req => isYoutubeVideoItem(req));
+    try {
+      if (!requests || requests.length === 0) return;
+      const hasYouTube = requests.some(req => isYoutubeVideoItem(req));
 
-    if (!hasYouTube && requests.length > 1) {
-      await downloadAllAsZip(requests);
-      return;
-    }
-
-    let startedCount = 0;
-    for (const req of requests) {
-      const url = req?.bestRequest?.originalUrl || req?.bestRequest?.url;
-      if (!url) continue;
-
-      const itemElement = Array.from(document.querySelectorAll('.media-item')).find(el => el.dataset.url === url || (el.dataset.originalUrl && el.dataset.originalUrl === url));
-      const dlBtn = itemElement?.querySelector('#download-button');
-      if (itemElement && itemElement.querySelector('mdui-linear-progress')) {
-        continue; // Already downloading
+      if (!hasYouTube && requests.length > 1) {
+        await downloadAllAsZip(requests);
+        return;
       }
 
-      if (dlBtn && !dlBtn.classList.contains('is-paused') && !dlBtn.classList.contains('is-playing')) {
-        dlBtn.click();
-        startedCount++;
-      } else {
-        await downloadFile(url, itemElement, req?.bestRequest?.size, true);
-        startedCount++;
-      }
-      await new Promise(r => setTimeout(r, 150));
-    }
+      let startedCount = 0;
+      for (const req of requests) {
+        const url = req?.bestRequest?.originalUrl || req?.bestRequest?.url;
+        if (!url) continue;
 
-    if (startedCount > 0 && typeof mdui !== 'undefined' && mdui.snackbar) {
-      tampilnoNotif(browser.i18n.getMessage('downloadStartedSnackbar') || browser.i18n.getMessage('downloadStarted') || 'Download started...');
+        const itemElement = Array.from(document.querySelectorAll('.media-item')).find(el => el.dataset.url === url || (el.dataset.originalUrl && el.dataset.originalUrl === url));
+        const dlBtn = itemElement?.querySelector('#download-button');
+        if (itemElement && itemElement.querySelector('mdui-linear-progress')) {
+          continue; // Already downloading
+        }
+
+        if (dlBtn && !dlBtn.classList.contains('is-paused') && !dlBtn.classList.contains('is-playing')) {
+          dlBtn.click();
+          startedCount++;
+        } else {
+          await downloadFile(url, itemElement, req?.bestRequest?.size, true);
+          startedCount++;
+        }
+        await new Promise(r => setTimeout(r, 150));
+      }
+
+      if (startedCount > 0 && typeof mdui !== 'undefined' && mdui.snackbar) {
+        tampilnoNotif(browser.i18n.getMessage('downloadStartedSnackbar') || browser.i18n.getMessage('downloadStarted') || 'Download started...');
+      }
+    } catch (galat) {
+      tampilnoNotif(browser.i18n.getMessage("downloadError", [galat?.message || galat]) || ("Download error: " + (galat?.message || galat)));
     }
   }
 
   document.getElementById('download-selected').addEventListener('click', async () => {
-    const activeRequests = getActiveRequests();
-    const selectedActiveRequests = activeRequests.filter(req => selectedUrls.has(req.bestRequest.originalUrl));
-    if (selectedActiveRequests.length === 0) return;
-    await triggerBatchDownload(selectedActiveRequests);
+    try {
+      await tungguMuatDaftarRampung();
+      const activeRequests = getActiveRequests();
+      const selectedActiveRequests = activeRequests.filter(req => selectedUrls.has(req.bestRequest.originalUrl));
+      if (selectedActiveRequests.length === 0) return;
+      await triggerBatchDownload(selectedActiveRequests);
+    } catch (galat) {
+      tampilnoNotif(browser.i18n.getMessage("downloadError", [galat?.message || galat]) || ("Download error: " + (galat?.message || galat)));
+    }
   });
 
   document.getElementById('download-all').addEventListener('click', async () => {
-    const activeRequests = getActiveRequests();
-    if (activeRequests.length === 0) return;
-    await triggerBatchDownload(activeRequests);
+    try {
+      await tungguMuatDaftarRampung();
+      const activeRequests = getActiveRequests();
+      if (activeRequests.length === 0) return;
+      await triggerBatchDownload(activeRequests);
+    } catch (galat) {
+      tampilnoNotif(browser.i18n.getMessage("downloadError", [galat?.message || galat]) || ("Download error: " + (galat?.message || galat)));
+    }
   });
 
   document.getElementById('delete-selected').addEventListener('click', async () => {
@@ -220,18 +245,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  document.getElementById('cancel-selected').addEventListener('click', () => {
-    const activeRequests = getActiveRequests();
-    const selectedActiveRequests = activeRequests.filter(req => selectedUrls.has(req.bestRequest.originalUrl));
-    selectedActiveRequests.forEach(item => {
-      const url = item.bestRequest.originalUrl;
-      const itemElement = Array.from(document.querySelectorAll('.media-item')).find(el => el.dataset.url === url);
-      if (itemElement && itemElement.querySelector('mdui-linear-progress')) {
-        const dlId = itemElement.dataset.downloadId;
-        browser.runtime.sendMessage({ action: 'cancelDownload', url: url, id: dlId });
-        finishDownloadUI(dlId || url, false);
-      }
-    });
+  document.getElementById('cancel-selected').addEventListener('click', async () => {
+    try {
+      await tungguMuatDaftarRampung();
+      const activeRequests = getActiveRequests();
+      const selectedActiveRequests = activeRequests.filter(req => selectedUrls.has(req.bestRequest.originalUrl));
+      selectedActiveRequests.forEach(item => {
+        const url = item.bestRequest.originalUrl;
+        const itemElement = Array.from(document.querySelectorAll('.media-item')).find(el => el.dataset.url === url);
+        if (itemElement && itemElement.querySelector('mdui-linear-progress')) {
+          const dlId = itemElement.dataset.downloadId;
+          browser.runtime.sendMessage({ action: 'cancelDownload', url: url, id: dlId });
+          finishDownloadUI(dlId || url, false);
+        }
+      });
+    } catch (galat) {
+      tampilnoNotif(browser.i18n.getMessage("downloadError", [galat?.message || galat]) || ("Download error: " + (galat?.message || galat)));
+    }
   });
 
   document.getElementById('cancel-all').addEventListener('click', () => {

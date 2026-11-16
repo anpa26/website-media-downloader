@@ -109,7 +109,20 @@ async function loadMediaListOnce() {
       }
     }
 
-    const { items: daftarMediaAnyar, activeCount } = await hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId, currentActiveHost, activeItems, activeDownloads);
+    let wisRenderAwal = false;
+    const { items: daftarMediaAnyar, activeCount } = await hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId, currentActiveHost, activeItems, activeDownloads, (paket) => {
+      if (!paket || !paket.items || paket.items.length === 0) return;
+      allMediaRequests = paket.items;
+      allFilteredRequests = [...paket.items];
+      generasiModelMedia++;
+      downloadingCount = paket.activeCount;
+      if (typeof updateDownloadingCount === 'function') updateDownloadingCount(0);
+      sudahMuatListAwal = true;
+      setelanStrukturalPalingAnyar = settings;
+      if (loadingSpinner) loadingSpinner.style.display = 'none';
+      wisRenderAwal = true;
+      renderInitialList();
+    });
     if (loadingSpinner) loadingSpinner.style.display = 'none';
     selarasnoSeleksi(allMediaRequests, daftarMediaAnyar);
     allMediaRequests = daftarMediaAnyar;
@@ -118,7 +131,16 @@ async function loadMediaListOnce() {
     downloadingCount = activeCount;
     updateDownloadingCount(0);
 
-    renderInitialList();
+    if (wisRenderAwal && activeDownloadingElements.length > 0) {
+      const query = document.getElementById('search-bar')?.value.trim() || '';
+      if (isGroupingEnabled && activeGroup === null && !query) {
+        segarkanHitunganGrup();
+      } else {
+        renderNextChunk();
+      }
+    } else {
+      renderInitialList();
+    }
     sudahMuatListAwal = true;
     setelanStrukturalPalingAnyar = settings;
 

@@ -62,14 +62,15 @@ function tampilnoNotif(pesen, opsi = {}) {
 
 async function ambilDataMediaMentah() {
     const loadTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Wektu muat daftar media entek (10 detik)')), 10000));
-    const [mediaRequests, settings, targetWebTab] = await Promise.race([Promise.all([
-      browser.runtime.sendMessage({ action: "getMediaRequests" }),
+    const [settings, targetWebTab] = await Promise.race([Promise.all([
       browser.storage.local.get(["manual-scan", "manual-scan-keep-tabs", "top-header-design", "bottom-bar-design", "filename-template", "only-video", "only-audio", "only-stream", "only-image", "only-subtitle", "only-file", "hide-segments", "hide-page-components", "media-sort-order", "limit-media-list", "limit-media-list-custom", "min-file-size", "min-file-size-custom", "image-min-side", "image-min-side-custom", "image-min-file-size", "image-min-file-size-custom", "hide-image-without-size", "optimize-low-end", "group-by-type", "group-download-progress", "disable-deduplication", "download-history"]),
       getTargetMediaTab()
     ]), loadTimeout]);
     const currentActiveTabId = targetWebTab?.id;
     let currentActiveHost = '';
     try { if (targetWebTab?.url) currentActiveHost = new URL(targetWebTab.url).hostname.toLowerCase().replace(/^www\./, ''); } catch (e) {}
+    const perluSaringTab = !isFlagEnabled(settings['manual-scan-keep-tabs'], false) && (currentActiveTabId != null || currentActiveHost);
+    const mediaRequests = await Promise.race([browser.runtime.sendMessage({ action: "getMediaRequests", ...(perluSaringTab ? { tabId: currentActiveTabId, host: currentActiveHost } : {}) }), loadTimeout]);
   return { mediaRequests, settings, targetWebTab, currentActiveTabId, currentActiveHost };
 }
 
@@ -90,7 +91,165 @@ function kumpulkanActiveItems() {
   return activeItems;
 }
 
-async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId, currentActiveHost, activeItems, activeDownloads) {
+function bangunModelMedia(group, settings) {
+  group.requests.sort((a, b) => {
+    const sizeA = parseInt(a.size) || 0;
+    const sizeB = parseInt(b.size) || 0;
+    return sizeB - sizeA;
+  });
+  const bestRequest = group.requests[0];
+  const mediaUrl = bestRequest.originalUrl || bestRequest.url || "";
+  const automaticFilename = mediaFilename.resolve(mediaUrl, bestRequest);
+  const filenameTemplate = settings['filename-template'];
+  const resolvedFilename = filenameTemplate && filenameTemplate !== '0'
+    ? mediaFilename.template(filenameTemplate, mediaUrl, automaticFilename, bestRequest.pageTitle)
+    : automaticFilename;
+  const urlLower = (bestRequest.originalUrl || bestRequest.url || "").toLowerCase();
+  const isStreamUrl = urlLower.includes('.m3u8') || urlLower.includes('.mpd');
+  let hasQuality = false;
+  if (isStreamUrl) {
+    const variants = (urlLower.includes('.mpd') ? mpdVariantsCache : m3u8VariantsCache).get(mediaUrl) || [];
+    hasQuality = variants.length > 0;
+  } else if (bestRequest.ytFormats && bestRequest.ytFormats.length > 1) {
+    hasQuality = true;
+  }
+  return {
+    resolvedFilename,
+    bestRequest,
+    type: group.type,
+    isVideo: group.type === 'video',
+    isAudio: group.type === 'audio',
+    isStream: group.type === 'stream',
+    isSubtitle: group.type === 'subtitle',
+    isImage: group.type === 'image',
+    isFile: group.type === 'file',
+    ytFormats: bestRequest.ytFormats || null,
+    ytSubtitles: bestRequest.ytSubtitles || null,
+    size: parseInt(bestRequest.size) || 0,
+    hasQuality
+  };
+}
+
+function urutnoModelMedia(items, sortOrder) {
+  items.sort((a, b) => {
+    if (sortOrder === 'oldest') {
+      return (a.bestRequest.timeStamp || a.bestRequest.timestamp || 0) - (b.bestRequest.timeStamp || b.bestRequest.timestamp || 0);
+    } else if (sortOrder === 'letter_asc') {
+      const nameA = a.resolvedFilename.toLowerCase();
+      const nameB = b.resolvedFilename.toLowerCase();
+      const isNumA = /^[0-9]/.test(nameA);
+      const isNumB = /^[0-9]/.test(nameB);
+      if (isNumA && !isNumB) return 1;
+      if (!isNumA && isNumB) return -1;
+      return nameA.localeCompare(nameB);
+    } else if (sortOrder === 'letter_desc') {
+      const nameA = a.resolvedFilename.toLowerCase();
+      const nameB = b.resolvedFilename.toLowerCase();
+      const isNumA = /^[0-9]/.test(nameA);
+      const isNumB = /^[0-9]/.test(nameB);
+      if (isNumA && !isNumB) return 1;
+      if (!isNumA && isNumB) return -1;
+      return nameB.localeCompare(nameA);
+    } else if (sortOrder === 'number_desc') {
+      const nameA = a.resolvedFilename.toLowerCase();
+      const nameB = b.resolvedFilename.toLowerCase();
+      const isNumA = /^[0-9]/.test(nameA);
+      const isNumB = /^[0-9]/.test(nameB);
+      if (isNumA && !isNumB) return -1;
+      if (!isNumA && isNumB) return 1;
+      return nameB.localeCompare(nameA, undefined, { numeric: true, sensitivity: 'base' });
+    } else if (sortOrder === 'number_asc') {
+      const nameA = a.resolvedFilename.toLowerCase();
+      const nameB = b.resolvedFilename.toLowerCase();
+      const isNumA = /^[0-9]/.test(nameA);
+      const isNumB = /^[0-9]/.test(nameB);
+      if (isNumA && !isNumB) return -1;
+      if (!isNumA && isNumB) return 1;
+      return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+    } else if (sortOrder === 'size_desc') {
+      const sizeA = parseInt(a.bestRequest.size) || 0;
+      const sizeB = parseInt(b.bestRequest.size) || 0;
+      return sizeB - sizeA;
+    } else if (sortOrder === 'size_asc') {
+      const sizeA = parseInt(a.bestRequest.size) || 0;
+      const sizeB = parseInt(b.bestRequest.size) || 0;
+      return sizeA - sizeB;
+    } else { // newest
+      return (b.bestRequest.timeStamp || b.bestRequest.timestamp || 0) - (a.bestRequest.timeStamp || a.bestRequest.timestamp || 0);
+    }
+  });
+  return items;
+}
+
+function bangunPaketAwal(mediaGroups, settings, activeDownloads) {
+  const kelompokAwal = [...mediaGroups.values()].slice(0, 60);
+  const entriAwal = [];
+  kelompokAwal.forEach(group => {
+    const model = bangunModelMedia(group, settings);
+    entriAwal.push({
+      group,
+      bestRequest: model.bestRequest,
+      resolvedFilename: model.resolvedFilename,
+      size: model.size,
+      hasQuality: model.hasQuality,
+      model
+    });
+  });
+  const isDisableDeduplication = isFlagEnabled(settings['disable-deduplication'], true);
+  const filenameGroupsMap = new Map();
+  entriAwal.forEach((item, index) => {
+    let nameKey;
+    if (isDisableDeduplication) {
+      nameKey = 'no_dedup_' + index + '_' + (item.bestRequest.originalUrl || item.bestRequest.url || '');
+    } else {
+      const isVideoAudioStream = ['video', 'audio', 'stream'].includes(item.group.type);
+      nameKey = item.resolvedFilename.toLowerCase();
+      if (isVideoAudioStream) {
+        const baseName = item.resolvedFilename.replace(/\.[a-zA-Z0-9]+$/, '').toLowerCase();
+        nameKey = baseName + '_' + item.group.type + '_media_group';
+      }
+      try { nameKey += '@' + new URL(item.bestRequest.originalUrl || item.bestRequest.url || '').hostname.toLowerCase(); } catch (_) {}
+      if (item.size > 0) {
+        nameKey += '_' + item.size;
+      } else {
+        const urlKey = item.bestRequest.originalUrl || item.bestRequest.url || '';
+        nameKey += '_' + urlKey;
+      }
+    }
+    if (!filenameGroupsMap.has(nameKey)) {
+      filenameGroupsMap.set(nameKey, []);
+    }
+    filenameGroupsMap.get(nameKey).push(item);
+  });
+  const modelPilih = [];
+  filenameGroupsMap.forEach(items => {
+    items.sort((a, b) => {
+      if (a.hasQuality && !b.hasQuality) return -1;
+      if (!a.hasQuality && b.hasQuality) return 1;
+      if (a.size !== b.size) {
+        return b.size - a.size;
+      }
+      const timeA = a.bestRequest.timeStamp || a.bestRequest.timestamp || 0;
+      const timeB = b.bestRequest.timeStamp || b.bestRequest.timestamp || 0;
+      return timeB - timeA;
+    });
+    modelPilih.push(items[0].model);
+  });
+  muatKunciMediaSudahDiunduh(settings['download-history'] || []);
+  const semuaTampil = deduplicateMediaForDisplay(modelPilih);
+  const tampilAwal = semuaTampil.filter(item => !apakahMediaSudahDiunduh(item));
+  const sortOrder = settings['media-sort-order'] || 'newest';
+  urutnoModelMedia(tampilAwal, sortOrder);
+  let activeCount = 0;
+  for (const downloadData of Object.values(activeDownloads || {})) {
+    if (downloadData.isZip || downloadData.isCachedSave) continue;
+    if (entriUnduhanSelesai(downloadData)) continue;
+    activeCount++;
+  }
+  return { items: tampilAwal.slice(0, 20), activeCount };
+}
+
+async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId, currentActiveHost, activeItems, activeDownloads, onAwal) {
     const minFileSizeSetting = settings['min-file-size'] || '0';
     const imageMinSideSelection = String(settings['image-min-side'] ?? '0');
     const imageMinSide = imageMinSideSelection === 'custom'
@@ -109,8 +268,15 @@ async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId
     }
     const mediaGroups = new Map();
     let mediaScanIndex = 0;
+    let sudahPanggilAwal = false;
     for (const rawUrl in mediaRequests) {
-      if (++mediaScanIndex % 20 === 0) await new Promise(resolve => requestAnimationFrame(resolve));
+      if (++mediaScanIndex % 20 === 0) {
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        if (onAwal && !sudahPanggilAwal && mediaGroups.size >= 20) {
+          sudahPanggilAwal = true;
+          onAwal(bangunPaketAwal(mediaGroups, settings, activeDownloads));
+        }
+      }
       if (activeItems.has(rawUrl)) continue;
 
       const requests = mediaRequests[rawUrl];
@@ -232,40 +398,22 @@ async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId
       });
     }
 
+    if (onAwal && !sudahPanggilAwal) {
+      sudahPanggilAwal = true;
+      onAwal(bangunPaketAwal(mediaGroups, settings, activeDownloads));
+    }
+
     const groupsWithNames = [];
     mediaGroups.forEach(group => {
-
-        group.requests.sort((a, b) => {
-          const sizeA = parseInt(a.size) || 0;
-          const sizeB = parseInt(b.size) || 0;
-          return sizeB - sizeA;
-        });
-
-        const bestRequest = group.requests[0];
-
-        const mediaUrl = bestRequest.originalUrl || bestRequest.url || "";
-        const automaticFilename = mediaFilename.resolve(mediaUrl, bestRequest);
-        const filenameTemplate = settings['filename-template'];
-        const resolvedFilename = filenameTemplate && filenameTemplate !== '0'
-            ? mediaFilename.template(filenameTemplate, mediaUrl, automaticFilename, bestRequest.pageTitle)
-            : automaticFilename;
-        const urlLower = (bestRequest.originalUrl || bestRequest.url || "").toLowerCase();
-        const isStreamUrl = urlLower.includes('.m3u8') || urlLower.includes('.mpd');
-        let hasQuality = false;
-        if (isStreamUrl) {
-            const variants = (urlLower.includes('.mpd') ? mpdVariantsCache : m3u8VariantsCache).get(mediaUrl) || [];
-            hasQuality = variants.length > 0;
-        } else if (bestRequest.ytFormats && bestRequest.ytFormats.length > 1) {
-            hasQuality = true;
-        }
-
-        groupsWithNames.push({
-            group,
-            bestRequest,
-            resolvedFilename,
-            size: parseInt(bestRequest.size) || 0,
-            hasQuality
-        });
+      const model = bangunModelMedia(group, settings);
+      groupsWithNames.push({
+        group,
+        bestRequest: model.bestRequest,
+        resolvedFilename: model.resolvedFilename,
+        size: model.size,
+        hasQuality: model.hasQuality,
+        model
+      });
     });
 
     const isDisableDeduplication = isFlagEnabled(settings['disable-deduplication'], true);
@@ -315,22 +463,7 @@ async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId
         });
 
         const bestItem = items[0];
-        const group = bestItem.group;
-        const bestRequest = bestItem.bestRequest;
-
-        flattenedRequests.push({
-          resolvedFilename: bestItem.resolvedFilename,
-          bestRequest: bestRequest,
-          type: group.type,
-          isVideo: group.type === 'video',
-          isAudio: group.type === 'audio',
-          isStream: group.type === 'stream',
-          isSubtitle: group.type === 'subtitle',
-          isImage: group.type === 'image',
-          isFile: group.type === 'file',
-          ytFormats: bestRequest.ytFormats || null,
-          ytSubtitles: bestRequest.ytSubtitles || null
-        });
+        flattenedRequests.push(bestItem.model);
     });
 
     const sortOrder = settings['media-sort-order'] || 'newest';
@@ -352,53 +485,7 @@ async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId
         console.warn('Worker media sorting failed; using the compatible fallback.', error);
       }
     }
-    if (!sortedByWorker) flattenedRequests.sort((a, b) => {
-      if (sortOrder === 'oldest') {
-        return (a.bestRequest.timeStamp || a.bestRequest.timestamp || 0) - (b.bestRequest.timeStamp || b.bestRequest.timestamp || 0);
-      } else if (sortOrder === 'letter_asc') {
-        const nameA = a.resolvedFilename.toLowerCase();
-        const nameB = b.resolvedFilename.toLowerCase();
-        const isNumA = /^[0-9]/.test(nameA);
-        const isNumB = /^[0-9]/.test(nameB);
-        if (isNumA && !isNumB) return 1;
-        if (!isNumA && isNumB) return -1;
-        return nameA.localeCompare(nameB);
-      } else if (sortOrder === 'letter_desc') {
-        const nameA = a.resolvedFilename.toLowerCase();
-        const nameB = b.resolvedFilename.toLowerCase();
-        const isNumA = /^[0-9]/.test(nameA);
-        const isNumB = /^[0-9]/.test(nameB);
-        if (isNumA && !isNumB) return 1;
-        if (!isNumA && isNumB) return -1;
-        return nameB.localeCompare(nameA);
-      } else if (sortOrder === 'number_desc') {
-        const nameA = a.resolvedFilename.toLowerCase();
-        const nameB = b.resolvedFilename.toLowerCase();
-        const isNumA = /^[0-9]/.test(nameA);
-        const isNumB = /^[0-9]/.test(nameB);
-        if (isNumA && !isNumB) return -1;
-        if (!isNumA && isNumB) return 1;
-        return nameB.localeCompare(nameA, undefined, { numeric: true, sensitivity: 'base' });
-      } else if (sortOrder === 'number_asc') {
-        const nameA = a.resolvedFilename.toLowerCase();
-        const nameB = b.resolvedFilename.toLowerCase();
-        const isNumA = /^[0-9]/.test(nameA);
-        const isNumB = /^[0-9]/.test(nameB);
-        if (isNumA && !isNumB) return -1;
-        if (!isNumA && isNumB) return 1;
-        return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
-      } else if (sortOrder === 'size_desc') {
-        const sizeA = parseInt(a.bestRequest.size) || 0;
-        const sizeB = parseInt(b.bestRequest.size) || 0;
-        return sizeB - sizeA;
-      } else if (sortOrder === 'size_asc') {
-        const sizeA = parseInt(a.bestRequest.size) || 0;
-        const sizeB = parseInt(b.bestRequest.size) || 0;
-        return sizeA - sizeB;
-      } else { // newest
-        return (b.bestRequest.timeStamp || b.bestRequest.timestamp || 0) - (a.bestRequest.timeStamp || a.bestRequest.timestamp || 0);
-      }
-    });
+    if (!sortedByWorker) urutnoModelMedia(flattenedRequests, sortOrder);
     let limitStr = settings['limit-media-list'];
     let limit = 0;
     if (limitStr === 'custom') {
