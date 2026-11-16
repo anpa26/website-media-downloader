@@ -41,6 +41,62 @@ async function initTheme() {
     }
 }
 
+async function bersihnoDaftarMati(daftar) {
+    let db;
+    try {
+        db = await openCacheDB();
+    } catch (e) {
+        return daftar;
+    }
+    const daftarUrip = [];
+    for (const entri of daftar) {
+        const kunci = entri.id || entri.url;
+        let cathetan = null;
+        let kenoDipriksa = true;
+        try {
+            cathetan = await new Promise((selesai, gagal) => {
+                const tx = db.transaction([STORE_NAME], "readonly");
+                const panjaluk = tx.objectStore(STORE_NAME).get(kunci);
+                panjaluk.onsuccess = (e) => selesai(e.target.result);
+                panjaluk.onerror = (e) => gagal(e.target.error);
+            });
+        } catch (e) {
+            kenoDipriksa = false;
+        }
+        if (!kenoDipriksa) {
+            daftarUrip.push(entri);
+            continue;
+        }
+        let urip = !!cathetan;
+        if (cathetan && !cathetan.data) {
+            try {
+                const cacah = await new Promise((selesai, gagal) => {
+                    const tx = db.transaction([CHUNK_STORE_NAME], "readonly");
+                    const panjaluk = tx.objectStore(CHUNK_STORE_NAME).count(IDBKeyRange.bound([kunci, 0], [kunci, Infinity]));
+                    panjaluk.onsuccess = (e) => selesai(e.target.result);
+                    panjaluk.onerror = (e) => gagal(e.target.error);
+                });
+                urip = cacah > 0;
+            } catch (e) {
+                urip = true;
+            }
+        }
+        if (urip) {
+            daftarUrip.push(entri);
+        } else {
+            try {
+                await new Promise((selesai, gagal) => {
+                    const tx = db.transaction([CHUNK_STORE_NAME], "readwrite");
+                    tx.objectStore(CHUNK_STORE_NAME).delete(IDBKeyRange.bound([kunci, 0], [kunci, Infinity]));
+                    tx.oncomplete = () => selesai();
+                    tx.onerror = () => gagal(tx.error);
+                });
+            } catch (e) {}
+        }
+    }
+    return daftarUrip;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     await initTheme();
     const colorResult = await browser.storage.local.get('ui-scale');
@@ -58,6 +114,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     browser.runtime.sendMessage({ action: 'registerDownloadManagerTab' }).catch(() => {});
 
     let stored = await getStoredDownloads();
+
+    const daftarResik = await bersihnoDaftarMati(stored);
+    if (daftarResik.length !== stored.length) {
+        stored = daftarResik;
+        await saveStoredDownloads(stored);
+    }
 
     const urlParams = new URLSearchParams(window.location.search);
     const initialId = urlParams.get('id');

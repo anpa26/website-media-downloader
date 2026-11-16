@@ -328,11 +328,18 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         addToHistory({ url: message.url, filename: finalName, timestamp: Date.now(), pageUrl, pageTitle });
 
-        browser.runtime.sendMessage({
-            action: 'startPersistentStreamJob', url: message.url, filename: finalName,
-            quality: message.quality || 'highest', request: message.request || {}, downloadMethod: 'browser'
+        (async () => {
+            const hasilMulai = await globalThis.startPersistentStreamJobDirect({
+                action: 'startPersistentStreamJob', url: message.url, filename: finalName,
+                quality: message.quality || 'highest', request: message.request || {}, downloadMethod: 'browser'
+            });
+            if (!hasilMulai.success) throw new Error(hasilMulai.error || 'Unable to start stream download');
+            sendResponse({ success: true, jobId: hasilMulai.jobId });
+        })().catch(error => {
+            console.error('Toast HLS download failed:', error);
+            sendResponse({ success: false, error: error.message });
         });
-        return;
+        return true;
     }
     if (message.action === 'startDownloadFromToast') {
         const url = message.url;
@@ -359,12 +366,22 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 const streamPref = res['stream-download'] || 'offline';
                 const mType = getMediaType(url);
 
-                if (url.toLowerCase().includes('.m3u8') && streamPref === 'offline') {
+                const apakahStream = (url.toLowerCase().includes('.m3u8') || url.toLowerCase().includes('.mpd')) && streamPref === 'offline';
+                if (apakahStream) {
+                    const jenisStream = url.toLowerCase().includes('.mpd') ? 'dash' : 'hls';
+                    if (!finalName.toLowerCase().endsWith('.mp4')) {
+                        const dotIdx = finalName.lastIndexOf('.');
+                        if (dotIdx !== -1) {
+                            finalName = finalName.substring(0, dotIdx);
+                        }
+                        finalName += '.mp4';
+                    }
                     addToHistory({ url, filename: finalName, timestamp: Date.now(), pageUrl, pageTitle });
-                    browser.runtime.sendMessage({
+                    const hasilMulai = await globalThis.startPersistentStreamJobDirect({
                         action: 'startPersistentStreamJob', url, filename: finalName,
-                        quality: 'highest', request: request || {}, downloadMethod: method
+                        quality: 'highest', request: request || {}, downloadMethod: method, streamType: jenisStream
                     });
+                    if (!hasilMulai.success) console.error('Toast stream download failed:', hasilMulai.error || 'Unable to start stream download');
                     return;
                 }
                 addToHistory({ url, filename: finalName, timestamp: Date.now(), pageUrl, pageTitle });

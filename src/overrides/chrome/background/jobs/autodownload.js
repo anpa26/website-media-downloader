@@ -286,6 +286,26 @@ browser.notifications.onButtonClicked.addListener((notificationId, buttonIndex) 
                         finalName = await generateTemplateName(template, data.url, originalName, data.tabId);
                     }
 
+                    const urlKecil = data.url.toLowerCase();
+                    const apakahStream = urlKecil.includes('.m3u8') || urlKecil.includes('.mpd');
+                    if (apakahStream) {
+                        const jenisStream = urlKecil.includes('.mpd') ? 'dash' : 'hls';
+                        if (!finalName.toLowerCase().endsWith('.mp4')) {
+                            const dotIdx = finalName.lastIndexOf('.');
+                            if (dotIdx !== -1) {
+                                finalName = finalName.substring(0, dotIdx);
+                            }
+                            finalName += '.mp4';
+                        }
+                        addToHistory({ url: data.url, filename: finalName, timestamp: Date.now(), pageUrl, pageTitle });
+                        const hasilMulai = await globalThis.startPersistentStreamJobDirect({
+                            action: 'startPersistentStreamJob', url: data.url, filename: finalName,
+                            quality: 'highest', request: request || {}, downloadMethod: method, streamType: jenisStream
+                        });
+                        if (!hasilMulai.success) console.error('Notification stream download failed:', hasilMulai.error || 'Unable to start stream download');
+                        return;
+                    }
+
                     addToHistory({ url: data.url, filename: finalName, timestamp: Date.now(), pageUrl, pageTitle });
 
                     if (method === 'fetch') {
