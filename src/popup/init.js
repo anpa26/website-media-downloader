@@ -308,6 +308,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  let timerMuatUlangSetelan = null;
+  const jadwalMuatUlangSetelan = () => {
+    if (timerMuatUlangSetelan) clearTimeout(timerMuatUlangSetelan);
+    timerMuatUlangSetelan = setTimeout(() => {
+      timerMuatUlangSetelan = null;
+      let onoOwahanDurungApply = false;
+      try {
+        onoOwahanDurungApply = typeof pendingChanges !== 'undefined' && Object.keys(pendingChanges).length > 0;
+      } catch (e) {
+        onoOwahanDurungApply = false;
+      }
+      const barApply = document.getElementById('settings-apply-bar');
+      if (barApply && barApply.style.display !== 'none' && barApply.style.display !== '') onoOwahanDurungApply = true;
+      if (onoOwahanDurungApply) return;
+      if (typeof window.resetSetelanInit === 'function') {
+        window.resetSetelanInit();
+        navigationPageLoads.delete('settings');
+        activateNavigationTab('settings').catch(error => console.error('Failed to reload settings tab:', error));
+      } else if (typeof muatUlangNilaiSetelan === 'function') {
+        muatUlangNilaiSetelan();
+      }
+    }, 300);
+  };
+
   browser.storage.onChanged.addListener(async (changes, area) => {
     const activeNavigationTab = document.getElementById('navbar')?.value;
     if (area === 'session') {
@@ -383,6 +407,19 @@ document.addEventListener('DOMContentLoaded', async () => {
           syncGroupProgressCard(card.dataset.groupType);
         });
       }
+    }
+
+    if (activeNavigationTab === 'settings') {
+      const kunciCloud = ['save-to-gdrive', 'save-to-dropbox', 'gdrive-stream', 'dropbox-stream', 'gdrive_token', 'dropbox_token', 'gdrive_user', 'dropbox_user'];
+      let kenaSetelan = true;
+      try {
+        if (typeof SETTINGS_KEYS !== 'undefined') {
+          kenaSetelan = SETTINGS_KEYS.some(kunci => Object.prototype.hasOwnProperty.call(changes, kunci)) || kunciCloud.some(kunci => Object.prototype.hasOwnProperty.call(changes, kunci));
+        }
+      } catch (e) {
+        kenaSetelan = true;
+      }
+      if (kenaSetelan) jadwalMuatUlangSetelan();
     }
   });
 

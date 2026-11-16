@@ -37,22 +37,73 @@ const URUTAN_MODUL_PENGATURAN = [
 
 let janjiMuatModulPengaturan = null;
 
+const WAKTU_TUNGGU_MODUL_PENGATURAN = 10000;
+
+function golekiTagModulPengaturan(modul) {
+    const urlMutlak = browser.runtime.getURL(modul);
+    for (const tag of document.scripts) {
+        if (tag.src === urlMutlak) return tag;
+    }
+    return null;
+}
+
+function muatSijiModulPengaturan(modul, sisaNyoba) {
+    if (golekiTagModulPengaturan(modul)) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+        const skrip = document.createElement('script');
+        skrip.async = false;
+        skrip.src = browser.runtime.getURL(modul);
+        let rampung = false;
+        const pewates = setTimeout(() => {
+            if (rampung) return;
+            rampung = true;
+            skrip.remove();
+            if (sisaNyoba > 0) {
+                muatSijiModulPengaturan(modul, sisaNyoba - 1).then(resolve, reject);
+            } else {
+                reject(new Error('Wektu entek ' + WAKTU_TUNGGU_MODUL_PENGATURAN + 'ms muat ' + modul));
+            }
+        }, WAKTU_TUNGGU_MODUL_PENGATURAN);
+        skrip.onload = () => {
+            if (rampung) return;
+            rampung = true;
+            clearTimeout(pewates);
+            resolve();
+        };
+        skrip.onerror = () => {
+            if (rampung) return;
+            rampung = true;
+            clearTimeout(pewates);
+            skrip.remove();
+            if (sisaNyoba > 0) {
+                muatSijiModulPengaturan(modul, sisaNyoba - 1).then(resolve, reject);
+            } else {
+                reject(new Error('Gagal muat script ' + modul));
+            }
+        };
+        document.head.appendChild(skrip);
+    });
+}
+
 function muatModulPengaturan() {
     let rantai = Promise.resolve();
     for (const modul of URUTAN_MODUL_PENGATURAN) {
-        rantai = rantai.then(() => new Promise((resolve, reject) => {
-            const skrip = document.createElement('script');
-            skrip.async = false;
-            skrip.src = browser.runtime.getURL(modul);
-            skrip.onload = () => resolve();
-            skrip.onerror = () => reject(new Error('Failed to load script ' + modul));
-            document.head.appendChild(skrip);
-        }));
+        rantai = rantai.then(() => muatSijiModulPengaturan(modul, 1));
     }
     return rantai;
 }
 
 window.initializeSettingsPage = function initializeSettingsPage() {
-    if (!janjiMuatModulPengaturan) janjiMuatModulPengaturan = muatModulPengaturan();
-    return janjiMuatModulPengaturan.then(() => window.__initSettingsPageAsli());
+    if (!janjiMuatModulPengaturan) {
+        janjiMuatModulPengaturan = muatModulPengaturan()
+            .then(() => {
+                if (typeof window.__initSettingsPageAsli !== 'function') throw new Error('__initSettingsPageAsli ora ketemu sawise modul pengaturan dimuat');
+                return window.__initSettingsPageAsli();
+            })
+            .catch((galat) => {
+                janjiMuatModulPengaturan = null;
+                throw galat;
+            });
+    }
+    return janjiMuatModulPengaturan;
 };

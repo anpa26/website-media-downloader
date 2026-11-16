@@ -89,12 +89,16 @@ window.__initSettingsPageAsli = function initializeSettingsPage() {
         });
     }
 
-    updateCloudVisibility();
+    await updateCloudVisibility();
 
-    await Promise.allSettled([
-        customElements.whenDefined('mdui-switch'),
-        customElements.whenDefined('mdui-segmented-button-group'),
-        customElements.whenDefined('mdui-segmented-button')
+    const WAKTU_TUNGGU_MDUI = 5000;
+    await Promise.race([
+        Promise.allSettled([
+            customElements.whenDefined('mdui-switch'),
+            customElements.whenDefined('mdui-segmented-button-group'),
+            customElements.whenDefined('mdui-segmented-button')
+        ]),
+        new Promise((_, tolak) => setTimeout(() => tolak(new Error('Wektu entek ' + WAKTU_TUNGGU_MDUI + 'ms ngenteni MDUI')), WAKTU_TUNGGU_MDUI))
     ]);
     await initializeSettings();
     setupConfirmationBar();
@@ -123,5 +127,14 @@ window.__initSettingsPageAsli = function initializeSettingsPage() {
         }
     }
   })();
+  settingsPageInitPromise = settingsPageInitPromise.catch((galat) => {
+    settingsPageInitPromise = null;
+    throw galat;
+  });
   return settingsPageInitPromise;
+};
+
+window.resetSetelanInit = function resetSetelanInit() {
+  if (typeof settingsPageInitPromise !== 'undefined') settingsPageInitPromise = null;
+  if (typeof janjiMuatModulPengaturan !== 'undefined') janjiMuatModulPengaturan = null;
 };

@@ -99,12 +99,30 @@ function initializeHistoryPage() {
     document.getElementById('import-history-input').click();
   });
   document.getElementById('import-history-input').addEventListener('change', handleImportHistory);
+  pasangGolekRiwayat();
 }
 async function activateNavigationTab(tab) {
   if (tab === 'settings') {
     return loadNavigationPageOnce(tab, async () => {
-      await ensureScriptLoaded('entries/settings.js', 'initializeSettingsPage');
-      await window.initializeSettingsPage();
+      try {
+        await ensureScriptLoaded('entries/settings.js', 'initializeSettingsPage');
+        await window.initializeSettingsPage();
+        document.getElementById('pesen-gagal-settings')?.remove();
+      } catch (error) {
+        const wadahPengaturan = document.getElementById('settings-container');
+        if (wadahPengaturan && !document.getElementById('pesen-gagal-settings')) {
+          const pesenGagal = document.createElement('div');
+          pesenGagal.id = 'pesen-gagal-settings';
+          pesenGagal.style.cssText = 'padding: 40px 20px; text-align: center;';
+          pesenGagal.innerHTML = 'Failed to load Settings. <button id="tombol-coba-maneh-settings" type="button">Coba lagi</button>';
+          wadahPengaturan.prepend(pesenGagal);
+          document.getElementById('tombol-coba-maneh-settings').addEventListener('click', () => {
+            navigationPageLoads.delete('settings');
+            activateNavigationTab('settings').catch((galat) => console.error(galat));
+          });
+        }
+        throw error;
+      }
     });
   }
   if (tab === 'about') {

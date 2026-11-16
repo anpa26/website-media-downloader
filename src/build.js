@@ -60,8 +60,8 @@ const FIREFOX_BASED_TARGETS = new Set(['firefox', 'firefox-amo', 'firefox-light'
 const TARGET_AMO = new Set(['firefox-amo', 'firefox-light-amo']);
 
 const EXCLUDE_PER_TARGET = {
-    chrome: new Set([...BERKAS_KHUSUS_YOUTUBE, ...BERKAS_KHUSUS_FIREFOX, ...BERKAS_KHUSUS_CHROME, ...MEDIABUNNY_FILES]),
-    'chrome-yt': new Set([...BERKAS_KHUSUS_FIREFOX, ...MEDIABUNNY_FILES]),
+    chrome: new Set([...BERKAS_KHUSUS_YOUTUBE, ...BERKAS_KHUSUS_FIREFOX, ...BERKAS_KHUSUS_CHROME, 'download_recovery.js', ...MEDIABUNNY_FILES]),
+    'chrome-yt': new Set([...BERKAS_KHUSUS_FIREFOX, 'download_recovery.js', ...MEDIABUNNY_FILES]),
     firefox: new Set([...FIREFOX_EXCLUDES, ...MEDIABUNNY_FILES]),
     'chrome-light': new Set([...BERKAS_KHUSUS_YOUTUBE, ...BERKAS_KHUSUS_FIREFOX, ...BERKAS_KHUSUS_CHROME, ...BERKAS_CADANGAN_FIREFOX, ...BERKAS_RINGAN_BERSAMA]),
     'chrome-yt-light': new Set([...BERKAS_KHUSUS_FIREFOX, ...BERKAS_CADANGAN_FIREFOX, ...BERKAS_RINGAN_BERSAMA]),

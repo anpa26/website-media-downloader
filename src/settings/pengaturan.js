@@ -17,8 +17,69 @@
 */
 
 
+const petaPeriksaAwal = new Map();
+const petaBatasan = new Map();
+let lagiMuatUlangSetelan = false;
+
+function terapnoConstraintSetelan() {
+    for (const jalankanPeriksaAwal of petaPeriksaAwal.values()) jalankanPeriksaAwal();
+    for (const [jenengSetelan, terapnoBatasan] of petaBatasan) {
+        if (!petaPeriksaAwal.has(jenengSetelan)) terapnoBatasan();
+    }
+}
+
+function terapnoVisibilitasCloud(nilaiSimpenan) {
+    const pilihLokasi = document.getElementById('cloud-save-location');
+    let lokasi = 'local';
+    if (nilaiSimpenan['save-to-gdrive'] === '1') lokasi = 'gdrive';
+    if (nilaiSimpenan['save-to-dropbox'] === '1') lokasi = 'dropbox';
+    if (pilihLokasi && pilihLokasi.value !== lokasi) pilihLokasi.value = lokasi;
+    const rincianGdrive = document.getElementById('gdrive-details-container');
+    const rincianDropbox = document.getElementById('dropbox-details-container');
+    if (rincianGdrive) rincianGdrive.style.display = lokasi === 'gdrive' ? 'flex' : 'none';
+    if (rincianDropbox) rincianDropbox.style.display = lokasi === 'dropbox' ? 'flex' : 'none';
+}
+
+function sinkronSaklarNotif(bgAktif) {
+    const saklarNotif = document.getElementById('media-notification');
+    if (!saklarNotif) return;
+    if (!bgAktif) {
+        saklarNotif.checked = false;
+        saklarNotif.disabled = true;
+        pendingChanges['media-notification'] = '0';
+    } else {
+        saklarNotif.disabled = false;
+    }
+}
+
+async function muatUlangNilaiSetelan() {
+    if (isInitializing || lagiMuatUlangSetelan) return;
+    if (Object.keys(pendingChanges).length) return;
+    lagiMuatUlangSetelan = true;
+    try {
+        const nilaiSimpenan = await browser.storage.local.get(SETTINGS_KEYS);
+        for (const setelan of SETTINGS_KEYS) {
+            const nilai = nilaiSimpenan[setelan];
+            if (nilai === undefined) continue;
+            const elemen = document.getElementById(setelan);
+            if (!elemen) continue;
+            if (elemen.tagName === 'MDUI-SWITCH') {
+                elemen.checked = nilai === '1' || nilai === true;
+            } else {
+                elemen.value = nilai;
+            }
+        }
+        terapnoVisibilitasCloud(nilaiSimpenan);
+        terapnoConstraintSetelan();
+    } finally {
+        lagiMuatUlangSetelan = false;
+    }
+}
+
 async function initializeSettings() {
     isInitializing = true;
+    petaPeriksaAwal.clear();
+    petaBatasan.clear();
 
     const tempRes = await browser.storage.local.get('filename-template');
     if (tempRes['filename-template'] === '0') {
@@ -365,8 +426,10 @@ async function initializeSettings() {
                     }
                 }
             };
+            petaBatasan.set(setting, updateConstraints);
 
             if (setting === 'auto-download-all-domains' || setting === 'gdrive-stream' || setting === 'speed-boost' || setting === 'background-download' || setting === 'save-to-gdrive' || setting === 'detect-download-links' || setting === 'optimize-low-end' || setting === 'embed-subtitles-mkv' || setting === 'audio-to-mp3' || setting === 'redirect-guard-hide-content') {
+                let cacahCobaPeriksa = 0;
                 const checkInitial = () => {
                     const speedBoost = document.getElementById('speed-boost');
                     const speedBoostResume = document.getElementById('speed-boost-resume');
@@ -455,12 +518,15 @@ async function initializeSettings() {
                                 }
                             }
                         }
-                    } else {
+                    } else if (cacahCobaPeriksa < 10) {
+                        cacahCobaPeriksa++;
                         setTimeout(checkInitial, 100);
+                    } else {
+                        console.error('checkInitial gagal: elemen setelan ora ketemu sawise 10x nyoba');
                     }
                     updateConstraints();
                 };
-                checkInitial();
+                petaPeriksaAwal.set(setting, checkInitial);
             }
 
             const handleChange = () => {
@@ -473,7 +539,7 @@ async function initializeSettings() {
                 showApplyBar();
 
                 if (setting === 'background-download') {
-                    syncNotificationSetting(element.checked);
+                    sinkronSaklarNotif(element.checked);
                 }
 
                 if (setting === 'gdrive-stream' && element.checked) {
@@ -620,6 +686,9 @@ async function initializeSettings() {
         }
     }
 
+    terapnoVisibilitasCloud(storedSettings);
+    terapnoConstraintSetelan();
+
     if (Object.keys(defaultSettings).length) {
         await browser.storage.local.set(defaultSettings);
     }
@@ -638,7 +707,7 @@ async function initializeSettings() {
         }
         if (!backgroundDownloadForAuto.checked && autoDownloadMediaInitial.checked) {
             autoDownloadMediaInitial.checked = false;
-            await browser.storage.local.set({ 'auto-download-media': '0' });
+            pendingChanges['auto-download-media'] = '0';
         }
     }
 
@@ -729,23 +798,20 @@ async function initializeSettings() {
         } else {
             dropboxText.textContent = browser.i18n.getMessage("dropboxLoginButton") || "Login";
             if (dropboxBtn) dropboxBtn.variant = "tonal";
-            dropboxUserInfo.style.display = 'none';
-
-            if (dropboxSaveContainer) dropboxSaveContainer.style.display = 'none';
-            if (dropboxStreamContainer) dropboxStreamContainer.style.display = 'none';
 
             const current = await browser.storage.local.get('save-to-dropbox');
-            if (current['save-to-dropbox'] === '1' || pendingChanges['save-to-dropbox'] === '1') {
-                pendingChanges['save-to-dropbox'] = '0';
-                await browser.storage.local.set({ 'save-to-dropbox': '0' });
-
-                const select = document.getElementById('cloud-save-location');
-                if (select && select.value === 'dropbox') {
-                    select.value = 'local';
-                    select.dispatchEvent(new Event('change'));
+            const cloudAktif = current['save-to-dropbox'] === '1' || pendingChanges['save-to-dropbox'] === '1';
+            if (cloudAktif) {
+                if (dropboxSaveContainer) dropboxSaveContainer.style.display = 'flex';
+                if (dropboxStreamContainer) dropboxStreamContainer.style.display = 'flex';
+                if (dropboxUserInfo) {
+                    dropboxUserInfo.style.display = 'block';
+                    if (dropboxUserEmail) dropboxUserEmail.textContent = browser.i18n.getMessage('cloudLoginExpired') || 'Login kadaluarsa, monggo login maneh';
                 }
-                const dropboxDetails = document.getElementById('dropbox-details-container');
-                if (dropboxDetails) dropboxDetails.style.display = 'none';
+            } else {
+                if (dropboxUserInfo) dropboxUserInfo.style.display = 'none';
+                if (dropboxSaveContainer) dropboxSaveContainer.style.display = 'none';
+                if (dropboxStreamContainer) dropboxStreamContainer.style.display = 'none';
             }
         }
     }
@@ -770,24 +836,20 @@ async function initializeSettings() {
         } else {
             gdriveText.textContent = browser.i18n.getMessage("gdriveLoginButton") || "Login";
             gdriveBtn.variant = "tonal";
-            gdriveUserInfo.style.display = 'none';
-
-            if (gdriveSaveContainer) gdriveSaveContainer.style.display = 'none';
-            if (gdriveStreamContainer) gdriveStreamContainer.style.display = 'none';
 
             const current = await browser.storage.local.get('save-to-gdrive');
-            if (current['save-to-gdrive'] === '1' || pendingChanges['save-to-gdrive'] === '1') {
-                pendingChanges['save-to-gdrive'] = '0';
-                await browser.storage.local.set({ 'save-to-gdrive': '0' });
-
-                const select = document.getElementById('cloud-save-location');
-                if (select && select.value === 'gdrive') {
-                    select.value = 'local';
-
-                    select.dispatchEvent(new Event('change'));
+            const cloudAktif = current['save-to-gdrive'] === '1' || pendingChanges['save-to-gdrive'] === '1';
+            if (cloudAktif) {
+                if (gdriveSaveContainer) gdriveSaveContainer.style.display = 'flex';
+                if (gdriveStreamContainer) gdriveStreamContainer.style.display = 'flex';
+                if (gdriveUserInfo) {
+                    gdriveUserInfo.style.display = 'block';
+                    if (gdriveUserEmail) gdriveUserEmail.textContent = browser.i18n.getMessage('cloudLoginExpired') || 'Login kadaluarsa, monggo login maneh';
                 }
-                const gdriveDetails = document.getElementById('gdrive-details-container');
-                if (gdriveDetails) gdriveDetails.style.display = 'none';
+            } else {
+                if (gdriveUserInfo) gdriveUserInfo.style.display = 'none';
+                if (gdriveSaveContainer) gdriveSaveContainer.style.display = 'none';
+                if (gdriveStreamContainer) gdriveStreamContainer.style.display = 'none';
             }
         }
     }
@@ -797,7 +859,14 @@ async function initializeSettings() {
             const res = await browser.storage.local.get('gdrive_token');
             if (res.gdrive_token) {
                 await browser.storage.local.remove(['gdrive_token', 'gdrive_user']);
-                checkGDriveLogin();
+                pendingChanges['save-to-gdrive'] = '0';
+                await browser.storage.local.set({ 'save-to-gdrive': '0' });
+                const pilihLokasiCloud = document.getElementById('cloud-save-location');
+                if (pilihLokasiCloud && pilihLokasiCloud.value === 'gdrive') {
+                    pilihLokasiCloud.value = 'local';
+                    pilihLokasiCloud.dispatchEvent(new Event('change'));
+                }
+                await checkGDriveLogin();
                 if (typeof mdui !== 'undefined' && mdui.snackbar) {
                     tampilnoNotif("Logged out from Google Drive");
                 }
@@ -915,7 +984,7 @@ async function initializeSettings() {
                 }
             }
         };
-        checkGDriveLogin();
+        await checkGDriveLogin();
     }
 
     if (dropboxBtn) {
@@ -923,7 +992,14 @@ async function initializeSettings() {
             const res = await browser.storage.local.get('dropbox_token');
             if (res.dropbox_token) {
                 await browser.storage.local.remove(['dropbox_token', 'dropbox_user']);
-                checkDropboxLogin();
+                pendingChanges['save-to-dropbox'] = '0';
+                await browser.storage.local.set({ 'save-to-dropbox': '0' });
+                const pilihLokasiCloud = document.getElementById('cloud-save-location');
+                if (pilihLokasiCloud && pilihLokasiCloud.value === 'dropbox') {
+                    pilihLokasiCloud.value = 'local';
+                    pilihLokasiCloud.dispatchEvent(new Event('change'));
+                }
+                await checkDropboxLogin();
                 if (typeof mdui !== 'undefined' && mdui.snackbar) {
                     tampilnoNotif("Logged out from Dropbox");
                 }
@@ -1047,7 +1123,7 @@ async function initializeSettings() {
                 }
             }
         };
-        checkDropboxLogin();
+        await checkDropboxLogin();
     }
 
     const layoutResult = await browser.storage.local.get('settings-layout');
@@ -1134,7 +1210,7 @@ async function initializeSettings() {
     const activeColor = colorResult['theme-color'] || '#bbdefb';
     let selectedHsv = hexToHsv(activeColor) || hexToHsv('#bbdefb');
     let baseSaturation = selectedHsv.s;
-    mdui.setColorScheme(activeColor);
+    if (typeof mdui !== 'undefined' && mdui.setColorScheme) mdui.setColorScheme(activeColor);
     if (hexInput) hexInput.value = activeColor;
     if (brightnessInput) brightnessInput.value = Math.round(selectedHsv.v * 100);
 
@@ -1181,7 +1257,7 @@ async function initializeSettings() {
         const color = hsvToHex(selectedHsv.h, selectedHsv.s, selectedHsv.v);
         pendingChanges['theme-color'] = color;
         showApplyBar();
-        mdui.setColorScheme(color);
+        if (typeof mdui !== 'undefined' && mdui.setColorScheme) mdui.setColorScheme(color);
         if (hexInput) hexInput.value = color.toUpperCase();
         drawColorWheel();
     };
@@ -1227,7 +1303,7 @@ async function initializeSettings() {
                 selectedHsv = hsv;
                 baseSaturation = selectedHsv.s;
                 if (brightnessInput) brightnessInput.value = Math.round(hsv.v * 100);
-                mdui.setColorScheme(value);
+                if (typeof mdui !== 'undefined' && mdui.setColorScheme) mdui.setColorScheme(value);
                 drawColorWheel();
             }
         };
@@ -1236,11 +1312,9 @@ async function initializeSettings() {
 
     const bgDlSwitch = document.getElementById('background-download');
     if (bgDlSwitch) {
-        syncNotificationSetting(bgDlSwitch.checked);
+        sinkronSaklarNotif(bgDlSwitch.checked);
     }
 
-    setTimeout(() => {
-        isInitializing = false;
-        pendingChanges = {};
-    }, 500);
+    isInitializing = false;
+    if (Object.keys(pendingChanges).length) showApplyBar();
 }

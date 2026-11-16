@@ -89,58 +89,69 @@ async function removeMediaRequest(url) {
     });
 }
 
-function processingJobInfo(key, job) {
-    const isAudioJob = key.startsWith('audioJob_');
-    const isZip = key.startsWith('zipJob_');
-    const isPopupJob = key.startsWith('popupJob_');
-    return {
-        id: job.jobId, url: isZip ? `zip://${job.jobId}` : job.url,
-        filename: job.filename, audioUrl: job.audioUrl,
-        loaded: 0, total: isZip ? (job.items || []).length : 100,
-        percent: job.percent ?? 0, isPaused: !!job.isPaused,
-        status: job.status || (job.isPaused ? 'Paused' : 'Preparing ZIP...'),
-        mediaType: isZip ? 'file' : (job.mediaType || (isAudioJob ? (job.audioOnly ? 'audio' : 'video') : 'stream')),
-        isAudioJob, isStreamJob: !isAudioJob && !isZip && !isPopupJob,
-        isZip, isPersistentZipJob: isZip, recoveryKey: key,
-        groupType: job.groupType || null
-    };
-}
+let wisResikSesiWingi = false;
 
-async function restorePersistentProcessingJobs() {
-    const stored = await browser.storage.local.get(null);
-    const staleKeys = [];
-    for (const [key, job] of Object.entries(stored)) {
-        if (!/^(audio|stream|zip|popup)Job_/.test(key) || !job?.jobId) continue;
-        if (job.recoveryState === 'completed' || job.recoveryState === 'cancelled' || job.status === 'Cancelled' || job.status === 'completed') {
-            staleKeys.push(key);
-            continue;
-        }
-        if (key.startsWith('popupJob_')) {
-            staleKeys.push(key);
-            continue;
-        }
-        if (!activeDownloads.has(job.jobId)) {
-            job.isPaused = true;
-            job.status = 'Paused';
-            activeDownloads.set(job.jobId, processingJobInfo(key, job));
-        }
-    }
-    if (staleKeys.length > 0) {
-        browser.storage.local.remove(staleKeys).catch(() => {});
+function sesiAsliKasedhiya() {
+    try {
+        const sesi = browser.storage && browser.storage.session;
+        return !!sesi && typeof sesi.getBytesInUse === 'function';
+    } catch (_) {
+        return false;
     }
 }
 
-async function discardStaleDownloadState() {
-    const penyimpananSesi = (typeof browser !== 'undefined' && browser.storage && browser.storage.session) ? browser.storage.session : (typeof browser !== 'undefined' && browser.storage ? browser.storage.local : null);
-    if (!penyimpananSesi) return;
-    const session = await penyimpananSesi.get("recovery-startup-cleaned");
-    if (session["recovery-startup-cleaned"]) return;
-    await penyimpananSesi.set({ "recovery-startup-cleaned": true });
-    const stored = await browser.storage.local.get(null);
-    if (stored['pending-downloads']) await browser.storage.local.remove('pending-downloads');
+function kunciJobLawase(kunci) {
+    return /^(audio|stream|zip|popup)Job_/.test(kunci);
 }
 
-discardStaleDownloadState()
-    .then(() => restorePersistentProcessingJobs())
-    .catch(error => console.error('Processing job restore failed:', error));
+async function tutupTabProsesor() {
+    try {
+        const kabehTab = await browser.tabs.query({});
+        const streamUrl = browser.runtime.getURL('pages/stream_processor.html');
+        const audioUrl = browser.runtime.getURL('pages/audio_processor.html');
+        const tabLawase = [];
+        for (const tab of kabehTab || []) {
+            if (!tab.url) continue;
+            if (tab.url.startsWith(streamUrl) || tab.url.startsWith(audioUrl)) tabLawase.push(tab.id);
+        }
+        if (tabLawase.length > 0) await browser.tabs.remove(tabLawase);
+    } catch (_) {}
+    try {
+        if (browser.offscreen && typeof browser.offscreen.closeDocument === 'function') {
+            const onoDokumen = browser.offscreen.hasDocument ? await browser.offscreen.hasDocument().catch(() => false) : true;
+            if (onoDokumen) await browser.offscreen.closeDocument().catch(() => {});
+        }
+    } catch (_) {}
+}
+
+async function bersihnoJobSesiWingi() {
+    if (wisResikSesiWingi) return false;
+    wisResikSesiWingi = true;
+    if (sesiAsliKasedhiya()) {
+        const tandha = await browser.storage.session.get('recovery-startup-cleaned');
+        if (tandha && tandha['recovery-startup-cleaned']) return false;
+        await browser.storage.session.set({ 'recovery-startup-cleaned': true });
+    }
+    const kabeh = await browser.storage.local.get(null);
+    const kunciBusak = [];
+    for (const kunci of Object.keys(kabeh || {})) {
+        if (kunciJobLawase(kunci)) kunciBusak.push(kunci);
+    }
+    if (kabeh['pending-downloads']) kunciBusak.push('pending-downloads');
+    if (kabeh['wmd_active_downloads']) kunciBusak.push('wmd_active_downloads');
+    if (kunciBusak.length > 0) await browser.storage.local.remove(kunciBusak);
+    for (const [id, item] of activeDownloads) {
+        if (item && (item.isStreamJob || item.isAudioJob || item.isZip || item.isPersistentZipJob || (item.recoveryKey && kunciJobLawase(item.recoveryKey)))) activeDownloads.delete(id);
+    }
+    await tutupTabProsesor();
+    return true;
+}
+
+if (sesiAsliKasedhiya()) {
+    bersihnoJobSesiWingi().catch(error => console.error('Processing job cleanup failed:', error));
+} else if (browser.runtime && browser.runtime.onStartup) {
+    browser.runtime.onStartup.addListener(() => {
+        bersihnoJobSesiWingi().catch(error => console.error('Processing job cleanup failed:', error));
+    });
+}
 

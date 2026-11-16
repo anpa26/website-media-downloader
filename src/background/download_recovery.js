@@ -18,7 +18,6 @@
 
 const processingJobClaims = new Map();
 const processingJobStarts = new Map();
-let staleDownloadStateCleanupReady = Promise.resolve();
 async function getCommittedDownloadPrefix(downloadId, savedMode) {
     const db = await getDB();
     return new Promise((resolve, reject) => {
@@ -64,30 +63,6 @@ function processingJobInfo(key, job) {
         isZip, isPersistentZipJob: isZip, recoveryKey: key,
         groupType: job.groupType || null
     };
-}
-
-async function restorePersistentProcessingJobs() {
-    const stored = await browser.storage.local.get(null);
-    const staleKeys = [];
-    for (const [key, job] of Object.entries(stored)) {
-        if (!/^(audio|stream|zip|popup)Job_/.test(key) || !job?.jobId) continue;
-        if (job.recoveryState === 'completed' || job.recoveryState === 'cancelled' || job.status === 'Cancelled' || job.status === 'completed') {
-            staleKeys.push(key);
-            continue;
-        }
-        if (key.startsWith('popupJob_')) {
-            staleKeys.push(key);
-            continue;
-        }
-        if (!activeDownloads.has(job.jobId)) {
-            job.isPaused = true;
-            job.status = 'Paused';
-            activeDownloads.set(job.jobId, processingJobInfo(key, job));
-        }
-    }
-    if (staleKeys.length > 0) {
-        browser.storage.local.remove(staleKeys).catch(() => {});
-    }
 }
 
 function restartProcessingJob(jobId) {

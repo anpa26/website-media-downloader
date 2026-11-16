@@ -18,21 +18,6 @@
 
 
 
-function syncNotificationSetting(isBgEnabled) {
-    const notificationSwitch = document.getElementById('media-notification');
-    if (!notificationSwitch) return;
-
-    if (!isBgEnabled) {
-
-        notificationSwitch.checked = false;
-        notificationSwitch.disabled = true;
-        browser.storage.local.set({ 'media-notification': '0' });
-    } else {
-
-        notificationSwitch.disabled = false;
-    }
-}
-
 function applySettingsLayout(layoutType) {
     const container = document.getElementById('settings-container');
     if (!container) return;

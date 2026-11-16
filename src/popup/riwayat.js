@@ -25,6 +25,31 @@ function clearMediaList() {
 const HISTORY_CHUNK_SIZE = 20;
 let historyRenderLimit = HISTORY_CHUNK_SIZE;
 let historyIntersectionObserver = null;
+let tembungGolekRiwayat = '';
+let golekRiwayatKapasang = false;
+let timerGolekRiwayat = null;
+
+function cocokGolekRiwayat(item) {
+  const tembung = tembungGolekRiwayat.trim().toLowerCase();
+  if (!tembung) return true;
+  const jeneng = (item.filename || getFileName(item.url) || '').toLowerCase();
+  const tautan = (item.url || '').toLowerCase();
+  return jeneng.includes(tembung) || tautan.includes(tembung);
+}
+
+function pasangGolekRiwayat() {
+  if (golekRiwayatKapasang) return;
+  const kolomGolek = document.getElementById('golek-riwayat');
+  if (!kolomGolek) return;
+  golekRiwayatKapasang = true;
+  kolomGolek.addEventListener('input', () => {
+    clearTimeout(timerGolekRiwayat);
+    timerGolekRiwayat = setTimeout(() => {
+      tembungGolekRiwayat = kolomGolek.value || '';
+      loadHistoryList();
+    }, 200);
+  });
+}
 
 async function loadHistoryList(reset = true) {
   if (reset) historyRenderLimit = HISTORY_CHUNK_SIZE;
@@ -36,6 +61,8 @@ async function loadHistoryList(reset = true) {
   const historyResult = await browser.storage.local.get('download-history');
   const history = historyResult['download-history'] || [];
   const settings = await browser.storage.local.get(['only-video', 'only-audio', 'only-stream', 'only-image', 'only-subtitle', 'only-file']);
+  const kolomGolek = document.getElementById('golek-riwayat');
+  if (kolomGolek) tembungGolekRiwayat = kolomGolek.value || '';
 
   if (reset) {
     historyContainer.innerHTML = '';
@@ -66,6 +93,7 @@ async function loadHistoryList(reset = true) {
     if (type === 'image' && !showImage) return;
     if (type === 'subtitle' && !showSubtitle) return;
     if (type === 'file' && !showFile) return;
+    if (!cocokGolekRiwayat(item)) return;
 
     visibleCount++;
     const chunkStart = reset ? 0 : Math.max(0, historyRenderLimit - HISTORY_CHUNK_SIZE);
@@ -202,7 +230,11 @@ async function loadHistoryList(reset = true) {
     }, { rootMargin: '240px' });
     historyIntersectionObserver.observe(sentinel);
   } else if (visibleCount === 0 && history.length > 0) {
-    historyContainer.innerHTML = `<div style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${browser.i18n.getMessage("noHistory") || "No items found for the current filters."}</div>`;
+    const tembung = tembungGolekRiwayat.trim();
+    const pesenOraCocok = tembung
+      ? (browser.i18n.getMessage('noMatchesFound', [escapeHtmlPopup(tembung)]) || `No matches found for "${escapeHtmlPopup(tembung)}"`)
+      : (browser.i18n.getMessage("noHistory") || "No items found for the current filters.");
+    historyContainer.innerHTML = `<div style="padding: 60px 20px; text-align: center; opacity: 0.8; line-height: 1.6;">${pesenOraCocok}</div>`;
   }
 }
 

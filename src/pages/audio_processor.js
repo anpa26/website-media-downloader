@@ -46,6 +46,12 @@ async function markRecoveryCompleted(key, job) {
     await browser.storage.local.set({ [key]: { ...job, recoveryState: "completed", status: "completed" } });
 }
 
+async function tutupTabProsesor(offscreen) {
+    if (offscreen || !browser.tabs) return;
+    const tab = await browser.tabs.getCurrent().catch(() => null);
+    if (tab?.id !== undefined) browser.tabs.remove(tab.id).catch(() => {});
+}
+
 async function saveOffscreenAudioBlob(blob, filename) {
     const objectUrl = URL.createObjectURL(blob);
     try {
@@ -161,10 +167,10 @@ async function runPersistentAudioJob(jobId, options = {}) {
     const stored = await browser.storage.local.get(key);
     const job = stored[key];
     let keepRecoveryJob = false;
-    if (!job) return;
+    if (!job) { await tutupTabProsesor(options.offscreen); return; }
     if (typeof browser.runtime.getBrowserInfo === 'function' && !options.offscreen) {
         const claim = await browser.runtime.sendMessage({ action: 'claimProcessingJob', key });
-        if (!claim?.allowed) return;
+        if (!claim?.allowed) { await tutupTabProsesor(options.offscreen); return; }
     }
 
     const report = (text, percent, indeterminate = false) => {
@@ -252,10 +258,7 @@ async function runPersistentAudioJob(jobId, options = {}) {
         await browser.runtime.sendMessage({ action: 'audioJobComplete', jobId, success: false, error: error?.message || String(error) });
     } finally {
         if (!keepRecoveryJob) await browser.storage.local.remove(key);
-        if (!options.offscreen && browser.tabs) {
-            const tab = await browser.tabs.getCurrent().catch(() => null);
-            if (tab?.id !== undefined) browser.tabs.remove(tab.id).catch(() => {});
-        }
+        await tutupTabProsesor(options.offscreen);
     }
 }
 

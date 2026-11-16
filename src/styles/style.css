@@ -168,19 +168,22 @@ mdui-tab-panel[value="settings"] {
     margin: 0 !important;
 }
 
-#search-bar {
+#search-bar,
+#golek-riwayat {
     --mdui-shape-corner-extra-small: 28px;
     --mdui-shape-corner-small: 28px;
     --mdui-shape-corner-medium: 28px;
     border-radius: 28px;
 }
 
-#search-bar::part(container) {
+#search-bar::part(container),
+#golek-riwayat::part(container) {
     border: 1px solid #858b96 !important;
     box-shadow: none !important;
 }
 
-#search-bar:focus-within::part(container) {
+#search-bar:focus-within::part(container),
+#golek-riwayat:focus-within::part(container) {
     border: 2px solid #8ab4f8 !important;
 }
 
