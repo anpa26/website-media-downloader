@@ -27,6 +27,7 @@ const URUTAN_MODUL_PENGATURAN = [
     'settings/perawatan/ekspor.js',
     'settings/perawatan/debug.js',
     'settings/perawatan/cache-indexeddb.js',
+    'settings/perawatan/download-manager.js',
     'settings/alat/ts-converter.js',
     'settings/tampilan/konfirmasi.js',
     'settings/pengaturan.js',

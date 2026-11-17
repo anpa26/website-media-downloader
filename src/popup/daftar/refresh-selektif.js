@@ -60,6 +60,48 @@ function sidikJariItemMedia(item) {
   ].join('|');
 }
 
+function sidikJariItemTampil(item) {
+  const r = item?.bestRequest || {};
+  return [
+    item?.resolvedFilename || '',
+    item?.type || '',
+    Array.isArray(r.ytFormats) ? r.ytFormats.length : 0,
+    item?.downloadId !== undefined ? String(item.downloadId) : ''
+  ].join('|');
+}
+
+function sidikJariModelTampil(itemsBaru, unduhanAktif) {
+  let hash = 2166136261;
+  const campur = (nilai) => { hash = campurSidikJari(nilai, hash); };
+  for (const item of itemsBaru || []) {
+    campur(getMediaRenderKey(item?.bestRequest?.originalUrl || item?.bestRequest?.url || '', item?.type || 'file'));
+    campur(item?.resolvedFilename || '');
+    campur(item?.type || '');
+    campur(parseInt(item?.bestRequest?.size) || 0);
+    campur(Array.isArray(item?.bestRequest?.ytFormats) ? item.bestRequest.ytFormats.length : 0);
+    campur(item?.downloadId !== undefined ? String(item.downloadId) : '');
+  }
+  campur(Object.keys(unduhanAktif || {}).sort().join(','));
+  campur(activeGroup || '');
+  campur(document.getElementById('search-bar')?.value.trim() || '');
+  return hash;
+}
+
+function segarnoKatranganKartu(el, item) {
+  const r = item?.bestRequest || {};
+  if (!el) return;
+  if (r.size !== undefined && r.size !== null) el.dataset.size = r.size;
+  const katrangan = el.querySelector('.media-description');
+  if (!katrangan) return;
+  let labelResolusi = '';
+  if (Array.isArray(r.ytFormats) && r.ytFormats.length > 0 && r.ytFormats[0].label) labelResolusi = ` • ${r.ytFormats[0].label}`;
+  const nilaiWektu = Number(r.timeStamp || r.timestamp) || 0;
+  const teksWektu = nilaiWektu > 0 ? new Date(nilaiWektu).toLocaleTimeString() : '';
+  katrangan.dataset.mediaResolution = labelResolusi;
+  katrangan.dataset.mediaTime = teksWektu;
+  katrangan.textContent = [katrangan.dataset.mediaHost || '', getHumanReadableSize(r.size) + labelResolusi, teksWektu].filter(Boolean).join(' • ');
+}
+
 function busakKunciRenderSakaUrl(url, type = 'file') {
   if (!url) return;
   renderedMediaUrls.delete(url);
@@ -77,6 +119,7 @@ let generasiModelMedia = 0;
 let refreshSelektifKotor = false;
 let refreshSelektifMlaku = false;
 let sidikJariRefreshMentahPalingAnyar = null;
+let sidikJariModelTampilPungkasan = null;
 
 function campurSidikJari(teks, hash) {
   const untai = String(teks ?? '');
@@ -154,7 +197,7 @@ function hitungSidikJariRefreshMentah(mediaRequests, settings, tabId, host, item
       campur(String(settings[k] ?? ''));
     }
   }
-  campur(JSON.stringify(unduhanAktif || {}));
+  campur(Object.keys(unduhanAktif || {}).sort().join(','));
   campur(itemAktif ? itemAktif.size : 0);
   if (itemAktif) {
     const kunciAktif = [...itemAktif.keys()].sort();
@@ -201,7 +244,10 @@ async function refreshListMediaSelektif() {
       if (mediaListLoad) butuhRefreshSelektifSawiseLoad = true;
       return;
     }
+    const sidikJariModel = sidikJariModelTampil(itemsBaru, activeDownloads);
+    if (sidikJariModel === sidikJariModelTampilPungkasan) return;
     terapnoSelisihDaftarMedia(itemsBaru);
+    sidikJariModelTampilPungkasan = sidikJariModel;
     sidikJariRefreshMentahPalingAnyar = sidikJariMentah;
   } catch (e) {
     console.warn('[website-media-downloader] Refresh selektif gagal, list lawas dipertahanno:', e);
@@ -281,7 +327,14 @@ function terapnoSelisihDaftarMedia(itemsBaru) {
     const tipeAnyar = Object.keys(hitungan).filter(t => hitungan[t] > 0);
     const kartuGrup = [...mediaContainer.querySelectorAll('.media-group-card[data-group-type]')].map(el => el.dataset.groupType);
     const tipeBerubah = tipeAnyar.length !== kartuGrup.length || tipeAnyar.some(t => !kartuGrup.includes(t));
-    if (tipeBerubah) { loadMediaList().catch(() => {}); return; }
+    if (tipeBerubah) {
+      for (const tipe of tipeAnyar) {
+        if (!kartuGrup.includes(tipe)) tambahKartuGrup(tipe, hitungan[tipe]);
+      }
+      for (const tipe of kartuGrup) {
+        if (!tipeAnyar.includes(tipe)) busakKartuGrup(tipe);
+      }
+    }
     segarkanHitunganGrup();
     return;
   }
@@ -302,7 +355,9 @@ function terapnoSelisihDaftarMedia(itemsBaru) {
   });
 
   if (renderedCount === 0 && mediaContainer.querySelectorAll('.media-item').length === 0 && katon.length > 0) {
-    loadMediaList().catch(() => {});
+    indeksChunkSabanjure = 0;
+    renderedMediaUrls.clear();
+    renderNextChunk();
     return;
   }
 
@@ -343,6 +398,10 @@ function terapnoSelisihDaftarMedia(itemsBaru) {
     const itemLawas = lawasMiturutKunci.get(kunci);
     if (itemLawas && sidikJariItemMedia(itemLawas) !== sidikJariItemMedia(itemAnyar)) {
       if (kartuLagiDipake(el)) continue;
+      if (sidikJariItemTampil(itemLawas) === sidikJariItemTampil(itemAnyar)) {
+        segarnoKatranganKartu(el, itemAnyar);
+        continue;
+      }
       let kartuAnyar;
       try {
         kartuAnyar = createMediaItem(itemAnyar);
@@ -382,6 +441,10 @@ function terapnoSelisihDaftarMedia(itemsBaru) {
   }
 
   if (mediaContainer.querySelectorAll('.media-item').length === 0 && mediaContainer.querySelectorAll('.media-group-card').length === 0) {
+    if (activeDownloadingElements.length > 0) {
+      renderInitialList();
+      return;
+    }
     mediaContainer.innerHTML = isSearching
       ? `<div id="no-matches-msg" style="padding: 60px 20px; text-align: center; opacity: 0.8;">No matches found for "${escapeHtmlPopup(query)}"</div>`
       : getNoMediaDetectedHTML();

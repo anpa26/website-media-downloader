@@ -81,6 +81,58 @@ function createBackToGroupsHeaderHTML(title) {
   `;
 }
 
+function judhulGrup(tipe) {
+  const judhul = {
+    video: browser.i18n.getMessage("groupByVideoTitle") || "Videos",
+    audio: browser.i18n.getMessage("groupByAudioTitle") || "Audio",
+    stream: browser.i18n.getMessage("groupByStreamTitle") || "Streams",
+    image: browser.i18n.getMessage("groupByImageTitle") || "Images",
+    subtitle: browser.i18n.getMessage("groupBySubtitleTitle") || "Subtitles",
+    file: browser.i18n.getMessage("groupByFileTitle") || "Files"
+  };
+  return judhul[tipe] || judhul.file;
+}
+
+function ikonGrup(tipe) {
+  const ikon = {
+    video: `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M18 4H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 12.5v-9l6 4.5-6 4.5z"/></svg>`,
+    audio: `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>`,
+    stream: `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 14H4v-4h11v4zm0-5H4V9h11v4zm5 5h-4V9h4v9z"/></svg>`,
+    image: `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-4.86 8.86l-3 3.87L9 13.14 6 17h12l-3.86-5.14z"/></svg>`,
+    subtitle: `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-4H6V8h12v4z"/></svg>`,
+    file: `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`
+  };
+  return ikon[tipe] || ikon.file;
+}
+
+function tambahKartuGrup(tipe, jumlah) {
+  const mediaContainer = document.getElementById('media-list');
+  if (!mediaContainer) return;
+  if (mediaContainer.querySelector(`.media-group-card[data-group-type="${tipe}"]`)) return;
+  const wadah = document.createElement('div');
+  wadah.innerHTML = createGroupItemHTML(tipe, jumlah, judhulGrup(tipe), ikonGrup(tipe));
+  const kartu = wadah.firstElementChild;
+  if (!kartu) return;
+  kartu.addEventListener('click', () => {
+    activeGroup = tipe;
+    renderInitialList();
+    updateGlobalProgressVisibility();
+  });
+  const urutan = ['video', 'audio', 'stream', 'image', 'subtitle', 'file'];
+  const indeksAnyar = urutan.indexOf(tipe);
+  let disisipno = null;
+  for (const liyane of mediaContainer.querySelectorAll('.media-group-card[data-group-type]')) {
+    if (urutan.indexOf(liyane.dataset.groupType) > indeksAnyar) { disisipno = liyane; break; }
+  }
+  if (disisipno) mediaContainer.insertBefore(kartu, disisipno);
+  else mediaContainer.appendChild(kartu);
+  syncGroupProgressCard(tipe);
+}
+
+function busakKartuGrup(tipe) {
+  document.querySelector(`.media-group-card[data-group-type="${tipe}"]`)?.remove();
+}
+
 function ensureMediaPreviewCleanupObserver(container) {
   if (container._previewCleanupObserver) return;
   const cleanupNode = (node) => {

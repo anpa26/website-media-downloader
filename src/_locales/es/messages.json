@@ -2231,6 +2231,12 @@
   "downloadManagerTitle": {
     "message": "Administrador de descargas"
   },
+  "downloadManagerExplain": {
+    "message": "Abre el Administrador de descargas para ver y descargar los archivos guardados por esta extensión. Úsalo si la página del administrador no se abrió automáticamente después de una descarga."
+  },
+  "downloadManagerOpenButton": {
+    "message": "Abrir"
+  },
   "deleteSelected": {
     "message": "Eliminar seleccionados"
   },

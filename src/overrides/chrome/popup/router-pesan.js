@@ -59,7 +59,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     let item = uiCache.get(message.id);
     if (!item) {
-      const mediaItems = document.querySelectorAll('.media-item');
+      const mediaItems = [...new Set([...document.querySelectorAll('.media-item'), ...activeDownloadingElements])];
       for (const el of mediaItems) {
         if (el.dataset.downloadId === message.id || el.dataset.url === message.id || (message.jobId && el.dataset.downloadId === message.jobId)) {
           let progressContainer = el.querySelector('.download-progress-container');

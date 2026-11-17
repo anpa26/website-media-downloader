@@ -1945,6 +1945,12 @@
     "downloadManagerTitle": {
         "message": "ダウンロードマネージャー"
     },
+    "downloadManagerExplain": {
+        "message": "この拡張機能で保存したファイルを表示・ダウンロードするには、ダウンロードマネージャーを開いてください。ダウンロード後にマネージャーのページが自動で開かなかった場合に使います。"
+    },
+    "downloadManagerOpenButton": {
+        "message": "開く"
+    },
     "deleteSelected": {
         "message": "選択項目を削除"
     },

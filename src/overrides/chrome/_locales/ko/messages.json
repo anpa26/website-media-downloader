@@ -1939,6 +1939,12 @@
     "downloadManagerTitle": {
         "message": "다운로드 관리자"
     },
+    "downloadManagerExplain": {
+        "message": "이 확장 프로그램에서 저장한 파일을 보고 다운로드하려면 다운로드 관리자를 여세요. 다운로드 후 관리자 페이지가 자동으로 열리지 않았을 때 사용하세요."
+    },
+    "downloadManagerOpenButton": {
+        "message": "열기"
+    },
     "deleteSelected": {
         "message": "선택 항목 삭제"
     },

@@ -107,6 +107,7 @@ window.__initSettingsPageAsli = function initializeSettingsPage() {
     // LIGHT_EXCLUDE_SPEED_TEST_END
     setupIndexedDBCacheControls();
     setupSettingsConfigurationControls();
+    setupDownloadManagerControls();
     // DEBUG_ONLY_START
     setupDebugLogControls();
     // DEBUG_ONLY_END

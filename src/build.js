@@ -402,7 +402,7 @@ function wocoGabunganUnduhan(outDir) {
 }
 
 const URUTAN_MODUL_PENGATURAN = [
-    'state.js', 'notif.js', 'tampilan/tema.js', 'perawatan/ekspor.js', 'perawatan/debug.js', 'perawatan/cache-indexeddb.js',
+    'state.js', 'notif.js', 'tampilan/tema.js', 'perawatan/ekspor.js', 'perawatan/debug.js', 'perawatan/cache-indexeddb.js', 'perawatan/download-manager.js',
     'alat/ts-converter.js', 'tampilan/konfirmasi.js', 'pengaturan.js', 'tampilan/tata-letak.js',
     'alat/speedtest.js', 'boot.js'
 ];

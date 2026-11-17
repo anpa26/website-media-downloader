@@ -221,8 +221,7 @@ function muatKunciMediaAktif(daftarAktif) {
 
 function apakahUrlAktif(url, type = 'file') {
   if (!url || kunciMediaAktif.size === 0) return false;
-  if (kunciMediaAktif.has(url)) return true;
-  return kunciMediaAktif.has(getMediaRenderKey(url, type));
+  return kunciMediaAktif.has(url);
 }
 
 function apakahMediaAktif(item) {

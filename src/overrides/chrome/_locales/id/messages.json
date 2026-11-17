@@ -1964,6 +1964,12 @@
     "downloadManagerTitle": {
         "message": "Pengelola Unduhan"
     },
+    "downloadManagerExplain": {
+        "message": "Buka Pengelola Unduhan untuk melihat dan mengunduh file yang disimpan dari ekstensi ini. Gunakan jika halaman pengelola tidak terbuka otomatis setelah unduhan."
+    },
+    "downloadManagerOpenButton": {
+        "message": "Buka"
+    },
     "deleteSelected": {
         "message": "Hapus Terpilih"
     },

@@ -246,7 +246,6 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     item.statusText = message.text || item.statusText;
                     item.currentFile = message.currentFile || item.currentFile;
                     item.percent = message.percent;
-                    activeDownloads.set(message.jobId, item);
                 }
             }
             browser.runtime.sendMessage({
@@ -350,11 +349,11 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                         loaded: 0, total: 0, percent: 0, status: 'Preparing stream...',
                         mediaType: 'stream', isStreamJob: true
                     };
+                    activeDownloads.set(message.jobId, item);
                 }
                 if (item) {
                     if (message.text !== undefined) item.status = message.text;
                     if (message.percent !== undefined) item.percent = message.percent;
-                    activeDownloads.set(message.jobId, item);
                 }
             }
             browser.runtime.sendMessage({

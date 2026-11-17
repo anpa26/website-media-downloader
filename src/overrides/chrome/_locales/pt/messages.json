@@ -1945,6 +1945,12 @@
     "downloadManagerTitle": {
         "message": "Gerenciador de Downloads"
     },
+    "downloadManagerExplain": {
+        "message": "Abra o Gerenciador de Downloads para ver e baixar arquivos salvos por esta extensão. Use-o se a página do gerenciador não abriu automaticamente após um download."
+    },
+    "downloadManagerOpenButton": {
+        "message": "Abrir"
+    },
     "deleteSelected": {
         "message": "Excluir Selecionados"
     },

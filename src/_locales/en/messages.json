@@ -2219,6 +2219,12 @@
   "downloadManagerTitle": {
     "message": "Download Manager"
   },
+  "downloadManagerExplain": {
+    "message": "Open the Download Manager to view and download files saved from this extension. Use it if the manager page did not open automatically after a download."
+  },
+  "downloadManagerOpenButton": {
+    "message": "Open"
+  },
   "deleteSelected": {
     "message": "Delete Selected"
   },

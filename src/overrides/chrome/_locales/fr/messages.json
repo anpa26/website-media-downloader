@@ -1945,6 +1945,12 @@
     "downloadManagerTitle": {
         "message": "Gestionnaire de téléchargement"
     },
+    "downloadManagerExplain": {
+        "message": "Ouvrez le gestionnaire de téléchargement pour voir et télécharger les fichiers enregistrés par cette extension. Utilisez-le si la page du gestionnaire ne s'est pas ouverte automatiquement après un téléchargement."
+    },
+    "downloadManagerOpenButton": {
+        "message": "Ouvrir"
+    },
     "deleteSelected": {
         "message": "Supprimer la sélection"
     },

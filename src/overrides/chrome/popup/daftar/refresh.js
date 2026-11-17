@@ -496,14 +496,22 @@ async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId
     if (snapshotAktif) activeDownloads = snapshotAktif;
     muatKunciMediaAktif(activeDownloads);
     const semuaTampil = deduplicateMediaForDisplay(flattenedRequests);
-    const itemTersembunyi = semuaTampil.filter(item => apakahMediaSudahDiunduh(item) && !apakahMediaAktif(item));
-    const displayRequests = semuaTampil.filter(item => !(apakahMediaSudahDiunduh(item) && !apakahMediaAktif(item)));
     const urlAktif = new Set();
     for (const downloadData of Object.values(activeDownloads || {})) {
       const url = downloadData?.url || '';
       if (!url) continue;
       for (const kunci of kunciMediaDariUrl(url, downloadData.mediaType || 'file')) urlAktif.add(kunci);
     }
+    const tansahKaton = (item) => {
+      if (!apakahMediaSudahDiunduh(item)) return true;
+      if (apakahMediaAktif(item)) return true;
+      const urlAsli = item?.bestRequest?.originalUrl || item?.bestRequest?.url || '';
+      if (!urlAsli) return false;
+      if (urlAktif.has(urlAsli)) return true;
+      return activeItems.has(urlAsli);
+    };
+    const itemTersembunyi = semuaTampil.filter(item => !tansahKaton(item));
+    const displayRequests = semuaTampil.filter(tansahKaton);
     if (limit > 0 && displayRequests.length > limit) {
       displayRequests.length = limit;
     }
@@ -511,7 +519,8 @@ async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId
     let daftarMedia = displayRequests;
 
 
-    activeDownloadingElements = [...new Set(activeItems.values())];
+    const unsurAktifAnyar = [...new Set(activeItems.values())];
+    if (unsurAktifAnyar.length > 0 || Object.keys(activeDownloads || {}).length === 0) activeDownloadingElements = unsurAktifAnyar;
     const requestUrls = new Set();
     daftarMedia.forEach(item => {
       const u = item.bestRequest?.originalUrl || item.bestRequest?.url || '';
@@ -534,7 +543,7 @@ async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId
       downloadModels.push({
         downloadId: id,
         bestRequest: { originalUrl: url, size: downloadData.total,
-          filename: downloadData.filename, timeStamp: Date.now() },
+          filename: downloadData.filename, timeStamp: 0 },
         type,
         isVideo: type === 'video', isAudio: type === 'audio', isStream: type === 'stream',
         isSubtitle: type === 'subtitle', isImage: type === 'image', isFile: type === 'file'

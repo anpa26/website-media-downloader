@@ -2214,6 +2214,12 @@
   "downloadManagerTitle": {
     "message": "مدير التنزيلات"
   },
+  "downloadManagerExplain": {
+    "message": "افتح مدير التنزيلات لعرض وتنزيل الملفات المحفوظة من هذا الامتداد. استخدمه إذا لم تفتح صفحة المدير تلقائيًا بعد التنزيل."
+  },
+  "downloadManagerOpenButton": {
+    "message": "فتح"
+  },
   "deleteSelected": {
     "message": "حذف المحدد"
   },

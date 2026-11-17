@@ -271,7 +271,13 @@ async function syncActiveDownloadsUI(activeDownloadsPassed = null) {
     const bar = item.querySelector('mdui-linear-progress');
     const nilaiBar = Number(bar?.value ?? uiCache.get(jobId)?.loadingBar?.value ?? 0);
     if (nilaiBar >= 100) {
-      finishDownloadUI(jobId, true);
+      const pertamaKaliIlang = waktuJobIlangTerlihat.get(jobId);
+      if (pertamaKaliIlang === undefined) {
+        waktuJobIlangTerlihat.set(jobId, Date.now());
+      } else if (Date.now() - pertamaKaliIlang >= BATAS_TUNGGU_JOB_ILANG_MS) {
+        waktuJobIlangTerlihat.delete(jobId);
+        finishDownloadUI(jobId, true);
+      }
     } else if (jobId.startsWith('audio_')) {
       const pertamaKaliIlang = waktuJobIlangTerlihat.get(jobId);
       if (pertamaKaliIlang === undefined) {

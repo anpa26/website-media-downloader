@@ -31,6 +31,7 @@ let downloadingCount = 0;
 let allMediaRequests = [];
 let allFilteredRequests = [];
 let kunciMediaSudahDiunduh = new Set();
+let kunciMediaAktif = new Set();
 let renderedCount = 0;
 let indeksChunkSabanjure = 0;
 const CHUNK_SIZE = 20;

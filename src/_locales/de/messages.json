@@ -2214,6 +2214,12 @@
   "downloadManagerTitle": {
     "message": "Download-Manager"
   },
+  "downloadManagerExplain": {
+    "message": "Öffne den Download-Manager, um Dateien anzuzeigen und herunterzuladen, die von dieser Erweiterung gespeichert wurden. Verwende ihn, falls sich die Manager-Seite nach einem Download nicht automatisch geöffnet hat."
+  },
+  "downloadManagerOpenButton": {
+    "message": "Öffnen"
+  },
   "deleteSelected": {
     "message": "Auswahl löschen"
   },

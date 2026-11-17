@@ -209,6 +209,26 @@ function apakahMediaSudahDiunduh(item) {
   return apakahUrlSudahDiunduh(url, item?.type || 'file');
 }
 
+function muatKunciMediaAktif(daftarAktif) {
+  kunciMediaAktif = new Set();
+  for (const item of Object.values(daftarAktif || {})) {
+    const url = item?.url || '';
+    if (!url) continue;
+    kunciMediaAktif.add(url);
+    kunciMediaAktif.add(getMediaRenderKey(url, item.mediaType || 'file'));
+  }
+}
+
+function apakahUrlAktif(url, type = 'file') {
+  if (!url || kunciMediaAktif.size === 0) return false;
+  return kunciMediaAktif.has(url);
+}
+
+function apakahMediaAktif(item) {
+  const url = item?.bestRequest?.originalUrl || item?.bestRequest?.url || '';
+  return apakahUrlAktif(url, item?.type || 'file');
+}
+
 
 function getMediaRepresentativeScore(item) {
   const request = item?.bestRequest || {};
