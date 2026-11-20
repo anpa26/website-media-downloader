@@ -142,6 +142,7 @@ async function loadMediaListOnce() {
     }
     sudahMuatListAwal = true;
     setelanStrukturalPalingAnyar = settings;
+    segarnoSidikJariSawiseMuat(mediaRequests, settings, currentActiveTabId, currentActiveHost, activeItems, activeDownloads, daftarMediaAnyar);
 
     if (autoAudioUrl) {
       const decodedUrl = decodeURIComponent(autoAudioUrl);

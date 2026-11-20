@@ -82,12 +82,25 @@ function saveNavigationScroll(tab = currentNavigationTab) {
 function restoreNavigationScroll(tab) {
   const target = parseInt(sessionStorage.getItem(`scrollPos:${tab}`) || '0', 10);
   let attempts = 0;
-  const restore = () => {
-    if (currentNavigationTab !== tab) return;
-    window.scrollTo(0, target);
-    if (window.scrollY < target && attempts++ < 8) setTimeout(restore, 50);
-  };
-  requestAnimationFrame(restore);
+  return new Promise(selesai => {
+    const restore = () => {
+      if (currentNavigationTab !== tab) { selesai(); return; }
+      window.scrollTo(0, target);
+      if (window.scrollY >= target || attempts++ >= 8) { selesai(); return; }
+      setTimeout(restore, 50);
+    };
+    requestAnimationFrame(restore);
+  });
+}
+
+async function balikNangHome() {
+  const wisAnaHome = navigationPageLoads.has('home');
+  await activateNavigationTab('home');
+  await restoreNavigationScroll('home');
+  if (!wisAnaHome) return 'muat-penuh';
+  const status = await jalankanCatchUpHome();
+  if (status === 'muat-penuh') await restoreNavigationScroll('home');
+  return status;
 }
 let historyPageInitialized = false;
 function initializeHistoryPage() {

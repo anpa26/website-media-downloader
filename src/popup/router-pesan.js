@@ -29,8 +29,6 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'mediaRemovedOnTabClose') {
     if (document.getElementById('navbar')?.value === 'home') {
       loadMediaList().catch(() => {});
-    } else {
-      navigationPageLoads.delete('home');
     }
     return;
   }

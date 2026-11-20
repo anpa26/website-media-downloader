@@ -310,9 +310,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     saveNavigationScroll(currentNavigationTab);
     currentNavigationTab = selectedTab;
     sessionStorage.setItem('activeTab', selectedTab);
-    activateNavigationTab(selectedTab)
-      .then(() => restoreNavigationScroll(selectedTab))
-      .catch(error => console.error(`Failed to load ${selectedTab} tab:`, error));
+    if (selectedTab === 'home') {
+      balikNangHome().catch(error => console.error(`Failed to load ${selectedTab} tab:`, error));
+    } else {
+      activateNavigationTab(selectedTab)
+        .then(() => restoreNavigationScroll(selectedTab))
+        .catch(error => console.error(`Failed to load ${selectedTab} tab:`, error));
+    }
   });
 
   window.addEventListener('pagehide', () => saveNavigationScroll());
@@ -366,10 +370,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const activeNavigationTab = document.getElementById('navbar')?.value;
     if (area === 'session') {
       if (activeNavigationTab !== 'home') {
-        navigationPageLoads.delete('home');
         return;
       }
-      if (document.visibilityState !== 'visible') { navigationPageLoads.delete('home'); return; }
+      if (document.visibilityState !== 'visible') { return; }
       jadwalRefreshSelektif();
       return;
     }
@@ -389,8 +392,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (mediaFilterSettings.some(s => Object.prototype.hasOwnProperty.call(changes, s))) {
       if (activeNavigationTab === 'home') {
         loadMediaList();
-      } else {
-        navigationPageLoads.delete('home');
       }
     }
 
@@ -406,7 +407,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           currentNavigationTab = 'home';
           navbar.value = 'home';
           sessionStorage.setItem('activeTab', 'home');
-          activateNavigationTab('home').catch(error => console.error('Failed to load home tab:', error));
+          balikNangHome().catch(error => console.error('Failed to load home tab:', error));
         }
       }
       refreshNavbarLayout(navbar);
