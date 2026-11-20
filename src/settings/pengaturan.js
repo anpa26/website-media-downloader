@@ -28,6 +28,21 @@ function terapnoConstraintSetelan() {
     }
 }
 
+async function resikiOwahanPodoSimpenan() {
+    const kunciOwahan = Object.keys(pendingChanges);
+    if (kunciOwahan.length === 0) return;
+    const nilaiSimpenan = await browser.storage.local.get(kunciOwahan);
+    const normalnoNilai = (nilai) => nilai === true ? '1' : nilai === false ? '0' : String(nilai ?? '');
+    for (const kunci of kunciOwahan) {
+        if (nilaiSimpenan[kunci] === undefined) continue;
+        if (normalnoNilai(nilaiSimpenan[kunci]) === normalnoNilai(pendingChanges[kunci])) delete pendingChanges[kunci];
+    }
+    if (Object.keys(pendingChanges).length === 0) {
+        const bar = document.getElementById('settings-apply-bar');
+        if (bar) bar.style.display = 'none';
+    }
+}
+
 function terapnoVisibilitasCloud(nilaiSimpenan) {
     const pilihLokasi = document.getElementById('cloud-save-location');
     let lokasi = 'local';
@@ -71,6 +86,7 @@ async function muatUlangNilaiSetelan() {
         }
         terapnoVisibilitasCloud(nilaiSimpenan);
         terapnoConstraintSetelan();
+        await resikiOwahanPodoSimpenan();
     } finally {
         lagiMuatUlangSetelan = false;
     }
@@ -1316,5 +1332,6 @@ async function initializeSettings() {
     }
 
     isInitializing = false;
+    await resikiOwahanPodoSimpenan();
     if (Object.keys(pendingChanges).length) showApplyBar();
 }
