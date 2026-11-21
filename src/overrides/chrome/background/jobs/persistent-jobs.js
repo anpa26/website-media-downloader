@@ -25,9 +25,17 @@ async function setPersistentJobPaused(item, jobId, isPaused) {
     await browser.storage.local.set({ [key]: stored[key] });
 }
 
+let versiDataMedia = 0;
+function mundhaknoVersiDataMedia() {
+    versiDataMedia++;
+    return versiDataMedia;
+}
 let antreanTulisSession = Promise.resolve();
 function antreTulisSession(tulis) {
-    const tugas = antreanTulisSession.then(() => tulis());
+    const tugas = antreanTulisSession.then(async () => {
+        await tulis();
+        mundhaknoVersiDataMedia();
+    });
     antreanTulisSession = tugas.catch((error) => console.error('[website-media-downloader] Gagal nulis session:', error));
     return tugas;
 }

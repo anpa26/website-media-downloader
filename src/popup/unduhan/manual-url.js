@@ -100,6 +100,7 @@ async function addManualUrl(url) {
     const updates = {};
     updates[url] = [item];
     await browser.storage.session.set(updates);
+    await browser.runtime.sendMessage({ action: 'tambahVersiDataMedia' }).catch(() => {});
 
     const loadingSpinner = document.getElementById('loading-media-list');
     if (loadingSpinner) loadingSpinner.style.display = 'block';

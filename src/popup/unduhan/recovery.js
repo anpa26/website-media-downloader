@@ -53,6 +53,7 @@ async function restorePopupDownload() {
     return;
   }
   await browser.storage.session.set({ [job.url]: [job.request] });
+  await browser.runtime.sendMessage({ action: 'tambahVersiDataMedia' }).catch(() => {});
   const type = job.mediaType || 'file';
   const item = createMediaItem({ bestRequest: { ...job.request, originalUrl: job.url }, type,
     isVideo: type === 'video', isAudio: type === 'audio', isStream: type === 'stream',

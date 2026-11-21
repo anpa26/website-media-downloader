@@ -120,6 +120,10 @@ let refreshSelektifKotor = false;
 let refreshSelektifMlaku = false;
 let sidikJariRefreshMentahPalingAnyar = null;
 let sidikJariModelTampilPungkasan = null;
+let versiDataMediaPalingAnyar = null;
+let sidikSetelanPalingAnyar = null;
+let kunciUnduhanAktifPalingAnyar = null;
+const KUNCI_SETELAN_CEK_VERSI = ["manual-scan", "manual-scan-keep-tabs", "top-header-design", "bottom-bar-design", "filename-template", "only-video", "only-audio", "only-stream", "only-image", "only-subtitle", "only-file", "hide-segments", "hide-page-components", "media-sort-order", "limit-media-list", "limit-media-list-custom", "min-file-size", "min-file-size-custom", "image-min-side", "image-min-side-custom", "image-min-file-size", "image-min-file-size-custom", "hide-image-without-size", "optimize-low-end", "group-by-type", "group-download-progress", "disable-deduplication", "download-history"];
 
 function campurSidikJari(teks, hash) {
   const untai = String(teks ?? '');
@@ -219,10 +223,81 @@ function hitungSidikJariRefreshMentah(mediaRequests, settings, tabId, host, item
   return hash;
 }
 
+async function takoVersiDataMedia() {
+  try {
+    const res = await Promise.race([
+      browser.runtime.sendMessage({ action: 'getMediaVersion' }),
+      new Promise(selesai => setTimeout(() => selesai(null), 1500))
+    ]);
+    if (res && typeof res.versi === 'number') return res.versi;
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function sidikJariSetelan(setelan) {
+  let hash = 2166136261;
+  const campur = (nilai) => { hash = campurSidikJari(nilai, hash); };
+  const kunciSetelan = Object.keys(setelan || {}).sort();
+  for (const k of kunciSetelan) {
+    campur(k);
+    if (k === 'download-history') {
+      const riwayat = setelan[k];
+      if (Array.isArray(riwayat)) {
+        campur(riwayat.length);
+        const kapisan = riwayat[0];
+        if (kapisan) campur((kapisan.url || '') + '|' + (kapisan.timestamp || 0) + '|' + (kapisan.filename || ''));
+        const pungkasanRiwayat = riwayat[riwayat.length - 1];
+        if (pungkasanRiwayat && pungkasanRiwayat !== kapisan) campur((pungkasanRiwayat.url || '') + '|' + (pungkasanRiwayat.timestamp || 0) + '|' + (pungkasanRiwayat.filename || ''));
+      } else {
+        campur(String(riwayat ?? ''));
+      }
+    } else {
+      campur(String(setelan[k] ?? ''));
+    }
+  }
+  return hash;
+}
+
+function tandhaniKahananSaiki(versi, setelan, unduhanAktif) {
+  if (typeof versi === 'number') versiDataMediaPalingAnyar = versi;
+  if (setelan) sidikSetelanPalingAnyar = sidikJariSetelan(setelan);
+  if (unduhanAktif) kunciUnduhanAktifPalingAnyar = Object.keys(unduhanAktif).sort().join(',');
+}
+
+async function cekKahananMedia() {
+  const kahanan = { podo: false, versi: null, setelan: null, unduhanAktif: null };
+  if (versiDataMediaPalingAnyar === null || sidikSetelanPalingAnyar === null || kunciUnduhanAktifPalingAnyar === null) return kahanan;
+  let versi;
+  let setelan;
+  let unduhanAktif;
+  try {
+    [versi, setelan, unduhanAktif] = await Promise.all([
+      takoVersiDataMedia(),
+      browser.storage.local.get(KUNCI_SETELAN_CEK_VERSI).catch(() => null),
+      getActiveDownloadSnapshot().catch(() => null)
+    ]);
+  } catch (e) {
+    return kahanan;
+  }
+  kahanan.versi = versi;
+  kahanan.setelan = setelan;
+  kahanan.unduhanAktif = unduhanAktif;
+  if (versi === null || !setelan || !unduhanAktif) return kahanan;
+  if (versi !== versiDataMediaPalingAnyar) return kahanan;
+  if (sidikJariSetelan(setelan) !== sidikSetelanPalingAnyar) return kahanan;
+  if (Object.keys(unduhanAktif).sort().join(',') !== kunciUnduhanAktifPalingAnyar) return kahanan;
+  kahanan.podo = true;
+  return kahanan;
+}
+
 function segarnoSidikJariSawiseMuat(mediaRequests, settings, tabId, host, itemAktif, unduhanAktif, itemsAkhir) {
   try {
     sidikJariRefreshMentahPalingAnyar = hitungSidikJariRefreshMentah(mediaRequests, settings, tabId, host, itemAktif, unduhanAktif);
     sidikJariModelTampilPungkasan = sidikJariModelTampil(itemsAkhir, unduhanAktif);
+    tandhaniKahananSaiki(null, settings, unduhanAktif);
+    takoVersiDataMedia().then(versi => { if (typeof versi === 'number') versiDataMediaPalingAnyar = versi; }).catch(() => {});
   } catch (e) {}
 }
 
@@ -231,6 +306,8 @@ async function refreshListMediaSelektif(opsional = {}) {
   if (!sudahMuatListAwal) { await loadMediaList().catch(() => {}); return 'muat-penuh'; }
   if ((!opsional.sakaBalikTab && document.getElementById('navbar')?.value !== 'home') || document.visibilityState !== 'visible') return 'ora-owah';
   if (mediaListLoad) { butuhRefreshSelektifSawiseLoad = true; return 'tunda'; }
+  const kahanan = await cekKahananMedia();
+  if (kahanan.podo) return 'ora-owah';
   refreshSelektifMlaku = true;
   const generasiSadurunge = generasiModelMedia;
   try {
@@ -245,8 +322,11 @@ async function refreshListMediaSelektif(opsional = {}) {
     if (quickActiveDownloads) activeDownloads = quickActiveDownloads;
     const itemAktif = kumpulkanActiveItems();
     const sidikJariMentah = hitungSidikJariRefreshMentah(mediaRequests, settings, currentActiveTabId, currentActiveHost, itemAktif, activeDownloads);
-    if (sidikJariMentah === sidikJariRefreshMentahPalingAnyar) return 'ora-owah';
-    const { items: itemsBaru, activeCount } = await hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId, currentActiveHost, itemAktif, activeDownloads);
+    if (sidikJariMentah === sidikJariRefreshMentahPalingAnyar) {
+      tandhaniKahananSaiki(kahanan.versi, settings, activeDownloads);
+      return 'ora-owah';
+    }
+    const { items: itemsBaru, activeCount } = await hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId, currentActiveHost, itemAktif, activeDownloads, undefined, 100);
     if (generasiModelMedia !== generasiSadurunge || mediaListLoad) {
       if (mediaListLoad) butuhRefreshSelektifSawiseLoad = true;
       return 'tunda';
@@ -256,6 +336,7 @@ async function refreshListMediaSelektif(opsional = {}) {
       sidikJariRefreshMentahPalingAnyar = sidikJariMentah;
       downloadingCount = activeCount;
       updateDownloadingCount(0);
+      tandhaniKahananSaiki(kahanan.versi, settings, activeDownloads);
       return 'ora-owah';
     }
     terapnoSelisihKanthiKompensasiScroll(itemsBaru);
@@ -263,6 +344,7 @@ async function refreshListMediaSelektif(opsional = {}) {
     updateDownloadingCount(0);
     sidikJariModelTampilPungkasan = sidikJariModel;
     sidikJariRefreshMentahPalingAnyar = sidikJariMentah;
+    tandhaniKahananSaiki(kahanan.versi, settings, activeDownloads);
     return 'diff';
   } catch (e) {
     console.warn('[website-media-downloader] Refresh selektif gagal, list lawas dipertahanno:', e);

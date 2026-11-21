@@ -850,6 +850,14 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
       return hasil;
     }
+    if (message.action === 'getMediaVersion') {
+        sendResponse({ versi: versiDataMedia });
+        return true;
+    }
+    if (message.action === 'tambahVersiDataMedia') {
+        sendResponse({ versi: mundhaknoVersiDataMedia() });
+        return true;
+    }
     if (message.action === 'getMediaRequests') {
         const onlyUrl = typeof message.url === 'string' && message.url ? message.url : null;
         browser.storage.session.get(onlyUrl || null, async function (items) {

@@ -249,8 +249,9 @@ function bangunPaketAwal(mediaGroups, settings, activeDownloads) {
   return { items: tampilAwal.slice(0, 20), activeCount };
 }
 
-async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId, currentActiveHost, activeItems, activeDownloads, onAwal) {
+async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId, currentActiveHost, activeItems, activeDownloads, onAwal, jedaYield) {
   const activeDownloadsPromise = getActiveDownloadSnapshot();
+  const langkahYield = jedaYield > 0 ? jedaYield : 20;
     const minFileSizeSetting = settings['min-file-size'] || '0';
     const imageMinSideSelection = String(settings['image-min-side'] ?? '0');
     const imageMinSide = imageMinSideSelection === 'custom'
@@ -271,7 +272,7 @@ async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId
     let mediaScanIndex = 0;
     let sudahPanggilAwal = false;
     for (const rawUrl in mediaRequests) {
-      if (++mediaScanIndex % 20 === 0) {
+      if (++mediaScanIndex % langkahYield === 0) {
         await new Promise(resolve => requestAnimationFrame(resolve));
         if (onAwal && !sudahPanggilAwal && mediaGroups.size >= 20) {
           sudahPanggilAwal = true;
