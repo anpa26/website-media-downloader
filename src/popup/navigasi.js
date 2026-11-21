@@ -20,7 +20,19 @@
 
 const navigationPageLoads = new Map();
 const navigationSkeletonsShown = new Set();
+let fragmentPengaturanDimuat = false;
+async function muatFragmentPengaturan() {
+  if (fragmentPengaturanDimuat) return;
+  const wadahPengaturan = document.getElementById('settings-container');
+  if (!wadahPengaturan) throw new Error('Wadah pengaturan ora ketemu');
+  const tanggapan = await fetch(browser.runtime.getURL('pages/settings-fragment.html'));
+  if (!tanggapan.ok) throw new Error('Gagal muat fragment pengaturan: ' + tanggapan.status);
+  wadahPengaturan.innerHTML = await tanggapan.text();
+  if (typeof window.mdu_translate === 'function') window.mdu_translate();
+  fragmentPengaturanDimuat = true;
+}
 function showNavigationSkeleton(tab) {
+  if (tab === 'settings') return;
   if (navigationSkeletonsShown.has(tab)) return;
   const target = tab === 'home'
     ? document.getElementById('media-list')
@@ -118,6 +130,7 @@ async function activateNavigationTab(tab) {
   if (tab === 'settings') {
     return loadNavigationPageOnce(tab, async () => {
       try {
+        await muatFragmentPengaturan();
         await ensureScriptLoaded('entries/settings.js', 'initializeSettingsPage');
         await window.initializeSettingsPage();
         document.getElementById('pesen-gagal-settings')?.remove();

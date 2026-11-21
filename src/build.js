@@ -657,19 +657,19 @@ function stripDisabledIntegrations(outDir) {
 }
 
 function stripLightFeatures(outDir) {
-    const popupPath = path.join(outDir, 'pages', 'popup.html');
-    removeMarkedSections(popupPath, 'SPEED_TEST');
-    removeMarkedSections(popupPath, 'CLOUD_SETTINGS');
-    removeMarkedSections(popupPath, 'DEVICE_NOTIFICATIONS');
-    removeMarkedSections(popupPath, 'AUTO_DOWNLOAD');
-    removeMarkedSections(popupPath, 'MEDIA_PROCESSING_OPTIONS');
-    removeMarkedSections(popupPath, 'STREAM_MP4');
-    removeMarkedSections(popupPath, 'MP3_CONVERSION');
-    const popup = fs.readFileSync(popupPath, 'utf8').replace(
+    const jalurFragmentPengaturan = path.join(outDir, 'pages', 'settings-fragment.html');
+    removeMarkedSections(jalurFragmentPengaturan, 'SPEED_TEST');
+    removeMarkedSections(jalurFragmentPengaturan, 'CLOUD_SETTINGS');
+    removeMarkedSections(jalurFragmentPengaturan, 'DEVICE_NOTIFICATIONS');
+    removeMarkedSections(jalurFragmentPengaturan, 'AUTO_DOWNLOAD');
+    removeMarkedSections(jalurFragmentPengaturan, 'MEDIA_PROCESSING_OPTIONS');
+    removeMarkedSections(jalurFragmentPengaturan, 'STREAM_MP4');
+    removeMarkedSections(jalurFragmentPengaturan, 'MP3_CONVERSION');
+    const fragmentPengaturan = fs.readFileSync(jalurFragmentPengaturan, 'utf8').replace(
         /\s*<div class="settings-items-container">\s*<\/div>/g,
         ''
     );
-    fs.writeFileSync(popupPath, popup, 'utf8');
+    fs.writeFileSync(jalurFragmentPengaturan, fragmentPengaturan, 'utf8');
     removeMarkedSections(path.join(outDir, 'settings', 'boot.js'), 'SPEED_TEST');
     removeMarkedSections(path.join(outDir, 'settings', 'alat', 'speedtest.js'), 'SPEED_TEST');
     stripLibAvCode(outDir);
@@ -757,9 +757,9 @@ function stripDebugFeatures(outDir) {
         fs.writeFileSync(htmlPath, html, 'utf8');
     }
 
-    const popupPath = path.join(outDir, 'pages', 'popup.html');
-    if (fs.existsSync(popupPath)) {
-        removeDebugSections(popupPath);
+    const jalurFragmentPengaturan = path.join(outDir, 'pages', 'settings-fragment.html');
+    if (fs.existsSync(jalurFragmentPengaturan)) {
+        removeDebugSections(jalurFragmentPengaturan);
     }
 
     removeDebugSections(path.join(outDir, 'settings', 'perawatan', 'debug.js'));
@@ -794,11 +794,11 @@ function stripDebugFeatures(outDir) {
 }
 
 function stripChromeUnsupportedMediaCache(outDir) {
-    const popupPath = path.join(outDir, 'pages', 'popup.html');
-    if (fs.existsSync(popupPath)) {
+    const jalurFragmentPengaturan = path.join(outDir, 'pages', 'settings-fragment.html');
+    if (fs.existsSync(jalurFragmentPengaturan)) {
         const startMarker = 'FIREFOX_ONLY_MEDIA_CACHE_START';
         const endMarker = 'FIREFOX_ONLY_MEDIA_CACHE_END';
-        let content = fs.readFileSync(popupPath, 'utf8');
+        let content = fs.readFileSync(jalurFragmentPengaturan, 'utf8');
         while (content.includes(startMarker)) {
             const start = content.lastIndexOf('\n', content.indexOf(startMarker)) + 1;
             const endMarkerIndex = content.indexOf(endMarker, start);
@@ -806,7 +806,7 @@ function stripChromeUnsupportedMediaCache(outDir) {
             const endLine = content.indexOf('\n', endMarkerIndex);
             content = content.slice(0, start) + content.slice(endLine === -1 ? content.length : endLine + 1);
         }
-        fs.writeFileSync(popupPath, content, 'utf8');
+        fs.writeFileSync(jalurFragmentPengaturan, content, 'utf8');
     }
 
     for (const namaModul of ['state.js', 'pengaturan.js']) {
@@ -1039,9 +1039,11 @@ function validasiRingan(berkas, outDir, target) {
 function validateTarget(baseTarget, outDir, isDebug = false) {
     const targetLabel = isDebug ? `${baseTarget}-debug` : baseTarget;
     const target = baseTarget;
+    const jalurFragmentPengaturan = path.join(outDir, 'pages', 'settings-fragment.html');
+    const isiFragmentPengaturan = fs.existsSync(jalurFragmentPengaturan) ? fs.readFileSync(jalurFragmentPengaturan, 'utf8') : '';
     const berkas = {
         manifes: JSON.parse(fs.readFileSync(path.join(outDir, 'manifest.json'), 'utf8')),
-        popup: fs.readFileSync(path.join(outDir, 'pages', 'popup.html'), 'utf8'),
+        popup: fs.readFileSync(path.join(outDir, 'pages', 'popup.html'), 'utf8') + isiFragmentPengaturan,
         latar: wocoGabunganLatar(outDir),
         pengaturan: wocoGabunganPengaturan(outDir),
     };
