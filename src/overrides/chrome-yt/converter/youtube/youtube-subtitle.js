@@ -31,7 +31,8 @@ async function embedSubtitlesWithLibAV(videoBlob, subData, containerFormat, file
     try {
         console.log("embedSubtitlesWithLibAV: Selecting LibAV variant...");
         const isMp4 = containerFormat === 'mp4';
-        const libavVar = isMp4 ? 'LibAV_h264' : 'LibAV';
+        if (!isMp4) throw new Error('Subtitle embedding only supports MP4 container');
+        const libavVar = 'LibAV_h264';
         const libavScript = 'libraries/libav.js';
 
         if (!window[libavVar] || !window[libavVar].LibAV) {
@@ -99,22 +100,9 @@ async function embedSubtitlesWithLibAV(videoBlob, subData, containerFormat, file
             ffmpegArgs.push("-c:s", "srt");
         }
 
-        const toIso3 = (lang) => {
-            const map = { en:'eng', id:'ind', ja:'jpn', ko:'kor', zh:'zho', fr:'fra', de:'deu',
-                          es:'spa', pt:'por', ru:'rus', ar:'ara', hi:'hin', tr:'tur', it:'ita',
-                          nl:'nld', pl:'pol', th:'tha', vi:'vie', sv:'swe', fi:'fin', da:'dan',
-                          no:'nor', cs:'ces', sk:'slk', ro:'ron', hu:'hun', el:'ell', uk:'ukr' };
-            if (!lang) return 'und';
-            const base = lang.split('-')[0].toLowerCase();
-            if (base.length === 3) return base;
-            return map[base] || 'und';
-        };
-
         for (let i = 0; i < normalizedSubData.length; i++) {
-            const lang = toIso3(normalizedSubData[i].language);
             const name = normalizedSubData[i].displayName || `Subtitle ${i+1}`;
-            ffmpegArgs.push(`-metadata:s:s:${i}`, `language=${lang}`);
-            if (lang === 'und') ffmpegArgs.push(`-metadata:s:s:${i}`, `title=${name}`);
+            ffmpegArgs.push(`-metadata:s:s:${i}`, `title=${name}`);
         }
 
         ffmpegArgs.push("-shortest", outputFile);

@@ -1142,14 +1142,7 @@ async function initializeSettings() {
         await checkDropboxLogin();
     }
 
-    const layoutResult = await browser.storage.local.get('settings-layout');
-    let layoutVal = layoutResult['settings-layout'] || 'tabs-icons';
-    if (!layoutResult['settings-layout']) {
-        const cleanViewResult = await browser.storage.local.get('clean-view');
-        if (cleanViewResult['clean-view'] === '1') {
-            layoutVal = 'clean';
-        }
-    }
+    const layoutVal = await bacaTataLetakTersimpen();
     applySettingsLayout(layoutVal);
 
     setupCollapsibleLogic();
@@ -1324,7 +1317,16 @@ async function initializeSettings() {
             }
         };
     }
-    drawColorWheel();
+    if (colorWheel && typeof IntersectionObserver !== 'undefined') {
+        const pengamatRodaWarna = new IntersectionObserver((entri, pengamat) => {
+            if (!entri.some((entriSiji) => entriSiji.isIntersecting)) return;
+            pengamat.disconnect();
+            drawColorWheel();
+        });
+        pengamatRodaWarna.observe(colorWheel);
+    } else {
+        drawColorWheel();
+    }
 
     const bgDlSwitch = document.getElementById('background-download');
     if (bgDlSwitch) {

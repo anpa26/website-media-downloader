@@ -23,12 +23,11 @@
     Builds separate Chrome and Firefox extension packages from shared source.
 
     Usage:
-        node src/build.js chrome      - Build Chrome extension
         node src/build.js firefox     - Build Firefox extension
         node src/build.js firefox-amo - Build Firefox extension for AMO listed distribution (no update_url)
         node src/build.js firefox-light-amo - Build Firefox Light extension for AMO listed distribution (no update_url)
         node src/build.js light       - Build all Light editions
-        node src/build.js chrome-light|chrome-yt-light|firefox-light
+        node src/build.js chrome-yt-light|firefox-light
         node src/build.js debug       - Build all Debug editions
         node src/build.js <target>-debug
         node src/build.js all         - Build all targets including Debug (default)
@@ -52,7 +51,6 @@ const LIGHT_STREAM_CONVERSION_FILES = ['mux.js', 'mp4_duration.js'];
 const FIREFOX_EXCLUDES = new Set(['chrome_audio_jobs.js', 'offscreen.html', 'offscreen.js']);
 const BERKAS_KHUSUS_YOUTUBE = ['yt_core.js', 'wymd.js', 'youtube-mux.js', 'youtube-chunk.js', 'youtube-vtt.js', 'youtube-subtitle.js'];
 const BERKAS_KHUSUS_FIREFOX = ['audio-base.js', 'cache.js'];
-const BERKAS_KHUSUS_CHROME = ['ts-converter.js'];
 const BERKAS_CADANGAN_FIREFOX = ['download_recovery.js', 'audio_processor.html'];
 const BERKAS_RINGAN_BERSAMA = ['libav.js', ...LIGHT_MP3_FILES, ...LIGHT_STREAM_CONVERSION_FILES];
 
@@ -60,10 +58,8 @@ const FIREFOX_BASED_TARGETS = new Set(['firefox', 'firefox-amo', 'firefox-light'
 const TARGET_AMO = new Set(['firefox-amo', 'firefox-light-amo']);
 
 const EXCLUDE_PER_TARGET = {
-    chrome: new Set([...BERKAS_KHUSUS_YOUTUBE, ...BERKAS_KHUSUS_FIREFOX, ...BERKAS_KHUSUS_CHROME, 'download_recovery.js', ...MEDIABUNNY_FILES]),
     'chrome-yt': new Set([...BERKAS_KHUSUS_FIREFOX, 'download_recovery.js', ...MEDIABUNNY_FILES]),
     firefox: new Set([...FIREFOX_EXCLUDES, ...MEDIABUNNY_FILES]),
-    'chrome-light': new Set([...BERKAS_KHUSUS_YOUTUBE, ...BERKAS_KHUSUS_FIREFOX, ...BERKAS_KHUSUS_CHROME, ...BERKAS_CADANGAN_FIREFOX, ...BERKAS_RINGAN_BERSAMA]),
     'chrome-yt-light': new Set([...BERKAS_KHUSUS_FIREFOX, ...BERKAS_CADANGAN_FIREFOX, ...BERKAS_RINGAN_BERSAMA]),
     'firefox-light': new Set([...FIREFOX_EXCLUDES, ...BERKAS_RINGAN_BERSAMA]),
 };
@@ -74,9 +70,9 @@ const FIREFOX_DEBUG_IDS = {
     firefox: '{1376a6d2-e07f-4015-af28-ca2acfef4e37}',
     'firefox-light': '{d223cfe1-7d70-4ba2-a81c-3cc817d21cc7}'
 };
-const CHROME_LIGHT_TARGETS = new Set(['chrome-light', 'chrome-yt-light']);
-const LIGHT_TARGETS = new Set(['chrome-light', 'chrome-yt-light', 'firefox-light', 'firefox-light-amo']);
-const BASE_TARGETS = ['chrome', 'chrome-yt', 'firefox', 'firefox-amo', 'chrome-light', 'chrome-yt-light', 'firefox-light', 'firefox-light-amo'];
+const CHROME_LIGHT_TARGETS = new Set(['chrome-yt-light']);
+const LIGHT_TARGETS = new Set(['chrome-yt-light', 'firefox-light', 'firefox-light-amo']);
+const BASE_TARGETS = ['chrome-yt', 'firefox', 'firefox-amo', 'chrome-yt-light', 'firefox-light', 'firefox-light-amo'];
 const DEBUG_TARGETS = BASE_TARGETS.filter(target => !target.endsWith('-amo')).map(target => `${target}-debug`);
 const DEBUG_MESSAGE_KEYS = [
     'debugLogTitle',
@@ -89,7 +85,6 @@ const DEBUG_MESSAGE_KEYS = [
     'debugLogCleared'
 ];
 const OVERRIDE_CHAIN_PER_TARGET = {
-    'chrome-light': ['chrome', 'light'],
     'chrome-yt-light': ['chrome-yt', 'light'],
     'firefox-light': ['light', 'firefox-light'],
     'firefox-light-amo': ['light', 'firefox-light']
@@ -631,7 +626,7 @@ function stripDisabledIntegrations(outDir) {
     replaceSection(
         path.join(outDir, 'settings', 'pengaturan.js'),
         "    const gdriveBtn = document.getElementById('gdrive-login-btn');\n    const gdriveText = document.getElementById('gdrive-login-text');",
-        "    const layoutResult = await browser.storage.local.get('settings-layout');",
+        "    const layoutVal = await bacaTataLetakTersimpen();",
         ''
     );
 
@@ -831,6 +826,12 @@ function finalizeManifest(target, outDir, isDebug = false) {
             manifest.browser_specific_settings.gecko = manifest.browser_specific_settings.gecko || {};
             manifest.browser_specific_settings.gecko.id = FIREFOX_DEBUG_IDS[target];
         }
+    }
+    if (!FIREFOX_BASED_TARGETS.has(target)) {
+        delete manifest.developer;
+        delete manifest.browser_specific_settings;
+        if (manifest.background) delete manifest.background.scripts;
+        manifest.permissions = (manifest.permissions || []).filter(permission => permission !== 'webRequestBlocking' && permission !== 'webRequestFilterResponse');
     }
     if (TARGET_AMO.has(target)) {
         if (manifest.browser_specific_settings?.gecko) {
@@ -1099,6 +1100,6 @@ if ([...BASE_TARGETS, ...DEBUG_TARGETS].includes(command)) {
     console.log('[OK] build/ cleaned');
 } else {
     console.error(`[ERROR] Unknown command: ${command}`);
-    console.error('Usage: node src/build.js [chrome|chrome-yt|firefox|firefox-amo|chrome-light|chrome-yt-light|firefox-light|firefox-light-amo|<target>-debug|light|debug|all|clean]');
+    console.error('Usage: node src/build.js [chrome-yt|firefox|firefox-amo|chrome-yt-light|firefox-light|firefox-light-amo|<target>-debug|light|debug|all|clean]');
     process.exit(1);
 }

@@ -33,16 +33,8 @@ jobs:
 
       - name: Create Extension Archives
         run: |
-          cd build/chrome
-          zip -9 -r ../../website-media-downloader-chrome-${{ steps.get_version.outputs.version }}.zip ./*
-          cd ../..
-
           cd build/chrome-yt
           zip -9 -r ../../website-media-downloader-chrome-yt-${{ steps.get_version.outputs.version }}.zip ./*
-          cd ../..
-
-          cd build/chrome-light
-          zip -9 -r ../../website-media-downloader-chrome-light-${{ steps.get_version.outputs.version }}.zip ./*
           cd ../..
 
           cd build/chrome-yt-light
@@ -57,16 +49,8 @@ jobs:
           zip -9 -r ../../website-media-downloader-firefox-light-${{ steps.get_version.outputs.version }}.xpi ./*
           cd ../..
 
-          cd build/chrome-debug
-          zip -9 -r ../../website-media-downloader-chrome-debug-${{ steps.get_version.outputs.version }}.zip ./*
-          cd ../..
-
           cd build/chrome-yt-debug
           zip -9 -r ../../website-media-downloader-chrome-yt-debug-${{ steps.get_version.outputs.version }}.zip ./*
-          cd ../..
-
-          cd build/chrome-light-debug
-          zip -9 -r ../../website-media-downloader-chrome-light-debug-${{ steps.get_version.outputs.version }}.zip ./*
           cd ../..
 
           cd build/chrome-yt-light-debug
@@ -101,15 +85,6 @@ jobs:
           cd ..
           rm -rf firefox-light-source-temp
 
-          mkdir -p chrome-source-temp/src
-          cp -r build/chrome/* chrome-source-temp/src/
-          cp README.md LICENSE.md CONTRIBUTING.md chrome-source-temp/
-          cp -r licenses chrome-source-temp/
-          cd chrome-source-temp
-          zip -9 -r ../website-media-downloader-chrome-source-${{ steps.get_version.outputs.version }}.zip ./*
-          cd ..
-          rm -rf chrome-source-temp
-
           mkdir -p chrome-yt-source-temp/src
           cp -r build/chrome-yt/* chrome-yt-source-temp/src/
           cp README.md LICENSE.md CONTRIBUTING.md chrome-yt-source-temp/
@@ -118,15 +93,6 @@ jobs:
           zip -9 -r ../website-media-downloader-chrome-yt-source-${{ steps.get_version.outputs.version }}.zip ./*
           cd ..
           rm -rf chrome-yt-source-temp
-
-          mkdir -p chrome-light-source-temp/src
-          cp -r build/chrome-light/* chrome-light-source-temp/src/
-          cp README.md LICENSE.md CONTRIBUTING.md chrome-light-source-temp/
-          cp -r licenses chrome-light-source-temp/
-          cd chrome-light-source-temp
-          zip -9 -r ../website-media-downloader-chrome-light-source-${{ steps.get_version.outputs.version }}.zip ./*
-          cd ..
-          rm -rf chrome-light-source-temp
 
           mkdir -p chrome-yt-light-source-temp/src
           cp -r build/chrome-yt-light/* chrome-yt-light-source-temp/src/
@@ -142,21 +108,15 @@ jobs:
         with:
           name: website-media-downloader-v${{ steps.get_version.outputs.version }}
           path: |
-            website-media-downloader-chrome-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-chrome-yt-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-firefox-${{ steps.get_version.outputs.version }}.xpi
-            website-media-downloader-chrome-light-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-chrome-yt-light-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-firefox-light-${{ steps.get_version.outputs.version }}.xpi
-            website-media-downloader-chrome-debug-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-chrome-yt-debug-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-firefox-debug-${{ steps.get_version.outputs.version }}.xpi
-            website-media-downloader-chrome-light-debug-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-chrome-yt-light-debug-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-firefox-light-debug-${{ steps.get_version.outputs.version }}.xpi
-            website-media-downloader-chrome-source-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-chrome-yt-source-${{ steps.get_version.outputs.version }}.zip
-            website-media-downloader-chrome-light-source-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-chrome-yt-light-source-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-firefox-source-${{ steps.get_version.outputs.version }}.zip
             website-media-downloader-firefox-light-source-${{ steps.get_version.outputs.version }}.zip

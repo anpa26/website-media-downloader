@@ -1,7 +1,7 @@
 {
   "require_uninstall": false,
   "en": {
-    "headline": "What's New (v2.6.0)",
+    "headline": "What's New (v2.6.2)",
     "changes": [
       "Optimized popup list rendering with lazy loading.",
       "Improved theme color picker and slider responsiveness in interface settings.",
@@ -13,11 +13,14 @@
       "Fixed download progress and media handling issues in the popup.",
       "Fixed parallel download handling when parts are skipped or fail, including recovery from chunk writing errors.",
       "Removed dead code and deduplicated some code.",
-      "Refined project credits and attribution."
+      "Refined project credits and attribution.",
+      "Fixed stream download not starting when clicking the download toast.",
+      "Fixed the download part count.",
+      "Improved extension performance for Home, Settings, and History."
     ]
   },
   "id": {
-    "headline": "Yang Baru (v2.6.0)",
+    "headline": "Yang Baru (v2.6.2)",
     "changes": [
       "Optimalisasi rendering daftar popup dengan lazy loading.",
       "Peningkatan responsivitas color picker tema dan slider di pengaturan tampilan.",
@@ -29,11 +32,14 @@
       "Perbaikan progres download dan penanganan media di popup.",
       "Perbaikan penanganan download paralel saat ada bagian yang dilewati atau gagal, termasuk pemulihan dari error penulisan chunk.",
       "Penghapusan dead code dan deduplikasi sebagian kode.",
-      "Penyempurnaan kredit dan atribusi proyek."
+      "Penyempurnaan kredit dan atribusi proyek.",
+      "Perbaikan download stream yang tidak mulai saat mengklik toast unduhan.",
+      "Perbaikan jumlah bagian download.",
+      "Peningkatan performa ekstensi untuk Home, Settings, dan History."
     ]
   },
   "de": {
-    "headline": "Was gibt's Neues (v2.6.0)",
+    "headline": "Was gibt's Neues (v2.6.2)",
     "changes": [
       "Optimiertes Rendering der Popup-Liste mit Lazy Loading.",
       "Verbesserte Reaktionsfähigkeit der Theme-Farbauswahl und der Schieberegler in den Oberflächeneinstellungen.",
@@ -45,11 +51,14 @@
       "Behobene Probleme mit Download-Fortschritt und Medienbehandlung im Popup.",
       "Behobene parallele Download-Verarbeitung, wenn Teile übersprungen werden oder fehlschlagen, einschließlich Wiederherstellung nach Fehlern beim Schreiben von Chunks.",
       "Entfernen von totem Code und Deduplizierung von Code.",
-      "Verfeinerte Projekt-Credits und Zuschreibung."
+      "Verfeinerte Projekt-Credits und Zuschreibung.",
+      "Behobener Stream-Download, der beim Klicken auf den Download-Toast nicht startete.",
+      "Behobene Anzahl der Download-Teile.",
+      "Verbesserte Leistung der Erweiterung für Startseite, Einstellungen und Verlauf."
     ]
   },
   "fr": {
-    "headline": "Nouveautés (v2.6.0)",
+    "headline": "Nouveautés (v2.6.2)",
     "changes": [
       "Rendu optimisé de la liste du popup avec chargement différé.",
       "Amélioration de la réactivité du sélecteur de couleur du thème et des curseurs dans les paramètres d'interface.",
@@ -61,11 +70,14 @@
       "Correction des problèmes de progression des téléchargements et de gestion des médias dans le popup.",
       "Correction de la gestion des téléchargements parallèles lorsque des parties sont ignorées ou échouent, y compris la récupération après des erreurs d'écriture de morceaux.",
       "Suppression du code mort et déduplication d'une partie du code.",
-      "Affinement des crédits et de l'attribution du projet."
+      "Affinement des crédits et de l'attribution du projet.",
+      "Correction du téléchargement de flux qui ne démarrait pas en cliquant sur le toast de téléchargement.",
+      "Correction du nombre de parties du téléchargement.",
+      "Amélioration des performances de l'extension pour l'Accueil, les Paramètres et l'Historique."
     ]
   },
   "ja": {
-    "headline": "新機能 (v2.6.0)",
+    "headline": "新機能 (v2.6.2)",
     "changes": [
       "遅延読み込みによるポップアップリストのレンダリングを最適化しました。",
       "インターフェース設定のテーマカラーピッカーとスライダーの応答性を改善しました。",
@@ -77,11 +89,14 @@
       "ポップアップのダウンロード進捗とメディア処理の問題を修正しました。",
       "一部がスキップまたは失敗した場合の並列ダウンロード処理を修正しました（チャンク書き込みエラーからの復旧を含む）。",
       "デッドコードを削除し、一部のコードを重複排除しました。",
-      "プロジェクトのクレジットと帰属を洗練しました。"
+      "プロジェクトのクレジットと帰属を洗練しました。",
+      "ダウンロードトーストをクリックしてもストリームのダウンロードが開始されない問題を修正しました。",
+      "ダウンロードのパート数を修正しました。",
+      "ホーム、設定、履歴における拡張機能のパフォーマンスを改善しました。"
     ]
   },
   "ko": {
-    "headline": "새로운 기능 (v2.6.0)",
+    "headline": "새로운 기능 (v2.6.2)",
     "changes": [
       "지연 로딩을 통한 팝업 목록 렌더링 최적화.",
       "인터페이스 설정의 테마 색상 선택기와 슬라이더 반응성 개선.",
@@ -93,11 +108,14 @@
       "팝업의 다운로드 진행률 및 미디어 처리 문제 수정.",
       "일부가 건너뛰거나 실패할 때의 병렬 다운로드 처리 수정(청크 쓰기 오류 복구 포함).",
       "데드 코드 제거 및 일부 코드 중복 제거.",
-      "프로젝트 크레딧 및 기여 표시 개선."
+      "프로젝트 크레딧 및 기여 표시 개선.",
+      "다운로드 토스트를 클릭해도 스트림 다운로드가 시작되지 않는 문제를 수정했습니다.",
+      "다운로드 파트 수를 수정했습니다.",
+      "홈, 설정, 기록에서 확장 프로그램 성능을 개선했습니다."
     ]
   },
   "pt": {
-    "headline": "Novidades (v2.6.0)",
+    "headline": "Novidades (v2.6.2)",
     "changes": [
       "Renderização otimizada da lista do popup com carregamento preguiçoso.",
       "Melhoria na responsividade do seletor de cores do tema e dos controles deslizantes nas configurações de interface.",
@@ -109,11 +127,14 @@
       "Correção de problemas de progresso de download e manipulação de mídia no popup.",
       "Correção do tratamento de downloads paralelos quando partes são ignoradas ou falham, incluindo recuperação de erros de gravação de partes.",
       "Remoção de código morto e deduplicação de parte do código.",
-      "Refinamento dos créditos e da atribuição do projeto."
+      "Refinamento dos créditos e da atribuição do projeto.",
+      "Correção do download de stream que não iniciava ao clicar no toast de download.",
+      "Correção da contagem de partes do download.",
+      "Melhoria do desempenho da extensão para Início, Configurações e Histórico."
     ]
   },
   "ru": {
-    "headline": "Что нового (v2.6.0)",
+    "headline": "Что нового (v2.6.2)",
     "changes": [
       "Оптимизирован рендеринг списка во всплывающем окне с ленивой загрузкой.",
       "Улучшена отзывчивость выбора цвета темы и ползунков в настройках интерфейса.",
@@ -125,11 +146,14 @@
       "Исправлены проблемы с прогрессом загрузки и обработкой медиа во всплывающем окне.",
       "Исправлена параллельная загрузка, когда части пропускаются или завершаются ошибкой, включая восстановление после ошибок записи фрагментов.",
       "Удалён мёртвый код, продублированный код объединён.",
-      "Уточнены кредиты проекта и атрибуция."
+      "Уточнены кредиты проекта и атрибуция.",
+      "Исправлена ошибка, из-за которой загрузка потока не начиналась при нажатии на всплывающее уведомление о загрузке.",
+      "Исправлено количество частей загрузки.",
+      "Улучшена производительность расширения для главной страницы, настроек и истории."
     ]
   },
   "ar": {
-    "headline": "ما الجديد (v2.6.0)",
+    "headline": "ما الجديد (v2.6.2)",
     "changes": [
       "تحسين عرض قائمة النافذة المنبثقة مع التحميل الكسول.",
       "تحسين استجابة منتقي ألوان السمة وأشرطة التمرير في إعدادات الواجهة.",
@@ -141,11 +165,14 @@
       "إصلاح مشاكل تقدم التنزيل ومعالجة الوسائط في النافذة المنبثقة.",
       "إصلاح معالجة التنزيلات المتوازية عند تخطي أجزاء أو فشلها، بما في ذلك الاسترداد من أخطاء كتابة الأجزاء.",
       "إزالة التعليمات البرمجية الميتة وإزالة تكرار بعض التعليمات البرمجية.",
-      "تحسين اعتمادات المشروع ونسبته."
+      "تحسين اعتمادات المشروع ونسبته.",
+      "إصلاح مشكلة عدم بدء تنزيل البث عند النقر على إشعار التنزيل.",
+      "إصلاح عدد أجزاء التنزيل.",
+      "تحسين أداء الإضافة للصفحة الرئيسية والإعدادات والسجل."
     ]
   },
   "es": {
-    "headline": "Novedades (v2.6.0)",
+    "headline": "Novedades (v2.6.2)",
     "changes": [
       "Renderizado optimizado de la lista del popup con carga diferida.",
       "Mejora de la capacidad de respuesta del selector de color del tema y los controles deslizantes en la configuración de la interfaz.",
@@ -157,7 +184,10 @@
       "Corrección de problemas de progreso de descarga y manejo de medios en el popup.",
       "Corrección del manejo de descargas paralelas cuando se omiten partes o fallan, incluida la recuperación de errores de escritura de fragmentos.",
       "Eliminación de código muerto y deduplicación de parte del código.",
-      "Refinamiento de los créditos y la atribución del proyecto."
+      "Refinamiento de los créditos y la atribución del proyecto.",
+      "Corrección de la descarga de stream que no se iniciaba al hacer clic en el toast de descarga.",
+      "Corrección del recuento de partes de la descarga.",
+      "Mejora del rendimiento de la extensión para Inicio, Ajustes e Historial."
     ]
   }
 }

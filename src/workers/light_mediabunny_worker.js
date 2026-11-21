@@ -20,25 +20,12 @@ importScripts('../libraries/mediabunny.min.js');
 
 let activeOutputs = new Set();
 
-function toIso3(language) {
-    const languages = {
-        en: 'eng', id: 'ind', ja: 'jpn', ko: 'kor', zh: 'zho', fr: 'fra', de: 'deu',
-        es: 'spa', pt: 'por', ru: 'rus', ar: 'ara', hi: 'hin', tr: 'tur', it: 'ita',
-        nl: 'nld', pl: 'pol', th: 'tha', vi: 'vie', sv: 'swe', fi: 'fin', da: 'dan',
-        no: 'nor', cs: 'ces', sk: 'slk', ro: 'ron', hu: 'hun', el: 'ell', uk: 'ukr'
-    };
-    const base = String(language || 'und').split('-')[0].toLowerCase();
-    return base.length === 3 ? base : (languages[base] || 'und');
-}
-
 function attachSubtitles(output, subtitles) {
     const sources = [];
     for (let index = 0; index < subtitles.length; index++) {
         const subtitle = subtitles[index];
         const source = new Mediabunny.TextSubtitleSource('webvtt');
-        const languageCode = toIso3(subtitle.language);
-        const metadata = { languageCode };
-        if (languageCode === 'und') metadata.name = subtitle.displayName || `Subtitle ${index + 1}`;
+        const metadata = { name: subtitle.displayName || `Subtitle ${index + 1}` };
         output.addSubtitleTrack(source, metadata);
         sources.push(source);
     }

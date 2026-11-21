@@ -21,15 +21,10 @@
 const navigationPageLoads = new Map();
 const navigationSkeletonsShown = new Set();
 let fragmentPengaturanDimuat = false;
-async function muatFragmentPengaturan() {
-  if (fragmentPengaturanDimuat) return;
-  const wadahPengaturan = document.getElementById('settings-container');
-  if (!wadahPengaturan) throw new Error('Wadah pengaturan ora ketemu');
+async function ambilTeksFragmentPengaturan() {
   const tanggapan = await fetch(browser.runtime.getURL('pages/settings-fragment.html'));
   if (!tanggapan.ok) throw new Error('Gagal muat fragment pengaturan: ' + tanggapan.status);
-  wadahPengaturan.innerHTML = await tanggapan.text();
-  if (typeof window.mdu_translate === 'function') window.mdu_translate();
-  fragmentPengaturanDimuat = true;
+  return tanggapan.text();
 }
 function showNavigationSkeleton(tab) {
   if (tab === 'settings') return;
@@ -129,8 +124,21 @@ function initializeHistoryPage() {
 async function activateNavigationTab(tab) {
   if (tab === 'settings') {
     return loadNavigationPageOnce(tab, async () => {
+      const wadahSetelan = document.getElementById('settings-container');
+      if (!wadahSetelan) throw new Error('Wadah pengaturan ora ketemu');
+      wadahSetelan.classList.add('tanpa-animasi');
       try {
-        await muatFragmentPengaturan();
+        if (!fragmentPengaturanDimuat) {
+          const janjiTeksFragment = ambilTeksFragmentPengaturan();
+          const janjiTataLetakAwal = ensureScriptLoaded('settings/tampilan/tata-letak.js')
+            .then(() => bacaTataLetakTersimpen())
+            .catch(() => null);
+          const [teksFragment, tataLetakAwal] = await Promise.all([janjiTeksFragment, janjiTataLetakAwal]);
+          wadahSetelan.innerHTML = teksFragment;
+          if (typeof window.mdu_translate === 'function') window.mdu_translate();
+          if (tataLetakAwal && typeof applySettingsLayout === 'function') applySettingsLayout(tataLetakAwal);
+          fragmentPengaturanDimuat = true;
+        }
         await ensureScriptLoaded('entries/settings.js', 'initializeSettingsPage');
         await window.initializeSettingsPage();
         document.getElementById('pesen-gagal-settings')?.remove();
@@ -148,6 +156,9 @@ async function activateNavigationTab(tab) {
           });
         }
         throw error;
+      } finally {
+        wadahSetelan.offsetHeight;
+        wadahSetelan.classList.remove('tanpa-animasi');
       }
     });
   }

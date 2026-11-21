@@ -6,7 +6,7 @@
 
 <div align="center">
 
-  [![Version](https://img.shields.io/badge/version-2.6.0-blue.svg)](src/manifest.json)
+  [![Version](https://img.shields.io/badge/version-2.6.2-blue.svg)](src/manifest.json)
   [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE.md)
   [![Platform](https://img.shields.io/badge/platform-Chrome%20%7C%20Firefox%20%7C%20Android-orange.svg)](#installation)
   [![Firefox Add-ons](https://img.shields.io/badge/Firefox-Add--ons-FF7139?logo=firefox)](https://addons.mozilla.org/en-US/firefox/addon/website-media-downloader/)
@@ -196,7 +196,6 @@ website-media-downloader/
 │   ├── libraries/
 │   ├── styles/
 │   ├── overrides/          # Browser-specific overrides
-│   │   ├── chrome/         # Chrome overrides
 │   │   ├── chrome-yt/      # Chrome-YT overrides
 │   │   ├── light/          # Shared Light edition overrides
 │   │   └── firefox-light/  # Firefox Light identity override
@@ -204,10 +203,8 @@ website-media-downloader/
 │   ├── manifest.json       # Firefox base manifest
 │   └── build.js            # Build script
 └── build/                  # Build output (git-ignored)
-    ├── chrome/
     ├── chrome-yt/
     ├── firefox/
-    ├── chrome-light/
     ├── chrome-yt-light/
     └── firefox-light/
 ```
@@ -215,11 +212,8 @@ website-media-downloader/
 ## Building
 
 ```bash
-# Build Chrome, Chrome-YT, Firefox, and Light
+# Build Chrome-YT, Firefox, and Light
 node src/build.js all
-
-# Build Chrome only
-node src/build.js chrome
 
 # Build Chrome-YT only
 node src/build.js chrome-yt
@@ -231,7 +225,6 @@ node src/build.js firefox
 node src/build.js light
 
 # Build one Light edition only
-node src/build.js chrome-light
 node src/build.js chrome-yt-light
 node src/build.js firefox-light
 
@@ -239,18 +232,18 @@ node src/build.js firefox-light
 node src/build.js clean
 ```
 
-Each build output is written to its matching directory under `build/`. The three Light editions exclude the Network Speed Test and cloud integrations, and share customizations from `src/overrides/light/`. Firefox Light has its own add-on UUID; Chrome and Chrome-YT Light receive distinct extension IDs when published as separate Web Store listings.
+Each build output is written to its matching directory under `build/`. The three Light editions exclude the Network Speed Test and cloud integrations, and share customizations from `src/overrides/light/`. Firefox Light has its own add-on UUID; Chrome-YT Light receives its own extension ID when published as a separate Web Store listing.
 
 ---
 
 ## Installation
 
-Website Media Downloader is available for Chrome, Chrome-YT, and Firefox.
+Website Media Downloader is available for Chrome-YT and Firefox.
 
 ### Chrome / Chromium
-1. Run `node src/build.js chrome` (or `node src/build.js chrome-yt` for the YouTube-enabled version)
+1. Run `node src/build.js chrome-yt`
 2. Open `chrome://extensions/` and enable **Developer mode**
-3. Click **Load unpacked** and select the `build/chrome/` (or `build/chrome-yt/`) folder
+3. Click **Load unpacked** and select the `build/chrome-yt/` folder
 
 ### Firefox Desktop & Android
 You can install the extension directly from the official Firefox Add-ons store:

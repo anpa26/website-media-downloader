@@ -36,8 +36,7 @@ async function downloadAndMuxYoutube(videoUrl, audioUrl, filename, downloadMetho
 
     try {
         console.log("downloadAndMuxYoutube: Selecting LibAV variant...");
-        const isMp4 = filename.toLowerCase().includes('.mp4');
-        const libavVar = isMp4 ? 'LibAV_h264' : 'LibAV';
+        const libavVar = 'LibAV_h264';
         const libavScript = 'libraries/libav.js';
 
         if (!window[libavVar] || !window[libavVar].LibAV) {

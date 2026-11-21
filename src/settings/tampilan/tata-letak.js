@@ -18,6 +18,18 @@
 
 
 
+async function bacaTataLetakTersimpen() {
+    const asilTataLetak = await browser.storage.local.get('settings-layout');
+    let tataLetak = asilTataLetak['settings-layout'] || 'tabs-icons';
+    if (!asilTataLetak['settings-layout']) {
+        const asilTampilanResik = await browser.storage.local.get('clean-view');
+        if (asilTampilanResik['clean-view'] === '1') {
+            tataLetak = 'clean';
+        }
+    }
+    return tataLetak;
+}
+
 function applySettingsLayout(layoutType) {
     const container = document.getElementById('settings-container');
     if (!container) return;
@@ -162,14 +174,7 @@ function setupCollapsibleLogic() {
         header.dataset.collapsibleBound = "true";
 
         header.addEventListener('click', async () => {
-            const layoutResult = await browser.storage.local.get('settings-layout');
-            let layoutVal = layoutResult['settings-layout'] || 'tabs-icons';
-            if (!layoutResult['settings-layout']) {
-                const cleanViewResult = await browser.storage.local.get('clean-view');
-                if (cleanViewResult['clean-view'] === '1') {
-                    layoutVal = 'clean';
-                }
-            }
+            const layoutVal = await bacaTataLetakTersimpen();
             if (layoutVal !== 'clean') return;
 
             const currentGroup = header.closest('.settings-group');

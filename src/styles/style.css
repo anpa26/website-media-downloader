@@ -1279,6 +1279,14 @@ mdui-card {
     transition: none !important;
 }
 
+#settings-container.tanpa-animasi,
+#settings-container.tanpa-animasi *,
+#settings-container.tanpa-animasi *::before,
+#settings-container.tanpa-animasi *::after {
+    transition: none !important;
+    animation: none !important;
+}
+
 #about-container .about-content > * {
     content-visibility: auto;
     contain: layout paint style;
