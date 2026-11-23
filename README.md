@@ -171,6 +171,9 @@ You can also manually trigger an update check at any time via the **About** page
 **Note on Store Updates vs. GitHub Releases:**
 New versions are often published to GitHub before they pass the review process on the Mozilla Add-ons (AMO) store. If you are notified of a GitHub update while AMO still serves the older version, you can choose to wait for the official store update or manually install the latest release.
 
+**Speeding up Firefox update checks:**
+Firefox checks for extension updates on its own schedule, controlled by `extensions.update.interval` in `about:config` (in seconds, default `86400` = 24 hours). That means a new GitHub release can take up to a day to reach you. To get it sooner, open `about:config`, search for `extensions.update.interval`, and lower it (for example `3600` for every hour, or even `60` to check every minute). To check right now, open `about:addons`, click the gear icon, and select **Check for Updates**.
+
 ---
 
 ## Supported Formats
