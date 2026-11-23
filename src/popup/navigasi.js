@@ -204,7 +204,7 @@ function waitForNavigationIdle() {
 }
 
 async function warmNavigationTabs(initialTab) {
-  const warmOrder = ['home'];
+  const warmOrder = ['history', 'about', 'home'];
   for (const tab of warmOrder) {
     if (tab === initialTab || navigationPageLoads.has(tab)) continue;
     await waitForNavigationIdle();
