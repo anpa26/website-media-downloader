@@ -110,13 +110,9 @@ jobs:
           if [ "${{ github.event.inputs.target_browser }}" = "both" ]; then
             node src/build.js all
           elif [ "${{ github.event.inputs.target_browser }}" = "chrome only" ]; then
-            node src/build.js chrome
             node src/build.js chrome-yt
-            node src/build.js chrome-light
             node src/build.js chrome-yt-light
-            node src/build.js chrome-debug
             node src/build.js chrome-yt-debug
-            node src/build.js chrome-light-debug
             node src/build.js chrome-yt-light-debug
           elif [ "${{ github.event.inputs.target_browser }}" = "firefox only" ]; then
             node src/build.js firefox
@@ -137,51 +133,21 @@ jobs:
         if: ${{ !inputs.recompress_only }}
         run: |
           if [ "${{ github.event.inputs.target_browser }}" = "both" ] || [ "${{ github.event.inputs.target_browser }}" = "chrome only" ]; then
-            cd build/chrome
-            zip -9 -r ../../website-media-downloader-chrome-${{ github.event.inputs.tag_name }}.zip ./*
-            cd ../..
-
             cd build/chrome-yt
             zip -9 -r ../../website-media-downloader-chrome-yt-${{ github.event.inputs.tag_name }}.zip ./*
-            cd ../..
-
-            cd build/chrome-light
-            zip -9 -r ../../website-media-downloader-chrome-light-${{ github.event.inputs.tag_name }}.zip ./*
             cd ../..
 
             cd build/chrome-yt-light
             zip -9 -r ../../website-media-downloader-chrome-yt-light-${{ github.event.inputs.tag_name }}.zip ./*
             cd ../..
 
-            cd build/chrome-debug
-            zip -9 -r ../../website-media-downloader-chrome-debug-${{ github.event.inputs.tag_name }}.zip ./*
-            cd ../..
-
             cd build/chrome-yt-debug
             zip -9 -r ../../website-media-downloader-chrome-yt-debug-${{ github.event.inputs.tag_name }}.zip ./*
-            cd ../..
-
-            cd build/chrome-light-debug
-            zip -9 -r ../../website-media-downloader-chrome-light-debug-${{ github.event.inputs.tag_name }}.zip ./*
             cd ../..
 
             cd build/chrome-yt-light-debug
             zip -9 -r ../../website-media-downloader-chrome-yt-light-debug-${{ github.event.inputs.tag_name }}.zip ./*
             cd ../..
-
-            mkdir -p chrome-source-temp/src
-            cp -r build/chrome/* chrome-source-temp/src/
-            cp LICENSE.md CONTRIBUTING.md chrome-source-temp/
-            if [ -f build/chrome/README.md ]; then
-              cp build/chrome/README.md chrome-source-temp/README.md
-            else
-              cp README.md chrome-source-temp/README.md
-            fi
-            cp -r licenses chrome-source-temp/
-            cd chrome-source-temp
-            zip -9 -r ../website-media-downloader-chrome-source-${{ github.event.inputs.tag_name }}.zip ./*
-            cd ..
-            rm -rf chrome-source-temp
 
             mkdir -p chrome-yt-source-temp/src
             cp -r build/chrome-yt/* chrome-yt-source-temp/src/
@@ -196,20 +162,6 @@ jobs:
             zip -9 -r ../website-media-downloader-chrome-yt-source-${{ github.event.inputs.tag_name }}.zip ./*
             cd ..
             rm -rf chrome-yt-source-temp
-
-            mkdir -p chrome-light-source-temp/src
-            cp -r build/chrome-light/* chrome-light-source-temp/src/
-            cp LICENSE.md CONTRIBUTING.md chrome-light-source-temp/
-            if [ -f build/chrome-light/README.md ]; then
-              cp build/chrome-light/README.md chrome-light-source-temp/README.md
-            else
-              cp README.md chrome-light-source-temp/README.md
-            fi
-            cp -r licenses chrome-light-source-temp/
-            cd chrome-light-source-temp
-            zip -9 -r ../website-media-downloader-chrome-light-source-${{ github.event.inputs.tag_name }}.zip ./*
-            cd ..
-            rm -rf chrome-light-source-temp
 
             mkdir -p chrome-yt-light-source-temp/src
             cp -r build/chrome-yt-light/* chrome-yt-light-source-temp/src/
@@ -517,18 +469,12 @@ jobs:
           body: ${{ steps.commit_info.outputs.body }}
           prerelease: ${{ github.event.inputs.prerelease == 'true' }}
           files: |
-            website-media-downloader-chrome-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-chrome-yt-${{ github.event.inputs.tag_name }}.zip
-            website-media-downloader-chrome-light-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-chrome-yt-light-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-firefox-*.xpi
-            website-media-downloader-chrome-debug-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-chrome-yt-debug-${{ github.event.inputs.tag_name }}.zip
-            website-media-downloader-chrome-light-debug-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-chrome-yt-light-debug-${{ github.event.inputs.tag_name }}.zip
-            website-media-downloader-chrome-source-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-chrome-yt-source-${{ github.event.inputs.tag_name }}.zip
-            website-media-downloader-chrome-light-source-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-chrome-yt-light-source-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-firefox-source-${{ github.event.inputs.tag_name }}.zip
             website-media-downloader-firefox-light-source-${{ github.event.inputs.tag_name }}.zip
