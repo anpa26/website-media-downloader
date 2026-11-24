@@ -129,5 +129,15 @@ function setupIndexedDBCacheControls() {
             clearButton.disabled = false;
         }
     });
-    refresh();
+    const wadahPerawatan = status.closest('.settings-group');
+    if (wadahPerawatan && typeof IntersectionObserver !== 'undefined') {
+        const pengamatCache = new IntersectionObserver((entri, pengamat) => {
+            if (!entri.some((entriSiji) => entriSiji.isIntersecting)) return;
+            pengamat.disconnect();
+            refresh();
+        });
+        pengamatCache.observe(wadahPerawatan);
+    } else {
+        refresh();
+    }
 }

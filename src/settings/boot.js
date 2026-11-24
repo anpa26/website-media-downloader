@@ -17,62 +17,60 @@
 */
 
 
-window.__initSettingsPageAsli = function initializeSettingsPage() {
-  if (settingsPageInitPromise) return settingsPageInitPromise;
-  settingsPageInitPromise = (async () => {
-    await initTheme();
+async function siapnoVisibilitasCloud() {
+    const pilihLokasi = document.getElementById('cloud-save-location');
+    const rincianGdrive = document.getElementById('gdrive-details-container');
+    const rincianDropbox = document.getElementById('dropbox-details-container');
+    const res = await browser.storage.local.get(['save-to-gdrive', 'save-to-dropbox']);
+    let gdriveVal = pendingChanges['save-to-gdrive'] !== undefined ? pendingChanges['save-to-gdrive'] : res['save-to-gdrive'];
+    let dropboxVal = pendingChanges['save-to-dropbox'] !== undefined ? pendingChanges['save-to-dropbox'] : res['save-to-dropbox'];
 
-    const cloudLocationSelect = document.getElementById('cloud-save-location');
-    const gdriveDetails = document.getElementById('gdrive-details-container');
-    const dropboxDetails = document.getElementById('dropbox-details-container');
+    let val = 'local';
+    if (gdriveVal === '1') val = 'gdrive';
+    if (dropboxVal === '1') val = 'dropbox';
 
-        async function updateCloudVisibility() {
-        const res = await browser.storage.local.get(['save-to-gdrive', 'save-to-dropbox']);
-        let gdriveVal = pendingChanges['save-to-gdrive'] !== undefined ? pendingChanges['save-to-gdrive'] : res['save-to-gdrive'];
-        let dropboxVal = pendingChanges['save-to-dropbox'] !== undefined ? pendingChanges['save-to-dropbox'] : res['save-to-dropbox'];
-
-        let val = 'local';
-        if (gdriveVal === '1') val = 'gdrive';
-        if (dropboxVal === '1') val = 'dropbox';
-
-        if (cloudLocationSelect) {
-            if (cloudLocationSelect.value !== val) {
-                cloudLocationSelect.value = val;
-            }
-        }
-
-        const gdriveStream = document.getElementById('gdrive-stream');
-        const dropboxStream = document.getElementById('dropbox-stream');
-
-        if (gdriveStream) {
-            gdriveStream.disabled = val !== 'gdrive';
-            if (gdriveStream.disabled && gdriveStream.checked) {
-                gdriveStream.checked = false;
-                gdriveStream.dispatchEvent(new Event('change'));
-            }
-        }
-        if (dropboxStream) {
-            dropboxStream.disabled = val !== 'dropbox';
-            if (dropboxStream.disabled && dropboxStream.checked) {
-                dropboxStream.checked = false;
-                dropboxStream.dispatchEvent(new Event('change'));
-            }
-        }
-
-        if (val === 'gdrive') {
-            if (gdriveDetails) gdriveDetails.style.display = 'flex';
-            if (dropboxDetails) dropboxDetails.style.display = 'none';
-        } else if (val === 'dropbox') {
-            if (gdriveDetails) gdriveDetails.style.display = 'none';
-            if (dropboxDetails) dropboxDetails.style.display = 'flex';
-        } else {
-            if (gdriveDetails) gdriveDetails.style.display = 'none';
-            if (dropboxDetails) dropboxDetails.style.display = 'none';
+    if (pilihLokasi) {
+        if (pilihLokasi.value !== val) {
+            pilihLokasi.value = val;
         }
     }
 
-    if (cloudLocationSelect) {
-        cloudLocationSelect.addEventListener('change', async (e) => {
+    const gdriveStream = document.getElementById('gdrive-stream');
+    const dropboxStream = document.getElementById('dropbox-stream');
+
+    if (gdriveStream) {
+        gdriveStream.disabled = val !== 'gdrive';
+        if (gdriveStream.disabled && gdriveStream.checked) {
+            gdriveStream.checked = false;
+            gdriveStream.dispatchEvent(new Event('change'));
+        }
+    }
+    if (dropboxStream) {
+        dropboxStream.disabled = val !== 'dropbox';
+        if (dropboxStream.disabled && dropboxStream.checked) {
+            dropboxStream.checked = false;
+            dropboxStream.dispatchEvent(new Event('change'));
+        }
+    }
+
+    if (val === 'gdrive') {
+        if (rincianGdrive) rincianGdrive.style.display = 'flex';
+        if (rincianDropbox) rincianDropbox.style.display = 'none';
+    } else if (val === 'dropbox') {
+        if (rincianGdrive) rincianGdrive.style.display = 'none';
+        if (rincianDropbox) rincianDropbox.style.display = 'flex';
+    } else {
+        if (rincianGdrive) rincianGdrive.style.display = 'none';
+        if (rincianDropbox) rincianDropbox.style.display = 'none';
+    }
+}
+
+window.siapnoPilihCloud = async function siapnoPilihCloud() {
+    const pilihLokasi = document.getElementById('cloud-save-location');
+    if (!pilihLokasi) return;
+    if (!pilihLokasi.dataset.pilihCloudSiap) {
+        pilihLokasi.dataset.pilihCloudSiap = '1';
+        pilihLokasi.addEventListener('change', async (e) => {
             const val = e.target.value;
             if (val === 'local') {
                 pendingChanges['save-to-gdrive'] = '0';
@@ -85,23 +83,13 @@ window.__initSettingsPageAsli = function initializeSettingsPage() {
                 pendingChanges['save-to-dropbox'] = '1';
             }
             if (typeof showApplyBar === 'function') showApplyBar();
-            updateCloudVisibility();
+            siapnoVisibilitasCloud();
         });
     }
+    await siapnoVisibilitasCloud();
+};
 
-    await updateCloudVisibility();
-
-    const WAKTU_TUNGGU_MDUI = 5000;
-    await Promise.race([
-        Promise.allSettled([
-            customElements.whenDefined('mdui-switch'),
-            customElements.whenDefined('mdui-segmented-button-group'),
-            customElements.whenDefined('mdui-segmented-button')
-        ]),
-        new Promise((_, tolak) => setTimeout(() => tolak(new Error('Wektu entek ' + WAKTU_TUNGGU_MDUI + 'ms ngenteni MDUI')), WAKTU_TUNGGU_MDUI))
-    ]);
-    await initializeSettings();
-    setupConfirmationBar();
+window.siapnoSetupSeksi = function siapnoSetupSeksi() {
     // LIGHT_EXCLUDE_SPEED_TEST_START
     setupSpeedTest();
     // LIGHT_EXCLUDE_SPEED_TEST_END
@@ -112,6 +100,27 @@ window.__initSettingsPageAsli = function initializeSettingsPage() {
     setupDebugLogControls();
     // DEBUG_ONLY_END
     setupManualTsConverter();
+};
+
+window.__initSettingsPageAsli = function initializeSettingsPage() {
+  if (settingsPageInitPromise) return settingsPageInitPromise;
+  settingsPageInitPromise = (async () => {
+    await initTheme();
+
+    await siapnoPilihCloud();
+
+    const WAKTU_TUNGGU_MDUI = 5000;
+    await Promise.race([
+        Promise.allSettled([
+            customElements.whenDefined('mdui-switch'),
+            customElements.whenDefined('mdui-segmented-button-group'),
+            customElements.whenDefined('mdui-segmented-button')
+        ]),
+        new Promise((rampung) => setTimeout(rampung, WAKTU_TUNGGU_MDUI))
+    ]);
+    await initializeSettings();
+    setupConfirmationBar();
+    siapnoSetupSeksi();
 
     if (window.location.search.includes('startDropbox=true')) {
         const res = await browser.storage.local.get('dropbox_token');

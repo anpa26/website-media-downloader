@@ -16,48 +16,47 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-window.mdu_translate = function() {
-    document.querySelectorAll('[data-translate]').forEach(element => {
-        const key = element.getAttribute('data-translate');
-        const translation = browser.i18n.getMessage(key);
-        if (translation) {
-            element.textContent = translation;
+window.mdu_translate = function(akar) {
+    const wadah = akar || document;
+    wadah.querySelectorAll('[data-translate], [data-helper-translate], [data-title-translate], [data-placeholder-translate], [data-label-translate]').forEach(element => {
+        const kunciTeks = element.getAttribute('data-translate');
+        if (kunciTeks !== null) {
+            const terjemahanTeks = browser.i18n.getMessage(kunciTeks);
+            if (terjemahanTeks) {
+                element.textContent = terjemahanTeks;
+            }
+            else {
+                console.warn(`Missing translation for key: ${kunciTeks}`);
+            }
         }
-        else {
-            console.warn(`Missing translation for key: ${key}`);
+        const kunciPambiyantu = element.getAttribute('data-helper-translate');
+        if (kunciPambiyantu !== null) {
+            const terjemahanPambiyantu = browser.i18n.getMessage(kunciPambiyantu);
+            if (terjemahanPambiyantu) {
+                element.setAttribute('helper', terjemahanPambiyantu);
+            }
         }
-    });
-
-    document.querySelectorAll('[data-helper-translate]').forEach(element => {
-        const key = element.getAttribute('data-helper-translate');
-        const translation = browser.i18n.getMessage(key);
-        if (translation) {
-            element.setAttribute('helper', translation);
+        const kunciJudhul = element.getAttribute('data-title-translate');
+        if (kunciJudhul !== null) {
+            const terjemahanJudhul = browser.i18n.getMessage(kunciJudhul);
+            if (terjemahanJudhul) {
+                element.setAttribute('title', terjemahanJudhul);
+                element.setAttribute('aria-label', terjemahanJudhul);
+            }
         }
-    });
-
-    document.querySelectorAll('[data-title-translate]').forEach(element => {
-        const key = element.getAttribute('data-title-translate');
-        const translation = browser.i18n.getMessage(key);
-        if (translation) {
-            element.setAttribute('title', translation);
-            element.setAttribute('aria-label', translation);
+        const kunciPanggonan = element.getAttribute('data-placeholder-translate');
+        if (kunciPanggonan !== null) {
+            const terjemahanPanggonan = browser.i18n.getMessage(kunciPanggonan);
+            if (terjemahanPanggonan) {
+                element.setAttribute('placeholder', terjemahanPanggonan);
+            }
         }
-    });
-
-    document.querySelectorAll('[data-placeholder-translate]').forEach(element => {
-        const key = element.getAttribute('data-placeholder-translate');
-        const translation = browser.i18n.getMessage(key);
-        if (translation) {
-            element.setAttribute('placeholder', translation);
-        }
-    });
-
-    document.querySelectorAll('[data-label-translate]').forEach(element => {
-        const key = element.getAttribute('data-label-translate');
-        const translation = browser.i18n.getMessage(key);
-        if (translation) {
-            element.setAttribute('label', translation);
+        const kunciTetenger = element.getAttribute('data-label-translate');
+        if (kunciTetenger !== null) {
+            const terjemahanTetenger = browser.i18n.getMessage(kunciTetenger);
+            if (terjemahanTetenger) {
+                element.setAttribute('label', terjemahanTetenger);
+            }
         }
     });
 };

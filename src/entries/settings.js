@@ -87,11 +87,8 @@ function muatSijiModulPengaturan(modul, sisaNyoba) {
 }
 
 function muatModulPengaturan() {
-    let rantai = Promise.resolve();
-    for (const modul of URUTAN_MODUL_PENGATURAN) {
-        rantai = rantai.then(() => muatSijiModulPengaturan(modul, 1));
-    }
-    return rantai;
+    const janjiModul = URUTAN_MODUL_PENGATURAN.map((modul) => muatSijiModulPengaturan(modul, 1));
+    return Promise.all(janjiModul);
 }
 
 window.initializeSettingsPage = function initializeSettingsPage() {

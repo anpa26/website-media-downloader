@@ -21,7 +21,8 @@
 // LIGHT_EXCLUDE_SPEED_TEST_START
 function setupSpeedTest() {
     const startBtn = document.getElementById('start-speed-test');
-    if (!startBtn) return;
+    if (!startBtn || startBtn.dataset.ready === '1') return;
+    startBtn.dataset.ready = '1';
 
     const resultsDiv = document.getElementById('speed-test-results');
     const dlValue = document.getElementById('download-speed-value');

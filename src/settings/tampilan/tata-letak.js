@@ -86,6 +86,7 @@ function applySettingsLayout(layoutType) {
 
                 groups.forEach(g => g.classList.remove('active-sidebar-group'));
                 group.classList.add('active-sidebar-group');
+                if (typeof window.muatIsiSeksi === 'function') window.muatIsiSeksi(index);
             });
 
             sidebarNav.appendChild(navItem);
@@ -130,6 +131,7 @@ function applySettingsLayout(layoutType) {
 
                 groups.forEach(g => g.classList.remove('active-tab-group'));
                 group.classList.add('active-tab-group');
+                if (typeof window.muatIsiSeksi === 'function') window.muatIsiSeksi(index);
             });
 
             tabsHeader.appendChild(tabItem);
@@ -142,7 +144,7 @@ function applySettingsLayout(layoutType) {
         container.insertBefore(tabsHeader, container.firstChild);
     }
 
-    document.body.offsetHeight;
+    if (!container.classList.contains('tanpa-animasi')) document.body.offsetHeight;
     setTimeout(() => {
         document.querySelectorAll('.settings-items-container').forEach(c => c.style.transition = '');
     }, 50);
@@ -188,6 +190,10 @@ function setupCollapsibleLogic() {
 
             if (isCurrentlyCollapsed) {
                 currentGroup.classList.remove('collapsed');
+                if (typeof window.muatIsiSeksi === 'function') {
+                    const kabehGrup = document.querySelectorAll('.settings-group');
+                    window.muatIsiSeksi(Array.prototype.indexOf.call(kabehGrup, currentGroup));
+                }
                 setTimeout(enforceUIConstraints, 50);
             }
         });
