@@ -250,8 +250,15 @@ function bangunPaketAwal(mediaGroups, settings, activeDownloads) {
   return { items: tampilAwal.slice(0, 20), activeCount };
 }
 
-async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId, currentActiveHost, activeItems, activeDownloads, onAwal, jedaYield) {
+async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId, currentActiveHost, activeItems, activeDownloads, onAwal, jedaYield, onHitunganBertahap) {
     const langkahYield = jedaYield > 0 ? jedaYield : 20;
+    let wektuKerjaPungkasan = performance.now();
+    async function ngasoNalikaPerlu() {
+      const kini = performance.now();
+      if (kini - wektuKerjaPungkasan < 16) return;
+      await new Promise(selesai => requestAnimationFrame(selesai));
+      wektuKerjaPungkasan = performance.now();
+    }
     const minFileSizeSetting = settings['min-file-size'] || '0';
     const imageMinSideSelection = String(settings['image-min-side'] ?? '0');
     const imageMinSide = imageMinSideSelection === 'custom'
@@ -271,12 +278,37 @@ async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId
     const mediaGroups = new Map();
     let mediaScanIndex = 0;
     let sudahPanggilAwal = false;
+    const hitunganBertahap = { video: 0, audio: 0, stream: 0, image: 0, subtitle: 0, file: 0 };
+    let hitunganBertahapBerubah = false;
+    const kunciHitunganAktif = new Set();
+    muatKunciMediaSudahDiunduh(settings['download-history'] || []);
+    muatKunciMediaAktif(activeDownloads);
+    for (const unsurAktif of activeItems.values()) {
+      const tipeAktif = unsurAktif.dataset?.type || 'file';
+      const golonganAktif = hitunganBertahap[tipeAktif] !== undefined ? tipeAktif : 'file';
+      const urlAktif = unsurAktif.dataset?.url || '';
+      const urlAsliAktif = unsurAktif.dataset?.originalUrl || '';
+      if (urlAktif) {
+        kunciHitunganAktif.add(urlAktif);
+        kunciHitunganAktif.add(getMediaRenderKey(urlAktif, tipeAktif));
+      }
+      if (urlAsliAktif && urlAsliAktif !== urlAktif) {
+        kunciHitunganAktif.add(urlAsliAktif);
+        kunciHitunganAktif.add(getMediaRenderKey(urlAsliAktif, tipeAktif));
+      }
+      hitunganBertahap[golonganAktif]++;
+    }
+    if (activeItems.size > 0) hitunganBertahapBerubah = true;
     for (const rawUrl in mediaRequests) {
       if (++mediaScanIndex % langkahYield === 0) {
         await new Promise(resolve => requestAnimationFrame(resolve));
         if (onAwal && !sudahPanggilAwal && mediaGroups.size >= 20) {
           sudahPanggilAwal = true;
           onAwal(bangunPaketAwal(mediaGroups, settings, activeDownloads));
+        }
+        if (onHitunganBertahap && hitunganBertahapBerubah) {
+          hitunganBertahapBerubah = false;
+          try { onHitunganBertahap({ ...hitunganBertahap }); } catch (_) {}
         }
       }
       if (activeItems.has(rawUrl)) continue;
@@ -381,6 +413,12 @@ async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId
 
       if (!mediaGroups.has(identity)) {
         mediaGroups.set(identity, { requests: [], type });
+        const golongan = hitunganBertahap[type] !== undefined ? type : 'file';
+        const wisDiitungAktif = kunciHitunganAktif.has(rawUrl) || kunciHitunganAktif.has(getMediaRenderKey(rawUrl, type));
+        if (!wisDiitungAktif && (!apakahUrlSudahDiunduh(rawUrl, type) || apakahUrlAktif(rawUrl, type))) {
+          hitunganBertahap[golongan]++;
+          hitunganBertahapBerubah = true;
+        }
       }
       const group = mediaGroups.get(identity);
 
@@ -406,7 +444,7 @@ async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId
     }
 
     const groupsWithNames = [];
-    mediaGroups.forEach(group => {
+    for (const group of mediaGroups.values()) {
       const model = bangunModelMedia(group, settings);
       groupsWithNames.push({
         group,
@@ -416,11 +454,12 @@ async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId
         hasQuality: model.hasQuality,
         model
       });
-    });
+      await ngasoNalikaPerlu();
+    }
 
     const isDisableDeduplication = isFlagEnabled(settings['disable-deduplication'], true);
     const filenameGroupsMap = new Map();
-    groupsWithNames.forEach((item, index) => {
+    for (const [index, item] of groupsWithNames.entries()) {
         let nameKey;
         if (isDisableDeduplication) {
             nameKey = 'no_dedup_' + index + '_' + (item.bestRequest.originalUrl || item.bestRequest.url || '');
@@ -444,10 +483,11 @@ async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId
             filenameGroupsMap.set(nameKey, []);
         }
         filenameGroupsMap.get(nameKey).push(item);
-    });
+        await ngasoNalikaPerlu();
+    }
 
     const flattenedRequests = [];
-    filenameGroupsMap.forEach(items => {
+    for (const items of filenameGroupsMap.values()) {
         items.sort((a, b) => {
             // 1. Prioritize having quality options
             if (a.hasQuality && !b.hasQuality) return -1;
@@ -466,7 +506,8 @@ async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId
 
         const bestItem = items[0];
         flattenedRequests.push(bestItem.model);
-    });
+        await ngasoNalikaPerlu();
+    }
 
     const sortOrder = settings['media-sort-order'] || 'newest';
     let sortedByWorker = false;
@@ -494,7 +535,9 @@ async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId
     }
     muatKunciMediaSudahDiunduh(settings['download-history'] || []);
     muatKunciMediaAktif(activeDownloads);
+    await ngasoNalikaPerlu();
     const semuaTampil = deduplicateMediaForDisplay(flattenedRequests);
+    await ngasoNalikaPerlu();
     const urlAktif = new Set();
     for (const downloadData of Object.values(activeDownloads || {})) {
       const url = downloadData?.url || '';
@@ -514,6 +557,7 @@ async function hitungDaftarMediaBaru(mediaRequests, settings, currentActiveTabId
     if (limit > 0 && displayRequests.length > limit) {
       displayRequests.length = limit;
     }
+    await ngasoNalikaPerlu();
 
     let daftarMedia = displayRequests;
 

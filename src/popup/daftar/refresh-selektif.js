@@ -70,10 +70,19 @@ function sidikJariItemTampil(item) {
   ].join('|');
 }
 
-function sidikJariModelTampil(itemsBaru, unduhanAktif) {
+async function sidikJariModelTampil(itemsBaru, unduhanAktif) {
   let hash = 2166136261;
+  let wektuKerjaPungkasan = performance.now();
+  const ngasoNalikaPerlu = async () => {
+    const kini = performance.now();
+    if (kini - wektuKerjaPungkasan >= 16) {
+      await new Promise(selesai => requestAnimationFrame(selesai));
+      wektuKerjaPungkasan = performance.now();
+    }
+  };
   const campur = (nilai) => { hash = campurSidikJari(nilai, hash); };
   for (const item of itemsBaru || []) {
+    await ngasoNalikaPerlu();
     campur(getMediaRenderKey(item?.bestRequest?.originalUrl || item?.bestRequest?.url || '', item?.type || 'file'));
     campur(item?.resolvedFilename || '');
     campur(item?.type || '');
@@ -146,14 +155,23 @@ function sidikJariTajuk(tajuk) {
   return hasil;
 }
 
-function hitungSidikJariRefreshMentah(mediaRequests, settings, tabId, host, itemAktif, unduhanAktif) {
+async function hitungSidikJariRefreshMentah(mediaRequests, settings, tabId, host, itemAktif, unduhanAktif) {
   let hash = 2166136261;
+  let wektuKerjaPungkasan = performance.now();
+  const ngasoNalikaPerlu = async () => {
+    const kini = performance.now();
+    if (kini - wektuKerjaPungkasan >= 16) {
+      await new Promise(selesai => requestAnimationFrame(selesai));
+      wektuKerjaPungkasan = performance.now();
+    }
+  };
   const campur = (nilai) => { hash = campurSidikJari(nilai, hash); };
   campur(tabId);
   campur(host);
   const kunciUrl = Object.keys(mediaRequests || {}).sort();
   campur(kunciUrl.length);
   for (const urlMentah of kunciUrl) {
+    await ngasoNalikaPerlu();
     campur(urlMentah);
     const daftar = mediaRequests[urlMentah];
     if (!Array.isArray(daftar)) { campur('ora-array'); continue; }
@@ -185,6 +203,7 @@ function hitungSidikJariRefreshMentah(mediaRequests, settings, tabId, host, item
   }
   const kunciSetelan = Object.keys(settings || {}).sort();
   for (const k of kunciSetelan) {
+    await ngasoNalikaPerlu();
     campur(k);
     if (k === 'download-history') {
       const riwayat = settings[k];
@@ -292,10 +311,10 @@ async function cekKahananMedia() {
   return kahanan;
 }
 
-function segarnoSidikJariSawiseMuat(mediaRequests, settings, tabId, host, itemAktif, unduhanAktif, itemsAkhir) {
+async function segarnoSidikJariSawiseMuat(mediaRequests, settings, tabId, host, itemAktif, unduhanAktif, itemsAkhir) {
   try {
-    sidikJariRefreshMentahPalingAnyar = hitungSidikJariRefreshMentah(mediaRequests, settings, tabId, host, itemAktif, unduhanAktif);
-    sidikJariModelTampilPungkasan = sidikJariModelTampil(itemsAkhir, unduhanAktif);
+    sidikJariRefreshMentahPalingAnyar = await hitungSidikJariRefreshMentah(mediaRequests, settings, tabId, host, itemAktif, unduhanAktif);
+    sidikJariModelTampilPungkasan = await sidikJariModelTampil(itemsAkhir, unduhanAktif);
     tandhaniKahananSaiki(null, settings, unduhanAktif);
     takoVersiDataMedia().then(versi => { if (typeof versi === 'number') versiDataMediaPalingAnyar = versi; }).catch(() => {});
   } catch (e) {}
@@ -321,7 +340,7 @@ async function refreshListMediaSelektif(opsional = {}) {
     const quickActiveDownloads = await Promise.race([activeDownloadsPromise, new Promise(resolve => setTimeout(() => resolve(null), 100))]);
     if (quickActiveDownloads) activeDownloads = quickActiveDownloads;
     const itemAktif = kumpulkanActiveItems();
-    const sidikJariMentah = hitungSidikJariRefreshMentah(mediaRequests, settings, currentActiveTabId, currentActiveHost, itemAktif, activeDownloads);
+    const sidikJariMentah = await hitungSidikJariRefreshMentah(mediaRequests, settings, currentActiveTabId, currentActiveHost, itemAktif, activeDownloads);
     if (sidikJariMentah === sidikJariRefreshMentahPalingAnyar) {
       tandhaniKahananSaiki(kahanan.versi, settings, activeDownloads);
       return 'ora-owah';
@@ -331,7 +350,7 @@ async function refreshListMediaSelektif(opsional = {}) {
       if (mediaListLoad) butuhRefreshSelektifSawiseLoad = true;
       return 'tunda';
     }
-    const sidikJariModel = sidikJariModelTampil(itemsBaru, activeDownloads);
+    const sidikJariModel = await sidikJariModelTampil(itemsBaru, activeDownloads);
     if (sidikJariModel === sidikJariModelTampilPungkasan) {
       sidikJariRefreshMentahPalingAnyar = sidikJariMentah;
       downloadingCount = activeCount;

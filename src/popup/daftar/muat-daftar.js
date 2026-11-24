@@ -69,6 +69,7 @@ async function loadMediaListOnce() {
 
   const activeItems = kumpulkanActiveItems();
   mediaContainer.innerHTML = '';
+  resetHitunganGrupBertahap();
   [...new Set(activeItems.values())].forEach(item => mediaContainer.appendChild(item));
 
   try {
@@ -121,7 +122,11 @@ async function loadMediaListOnce() {
       setelanStrukturalPalingAnyar = settings;
       if (loadingSpinner) loadingSpinner.style.display = 'none';
       wisRenderAwal = true;
-      renderInitialList();
+      if (!apakahKartuGrupBertahapKaton()) renderInitialList();
+    }, undefined, (hitungan) => {
+      if (isGroupingEnabled && activeGroup === null && !document.getElementById('search-bar')?.value.trim()) {
+        segarkanKartuGrupBertahap(hitungan);
+      }
     });
     if (loadingSpinner) loadingSpinner.style.display = 'none';
     selarasnoSeleksi(allMediaRequests, daftarMediaAnyar);
@@ -143,7 +148,12 @@ async function loadMediaListOnce() {
     }
     sudahMuatListAwal = true;
     setelanStrukturalPalingAnyar = settings;
-    segarnoSidikJariSawiseMuat(mediaRequests, settings, currentActiveTabId, currentActiveHost, activeItems, activeDownloads, daftarMediaAnyar);
+    const tugasSidikJari = () => segarnoSidikJariSawiseMuat(mediaRequests, settings, currentActiveTabId, currentActiveHost, activeItems, activeDownloads, daftarMediaAnyar);
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(tugasSidikJari, { timeout: 2000 });
+    } else {
+      setTimeout(tugasSidikJari, 0);
+    }
 
     if (autoAudioUrl) {
       const decodedUrl = decodeURIComponent(autoAudioUrl);
@@ -256,6 +266,8 @@ async function loadMediaListOnce() {
     }
     } catch (err) {
     console.error("Error loading media list:", err);
+    if (mediaContainer) mediaContainer.querySelectorAll('.media-group-card').forEach(el => el.remove());
+    resetHitunganGrupBertahap();
     if (globalLoading) globalLoading.style.display = 'none';
     if (mainContent) mainContent.style.display = 'block';
     if (loadingSpinner) loadingSpinner.style.display = 'none';

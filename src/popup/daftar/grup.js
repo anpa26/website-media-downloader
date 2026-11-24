@@ -155,3 +155,60 @@ function apakahKartuAktifCocokQuery(item, query) {
   const haystack = [item.dataset.url || '', item.dataset.originalUrl || '', item.dataset.type || '', item.textContent || ''].join(' ').toLowerCase();
   return haystack.includes(q);
 }
+
+let tekenHitunganGrupBertahap = null;
+let wektuSegarKartuPungkasan = 0;
+function resetHitunganGrupBertahap() {
+  tekenHitunganGrupBertahap = null;
+  wektuSegarKartuPungkasan = 0;
+}
+function apakahKartuGrupBertahapKaton() {
+  if (!isGroupingEnabled || activeGroup !== null) return false;
+  const wadah = document.getElementById('media-list');
+  if (!wadah) return false;
+  if (wadah.querySelector('.media-item')) return false;
+  return !!wadah.querySelector('.media-group-card[data-group-type]');
+}
+function segarkanKartuGrupBertahap(hitungan) {
+  if (!isGroupingEnabled || activeGroup !== null) return;
+  const bilahGolek = document.getElementById('search-bar');
+  if (bilahGolek && bilahGolek.value.trim()) return;
+  const wadah = document.getElementById('media-list');
+  if (!wadah) return;
+  if (wadah.querySelector('.media-item')) return;
+  const urutan = ['video', 'audio', 'stream', 'image', 'subtitle', 'file'];
+  const teken = urutan.map(tipe => tipe + ':' + (hitungan[tipe] || 0)).join(',');
+  if (teken === tekenHitunganGrupBertahap) return;
+  const saiki = performance.now();
+  if (tekenHitunganGrupBertahap !== null && saiki - wektuSegarKartuPungkasan < 150) return;
+  tekenHitunganGrupBertahap = teken;
+  wektuSegarKartuPungkasan = saiki;
+  let onoKartu = false;
+  for (const tipe of urutan) {
+    const jumlah = hitungan[tipe] || 0;
+    const kartu = wadah.querySelector('.media-group-card[data-group-type="' + tipe + '"]');
+    if (jumlah > 0) {
+      onoKartu = true;
+      if (kartu) {
+        const label = kartu.querySelector('h4 + span');
+        const teks = jumlah + ' ' + (jumlah === 1 ? 'item' : 'items');
+        if (label && label.textContent !== teks) label.textContent = teks;
+      } else {
+        tambahKartuGrup(tipe, jumlah);
+      }
+    } else if (kartu) {
+      kartu.remove();
+    }
+  }
+  if (!onoKartu) return;
+  wadah.querySelector(':scope > .tab-skeleton')?.remove();
+  wadah.classList.remove('tab-content-loading');
+  const barInfo = document.getElementById('selected-info-bar');
+  if (barInfo) barInfo.style.display = 'none';
+  const barMedia = document.getElementById('media-controls');
+  if (barMedia) barMedia.style.display = 'flex';
+  for (const z of zipProgressPerJob.values()) {
+    syncZipProgressToGroupCards(z.text, z.percent, z.indeterminate, z.cancelCb, z.isPaused, z.pauseCb, z.groupType ?? null, z.jobId ?? null);
+  }
+  updateGlobalProgressVisibility();
+}
