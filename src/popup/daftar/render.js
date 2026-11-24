@@ -231,6 +231,10 @@ function renderNextChunk() {
   mediaContainer.appendChild(fragment);
   indeksChunkSabanjure += nextChunk.length;
   renderedCount += jumlahKartuDibuat;
+  if (jumlahKartuDibuat > 0) {
+    mediaContainer.querySelector('.no-media-container')?.remove();
+    mediaContainer.querySelector('#no-matches-msg')?.remove();
+  }
 
   if (indeksChunkSabanjure < requestsToRender.length) {
     const sentinel = document.createElement('div');

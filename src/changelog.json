@@ -1,193 +1,73 @@
 {
   "require_uninstall": false,
   "en": {
-    "headline": "What's New (v2.6.2)",
+    "headline": "What's New (v2.6.3)",
     "changes": [
-      "Optimized popup list rendering with lazy loading.",
-      "Improved theme color picker and slider responsiveness in interface settings.",
-      "Fixed HLS audio and video merging into a single MP4 file options.",
-      "Fixed downloads getting stuck in the popup list.",
-      "Fixed delays when initializing the list view on first launch.",
-      "Fixed toast dragging issues.",
-      "Fixed notifications overlapping the top area.",
-      "Fixed download progress and media handling issues in the popup.",
-      "Fixed parallel download handling when parts are skipped or fail, including recovery from chunk writing errors.",
-      "Removed dead code and deduplicated some code.",
-      "Refined project credits and attribution.",
-      "Fixed stream download not starting when clicking the download toast.",
-      "Fixed the download part count.",
-      "Improved extension performance for Home, Settings, and History."
+      "Improve extension performance.",
+      "Fix performance issue on 2.6.2 version."
     ]
   },
   "id": {
-    "headline": "Yang Baru (v2.6.2)",
+    "headline": "Yang Baru (v2.6.3)",
     "changes": [
-      "Optimalisasi rendering daftar popup dengan lazy loading.",
-      "Peningkatan responsivitas color picker tema dan slider di pengaturan tampilan.",
-      "Perbaikan penggabungan audio dan video HLS menjadi satu file MP4.",
-      "Perbaikan download yang macet di daftar popup.",
-      "Perbaikan delay saat menginisialisasi tampilan daftar pada peluncuran pertama.",
-      "Perbaikan masalah drag pada toast.",
-      "Perbaikan notifikasi yang menumpuk di area atas.",
-      "Perbaikan progres download dan penanganan media di popup.",
-      "Perbaikan penanganan download paralel saat ada bagian yang dilewati atau gagal, termasuk pemulihan dari error penulisan chunk.",
-      "Penghapusan dead code dan deduplikasi sebagian kode.",
-      "Penyempurnaan kredit dan atribusi proyek.",
-      "Perbaikan download stream yang tidak mulai saat mengklik toast unduhan.",
-      "Perbaikan jumlah bagian download.",
-      "Peningkatan performa ekstensi untuk Home, Settings, dan History."
+      "Meningkatkan performa ekstensi.",
+      "Memperbaiki masalah performa pada versi 2.6.2."
     ]
   },
   "de": {
-    "headline": "Was gibt's Neues (v2.6.2)",
+    "headline": "Was gibt's Neues (v2.6.3)",
     "changes": [
-      "Optimiertes Rendering der Popup-Liste mit Lazy Loading.",
-      "Verbesserte Reaktionsfähigkeit der Theme-Farbauswahl und der Schieberegler in den Oberflächeneinstellungen.",
-      "Behobenes Zusammenführen von HLS-Audio und -Video in eine einzelne MP4-Datei.",
-      "Behobene Downloads, die in der Popup-Liste stecken blieben.",
-      "Behobene Verzögerungen beim Initialisieren der Listenansicht beim ersten Start.",
-      "Behobene Probleme beim Ziehen von Toasts.",
-      "Behobene Benachrichtigungen, die den oberen Bereich überlappten.",
-      "Behobene Probleme mit Download-Fortschritt und Medienbehandlung im Popup.",
-      "Behobene parallele Download-Verarbeitung, wenn Teile übersprungen werden oder fehlschlagen, einschließlich Wiederherstellung nach Fehlern beim Schreiben von Chunks.",
-      "Entfernen von totem Code und Deduplizierung von Code.",
-      "Verfeinerte Projekt-Credits und Zuschreibung.",
-      "Behobener Stream-Download, der beim Klicken auf den Download-Toast nicht startete.",
-      "Behobene Anzahl der Download-Teile.",
-      "Verbesserte Leistung der Erweiterung für Startseite, Einstellungen und Verlauf."
+      "Leistung der Erweiterung verbessern.",
+      "Leistungsproblem in Version 2.6.2 beheben."
     ]
   },
   "fr": {
-    "headline": "Nouveautés (v2.6.2)",
+    "headline": "Nouveautés (v2.6.3)",
     "changes": [
-      "Rendu optimisé de la liste du popup avec chargement différé.",
-      "Amélioration de la réactivité du sélecteur de couleur du thème et des curseurs dans les paramètres d'interface.",
-      "Correction de la fusion audio et vidéo HLS en un seul fichier MP4.",
-      "Correction des téléchargements bloqués dans la liste du popup.",
-      "Correction des délais lors de l'initialisation de la vue de liste au premier lancement.",
-      "Correction des problèmes de glissement des toasts.",
-      "Correction des notifications qui chevauchaient la zone supérieure.",
-      "Correction des problèmes de progression des téléchargements et de gestion des médias dans le popup.",
-      "Correction de la gestion des téléchargements parallèles lorsque des parties sont ignorées ou échouent, y compris la récupération après des erreurs d'écriture de morceaux.",
-      "Suppression du code mort et déduplication d'une partie du code.",
-      "Affinement des crédits et de l'attribution du projet.",
-      "Correction du téléchargement de flux qui ne démarrait pas en cliquant sur le toast de téléchargement.",
-      "Correction du nombre de parties du téléchargement.",
-      "Amélioration des performances de l'extension pour l'Accueil, les Paramètres et l'Historique."
+      "Améliorer les performances de l'extension.",
+      "Corriger le problème de performance de la version 2.6.2."
     ]
   },
   "ja": {
-    "headline": "新機能 (v2.6.2)",
+    "headline": "新機能 (v2.6.3)",
     "changes": [
-      "遅延読み込みによるポップアップリストのレンダリングを最適化しました。",
-      "インターフェース設定のテーマカラーピッカーとスライダーの応答性を改善しました。",
-      "HLSの音声と動画を1つのMP4ファイルに結合するオプションを修正しました。",
-      "ポップアップリストでダウンロードが止まる問題を修正しました。",
-      "初回起動時のリストビュー初期化の遅延を修正しました。",
-      "トーストのドラッグ問題を修正しました。",
-      "通知が上部エリアに重なる問題を修正しました。",
-      "ポップアップのダウンロード進捗とメディア処理の問題を修正しました。",
-      "一部がスキップまたは失敗した場合の並列ダウンロード処理を修正しました（チャンク書き込みエラーからの復旧を含む）。",
-      "デッドコードを削除し、一部のコードを重複排除しました。",
-      "プロジェクトのクレジットと帰属を洗練しました。",
-      "ダウンロードトーストをクリックしてもストリームのダウンロードが開始されない問題を修正しました。",
-      "ダウンロードのパート数を修正しました。",
-      "ホーム、設定、履歴における拡張機能のパフォーマンスを改善しました。"
+      "拡張機能のパフォーマンスを改善しました。",
+      "バージョン 2.6.2 のパフォーマンス問題を修正しました。"
     ]
   },
   "ko": {
-    "headline": "새로운 기능 (v2.6.2)",
+    "headline": "새로운 기능 (v2.6.3)",
     "changes": [
-      "지연 로딩을 통한 팝업 목록 렌더링 최적화.",
-      "인터페이스 설정의 테마 색상 선택기와 슬라이더 반응성 개선.",
-      "HLS 오디오와 비디오를 하나의 MP4 파일로 병합하는 옵션 수정.",
-      "팝업 목록에서 다운로드가 멈추는 문제 수정.",
-      "첫 실행 시 목록 보기 초기화 지연 수정.",
-      "토스트 드래그 문제 수정.",
-      "알림이 상단 영역과 겹치는 문제 수정.",
-      "팝업의 다운로드 진행률 및 미디어 처리 문제 수정.",
-      "일부가 건너뛰거나 실패할 때의 병렬 다운로드 처리 수정(청크 쓰기 오류 복구 포함).",
-      "데드 코드 제거 및 일부 코드 중복 제거.",
-      "프로젝트 크레딧 및 기여 표시 개선.",
-      "다운로드 토스트를 클릭해도 스트림 다운로드가 시작되지 않는 문제를 수정했습니다.",
-      "다운로드 파트 수를 수정했습니다.",
-      "홈, 설정, 기록에서 확장 프로그램 성능을 개선했습니다."
+      "확장 프로그램 성능을 개선했습니다.",
+      "버전 2.6.2의 성능 문제를 수정했습니다."
     ]
   },
   "pt": {
-    "headline": "Novidades (v2.6.2)",
+    "headline": "Novidades (v2.6.3)",
     "changes": [
-      "Renderização otimizada da lista do popup com carregamento preguiçoso.",
-      "Melhoria na responsividade do seletor de cores do tema e dos controles deslizantes nas configurações de interface.",
-      "Correção da mesclagem de áudio e vídeo HLS em um único arquivo MP4.",
-      "Correção de downloads travados na lista do popup.",
-      "Correção de atrasos ao inicializar a visualização de lista na primeira execução.",
-      "Correção de problemas ao arrastar notificações toast.",
-      "Correção de notificações sobrepondo a área superior.",
-      "Correção de problemas de progresso de download e manipulação de mídia no popup.",
-      "Correção do tratamento de downloads paralelos quando partes são ignoradas ou falham, incluindo recuperação de erros de gravação de partes.",
-      "Remoção de código morto e deduplicação de parte do código.",
-      "Refinamento dos créditos e da atribuição do projeto.",
-      "Correção do download de stream que não iniciava ao clicar no toast de download.",
-      "Correção da contagem de partes do download.",
-      "Melhoria do desempenho da extensão para Início, Configurações e Histórico."
+      "Melhorar o desempenho da extensão.",
+      "Corrigir o problema de desempenho da versão 2.6.2."
     ]
   },
   "ru": {
-    "headline": "Что нового (v2.6.2)",
+    "headline": "Что нового (v2.6.3)",
     "changes": [
-      "Оптимизирован рендеринг списка во всплывающем окне с ленивой загрузкой.",
-      "Улучшена отзывчивость выбора цвета темы и ползунков в настройках интерфейса.",
-      "Исправлено объединение аудио и видео HLS в один MP4-файл.",
-      "Исправлены загрузки, застревавшие в списке всплывающего окна.",
-      "Исправлены задержки при инициализации списка при первом запуске.",
-      "Исправлены проблемы с перетаскиванием всплывающих уведомлений.",
-      "Исправлены уведомления, перекрывавшие верхнюю область.",
-      "Исправлены проблемы с прогрессом загрузки и обработкой медиа во всплывающем окне.",
-      "Исправлена параллельная загрузка, когда части пропускаются или завершаются ошибкой, включая восстановление после ошибок записи фрагментов.",
-      "Удалён мёртвый код, продублированный код объединён.",
-      "Уточнены кредиты проекта и атрибуция.",
-      "Исправлена ошибка, из-за которой загрузка потока не начиналась при нажатии на всплывающее уведомление о загрузке.",
-      "Исправлено количество частей загрузки.",
-      "Улучшена производительность расширения для главной страницы, настроек и истории."
+      "Улучшена производительность расширения.",
+      "Исправлена проблема с производительностью в версии 2.6.2."
     ]
   },
   "ar": {
-    "headline": "ما الجديد (v2.6.2)",
+    "headline": "ما الجديد (v2.6.3)",
     "changes": [
-      "تحسين عرض قائمة النافذة المنبثقة مع التحميل الكسول.",
-      "تحسين استجابة منتقي ألوان السمة وأشرطة التمرير في إعدادات الواجهة.",
-      "إصلاح دمج صوت وفيديو HLS في ملف MP4 واحد.",
-      "إصلاح التنزيلات العالقة في قائمة النافذة المنبثقة.",
-      "إصلاح التأخير عند تهيئة عرض القائمة عند التشغيل الأول.",
-      "إصلاح مشاكل سحب التنبيهات.",
-      "إصلاح الإشعارات التي تتداخل مع المنطقة العلوية.",
-      "إصلاح مشاكل تقدم التنزيل ومعالجة الوسائط في النافذة المنبثقة.",
-      "إصلاح معالجة التنزيلات المتوازية عند تخطي أجزاء أو فشلها، بما في ذلك الاسترداد من أخطاء كتابة الأجزاء.",
-      "إزالة التعليمات البرمجية الميتة وإزالة تكرار بعض التعليمات البرمجية.",
-      "تحسين اعتمادات المشروع ونسبته.",
-      "إصلاح مشكلة عدم بدء تنزيل البث عند النقر على إشعار التنزيل.",
-      "إصلاح عدد أجزاء التنزيل.",
-      "تحسين أداء الإضافة للصفحة الرئيسية والإعدادات والسجل."
+      "تحسين أداء الإضافة.",
+      "إصلاح مشكلة الأداء في الإصدار 2.6.2."
     ]
   },
   "es": {
-    "headline": "Novedades (v2.6.2)",
+    "headline": "Novedades (v2.6.3)",
     "changes": [
-      "Renderizado optimizado de la lista del popup con carga diferida.",
-      "Mejora de la capacidad de respuesta del selector de color del tema y los controles deslizantes en la configuración de la interfaz.",
-      "Corrección de la fusión de audio y video HLS en un solo archivo MP4.",
-      "Corrección de descargas atascadas en la lista del popup.",
-      "Corrección de retrasos al inicializar la vista de lista en el primer inicio.",
-      "Corrección de problemas al arrastrar notificaciones toast.",
-      "Corrección de notificaciones que se superponían al área superior.",
-      "Corrección de problemas de progreso de descarga y manejo de medios en el popup.",
-      "Corrección del manejo de descargas paralelas cuando se omiten partes o fallan, incluida la recuperación de errores de escritura de fragmentos.",
-      "Eliminación de código muerto y deduplicación de parte del código.",
-      "Refinamiento de los créditos y la atribución del proyecto.",
-      "Corrección de la descarga de stream que no se iniciaba al hacer clic en el toast de descarga.",
-      "Corrección del recuento de partes de la descarga.",
-      "Mejora del rendimiento de la extensión para Inicio, Ajustes e Historial."
+      "Mejorar el rendimiento de la extensión.",
+      "Corregir el problema de rendimiento de la versión 2.6.2."
     ]
   }
 }
