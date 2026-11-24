@@ -613,7 +613,6 @@ function kabelnoKunciSetelan(setting, value, akar, kanggoSeksi) {
         if (!wisDikabel) petaBatasan.set(setting, updateConstraints);
 
         if (setting === 'auto-download-all-domains' || setting === 'gdrive-stream' || setting === 'speed-boost' || setting === 'background-download' || setting === 'save-to-gdrive' || setting === 'detect-download-links' || setting === 'optimize-low-end' || setting === 'embed-subtitles-mkv' || setting === 'audio-to-mp3' || setting === 'redirect-guard-hide-content') {
-            let cacahCobaPeriksa = 0;
             const checkInitial = () => {
                 const speedBoost = document.getElementById('speed-boost');
                 const speedBoostResume = document.getElementById('speed-boost-resume');
@@ -702,11 +701,6 @@ function kabelnoKunciSetelan(setting, value, akar, kanggoSeksi) {
                             }
                         }
                     }
-                } else if (cacahCobaPeriksa < 10) {
-                    cacahCobaPeriksa++;
-                    setTimeout(checkInitial, 100);
-                } else {
-                    console.error('checkInitial gagal: elemen setelan ora ketemu sawise 10x nyoba');
                 }
                 updateConstraints();
             };
