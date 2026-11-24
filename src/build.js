@@ -319,8 +319,8 @@ function stripDisabledFunctionBodies(filePath, replacements) {
 
 function replaceSection(filePath, startText, endText, replacement) {
     let source = fs.readFileSync(filePath, 'utf8');
-    const start = source.indexOf(startText);
-    const end = source.indexOf(endText, start + startText.length);
+    const end = source.indexOf(endText);
+    const start = end === -1 ? -1 : source.lastIndexOf(startText, end);
     if (start === -1 || end === -1) {
         throw new Error(`[light] Missing section boundary in ${path.relative(SRC_DIR, filePath)}`);
     }
@@ -626,7 +626,7 @@ function stripDisabledIntegrations(outDir) {
     replaceSection(
         path.join(outDir, 'settings', 'pengaturan.js'),
         "    const gdriveBtn = document.getElementById('gdrive-login-btn');\n    const gdriveText = document.getElementById('gdrive-login-text');",
-        "    const layoutVal = await bacaTataLetakTersimpen();",
+        "    if (!kanggoSeksi) {\n        const layoutVal = await bacaTataLetakTersimpen();",
         ''
     );
 

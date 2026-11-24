@@ -108,6 +108,7 @@ function ikonGrup(tipe) {
 function tambahKartuGrup(tipe, jumlah) {
   const mediaContainer = document.getElementById('media-list');
   if (!mediaContainer) return;
+  mediaContainer.querySelector('.no-media-container')?.remove();
   if (mediaContainer.querySelector(`.media-group-card[data-group-type="${tipe}"]`)) return;
   const wadah = document.createElement('div');
   wadah.innerHTML = createGroupItemHTML(tipe, jumlah, judhulGrup(tipe), ikonGrup(tipe));
