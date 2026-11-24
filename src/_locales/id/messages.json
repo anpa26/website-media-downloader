@@ -1490,6 +1490,10 @@
     "message": "Dipelihara Oleh",
     "description": "About page title."
   },
+  "newCommunityTitle": {
+    "message": "Komunitas Baru",
+    "description": "About page title."
+  },
   "legacyContributionsTitle": {
     "message": "Kontribusi Lama",
     "description": "About page title."

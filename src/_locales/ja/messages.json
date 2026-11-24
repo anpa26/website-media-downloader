@@ -1518,6 +1518,10 @@
     "message": "メンテナンス者",
     "description": "About page title."
   },
+  "newCommunityTitle": {
+    "message": "新しいコミュニティ",
+    "description": "About page title."
+  },
   "legacyContributionsTitle": {
     "message": "過去の貢献",
     "description": "About page title."

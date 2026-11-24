@@ -1518,6 +1518,10 @@
     "message": "تتم صيانته بواسطة",
     "description": "About page title."
   },
+  "newCommunityTitle": {
+    "message": "مجتمع جديد",
+    "description": "About page title."
+  },
   "legacyContributionsTitle": {
     "message": "المساهمات القديمة",
     "description": "About page title."

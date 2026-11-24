@@ -1518,6 +1518,10 @@
     "message": "Mantido por",
     "description": "About page title."
   },
+  "newCommunityTitle": {
+    "message": "Nova comunidade",
+    "description": "About page title."
+  },
   "legacyContributionsTitle": {
     "message": "Contribuições herdadas",
     "description": "About page title."

@@ -1518,6 +1518,10 @@
     "message": "Поддерживается",
     "description": "About page title."
   },
+  "newCommunityTitle": {
+    "message": "Новое сообщество",
+    "description": "About page title."
+  },
   "legacyContributionsTitle": {
     "message": "Предыдущий вклад",
     "description": "About page title."

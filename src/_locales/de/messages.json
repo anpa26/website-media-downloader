@@ -1518,6 +1518,10 @@
     "message": "Gepflegt von",
     "description": "About page title."
   },
+  "newCommunityTitle": {
+    "message": "Neue Community",
+    "description": "About page title."
+  },
   "legacyContributionsTitle": {
     "message": "Frühere Beiträge",
     "description": "About page title."

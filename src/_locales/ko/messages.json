@@ -1518,6 +1518,10 @@
     "message": "유지 관리자",
     "description": "About page title."
   },
+  "newCommunityTitle": {
+    "message": "새 커뮤니티",
+    "description": "About page title."
+  },
   "legacyContributionsTitle": {
     "message": "이전 기여",
     "description": "About page title."
